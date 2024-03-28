@@ -3,7 +3,7 @@ ifndef TARGET_COMPILE
 endif
 
 ifndef KP_DIR
-    KP_DIR = ./KernelPatch
+    KP_DIR = ../KernelPatch
 endif
 
 
@@ -22,7 +22,7 @@ xperia_ii_battery_age.kpm: ${objs}
 	${CC} -r -o $@ $^
 
 %.o: %.c
-	${CC} $(CFLAGS) $(INCLUDE_FLAGS) -c -O2 -o $@ $<
+	${CC} $(CFLAGS) $(INCLUDE_FLAGS) -T../demo.lds -c -O2 -o $@ $<
 
 .PHONY: clean
 clean:

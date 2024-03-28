@@ -13,10 +13,13 @@
 *.la
 *.lo
 
+# Binary
 *.bin
 *.elf
-
 *.kpm
 
 # VSCode
-.vscode
+*.vscode
+
+# Other
+*.bak

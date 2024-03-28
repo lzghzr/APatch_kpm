@@ -9,13 +9,12 @@
 #include <kputils.h>
 #include <linux/kernel.h>
 #include <linux/printk.h>
-#include <log.h>
 
 KPM_NAME("xperia_ii_battery_age");
 KPM_VERSION("1.1.0");
 KPM_LICENSE("GPL v2");
 KPM_AUTHOR("lzghzr");
-KPM_DESCRIPTION("xperia ii set battery aging level");
+KPM_DESCRIPTION("set xperia ii battery aging level");
 
 #define FG_IMA_DEFAULT 0
 #define SOMC_AGING_LEVEL_WORD 291
