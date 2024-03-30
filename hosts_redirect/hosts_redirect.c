@@ -13,7 +13,7 @@
 #include <taskext.h>
 
 KPM_NAME("hosts_redirect");
-KPM_VERSION("1.1.0");
+KPM_VERSION("1.1.1");
 KPM_LICENSE("GPL v2");
 KPM_AUTHOR("lzghzr");
 KPM_DESCRIPTION("redirect /system/etc/hosts to /data/adb/hosts/{n}");
@@ -23,6 +23,15 @@ uint64_t (*do_filp_open)(int dfd, struct filename *pathname, const struct open_f
 
 char hosts_source[] = "/system/etc/hosts";
 char hosts_target[] = "/data/adb/hosts/0";
+
+void _unhook(void *func)
+{
+  if (func && !is_bad_address(func))
+  {
+    unhook(func);
+    func = 0;
+  }
+}
 
 static long inline_hook_control0(const char *ctl_args, char *__user out_msg, int outlen)
 {
@@ -83,12 +92,12 @@ static long inline_hook_init(const char *args, const char *event, void *__user r
   hook_err_t err = hook_wrap3(do_filp_open, do_filp_open_before, do_filp_open_after, 0);
   if (err)
   {
-    pr_err("hook do_filp_open after error: %d\n", err);
+    pr_err("hook do_filp_open error: %d\n", err);
     return -22;
   }
   else
   {
-    pr_info("hook do_filp_open after success\n");
+    pr_info("hook do_filp_open success\n");
   }
 
   return 0;
@@ -96,10 +105,7 @@ static long inline_hook_init(const char *args, const char *event, void *__user r
 
 static long inline_hook_exit(void *__user reserved)
 {
-  if (do_filp_open)
-  {
-    unhook(do_filp_open);
-  }
+  _unhook(do_filp_open);
 }
 
 KPM_INIT(inline_hook_init);
