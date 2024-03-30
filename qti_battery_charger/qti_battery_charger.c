@@ -10,10 +10,11 @@
 #include <linux/printk.h>
 #include <linux/string.h>
 
+#include "../demo.h"
 #include "battchg.h"
 
 KPM_NAME("qti_battery_charger");
-KPM_VERSION("1.0.0");
+KPM_VERSION("1.0.1");
 KPM_LICENSE("GPL v2");
 KPM_AUTHOR("lzghzr");
 KPM_DESCRIPTION("set battery_psy_get_prop value");
@@ -79,8 +80,7 @@ void do_init_module_after(hook_fargs1_t *args, void *udata)
   struct module *mod = (typeof(mod))args->arg0;
   if (unlikely(!memcmp(mod->name, MODULE_NAME, sizeof(MODULE_NAME))))
   {
-    unhook(do_init_module);
-    do_init_module = 0;
+    demo_unhook(do_init_module);
     hook_battery_psy_get_prop();
   }
 }
@@ -124,16 +124,8 @@ static long inline_hook_init(const char *args, const char *event, void *__user r
 
 static long inline_hook_exit(void *__user reserved)
 {
-  if (do_init_module)
-  {
-    unhook(do_init_module);
-    do_init_module = 0;
-  }
-  if (battery_psy_get_prop)
-  {
-    unhook(battery_psy_get_prop);
-    battery_psy_get_prop = 0;
-  }
+  demo_unhook(do_init_module);
+  demo_unhook(battery_psy_get_prop);
 }
 
 KPM_INIT(inline_hook_init);

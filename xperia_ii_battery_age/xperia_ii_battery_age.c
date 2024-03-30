@@ -10,8 +10,10 @@
 #include <linux/kernel.h>
 #include <linux/printk.h>
 
+#include "../demo.h"
+
 KPM_NAME("xperia_ii_battery_age");
-KPM_VERSION("1.1.0");
+KPM_VERSION("1.1.1");
 KPM_LICENSE("GPL v2");
 KPM_AUTHOR("lzghzr");
 KPM_DESCRIPTION("set xperia ii battery aging level");
@@ -61,7 +63,7 @@ static long inline_hook_control0(const char *args, char *__user out_msg, int out
 
 void before_read(hook_fargs6_t *args, void *udata)
 {
-    unhook(fg_sram_read);
+    demo_unhook(fg_sram_read);
     fg = (struct fg_dev *)args->arg0;
     // u8 *arg3 = (u8 *)args->arg3;
     // logkd("before read fg: %llu, address: %u, offset: %u, val: %u, len: %d, flags: %d\n", args->arg0, (u16)args->arg1,
@@ -103,10 +105,7 @@ static long inline_hook_init(const char *args, const char *event, void *__user r
 
 static long inline_hook_exit(void *__user reserved)
 {
-    if (fg_sram_read)
-    {
-        unhook(fg_sram_read);
-    }
+    demo_unhook(fg_sram_read);
 }
 
 KPM_INIT(inline_hook_init);
