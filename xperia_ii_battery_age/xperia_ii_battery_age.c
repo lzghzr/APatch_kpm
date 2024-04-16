@@ -79,33 +79,15 @@ static long inline_hook_init(const char *args, const char *event, void *__user r
         return -1;
     }
 
-    fg_sram_read = (typeof(fg_sram_read))kallsyms_lookup_name("fg_sram_read");
-    pr_info("kernel function fg_sram_read addr: %llx\n", fg_sram_read);
-
-    fg_sram_write = (typeof(fg_sram_write))kallsyms_lookup_name("fg_sram_write");
-    pr_info("kernel function fg_sram_write addr: %llx\n", fg_sram_write);
-
-    if (!fg_sram_read || !fg_sram_write)
-    {
-        return -2;
-    }
-
-    hook_err_t err = hook_wrap6(fg_sram_read, before_read, 0, 0);
-    if (err)
-    {
-        pr_err("hook fg_sram_read error: %d\n", err);
-        return -3;
-    }
-    else
-    {
-        pr_info("hook fg_sram_read success\n");
-        return 0;
-    }
+    lookup_name(fg_sram_write);
+    lookup_name(fg_sram_read);
+    hook_func(fg_sram_read, 6, before_read, 0, 0);
+    return 0;
 }
 
 static long inline_hook_exit(void *__user reserved)
 {
-    demo_unhook(fg_sram_read);
+    unhook_func(fg_sram_read);
 }
 
 KPM_INIT(inline_hook_init);

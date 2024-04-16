@@ -20,9 +20,7 @@ KPM_AUTHOR("lzghzr");
 KPM_DESCRIPTION("set battery_psy_get_prop value");
 
 int (*do_init_module)(struct module *mod) = 0;
-int (*battery_psy_get_prop)(struct power_supply *psy,
-                            enum power_supply_property prop,
-                            union power_supply_propval *pval) = 0;
+int (*battery_psy_get_prop)(struct power_supply *psy, enum power_supply_property prop, union power_supply_propval *pval) = 0;
 
 char MODULE_NAME[] = "qti_battery_charger";
 char MODEL_NAME[] = "SNYSCA6";
@@ -55,6 +53,7 @@ void battery_psy_get_prop_after(hook_fargs3_t *args, void *udata)
 
 static long hook_battery_psy_get_prop()
 {
+  battery_psy_get_prop = 0;
   battery_psy_get_prop = (typeof(battery_psy_get_prop))kallsyms_lookup_name("battery_psy_get_prop");
   pr_info("kernel function battery_psy_get_prop addr: %llx\n", battery_psy_get_prop);
   if (!battery_psy_get_prop)
@@ -87,6 +86,7 @@ void do_init_module_after(hook_fargs1_t *args, void *udata)
 
 static long hook_do_init_module()
 {
+  do_init_module = 0;
   do_init_module = (typeof(do_init_module))kallsyms_lookup_name("do_init_module");
   pr_info("kernel function do_init_module addr: %llx\n", do_init_module);
   if (!do_init_module)
