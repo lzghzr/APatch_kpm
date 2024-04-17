@@ -303,89 +303,28 @@ struct nlmsghdr
 #define NLMSG_ALIGNTO 4U
 #define NLMSG_ALIGN(len) (((len) + NLMSG_ALIGNTO - 1) & ~(NLMSG_ALIGNTO - 1))
 #define NLMSG_HDRLEN ((int)NLMSG_ALIGN(sizeof(struct nlmsghdr)))
+static inline int nlmsg_msg_size(int payload)
+{
+    return NLMSG_HDRLEN + payload;
+}
+static inline int nlmsg_total_size(int payload)
+{
+    return NLMSG_ALIGN(nlmsg_msg_size(payload));
+}
 static inline void *nlmsg_data(const struct nlmsghdr *nlh)
 {
     return (unsigned char *)nlh + NLMSG_HDRLEN;
 }
 
-// fs/proc/internal.h
+// linux/gfp.h
+#define NUMA_NO_NODE (-1)
+#define ___GFP_HIGH 0x20u
+#define ___GFP_ATOMIC 0x80000u
+#define ___GFP_KSWAPD_RECLAIM 0x400000u
+#define __GFP_HIGH ((__force gfp_t)___GFP_HIGH)
+#define __GFP_ATOMIC ((__force gfp_t)___GFP_ATOMIC)
+#define __GFP_KSWAPD_RECLAIM ((__force gfp_t)___GFP_KSWAPD_RECLAIM)
+#define GFP_ATOMIC (__GFP_HIGH | __GFP_ATOMIC | __GFP_KSWAPD_RECLAIM)
 
-typedef struct refcount_struct
-{
-    atomic_t refs;
-} refcount_t;
-typedef int (*proc_write_t)(struct file *file, const char *buf,
-                            unsigned long count, void *data);
-struct proc_dir_entry
-{
-    /*
-     * number of callers into module in progress;
-     * negative -> it's going away RSN
-     */
-    atomic_t in_use;
-    refcount_t refcnt;
-    struct list_head pde_openers; /* who did ->open, but not ->release */
-    /* protects ->pde_openers and all struct pde_opener instances */
-    spinlock_t pde_unload_lock;
-    struct completion *pde_unload_completion;
-    const struct inode_operations *proc_iops;
-    const struct file_operations *proc_fops;
-    const struct dentry_operations *proc_dops;
-    union
-    {
-        const struct seq_operations *seq_ops;
-        int (*single_show)(struct seq_file *, void *);
-    };
-    proc_write_t write;
-    void *data;
-    unsigned int state_size;
-    unsigned int low_ino;
-    nlink_t nlink;
-    kuid_t uid;
-    kgid_t gid;
-    loff_t size;
-    struct proc_dir_entry *parent;
-    struct rb_root subdir;
-    struct rb_node subdir_node;
-    char *name;
-    umode_t mode;
-    u8 namelen;
-    char inline_name[];
-} __randomize_layout;
-
-// linux/fs.h
-#define __designated_init
-#define __randomize_layout __designated_init
-struct file_operations
-{
-    struct module *owner;
-    loff_t (*llseek)(struct file *, loff_t, int);
-    ssize_t (*read)(struct file *, char __user *, size_t, loff_t *);
-    ssize_t (*write)(struct file *, const char __user *, size_t, loff_t *);
-    ssize_t (*read_iter)(struct kiocb *, struct iov_iter *);
-    ssize_t (*write_iter)(struct kiocb *, struct iov_iter *);
-    int (*iterate)(struct file *, struct dir_context *);
-    int (*iterate_shared)(struct file *, struct dir_context *);
-    __poll_t (*poll)(struct file *, struct poll_table_struct *);
-    long (*unlocked_ioctl)(struct file *, unsigned int, unsigned long);
-    long (*compat_ioctl)(struct file *, unsigned int, unsigned long);
-    int (*mmap)(struct file *, struct vm_area_struct *);
-    unsigned long mmap_supported_flags;
-    int (*open)(struct inode *, struct file *);
-    int (*flush)(struct file *, fl_owner_t id);
-    int (*release)(struct inode *, struct file *);
-    int (*fsync)(struct file *, loff_t, loff_t, int datasync);
-    int (*fasync)(int, struct file *, int);
-    int (*lock)(struct file *, int, struct file_lock *);
-    ssize_t (*sendpage)(struct file *, struct page *, int, size_t, loff_t *, int);
-    unsigned long (*get_unmapped_area)(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
-    int (*check_flags)(int);
-    int (*flock)(struct file *, int, struct file_lock *);
-    ssize_t (*splice_write)(struct pipe_inode_info *, struct file *, loff_t *, size_t, unsigned int);
-    ssize_t (*splice_read)(struct file *, loff_t *, struct pipe_inode_info *, size_t, unsigned int);
-    int (*setlease)(struct file *, long, struct file_lock **, void **);
-    long (*fallocate)(struct file *file, int mode, loff_t offset,
-                      loff_t len);
-    void (*show_fdinfo)(struct seq_file *m, struct file *f);
-    /* unknow */
-} __randomize_layout;
+// other
+#define THIS_MODULE ((struct module *)0)

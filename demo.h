@@ -5,6 +5,21 @@
 
 #include <hook.h>
 
+extern struct task_struct_offset task_struct_offset;
+extern struct cred_offset cred_offset;
+#define task_uid(task)                                                                       \
+  ({                                                                                         \
+    struct cred *cred = *(struct cred **)((uintptr_t)task + task_struct_offset.cred_offset); \
+    kuid_t ___val = *(kuid_t *)((uintptr_t)cred + cred_offset.uid_offset);                   \
+    ___val;                                                                                  \
+  })
+#define task_euid(task)                                                                      \
+  ({                                                                                         \
+    struct cred *cred = *(struct cred **)((uintptr_t)task + task_struct_offset.cred_offset); \
+    kuid_t ___val = *(kuid_t *)((uintptr_t)cred + cred_offset.euid_offset);                  \
+    ___val;                                                                                  \
+  })
+
 #define lookup_name(func)                                    \
   func = 0;                                                  \
   func = (typeof(func))kallsyms_lookup_name(#func);          \
@@ -35,4 +50,4 @@
   {                                  \
     unhook(func);                    \
     func = 0;                        \
-  }\
+  }
