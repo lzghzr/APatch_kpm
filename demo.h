@@ -1,9 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
+ * Copyright (C) 2024 bmax121. All Rights Reserved.
  * Copyright (C) 2024 lzghzr. All Rights Reserved.
  */
 
 #include <hook.h>
+#include <linux/sched.h>
 
 extern struct task_struct_offset task_struct_offset;
 extern struct cred_offset cred_offset;

@@ -10,17 +10,17 @@
 #include <kpmodule.h>
 #include <kputils.h>
 #include <taskext.h>
+#include <asm/atomic.h>
 #include <linux/cred.h>
 #include <linux/kernel.h>
 #include <linux/printk.h>
-#include <linux/sched.h>
 #include <linux/string.h>
 
 #include "../demo.h"
 #include "re_kernel.h"
 
 KPM_NAME("re_kernel");
-KPM_VERSION("1.0.1");
+KPM_VERSION("1.0.2");
 KPM_LICENSE("GPL v2");
 KPM_AUTHOR("Nep-Timeline, lzghzr");
 KPM_DESCRIPTION("Re:Kernel 4.19 5.15");
@@ -39,6 +39,8 @@ KPM_DESCRIPTION("Re:Kernel 4.19 5.15");
 #define PF_FROZEN 0x00010000
 #define MSG_DONTWAIT 0x40
 
+atomic_t(*system_freezing_cnt);
+bool (*freezing_slow_path)(struct task_struct *p);
 struct sk_buff *(*__alloc_skb)(unsigned int size, int /*gfp_t*/ gfp_mask, int flags, int node);
 struct nlmsghdr *(*__nlmsg_put)(struct sk_buff *skb, u32 portid, u32 seq, int type, int len, int flags);
 void (*kfree_skb)(struct sk_buff *skb);
@@ -54,16 +56,28 @@ int (*binder_inc_node_nilocked)(struct binder_node *node, int strong, int intern
 int (*security_binder_transaction)(const struct cred *from, const struct cred *to);
 int (*do_send_sig_info)(int sig, struct siginfo *info, struct task_struct *p, enum pid_type type);
 
+static unsigned long group_leader_offset;
 struct binder_transaction_data *tr_data;
 struct binder_proc *from_proc, *to_proc;
 
 static struct sock *rekernel_netlink;
 static int netlink_unit;
 
+static inline bool frozen(struct task_struct *p)
+{
+  unsigned int flags = *(unsigned int *)((uintptr_t)p + task_struct_offset.stack_offset + 0xC);
+  return flags & PF_FROZEN;
+}
+static inline bool freezing(struct task_struct *p)
+{
+  if (likely(!atomic_read(system_freezing_cnt)))
+    return false;
+  return freezing_slow_path(p);
+}
 static inline bool line_is_frozen(struct task_struct *task)
 {
-  // unknow group_leader_offset
-  return true;
+  struct task_struct *group_leader = *(struct task_struct **)((uintptr_t)task + group_leader_offset);
+  return frozen(group_leader) || freezing(group_leader);
 }
 
 static int send_netlink_message(char *msg, uint16_t len)
@@ -228,6 +242,28 @@ void do_send_sig_info_before(hook_fargs4_t *args, void *udata)
 
 static long inline_hook_init(const char *args, const char *event, void *__user reserved)
 {
+  struct pid *(*get_task_pid)(struct task_struct *task, enum pid_type type);
+  struct task_struct *(*get_pid_task)(struct pid *pid, enum pid_type type);
+  lookup_name(get_task_pid);
+  lookup_name(get_pid_task);
+  struct task_struct *task = current;
+  struct pid *tgid = get_task_pid(task, PIDTYPE_TGID);
+  struct task_struct *group = get_pid_task(tgid, PIDTYPE_TGID);
+  for (int i = task_struct_offset.active_mm_offset; i < task_struct_offset.cred_offset; i += 0x8)
+  {
+    if (*(struct task_struct **)((uintptr_t)task + i) == group)
+    {
+      group_leader_offset = i;
+      break;
+    }
+  }
+  if (!group_leader_offset)
+  {
+    return -11;
+  }
+
+  lookup_name(system_freezing_cnt);
+  lookup_name(freezing_slow_path);
   lookup_name(__alloc_skb);
   lookup_name(__nlmsg_put);
   lookup_name(kfree_skb);
