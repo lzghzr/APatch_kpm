@@ -110,6 +110,7 @@ static inline bool freezing(struct task_struct *p)
 }
 static inline bool line_is_frozen(struct task_struct *task)
 {
+  return true;
   struct task_struct *group_leader = *(struct task_struct **)((uintptr_t)task + task_struct_offset.thread_pid_offset - 0x5 /* 0x28 */);
   return frozen(group_leader) || freezing(group_leader);
 }
@@ -232,7 +233,9 @@ void binder_transaction_before(hook_fargs5_t *args, void *udata)
     {
       char binder_kmsg[PACKET_SIZE];
       snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=reply,oneway=0,from_pid=%d,from=%d,target_pid=%d,target=%d;", proc->pid, get_task_uid(proc->tsk), target_proc->pid, get_task_uid(target_proc->tsk));
-      printk("type=Binder,bindertype=reply,oneway=0,from_pid=%d,from=%d,target_pid=%d,target=%d;\n", proc->pid, get_task_uid(proc->tsk), target_proc->pid, get_task_uid(target_proc->tsk));
+#ifdef DEBUG
+      printk("re_kernel: type=Binder,bindertype=reply,oneway=0,from_pid=%d,from=%d,target_pid=%d,target=%d;\n", proc->pid, get_task_uid(proc->tsk), target_proc->pid, get_task_uid(target_proc->tsk));
+#endif
       send_netlink_message(binder_kmsg, strlen(binder_kmsg));
     }
   }
@@ -275,7 +278,9 @@ void security_binder_transaction_before(hook_fargs2_t *args, void *udata)
   {
     char binder_kmsg[PACKET_SIZE];
     snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=transaction,oneway=%d,from_pid=%d,from=%d,target_pid=%d,target=%d;", oneway & TF_ONE_WAY, proc->pid, get_task_uid(proc->tsk), target_proc->pid, get_task_uid(target_proc->tsk));
-    printk("type=Binder,bindertype=reply,oneway=0,from_pid=%d,from=%d,target_pid=%d,target=%d;\n", proc->pid, get_task_uid(proc->tsk), target_proc->pid, get_task_uid(target_proc->tsk));
+#ifdef DEBUG
+    printk("re_kernel: type=Binder,bindertype=reply,oneway=0,from_pid=%d,from=%d,target_pid=%d,target=%d;\n", proc->pid, get_task_uid(proc->tsk), target_proc->pid, get_task_uid(target_proc->tsk));
+#endif
     send_netlink_message(binder_kmsg, strlen(binder_kmsg));
   }
 }
@@ -293,7 +298,9 @@ void do_send_sig_info_before(hook_fargs4_t *args, void *udata)
   {
     char binder_kmsg[PACKET_SIZE];
     snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Signal,signal=%d,killer=%d,dst=%d;", sig, get_task_uid(p), get_task_uid(current));
-    printk("type=Signal,signal=%d,killer=%d,dst=%d;", sig, get_task_uid(p), get_task_uid(current));
+#ifdef DEBUG
+    printk("re_kernel: type=Signal,signal=%d,killer=%d,dst=%d;", sig, get_task_uid(p), get_task_uid(current));
+#endif
     send_netlink_message(binder_kmsg, strlen(binder_kmsg));
   }
 }
@@ -305,8 +312,10 @@ static long inline_hook_init(const char *args, const char *event, void *__user r
   lookup_name(__alloc_skb);
   lookup_name(__nlmsg_put);
   lookup_name(kfree_skb);
+  lookup_name(netlink_unicast);
   lookup_name(init_net);
   lookup_name(__netlink_kernel_create);
+  lookup_name(netlink_kernel_release);
   lookup_name(_binder_inner_proc_lock);
   lookup_name(_binder_inner_proc_unlock);
   lookup_name(seq_printf);
