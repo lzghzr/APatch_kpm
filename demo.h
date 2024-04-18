@@ -5,10 +5,9 @@
  */
 
 #include <hook.h>
+#include <linux/cred.h>
 #include <linux/sched.h>
 
-extern struct task_struct_offset task_struct_offset;
-extern struct cred_offset cred_offset;
 #define task_uid(task)                                                                       \
   ({                                                                                         \
     struct cred *cred = *(struct cred **)((uintptr_t)task + task_struct_offset.cred_offset); \

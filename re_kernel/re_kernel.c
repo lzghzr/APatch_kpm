@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2024 bmax121. All Rights Reserved.
+ */
+
+/*   SPDX-License-Identifier: GPL-3.0-only   */
+/*
  * Copyright (C) 2024 Nep-Timeline. All Rights Reserved.
  * Copyright (C) 2024 lzghzr. All Rights Reserved.
  */
@@ -11,7 +15,6 @@
 #include <kputils.h>
 #include <taskext.h>
 #include <asm/atomic.h>
-#include <linux/cred.h>
 #include <linux/kernel.h>
 #include <linux/printk.h>
 #include <linux/string.h>
@@ -20,10 +23,10 @@
 #include "re_kernel.h"
 
 KPM_NAME("re_kernel");
-KPM_VERSION("1.0.2");
-KPM_LICENSE("GPL v2");
+KPM_VERSION(RK_VERSION);
+KPM_LICENSE("GPL v3");
 KPM_AUTHOR("Nep-Timeline, lzghzr");
-KPM_DESCRIPTION("Re:Kernel 4.19 5.15");
+KPM_DESCRIPTION("Re:Kernel 4.9, 4.19, 5.15");
 
 #define NETLINK_REKERNEL_MAX 26
 #define NETLINK_REKERNEL_MIN 22
@@ -48,9 +51,6 @@ int (*netlink_unicast)(struct sock *ssk, struct sk_buff *skb, u32 portid, int no
 struct net(*init_net);
 struct sock *(*__netlink_kernel_create)(struct net *net, int unit, struct module *module, struct netlink_kernel_cfg *cfg);
 void (*netlink_kernel_release)(struct sock *sk);
-void (*_binder_inner_proc_lock)(struct binder_proc *proc, int line);
-void (*_binder_inner_proc_unlock)(struct binder_proc *proc, int line);
-struct binder_thread *(*binder_get_txn_from_and_acq_inner)(struct binder_transaction *t);
 void (*binder_transaction)(struct binder_proc *proc, struct binder_thread *thread, struct binder_transaction_data *tr, int reply, binder_size_t extra_buffers_size);
 int (*binder_inc_node_nilocked)(struct binder_node *node, int strong, int internal, struct list_head *target_list);
 int (*security_binder_transaction)(const struct cred *from, const struct cred *to);
@@ -76,6 +76,9 @@ static inline bool freezing(struct task_struct *p)
 }
 static inline bool line_is_frozen(struct task_struct *task)
 {
+#ifdef DEBUG
+  return true;
+#endif
   struct task_struct *group_leader = *(struct task_struct **)((uintptr_t)task + group_leader_offset);
   return frozen(group_leader) || freezing(group_leader);
 }
@@ -105,6 +108,8 @@ static int send_netlink_message(char *msg, uint16_t len)
   return netlink_unicast(rekernel_netlink, skbuffer, USER_PORT, MSG_DONTWAIT);
 }
 
+// kpatch实装 事件加载 时会移动到 inline_hook_init
+// 目前 默认事件 开机会卡第一屏
 static int start_rekernel_server(void)
 {
   if (rekernel_netlink)
@@ -138,34 +143,19 @@ void binder_transaction_before(hook_fargs5_t *args, void *udata)
   struct binder_transaction_data *tr = (struct binder_transaction_data *)args->arg2;
   int reply = (int)args->arg3;
 
-  struct binder_proc *target_proc = NULL;
   if (reply)
   {
-    binder_inner_proc_lock(proc);
     struct binder_transaction *in_reply_to = thread->transaction_stack;
-    if (in_reply_to == NULL)
-    {
-      binder_inner_proc_unlock(proc);
-      return;
-    }
-    if (in_reply_to->to_thread != thread)
-    {
-      binder_inner_proc_unlock(proc);
-      return;
-    }
-    binder_inner_proc_unlock(proc);
-    struct binder_thread *target_thread = binder_get_txn_from_and_acq_inner(in_reply_to);
-    if (target_thread == NULL)
+    if (in_reply_to == NULL || in_reply_to->to_thread != thread)
     {
       return;
     }
-    if (target_thread->transaction_stack != in_reply_to)
+    struct binder_thread *target_thread = in_reply_to->from;
+    if (target_thread == NULL || target_thread->transaction_stack != in_reply_to)
     {
-      binder_inner_proc_unlock(target_thread->proc);
       return;
     }
-    target_proc = target_thread->proc;
-    binder_inner_proc_unlock(target_thread->proc);
+    struct binder_proc *target_proc = target_thread->proc;
 
     if (target_proc && (NULL != target_proc->tsk) && (NULL != proc->tsk) && (task_uid(target_proc->tsk).val > MIN_USERAPP_UID) && (proc->pid != target_proc->pid) && line_is_frozen(target_proc->tsk))
     {
@@ -243,17 +233,14 @@ void do_send_sig_info_before(hook_fargs4_t *args, void *udata)
 static long inline_hook_init(const char *args, const char *event, void *__user reserved)
 {
   struct pid *(*get_task_pid)(struct task_struct *task, enum pid_type type);
-  struct task_struct *(*get_pid_task)(struct pid *pid, enum pid_type type);
   lookup_name(get_task_pid);
-  lookup_name(get_pid_task);
   struct task_struct *task = current;
-  struct pid *tgid = get_task_pid(task, PIDTYPE_TGID);
-  struct task_struct *group = get_pid_task(tgid, PIDTYPE_TGID);
+  struct pid *pid = get_task_pid(task, PIDTYPE_PID);
   for (int i = task_struct_offset.active_mm_offset; i < task_struct_offset.cred_offset; i += 0x8)
   {
-    if (*(struct task_struct **)((uintptr_t)task + i) == group)
+    if (*(struct pid **)((uintptr_t)task + i) == pid)
     {
-      group_leader_offset = i;
+      group_leader_offset = i - 0x28;
       break;
     }
   }
@@ -271,9 +258,6 @@ static long inline_hook_init(const char *args, const char *event, void *__user r
   lookup_name(init_net);
   lookup_name(__netlink_kernel_create);
   lookup_name(netlink_kernel_release);
-  lookup_name(_binder_inner_proc_lock);
-  lookup_name(_binder_inner_proc_unlock);
-  lookup_name(binder_get_txn_from_and_acq_inner);
   lookup_name(binder_transaction);
   lookup_name(binder_inc_node_nilocked);
   lookup_name(security_binder_transaction);
@@ -297,6 +281,8 @@ static long inline_hook_exit(void *__user reserved)
   unhook_func(binder_inc_node_nilocked);
   unhook_func(security_binder_transaction);
   unhook_func(do_send_sig_info);
+
+  return 0;
 }
 
 KPM_INIT(inline_hook_init);
