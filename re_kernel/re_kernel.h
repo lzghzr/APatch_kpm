@@ -67,6 +67,11 @@ struct rb_root
 {
     struct rb_node *rb_node;
 };
+struct binder_context
+{
+    struct binder_node *binder_context_mgr_node;
+    /* unknow */
+};
 struct binder_proc
 {
     struct hlist_node proc_node;
@@ -77,7 +82,6 @@ struct binder_proc
     struct list_head waiting_threads;
     int pid;
     struct task_struct *tsk;
-    struct files_struct *files;
     /* unknow */
 };
 
@@ -304,5 +308,37 @@ static inline void *nlmsg_data(const struct nlmsghdr *nlh)
 #define __GFP_KSWAPD_RECLAIM ((__force gfp_t)___GFP_KSWAPD_RECLAIM)
 #define GFP_ATOMIC (__GFP_HIGH | __GFP_ATOMIC | __GFP_KSWAPD_RECLAIM)
 
-// other
-#define THIS_MODULE ((struct module *)0)
+// linux/fs.h
+struct file_operations
+{
+    struct module *owner;
+    loff_t (*llseek)(struct file *, loff_t, int);
+    ssize_t (*read)(struct file *, char __user *, size_t, loff_t *);
+    ssize_t (*write)(struct file *, const char __user *, size_t, loff_t *);
+    ssize_t (*read_iter)(struct kiocb *, struct iov_iter *);
+    ssize_t (*write_iter)(struct kiocb *, struct iov_iter *);
+    int (*iterate)(struct file *, struct dir_context *);
+    int (*iterate_shared)(struct file *, struct dir_context *);
+    __poll_t (*poll)(struct file *, struct poll_table_struct *);
+    long (*unlocked_ioctl)(struct file *, unsigned int, unsigned long);
+    long (*compat_ioctl)(struct file *, unsigned int, unsigned long);
+    int (*mmap)(struct file *, struct vm_area_struct *);
+    unsigned long mmap_supported_flags;
+    int (*open)(struct inode *, struct file *);
+    int (*flush)(struct file *, fl_owner_t id);
+    int (*release)(struct inode *, struct file *);
+    int (*fsync)(struct file *, loff_t, loff_t, int datasync);
+    int (*fasync)(int, struct file *, int);
+    int (*lock)(struct file *, int, struct file_lock *);
+    ssize_t (*sendpage)(struct file *, struct page *, int, size_t, loff_t *, int);
+    unsigned long (*get_unmapped_area)(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
+    int (*check_flags)(int);
+    int (*flock)(struct file *, int, struct file_lock *);
+    ssize_t (*splice_write)(struct pipe_inode_info *, struct file *, loff_t *, size_t, unsigned int);
+    ssize_t (*splice_read)(struct file *, loff_t *, struct pipe_inode_info *, size_t, unsigned int);
+    int (*setlease)(struct file *, long, struct file_lock **, void **);
+    long (*fallocate)(struct file *file, int mode, loff_t offset,
+                      loff_t len);
+    void (*show_fdinfo)(struct seq_file *m, struct file *f);
+    /* unknow */
+};
