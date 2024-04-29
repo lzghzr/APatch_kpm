@@ -34,6 +34,8 @@ KPM_DESCRIPTION("Re:Kernel, support 4.9, 4.19, 5.4, 5.15");
 #define PACKET_SIZE 128
 #define MIN_USERAPP_UID 10000
 #define MAX_SYSTEM_UID 2000
+#define RESERVE_ORDER 17
+#define WARN_AHEAD_SPACE	(1 << RESERVE_ORDER)
 
 #define SIGQUIT 3
 #define SIGABRT 6
@@ -101,11 +103,11 @@ static inline pid_t task_tgid(struct task_struct* task) {
     return skfunc(pid_vnr)(group_leader_pid);
 }
 // 判断线程是否进入 frozen 状态
-static inline bool is_jobctl_frozen(struct task_struct* task)
+/*static inline bool is_jobctl_frozen(struct task_struct* task)
 {
     unsigned int jobctl = *(unsigned int*)((uintptr_t)task + task_struct_offset.active_mm_offset + 0x58);
     return ((jobctl & JOBCTL_TRAP_FREEZE) != 0);
-}
+}*/
 static inline bool frozen(struct task_struct* p)
 {
     unsigned int flags = *(unsigned int*)((uintptr_t)p + task_struct_offset.stack_offset + 0xC);
@@ -120,7 +122,7 @@ static inline bool freezing(struct task_struct* p)
 static inline bool is_frozen_tg(struct task_struct* task)
 {
     struct task_struct* group_leader = *(struct task_struct**)((uintptr_t)task + task_struct_group_leader_offset);
-    return is_jobctl_frozen(task) || frozen(group_leader) || freezing(group_leader);;
+    return frozen(group_leader) || freezing(group_leader); // is_jobctl_frozen(task) || 
 }
 
 // 发送 netlink 消息
@@ -242,7 +244,7 @@ static void binder_alloc_new_buf_locked_before(hook_fargs6_t* args, void* udata)
     size_t free_async_space = *(size_t*)((uintptr_t)alloc + free_async_space_offset);
     if (is_async
         && (free_async_space < 3 * (size + sizeof(struct binder_buffer))
-            || (free_async_space < 100 * 1024))) {
+            || (free_async_space < WARN_AHEAD_SPACE))) {
         struct binder_proc* target_proc = *(struct binder_proc**)((uintptr_t)alloc - binder_alloc_offset);
         if (target_proc
             && (NULL != target_proc->tsk)
