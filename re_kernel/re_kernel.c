@@ -34,6 +34,8 @@ KPM_DESCRIPTION("Re:Kernel, support 4.9, 4.19, 5.4, 5.15");
 #define PACKET_SIZE 128
 #define MIN_USERAPP_UID 10000
 #define MAX_SYSTEM_UID 2000
+#define RESERVE_ORDER 17
+#define WARN_AHEAD_SPACE	(1 << RESERVE_ORDER)
 
 #define SIGQUIT 3
 #define SIGABRT 6
@@ -250,7 +252,7 @@ static void binder_alloc_new_buf_locked_before(hook_fargs6_t* args, void* udata)
     size_t free_async_space = *(size_t*)((uintptr_t)alloc + free_async_space_offset);
     if (is_async
         && (free_async_space < 3 * (size + sizeof(struct binder_buffer))
-            || (free_async_space < 100 * 1024))) {
+            || (free_async_space < WARN_AHEAD_SPACE))) {
         struct binder_proc* target_proc = *(struct binder_proc**)((uintptr_t)alloc - binder_alloc_offset);
         if (target_proc
             && (NULL != target_proc->tsk)
