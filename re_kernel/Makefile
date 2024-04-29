@@ -1,4 +1,4 @@
-RK_VERSION := 1.3.0
+RK_VERSION := 1.3.6
 
 ifndef TARGET_COMPILE
     $(error TARGET_COMPILE not set)

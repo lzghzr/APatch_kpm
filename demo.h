@@ -10,6 +10,11 @@
 #include <linux/cred.h>
 #include <linux/sched.h>
 
+#define bits32(n, high, low) ((uint32_t)((n) << (31u - (high))) >> (31u - (high) + (low)))
+#define bit(n, st) (((n) >> (st)) & 1)
+#define sign64_extend(n, len) \
+    (((uint64_t)((n) << (63u - (len - 1))) >> 63u) ? ((n) | (0xFFFFFFFFFFFFFFFF << (len))) : n)
+
 typedef uint32_t inst_type_t;
 typedef uint32_t inst_mask_t;
 
@@ -22,6 +27,8 @@ typedef uint32_t inst_mask_t;
 #define INST_LDR_32 0x18000000u
 #define INST_LDR_64 0x58000000u
 #define INST_LDR_64_SP 0xF94003E0u
+#define INST_LDRB 0x39400000u
+#define INST_LDRH 0x79400000u
 #define INST_LDRSW_LIT 0x98000000u
 #define INST_PRFM_LIT 0xD8000000u
 #define INST_LDR_SIMD_32 0x1C000000u
@@ -42,7 +49,9 @@ typedef uint32_t inst_mask_t;
 #define MASK_ADRP 0x9F000000u
 #define MASK_LDR_32 0xFF000000u
 #define MASK_LDR_64 0xFF000000u
-#define MASK_LDR_64_SP 0xF94003E0u
+#define MASK_LDR_64_SP 0xFFC003E0u
+#define MASK_LDRB 0xFFC00000u
+#define MASK_LDRH 0xFFC00000u
 #define MASK_LDRSW_LIT 0xFF000000u
 #define MASK_PRFM_LIT 0xFF000000u
 #define MASK_LDR_SIMD_32 0xFF000000u

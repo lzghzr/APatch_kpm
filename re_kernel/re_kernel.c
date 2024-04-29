@@ -34,8 +34,6 @@ KPM_DESCRIPTION("Re:Kernel, support 4.9, 4.19, 5.4, 5.15");
 #define PACKET_SIZE 128
 #define MIN_USERAPP_UID 10000
 #define MAX_SYSTEM_UID 2000
-#define RESERVE_ORDER 17
-#define WARN_AHEAD_SPACE	(1 << RESERVE_ORDER)
 
 #define SIGQUIT 3
 #define SIGABRT 6
@@ -78,7 +76,7 @@ static void (*binder_transaction)(struct binder_proc* proc, struct binder_thread
 // hook do_send_sig_info
 static int (*do_send_sig_info)(int sig, struct siginfo* info, struct task_struct* p, enum pid_type type);
 
-static long task_struct_group_leader_offset,
+static uint64_t task_struct_group_leader_offset, task_struct_frozen_offset,
 context_offset, vma_offset, free_async_space_offset, binder_alloc_offset;
 
 static struct sock* rekernel_netlink;
@@ -103,6 +101,14 @@ static inline pid_t task_tgid(struct task_struct* task) {
     return skfunc(pid_vnr)(group_leader_pid);
 }
 // 判断线程是否进入 frozen 状态
+static inline bool cgroup_task_frozen(struct task_struct* task)
+{
+    if (task_struct_frozen_offset) {
+        bool frozen = *(bool*)((uintptr_t)task + task_struct_frozen_offset);
+        return frozen;
+    }
+    return false;
+}
 static inline bool is_jobctl_frozen(struct task_struct* task)
 {
     unsigned int jobctl = *(unsigned int*)((uintptr_t)task + task_struct_offset.active_mm_offset + 0x58);
@@ -122,7 +128,7 @@ static inline bool freezing(struct task_struct* p)
 static inline bool is_frozen_tg(struct task_struct* task)
 {
     struct task_struct* group_leader = *(struct task_struct**)((uintptr_t)task + task_struct_group_leader_offset);
-    return ((cgroup_task_frozen(task) && is_jobctl_frozen(task)) || frozen(group_leader) || freezing(group_leader);
+    return ((cgroup_task_frozen(task) && is_jobctl_frozen(task)) || frozen(group_leader) || freezing(group_leader));
 }
 
 // 发送 netlink 消息
@@ -191,7 +197,7 @@ static void binder_alloc_new_buf_locked_before(hook_fargs6_t* args, void* udata)
     int is_async = args->arg4;
     // 计算 free_async_space_offset
     if (free_async_space_offset == 0) {
-        free_async_space_offset = -1;
+        free_async_space_offset = 1 << 0x10;
         int first = 0;
         for (int i = 0x30;i < 0x100;i += 0x8) {
             u64 ptr = *(u64*)((uintptr_t)alloc + i);
@@ -210,7 +216,7 @@ static void binder_alloc_new_buf_locked_before(hook_fargs6_t* args, void* udata)
     }
     // 计算 binder_alloc_offset
     if (binder_alloc_offset == 0) {
-        binder_alloc_offset = -1;
+        binder_alloc_offset = 1 << 0x10;
         int count = 0;
         for (int i = 0;i < 0x200;i += 0x8) {
             u64 ptr = *(u64*)((uintptr_t)alloc - i);
@@ -226,7 +232,7 @@ static void binder_alloc_new_buf_locked_before(hook_fargs6_t* args, void* udata)
         }
     }
 
-    if (free_async_space_offset <= 0 || binder_alloc_offset <= 0) {
+    if (free_async_space_offset == 1 << 0x10 || binder_alloc_offset == 1 << 0x10) {
         return;
     }
     if (!*(struct vm_area_struct**)((uintptr_t)alloc + vma_offset)) {
@@ -244,7 +250,7 @@ static void binder_alloc_new_buf_locked_before(hook_fargs6_t* args, void* udata)
     size_t free_async_space = *(size_t*)((uintptr_t)alloc + free_async_space_offset);
     if (is_async
         && (free_async_space < 3 * (size + sizeof(struct binder_buffer))
-            || (free_async_space < WARN_AHEAD_SPACE))) {
+            || (free_async_space < 100 * 1024))) {
         struct binder_proc* target_proc = *(struct binder_proc**)((uintptr_t)alloc - binder_alloc_offset);
         if (target_proc
             && (NULL != target_proc->tsk)
@@ -267,7 +273,7 @@ static void binder_transaction_before(hook_fargs5_t* args, void* udata)
     int reply = (int)args->arg3;
 
     if (context_offset == 0) {
-        context_offset = -1;
+        context_offset = 1 << 0x10;
         u64 l_pid = proc->pid * 1L << 0x20;
         int l_pid_offset = 0;
         for (int i = 0x48; i < 0x300; i += 0x8) {
@@ -313,7 +319,7 @@ static void binder_transaction_before(hook_fargs5_t* args, void* udata)
             if (target_node) {
                 target_proc = target_node->proc;
             }
-        } else if (context_offset > 0) {
+        } else if (context_offset != 1 << 0x10) {
             struct binder_context* context = *(struct binder_context**)((uintptr_t)proc + context_offset);
             target_node = context->binder_context_mgr_node;
             if (target_node) {
@@ -408,6 +414,26 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
     }
     if (!task_struct_group_leader_offset) {
         return -11;
+    }
+    // 获取 task->frozen, 不一定所有内核都有
+    void (*recalc_sigpending_and_wake)(struct task_struct* t);
+    lookup_name(recalc_sigpending_and_wake);
+
+    uint32_t* src = (uint32_t*)recalc_sigpending_and_wake;
+    for (u32 i = 0; i < 0x20; i++) {
+        if (src[i] == ARM64_RET) {
+            break;
+        } else if ((src[i] & MASK_TBZ) == INST_TBZ || (src[i] & MASK_TBNZ) == INST_TBNZ) {
+            if ((src[i - 1] & MASK_LDRB) == INST_LDRB) {
+                uint64_t imm12 = bits32(src[i - 1], 21, 10);
+                task_struct_frozen_offset = sign64_extend((imm12), 16u);
+                break;
+            } else if ((src[i - 1] & MASK_LDRH) == INST_LDRH) {
+                uint64_t imm12 = bits32(src[i - 1], 21, 10);
+                task_struct_frozen_offset = sign64_extend((imm12 << 1u), 16u);
+                break;
+            }
+        }
     }
 
     binder_alloc_new_buf_locked = (typeof(binder_alloc_new_buf_locked))kallsyms_lookup_name("binder_alloc_new_buf_locked");
