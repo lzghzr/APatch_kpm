@@ -198,6 +198,7 @@ static void binder_alloc_new_buf_locked_before(hook_fargs6_t* args, void* udata)
     size_t extra_buffers_size = args->arg3;
     int is_async = args->arg4;
     // 计算 free_async_space_offset
+    uint64_t binder_alloc_pid_offset = 0;
     if (free_async_space_offset == 0) {
         free_async_space_offset = 1 << 0x10;
         int first = 0;
@@ -208,7 +209,7 @@ static void binder_alloc_new_buf_locked_before(hook_fargs6_t* args, void* udata)
                     vma_offset = i - 0x48;
                     free_async_space_offset = i - 0x10;
                     // buffer_size_offset = i;
-                    // binder_alloc_pid_offset = i + 0xC;
+                    binder_alloc_pid_offset = i + 0xC;
                     break;
                 } else {
                     first = i;
@@ -217,18 +218,12 @@ static void binder_alloc_new_buf_locked_before(hook_fargs6_t* args, void* udata)
         }
     }
     // 计算 binder_alloc_offset
-    if (binder_alloc_offset == 0) {
+    if (binder_alloc_pid_offset != 0 && binder_alloc_offset == 0) {
         binder_alloc_offset = 1 << 0x10;
-        int count = 0;
+        u32 pid = *(u32*)((uintptr_t)alloc + binder_alloc_pid_offset);
         for (int i = 0;i < 0x200;i += 0x8) {
-            u64 ptr = *(u64*)((uintptr_t)alloc - i);
-            if (ptr > 1L << 0x30) {
-                count++;
-            } else {
-                count = 0;
-            }
-            if (count == 8) {
-                binder_alloc_offset = i;
+            if (pid == *(u32*)((uintptr_t)alloc - i)) {
+                binder_alloc_offset = i + 0x40;
                 break;
             }
         }
