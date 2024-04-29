@@ -103,11 +103,11 @@ static inline pid_t task_tgid(struct task_struct* task) {
     return skfunc(pid_vnr)(group_leader_pid);
 }
 // 判断线程是否进入 frozen 状态
-/*static inline bool is_jobctl_frozen(struct task_struct* task)
+static inline bool is_jobctl_frozen(struct task_struct* task)
 {
     unsigned int jobctl = *(unsigned int*)((uintptr_t)task + task_struct_offset.active_mm_offset + 0x58);
     return ((jobctl & JOBCTL_TRAP_FREEZE) != 0);
-}*/
+}
 static inline bool frozen(struct task_struct* p)
 {
     unsigned int flags = *(unsigned int*)((uintptr_t)p + task_struct_offset.stack_offset + 0xC);
@@ -122,7 +122,7 @@ static inline bool freezing(struct task_struct* p)
 static inline bool is_frozen_tg(struct task_struct* task)
 {
     struct task_struct* group_leader = *(struct task_struct**)((uintptr_t)task + task_struct_group_leader_offset);
-    return frozen(group_leader) || freezing(group_leader); // is_jobctl_frozen(task) || 
+    return ((cgroup_task_frozen(task) && is_jobctl_frozen(task)) || frozen(group_leader) || freezing(group_leader);
 }
 
 // 发送 netlink 消息
