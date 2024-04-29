@@ -4,6 +4,10 @@
 #include <ktypes.h>
 
 #define THIS_MODULE ((struct module *)0)
+#define ALIGN_MASK(x, mask) (((x) + (mask)) & ~(mask))
+#define ALIGN(x, a) ALIGN_MASK(x, (typeof(x))(a)-1)
+
+struct binder_alloc;
 
 // uapi/linux/android/binder.h
 typedef __u64 binder_size_t;
@@ -188,6 +192,25 @@ struct binder_node {
     struct list_head async_todo;
 };
 
+struct binder_buffer {
+    struct list_head entry; /* free and allocated entries by address */
+    struct rb_node rb_node; /* free entry by size or allocated entry */
+    /* by address */
+    unsigned free : 1;
+    unsigned allow_user_free : 1;
+    unsigned async_transaction : 1;
+    unsigned debug_id : 29;
+
+    struct binder_transaction* transaction;
+
+    struct binder_node* target_node;
+    size_t data_size;
+    size_t offsets_size;
+    size_t extra_buffers_size;
+    void __user* user_data;
+    int    pid;
+};
+
 // linux/netlink.h
 typedef s64 ktime_t;
 struct sk_buff {
@@ -327,3 +350,6 @@ struct file_operations {
 };
 
 #endif
+
+// asm/atomic.h
+#define atomic_read(v)		READ_ONCE((v)->counter)
