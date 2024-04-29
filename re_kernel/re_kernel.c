@@ -194,7 +194,7 @@ static void binder_transaction_before(hook_fargs5_t* args, void* udata)
 #endif
         {
             char binder_kmsg[PACKET_SIZE];
-            snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=reply,oneway=1,from_pid=%d,from=%d,target_pid=%d,target=%d;", thread->pid, task_uid(proc->tsk).val, target_proc->pid, task_uid(target_proc->tsk).val);
+            snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=reply,oneway=0,from_pid=%d,from=%d,target_pid=%d,target=%d;", thread->pid, task_uid(proc->tsk).val, target_proc->pid, task_uid(target_proc->tsk).val);
 #ifdef DEBUG
             printk("re_kernel: %s\n", binder_kmsg);
 #endif
