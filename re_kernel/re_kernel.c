@@ -190,11 +190,11 @@ static void binder_transaction_before(hook_fargs5_t* args, void* udata)
 #ifdef DEBUG
         if (target_proc && target_proc->tsk && (proc->pid != target_proc->pid) && is_jobctl_frozen(target_proc->tsk))
 #else
-        if (!(tr->flags & TF_ONE_WAY) && target_proc && target_proc->tsk && (task_uid(target_proc->tsk).val <= MIN_USERAPP_UID) && (proc->pid != target_proc->pid) && is_jobctl_frozen(target_proc->tsk))
+        if (target_proc && target_proc->tsk && (task_uid(target_proc->tsk).val <= MAX_SYSTEM_UID) && (proc->pid != target_proc->pid) && is_jobctl_frozen(target_proc->tsk))
 #endif
         {
             char binder_kmsg[PACKET_SIZE];
-            snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=reply,oneway=%d,from_pid=%d,from=%d,target_pid=%d,target=%d;", tr->flags & TF_ONE_WAY, thread->pid, task_uid(proc->tsk).val, target_proc->pid, task_uid(target_proc->tsk).val);
+            snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=reply,oneway=1,from_pid=%d,from=%d,target_pid=%d,target=%d;", thread->pid, task_uid(proc->tsk).val, target_proc->pid, task_uid(target_proc->tsk).val);
 #ifdef DEBUG
             printk("re_kernel: %s\n", binder_kmsg);
 #endif
@@ -218,7 +218,7 @@ static void binder_transaction_before(hook_fargs5_t* args, void* udata)
 #ifdef DEBUG
         if (target_proc && target_proc->tsk && (proc->pid != target_proc->pid) && is_jobctl_frozen(target_proc->tsk))
 #else
-        if (!(tr->flags & TF_ONE_WAY) && target_proc && target_proc->tsk && (task_uid(target_proc->tsk).val >= MIN_USERAPP_UID) && (proc->pid != target_proc->pid) && is_jobctl_frozen(target_proc->tsk))
+        if (!(tr->flags & TF_ONE_WAY) && target_proc && target_proc->tsk && (task_uid(target_proc->tsk).val > MIN_USERAPP_UID) && (proc->pid != target_proc->pid) && is_jobctl_frozen(target_proc->tsk))
 #endif
         {
             char binder_kmsg[PACKET_SIZE];
