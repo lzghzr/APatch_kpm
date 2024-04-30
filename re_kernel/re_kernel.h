@@ -353,3 +353,165 @@ struct file_operations {
 
 // asm/atomic.h
 #define atomic_read(v)		READ_ONCE((v)->counter)
+
+// linux/schde/jobctl.h
+/*
+ * task->jobctl flags
+ */
+#define JOBCTL_STOP_SIGMASK	0xffff	/* signr of the last group stop */
+
+#define JOBCTL_STOP_DEQUEUED_BIT 16	/* stop signal dequeued */
+#define JOBCTL_STOP_PENDING_BIT	17	/* task should stop for group stop */
+#define JOBCTL_STOP_CONSUME_BIT	18	/* consume group stop count */
+#define JOBCTL_TRAP_STOP_BIT	19	/* trap for STOP */
+#define JOBCTL_TRAP_NOTIFY_BIT	20	/* trap for NOTIFY */
+#define JOBCTL_TRAPPING_BIT	21	/* switching to TRACED */
+#define JOBCTL_LISTENING_BIT	22	/* ptracer is listening for events */
+#define JOBCTL_TRAP_FREEZE_BIT	23	/* trap for cgroup freezer */
+
+#define JOBCTL_STOP_DEQUEUED	(1UL << JOBCTL_STOP_DEQUEUED_BIT)
+#define JOBCTL_STOP_PENDING	(1UL << JOBCTL_STOP_PENDING_BIT)
+#define JOBCTL_STOP_CONSUME	(1UL << JOBCTL_STOP_CONSUME_BIT)
+#define JOBCTL_TRAP_STOP	(1UL << JOBCTL_TRAP_STOP_BIT)
+#define JOBCTL_TRAP_NOTIFY	(1UL << JOBCTL_TRAP_NOTIFY_BIT)
+#define JOBCTL_TRAPPING		(1UL << JOBCTL_TRAPPING_BIT)
+#define JOBCTL_LISTENING	(1UL << JOBCTL_LISTENING_BIT)
+#define JOBCTL_TRAP_FREEZE	(1UL << JOBCTL_TRAP_FREEZE_BIT)
+
+#define JOBCTL_TRAP_MASK	(JOBCTL_TRAP_STOP | JOBCTL_TRAP_NOTIFY)
+#define JOBCTL_PENDING_MASK	(JOBCTL_STOP_PENDING | JOBCTL_TRAP_MASK)
+
+// linux/schde.h
+
+/*
+ * Per process flags
+ */
+#define PF_VCPU			0x00000001	/* I'm a virtual CPU */
+#define PF_IDLE			0x00000002	/* I am an IDLE thread */
+#define PF_EXITING		0x00000004	/* Getting shut down */
+#define PF_IO_WORKER		0x00000010	/* Task is an IO worker */
+#define PF_WQ_WORKER		0x00000020	/* I'm a workqueue worker */
+#define PF_FORKNOEXEC		0x00000040	/* Forked but didn't exec */
+#define PF_MCE_PROCESS		0x00000080      /* Process policy on mce errors */
+#define PF_SUPERPRIV		0x00000100	/* Used super-user privileges */
+#define PF_DUMPCORE		0x00000200	/* Dumped core */
+#define PF_SIGNALED		0x00000400	/* Killed by a signal */
+#define PF_MEMALLOC		0x00000800	/* Allocating memory */
+#define PF_NPROC_EXCEEDED	0x00001000	/* set_user() noticed that RLIMIT_NPROC was exceeded */
+#define PF_USED_MATH		0x00002000	/* If unset the fpu must be initialized before use */
+#define PF_NOFREEZE		0x00008000	/* This thread should not be frozen */
+#define PF_FROZEN		0x00010000	/* Frozen for system suspend */
+#define PF_KSWAPD		0x00020000	/* I am kswapd */
+#define PF_MEMALLOC_NOFS	0x00040000	/* All allocation requests will inherit GFP_NOFS */
+#define PF_MEMALLOC_NOIO	0x00080000	/* All allocation requests will inherit GFP_NOIO */
+#define PF_LOCAL_THROTTLE	0x00100000	/* Throttle writes only against the bdi I write to,
+* I am cleaning dirty pages from some other bdi. */
+#define PF_KTHREAD		0x00200000	/* I am a kernel thread */
+#define PF_RANDOMIZE		0x00400000	/* Randomize virtual address space */
+#define PF_SWAPWRITE		0x00800000	/* Allowed to write to swap */
+#define PF_NO_SETAFFINITY	0x04000000	/* Userland is not allowed to meddle with cpus_mask */
+#define PF_MCE_EARLY		0x08000000      /* Early kill for mce process policy */
+#define PF_MEMALLOC_PIN		0x10000000	/* Allocation context constrained to zones which allow long term pinning. */
+#define PF_FREEZER_SKIP		0x40000000	/* Freezer should not count it as freezable */
+#define PF_SUSPEND_TASK		0x80000000      /* This thread called freeze_processes() and should not be frozen */
+
+// uapi/asm/signal.h
+#define NSIG		32
+#define _NSIG		64
+#define SIGHUP		 1
+#define SIGINT		 2
+#define SIGQUIT		 3
+#define SIGILL		 4
+#define SIGTRAP		 5
+#define SIGABRT		 6
+#define SIGIOT		 6
+#define SIGBUS		 7
+#define SIGFPE		 8
+#define SIGKILL		 9
+#define SIGUSR1		10
+#define SIGSEGV		11
+#define SIGUSR2		12
+#define SIGPIPE		13
+#define SIGALRM		14
+#define SIGTERM		15
+#define SIGSTKFLT	16
+#define SIGCHLD		17
+#define SIGCONT		18
+#define SIGSTOP		19
+#define SIGTSTP		20
+#define SIGTTIN		21
+#define SIGTTOU		22
+#define SIGURG		23
+#define SIGXCPU		24
+#define SIGXFSZ		25
+#define SIGVTALRM	26
+#define SIGPROF		27
+#define SIGWINCH	28
+#define SIGIO		29
+#define SIGPOLL		SIGIO
+/*
+#define SIGLOST		29
+*/
+#define SIGPWR		30
+#define SIGSYS		31
+#define	SIGUNUSED	31
+
+/* These should not be considered constants from userland.  */
+#define SIGRTMIN	32
+#define SIGRTMAX	_NSIG
+
+#define SIGSWI		32
+
+
+#define __SIGINFO \
+struct {          \
+	int si_signo; \
+	int si_errno; \
+	int si_code;  \
+}
+typedef struct kernel_siginfo {
+    __SIGINFO;
+} kernel_siginfo_t;
+
+// linux/socket.h
+
+#define MSG_OOB		1
+#define MSG_PEEK	2
+#define MSG_DONTROUTE	4
+#define MSG_TRYHARD     4       /* Synonym for MSG_DONTROUTE for DECnet */
+#define MSG_CTRUNC	8
+#define MSG_PROBE	0x10	/* Do not send. Only probe path f.e. for MTU */
+#define MSG_TRUNC	0x20
+#define MSG_DONTWAIT	0x40	/* Nonblocking io		 */
+#define MSG_EOR         0x80	/* End of record */
+#define MSG_WAITALL	0x100	/* Wait for a full request */
+#define MSG_FIN         0x200
+#define MSG_SYN		0x400
+#define MSG_CONFIRM	0x800	/* Confirm path validity */
+#define MSG_RST		0x1000
+#define MSG_ERRQUEUE	0x2000	/* Fetch message from error queue */
+#define MSG_NOSIGNAL	0x4000	/* Do not generate SIGPIPE */
+#define MSG_MORE	0x8000	/* Sender will send more */
+#define MSG_WAITFORONE	0x10000	/* recvmmsg(): block until 1+ packets avail */
+#define MSG_SENDPAGE_NOPOLICY 0x10000 /* sendpage() internal : do no apply policy */
+#define MSG_SENDPAGE_NOTLAST 0x20000 /* sendpage() internal : not the last page */
+#define MSG_BATCH	0x40000 /* sendmmsg(): more messages coming */
+#define MSG_EOF         MSG_FIN
+#define MSG_NO_SHARED_FRAGS 0x80000 /* sendpage() internal : page frags are not shared */
+#define MSG_SENDPAGE_DECRYPTED	0x100000 /* sendpage() internal : page may carry
+                      * plain text and require encryption
+                      */
+
+#define MSG_ZEROCOPY	0x4000000	/* Use user data in kernel path */
+#define MSG_FASTOPEN	0x20000000	/* Send data in TCP SYN */
+#define MSG_CMSG_CLOEXEC 0x40000000	/* Set close_on_exec for file
+                       descriptor received through
+                       SCM_RIGHTS */
+
+typedef struct refcount_struct {
+    atomic_t refs;
+} refcount_t;
+struct task_struct {
+    unsigned int			__state;
+    // unknow
+};

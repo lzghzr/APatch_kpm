@@ -1,4 +1,4 @@
-RK_VERSION := 1.3.6
+RK_VERSION := 1.3.6.2
 
 ifndef TARGET_COMPILE
     $(error TARGET_COMPILE not set)
@@ -12,7 +12,7 @@ endif
 CC = $(TARGET_COMPILE)gcc
 LD = $(TARGET_COMPILE)ld
 
-CFLAGS = -Wall -O2 -DRK_VERSION=\"$(RK_VERSION)\"
+CFLAGS = -Wall -O2 -DRK_VERSION=\"$(RK_VERSION)$(RK_VER)\"
 
 INCLUDE_DIRS := . include patch/include linux/include linux/arch/arm64/include linux/tools/arch/arm64/include
 
@@ -23,6 +23,7 @@ objs := re_kernel.o
 all: re_kernel_$(RK_VERSION).kpm
 
 debug: CFLAGS += -DDEBUG
+debug: RK_VER := _debug
 debug: re_kernel_$(RK_VERSION)_debug.kpm
 
 re_kernel_$(RK_VERSION).kpm: ${objs}
