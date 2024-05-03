@@ -13,6 +13,7 @@ struct binder_alloc;
 // uapi/linux/android/binder.h
 typedef __u64 binder_size_t;
 typedef __u64 binder_uintptr_t;
+#define	rb_entry(ptr, type, member) container_of(ptr, type, member)
 
 enum transaction_flags {
     TF_ONE_WAY = 0x01,     /* this is a one-way call: async, no return */
@@ -82,6 +83,55 @@ struct binder_proc {
     int pid;
     struct task_struct* tsk;
     /* unknow */
+};
+
+/**
+ * struct binder_ref_data - binder_ref counts and id
+ * @debug_id:        unique ID for the ref
+ * @desc:            unique userspace handle for ref
+ * @strong:          strong ref count (debugging only if not locked)
+ * @weak:            weak ref count (debugging only if not locked)
+ *
+ * Structure to hold ref count and ref id information. Since
+ * the actual ref can only be accessed with a lock, this structure
+ * is used to return information about the ref to callers of
+ * ref inc/dec functions.
+ */
+struct binder_ref_data {
+    int debug_id;
+    uint32_t desc;
+    int strong;
+    int weak;
+};
+/**
+ * struct binder_ref - struct to track references on nodes
+ * @data:        binder_ref_data containing id, handle, and current refcounts
+ * @rb_node_desc: node for lookup by @data.desc in proc's rb_tree
+ * @rb_node_node: node for lookup by @node in proc's rb_tree
+ * @node_entry:  list entry for node->refs list in target node
+ *               (protected by @node->lock)
+ * @proc:        binder_proc containing ref
+ * @node:        binder_node of target node. When cleaning up a
+ *               ref for deletion in binder_cleanup_ref, a non-NULL
+ *               @node indicates the node must be freed
+ * @death:       pointer to death notification (ref_death) if requested
+ *               (protected by @node->lock)
+ *
+ * Structure to track references from procA to target node (on procB). This
+ * structure is unsafe to access without holding @proc->outer_lock.
+ */
+struct binder_ref {
+    /* Lookups needed: */
+    /*   node + proc => ref (transaction) */
+    /*   desc + proc => ref (transaction, inc/dec ref) */
+    /*   node => refs + procs (proc exit) */
+    struct binder_ref_data data;
+    struct rb_node rb_node_desc;
+    struct rb_node rb_node_node;
+    struct hlist_node node_entry;
+    struct binder_proc* proc;
+    struct binder_node* node;
+    struct binder_ref_death* death;
 };
 
 struct binder_priority {
@@ -282,18 +332,6 @@ struct nlmsghdr {
 #define NLMSG_ALIGNTO 4U
 #define NLMSG_ALIGN(len) (((len) + NLMSG_ALIGNTO - 1) & ~(NLMSG_ALIGNTO - 1))
 #define NLMSG_HDRLEN ((int)NLMSG_ALIGN(sizeof(struct nlmsghdr)))
-static inline int nlmsg_msg_size(int payload)
-{
-    return NLMSG_HDRLEN + payload;
-}
-static inline int nlmsg_total_size(int payload)
-{
-    return NLMSG_ALIGN(nlmsg_msg_size(payload));
-}
-static inline void* nlmsg_data(const struct nlmsghdr* nlh)
-{
-    return (unsigned char*)nlh + NLMSG_HDRLEN;
-}
 
 // linux/gfp.h
 #define NUMA_NO_NODE (-1)
@@ -316,7 +354,6 @@ struct page;
 struct pipe_inode_info;
 struct seq_file;
 struct open_flags;
-struct binder_ref_data;
 struct file_operations {
     struct module* owner;
     loff_t(*llseek)(struct file*, loff_t, int);
@@ -828,5 +865,6 @@ struct css_set {
     /* For RCU-protected deletion */
     struct rcu_head rcu_head;
 };
+
 
 #endif /* __RE_KERNEL_H */
