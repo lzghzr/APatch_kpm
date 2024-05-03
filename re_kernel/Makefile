@@ -1,5 +1,5 @@
 MYKPM_NAME := re_kernel
-MYKPM_VERSION := 1.3.6.3
+MYKPM_VERSION := 1.3.6.4
 
 ifndef TARGET_COMPILE
     $(error TARGET_COMPILE not set)

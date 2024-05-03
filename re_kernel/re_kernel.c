@@ -85,6 +85,7 @@ binder_proc_context_offset = UZERO,
 binder_proc_binder_alloc_offset = UZERO,
 binder_alloc_vma_offset = UZERO, binder_alloc_free_async_space_offset = UZERO, binder_alloc_pid_offset = UZERO,
 #endif
+css_set_dfl_cgrp_offset = UZERO,
 cgroup_flags_offset = UZERO,
 oneway = UZERO;
 
@@ -123,8 +124,7 @@ static inline bool cgroup_task_freeze(struct task_struct* task)
 
     rcu_read_lock();
     struct css_set __rcu* css_set = *(struct css_set __rcu**)((uintptr_t)task + task_struct_css_set_offset);
-    // 目前来看偏移量都是 0x48
-    struct cgroup* cgrp = *(struct cgroup**)((uintptr_t)css_set + 0x48); // css_set->dfl_cgrp;
+    struct cgroup* cgrp = *(struct cgroup**)((uintptr_t)css_set + css_set_dfl_cgrp_offset);
     unsigned long cgrp_flags = *(unsigned long*)((uintptr_t)cgrp + cgroup_flags_offset);
     ret = test_bit(CGRP_FREEZE, &cgrp_flags);
     rcu_read_unlock();
@@ -443,46 +443,45 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
     skfunc_lookup_name(proc_create_data);
     skfunc_lookup_name(proc_remove);
 
-    // 获取 task->css_set, 没有就是不支持 cgroup
-    void (*cgroup_free)(struct task_struct* task);
-    lookup_name(cgroup_free);
+    // 获取 cgroup 相关偏移，没有就是不支持 cgroup
+    // count = 1; task->css_set
+    // count = 2; css_set->dfl_cgrp
+    // count = 3; cgroup->flags
+    void (*cgroup_exit)(struct task_struct* task);
+    lookup_name(cgroup_exit);
 
-    uint32_t* cgroup_free_src = (uint32_t*)cgroup_free;
-    for (u32 i = 0; i < 0x20; i++) {
-        if (cgroup_free_src[i] == ARM64_RET) {
+    u32 start = false;
+    u32 count = 0;
+    uint32_t* cgroup_exit_src = (uint32_t*)cgroup_exit;
+    for (u32 i = 0; i < 0x50; i++) {
+        if (cgroup_exit_src[i] == ARM64_RET) {
             break;
-        } else if ((cgroup_free_src[i] & MASK_LDR_64_X0) == INST_LDR_64_X0) {
-            uint64_t imm12 = bits32(cgroup_free_src[i], 21, 10);
+        } else if (start && count == 2 && (cgroup_exit_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
+            uint64_t imm12 = bits32(cgroup_exit_src[i], 21, 10);
+            cgroup_flags_offset = sign64_extend((imm12 << 0b11u), 16u);
+            break;
+        } else if (start && count == 1 && (cgroup_exit_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
+            uint64_t imm12 = bits32(cgroup_exit_src[i], 21, 10);
+            css_set_dfl_cgrp_offset = sign64_extend((imm12 << 0b11u), 16u);
+            count = 2;
+        } else if (start && count == 0 && (cgroup_exit_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
+            uint64_t imm12 = bits32(cgroup_exit_src[i], 21, 10);
             task_struct_css_set_offset = sign64_extend((imm12 << 0b11u), 16u);
-            break;
-        } else if ((cgroup_free_src[i] & MASK_ADD_64_X0) == INST_ADD_64_X0) {
-            uint32_t sh = bit(cgroup_free_src[i], 22);
-            uint64_t imm12 = imm12 = bits32(cgroup_free_src[i], 21, 10);
+            count = 1;
+        } else if (start && count == 0 && (cgroup_exit_src[i] & MASK_ADD_64) == INST_ADD_64) {
+            uint32_t sh = bit(cgroup_exit_src[i], 22);
+            uint64_t imm12 = imm12 = bits32(cgroup_exit_src[i], 21, 10);
             if (sh) {
                 task_struct_css_set_offset = sign64_extend((imm12 << 12u), 16u);
             } else {
                 task_struct_css_set_offset = sign64_extend((imm12), 16u);
             }
-            break;
+            count = 1;
+        } else if ((cgroup_exit_src[i] & MASK_TBNZ_5) == INST_TBNZ_5) {
+            start = true;
         }
     }
-    if (task_struct_css_set_offset == UZERO) {
-        return -11;
-    }
-    // 获取 cgroup->flags, 没有就是不支持 cgroup
-    u64(*cgroup_clone_children_read)(struct cgroup_subsys_state* css, struct cftype* cft);
-    lookup_name(cgroup_clone_children_read);
-
-    uint32_t* cgroup_clone_children_read_src = (uint32_t*)cgroup_clone_children_read;
-    for (u32 i = 0; i < 0x40; i++) {
-        if (cgroup_clone_children_read_src[i] == ARM64_RET) {
-            break;
-        } else if ((cgroup_clone_children_read_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
-            uint64_t imm12 = bits32(cgroup_clone_children_read_src[i], 21, 10);
-            cgroup_flags_offset = sign64_extend((imm12 << 0b11u), 16u);
-        }
-    }
-    if (cgroup_flags_offset == UZERO) {
+    if (task_struct_css_set_offset == UZERO || css_set_dfl_cgrp_offset == UZERO || cgroup_flags_offset == UZERO) {
         return -11;
     }
     // 获取 task->frozen, 不一定所有内核都有
