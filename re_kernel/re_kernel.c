@@ -16,15 +16,16 @@
 #include <taskext.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>
-#include <linux/printk.h>
-#include <linux/string.h>
 #include <linux/pid.h>
+#include <linux/printk.h>
+#include <linux/rcupdate.h>
+#include <linux/string.h>
 
 #include "../demo.h"
 #include "re_kernel.h"
 
-KPM_NAME("re_kernel");
-KPM_VERSION(RK_VERSION);
+KPM_NAME(MYKPM_NAME);
+KPM_VERSION(MYKPM_VERSION);
 KPM_LICENSE("GPL v3");
 KPM_AUTHOR("Nep-Timeline, lzghzr");
 KPM_DESCRIPTION("Re:Kernel, support 4.4, 4.9, 4.14, 4.19, 5.4, 5.10, 5.15");
@@ -43,12 +44,15 @@ KPM_DESCRIPTION("Re:Kernel, support 4.4, 4.9, 4.14, 4.19, 5.4, 5.10, 5.15");
 
 // 延迟加载, KernelPatch支持 事件加载 后弃用
 static struct file* (*do_filp_open)(int dfd, struct filename* pathname, const struct open_flags* op);
-
+// rcu_read_lock && rcu_read_unlock
+void kfunc_def(__rcu_read_lock)(void);
+void kfunc_def(__rcu_read_unlock)(void);
+// pid
 struct task_struct* kfunc_def(get_pid_task)(struct pid* pid, enum pid_type type);
 struct pid* kfunc_def(get_task_pid)(struct task_struct* task, enum pid_type type);
 pid_t kfunc_def(pid_vnr)(struct pid* pid);
 struct pid* kfunc_def(find_vpid)(pid_t nr);
-// is_frozen_tg
+// frozen_task_group
 atomic_t skvar_def(system_freezing_cnt);
 bool skfunc_def(freezing_slow_path)(struct task_struct* p);
 // send_netlink_message
@@ -75,12 +79,13 @@ static void (*binder_transaction)(struct binder_proc* proc, struct binder_thread
 // hook do_send_sig_info
 static int (*do_send_sig_info)(int sig, struct siginfo* info, struct task_struct* p, enum pid_type type);
 
-static uint64_t task_struct_frozen_offset = UZERO,
+static uint64_t task_struct_frozen_offset = UZERO, task_struct_css_set_offset = UZERO,
 binder_proc_context_offset = UZERO,
 #ifndef QUIET
 binder_proc_binder_alloc_offset = UZERO,
 binder_alloc_vma_offset = UZERO, binder_alloc_free_async_space_offset = UZERO, binder_alloc_pid_offset = UZERO,
 #endif
+cgroup_flags_offset = UZERO,
 oneway = UZERO;
 
 static struct sock* rekernel_netlink;
@@ -107,10 +112,23 @@ static inline bool cgroup_task_frozen(struct task_struct* task)
     }
     return false;
 }
-static inline bool is_jobctl_frozen(struct task_struct* task)
+static inline bool cgroup_task_freeze(struct task_struct* task)
 {
-    unsigned int jobctl = *(unsigned int*)((uintptr_t)task + task_struct_offset.active_mm_offset + 0x58);
-    return ((jobctl & JOBCTL_TRAP_FREEZE) != 0);
+    bool ret = false;
+
+    unsigned int task_flags = *(unsigned int*)((uintptr_t)task + task_struct_offset.stack_offset + 0xC);
+    if (task_flags & PF_KTHREAD) {
+        return ret;
+    }
+
+    rcu_read_lock();
+    struct css_set __rcu* css_set = *(struct css_set __rcu**)((uintptr_t)task + task_struct_css_set_offset);
+    // 目前来看偏移量都是 0x48
+    struct cgroup* cgrp = *(struct cgroup**)((uintptr_t)css_set + 0x48); // css_set->dfl_cgrp;
+    unsigned long cgrp_flags = *(unsigned long*)((uintptr_t)cgrp + cgroup_flags_offset);
+    ret = test_bit(CGRP_FREEZE, &cgrp_flags);
+    rcu_read_unlock();
+    return ret;
 }
 static inline bool frozen(struct task_struct* p)
 {
@@ -123,9 +141,9 @@ static inline bool freezing(struct task_struct* p)
         return false;
     return skfunc(freezing_slow_path)(p);
 }
-static inline bool is_frozen_tg(struct task_struct* task)
+static inline bool frozen_task_group(struct task_struct* task)
 {
-    return (cgroup_task_frozen(task) && is_jobctl_frozen(task)) || frozen(task) || freezing(task);
+    return (cgroup_task_frozen(task) || cgroup_task_freeze(task) || frozen(task) || freezing(task));
 }
 
 // 发送 netlink 消息
@@ -191,11 +209,9 @@ static void security_binder_transaction_before(hook_fargs2_t* args, void* udata)
     struct task_struct* to_task = (struct task_struct*)args->arg1;
     if (from_task != NULL
         && to_task != NULL
-#ifndef QUIET
         && (task_uid(to_task).val > MIN_USERAPP_UID)
-#endif
         && (get_task_ext(from_task)->pid != get_task_ext(to_task)->pid)
-        && is_frozen_tg(to_task)) {
+        && frozen_task_group(to_task)) {
         char binder_kmsg[PACKET_SIZE];
         snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=transaction,oneway=%d,from_pid=%d,from=%d,target_pid=%d,target=%d;", oneway, get_task_ext(from_task)->pid, task_uid(from_task).val, get_task_ext(to_task)->pid, task_uid(to_task).val);
 #ifdef DEBUG
@@ -267,7 +283,7 @@ static void binder_alloc_new_buf_locked_before(hook_fargs6_t* args, void* udata)
         struct binder_proc* target_proc = *(struct binder_proc**)((uintptr_t)alloc - binder_proc_binder_alloc_offset);
         if (target_proc
             && (NULL != target_proc->tsk)
-            && is_frozen_tg(target_proc->tsk)) {
+            && frozen_task_group(target_proc->tsk)) {
             char binder_kmsg[PACKET_SIZE];
             snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=free_buffer_full,oneway=1,from_pid=%d,from=%d,target_pid=%d,target=%d;", get_current_task_ext()->pid, task_uid(current).val, target_proc->pid, task_uid(target_proc->tsk).val);
 #ifdef DEBUG
@@ -317,11 +333,9 @@ static void binder_transaction_before(hook_fargs5_t* args, void* udata)
         if (target_proc
             && (NULL != target_proc->tsk)
             && (NULL != proc->tsk)
-#ifndef QUIET
             && (task_uid(target_proc->tsk).val <= MAX_SYSTEM_UID)
-#endif
             && (proc->pid != target_proc->pid)
-            && is_frozen_tg(target_proc->tsk)) {
+            && frozen_task_group(target_proc->tsk)) {
             char binder_kmsg[PACKET_SIZE];
             snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=reply,oneway=0,from_pid=%d,from=%d,target_pid=%d,target=%d;", proc->pid, task_uid(proc->tsk).val, target_proc->pid, task_uid(target_proc->tsk).val);
 #ifdef DEBUG
@@ -346,11 +360,9 @@ static void binder_transaction_before(hook_fargs5_t* args, void* udata)
             if (target_proc
                 && (NULL != target_proc->tsk)
                 && (NULL != proc->tsk)
-#ifndef QUIET
                 && (task_uid(target_proc->tsk).val > MIN_USERAPP_UID)
-#endif
                 && (proc->pid != target_proc->pid)
-                && is_frozen_tg(target_proc->tsk)) {
+                && frozen_task_group(target_proc->tsk)) {
                 char binder_kmsg[PACKET_SIZE];
                 snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=transaction,oneway=%d,from_pid=%d,from=%d,target_pid=%d,target=%d;", (tr->flags & TF_ONE_WAY), proc->pid, task_uid(proc->tsk).val, target_proc->pid, task_uid(target_proc->tsk).val);
 #ifdef DEBUG
@@ -371,8 +383,9 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata)
     struct task_struct* dst = (struct task_struct*)args->arg2;
 
     if ((sig == SIGKILL || sig == SIGTERM || sig == SIGABRT || sig == SIGQUIT)
-        && is_frozen_tg(dst)) {
+        && frozen_task_group(dst)) {
         char binder_kmsg[PACKET_SIZE];
+        // SIGKILL 信号可能会直接释放内存, 导致 get_task_ext 崩溃, 需使用 refcount_inc(&pid->count) 告知线程正在使用
         snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Signal,signal=%d,killer_pid=%d,killer=%d,dst_pid=%d,dst=%d;", sig, task_pid(current), task_uid(current).val, task_pid(dst), task_uid(dst).val);
 #ifdef DEBUG
         printk("re_kernel: %s\n", binder_kmsg);
@@ -410,6 +423,8 @@ static void do_filp_open_after(hook_fargs3_t* args, void* udata)
 static long inline_hook_init(const char* args, const char* event, void* __user reserved)
 {
     lookup_name(do_filp_open);
+    kfunc_lookup_name(__rcu_read_lock);
+    kfunc_lookup_name(__rcu_read_unlock);
     kfunc_lookup_name(get_pid_task);
     kfunc_lookup_name(get_task_pid);
     kfunc_lookup_name(pid_vnr);
@@ -428,6 +443,48 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
     skfunc_lookup_name(proc_create_data);
     skfunc_lookup_name(proc_remove);
 
+    // 获取 task->css_set, 没有就是不支持 cgroup
+    void (*cgroup_free)(struct task_struct* task);
+    lookup_name(cgroup_free);
+
+    uint32_t* cgroup_free_src = (uint32_t*)cgroup_free;
+    for (u32 i = 0; i < 0x20; i++) {
+        if (cgroup_free_src[i] == ARM64_RET) {
+            break;
+        } else if ((cgroup_free_src[i] & MASK_LDR_64_X0) == INST_LDR_64_X0) {
+            uint64_t imm12 = bits32(cgroup_free_src[i], 21, 10);
+            task_struct_css_set_offset = sign64_extend((imm12 << 0b11u), 16u);
+            break;
+        } else if ((cgroup_free_src[i] & MASK_ADD_64_X0) == INST_ADD_64_X0) {
+            uint32_t sh = bit(cgroup_free_src[i], 22);
+            uint64_t imm12 = imm12 = bits32(cgroup_free_src[i], 21, 10);
+            if (sh) {
+                task_struct_css_set_offset = sign64_extend((imm12 << 12u), 16u);
+            } else {
+                task_struct_css_set_offset = sign64_extend((imm12), 16u);
+            }
+            break;
+        }
+    }
+    if (task_struct_css_set_offset == UZERO) {
+        return -11;
+    }
+    // 获取 cgroup->flags, 没有就是不支持 cgroup
+    u64(*cgroup_clone_children_read)(struct cgroup_subsys_state* css, struct cftype* cft);
+    lookup_name(cgroup_clone_children_read);
+
+    uint32_t* cgroup_clone_children_read_src = (uint32_t*)cgroup_clone_children_read;
+    for (u32 i = 0; i < 0x40; i++) {
+        if (cgroup_clone_children_read_src[i] == ARM64_RET) {
+            break;
+        } else if ((cgroup_clone_children_read_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
+            uint64_t imm12 = bits32(cgroup_clone_children_read_src[i], 21, 10);
+            cgroup_flags_offset = sign64_extend((imm12 << 0b11u), 16u);
+        }
+    }
+    if (cgroup_flags_offset == UZERO) {
+        return -11;
+    }
     // 获取 task->frozen, 不一定所有内核都有
     void (*recalc_sigpending_and_wake)(struct task_struct* t);
     lookup_name(recalc_sigpending_and_wake);
