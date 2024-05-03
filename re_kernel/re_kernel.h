@@ -350,8 +350,6 @@ struct file_operations {
     /* unknow */
 };
 
-#endif
-
 // asm/atomic.h
 #define atomic_read(v)		READ_ONCE((v)->counter)
 
@@ -830,3 +828,5 @@ struct css_set {
     /* For RCU-protected deletion */
     struct rcu_head rcu_head;
 };
+
+#endif /* __RE_KERNEL_H */
