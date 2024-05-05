@@ -560,7 +560,7 @@ static long inline_hook_control0(const char* ctl_args, char* __user out_msg, int
 #endif /* QUIET */
     compat_copy_to_user(out_msg, msg, sizeof(msg));
     return 0;
-    }
+}
 
 static long inline_hook_exit(void* __user reserved)
 {
