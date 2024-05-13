@@ -389,6 +389,10 @@ static long calculate_offsets()
     for (u32 i = 0; i < 0x20; i++) {
         if (freezing_slow_path_src[i] == ARM64_RET) {
             break;
+        } else if ((freezing_slow_path_src[i] & MASK_LDR_32_X0) == INST_LDR_32_X0) {
+            uint64_t imm12 = bits32(freezing_slow_path_src[i], 21, 10);
+            task_struct_flags_offset = sign64_extend((imm12 << 0b10u), 16u);
+            break;
         } else if ((freezing_slow_path_src[i] & MASK_LDR_64_X0) == INST_LDR_64_X0) {
             uint64_t imm12 = bits32(freezing_slow_path_src[i], 21, 10);
             task_struct_flags_offset = sign64_extend((imm12 << 0b11u), 16u);
