@@ -19,6 +19,10 @@
 #include <linux/printk.h>
 #include <linux/string.h>
 
+#ifdef DEBUG
+#include <uapi/linux/limits.h>
+#endif /* DEBUG */
+
 #include "re_kernel.h"
 #include "re_utils.h"
 
@@ -66,6 +70,9 @@ int kfunc_def(single_release)(struct inode* inode, struct file* file);
 static int (*binder_proc_transaction)(struct binder_transaction* t, struct binder_proc* proc, struct binder_thread* thread);
 // hook do_send_sig_info
 static int (*do_send_sig_info)(int sig, struct siginfo* info, struct task_struct* p, enum pid_type type);
+#ifdef DEBUG
+int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
+#endif /* DEBUG */
 
 static uint64_t task_struct_flags_offset = UZERO, task_struct_jobctl_offset = UZERO, task_struct_pid_offset = UZERO, task_struct_group_leader_offset = UZERO, task_struct_frozen_offset = UZERO, task_struct_css_set_offset = UZERO,
 binder_proc_alloc_offset = UZERO,
@@ -223,15 +230,17 @@ static void binder_proc_transaction_before(hook_fargs3_t* args, void* udata) {
 #ifndef QUIET
         struct binder_alloc* target_alloc = (struct binder_alloc*)((uintptr_t)target_proc + binder_proc_alloc_offset);
         size_t free_async_space = *(size_t*)((uintptr_t)target_alloc + binder_alloc_free_async_space_offset);
-        if (free_async_space < REKERNEL_WARN_AHEAD_SPACE
-            && target_proc->tsk
+        size_t buffer_size = *(size_t*)((uintptr_t)target_alloc + binder_alloc_buffer_size_offset);
+        if (target_proc->tsk
             && frozen_task_group(target_proc->tsk)) {
-            char binder_kmsg[REKERNEL_PACKET_SIZE];
-            snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=free_buffer_full,oneway=1,from_pid=%d,from=%d,target_pid=%d,target=%d;", task_pid(current), task_uid(current).val, target_proc->pid, task_uid(target_proc->tsk).val);
+            if (free_async_space < (buffer_size / 10 + 0x300)) {
+                char binder_kmsg[REKERNEL_PACKET_SIZE];
+                snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=free_buffer_full,oneway=1,from_pid=%d,from=%d,target_pid=%d,target=%d;", task_pid(current), task_uid(current).val, target_proc->pid, task_uid(target_proc->tsk).val);
 #ifdef DEBUG
-            printk("re_kernel: %s\n", binder_kmsg);
+                printk("re_kernel: %s\n", binder_kmsg);
 #endif /* DEBUG */
-            send_netlink_message(binder_kmsg, strlen(binder_kmsg));
+                send_netlink_message(binder_kmsg, strlen(binder_kmsg));
+            }
         }
 #endif /* QUIET */
     } else {
@@ -264,7 +273,11 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
         char binder_kmsg[REKERNEL_PACKET_SIZE];
         snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Signal,signal=%d,killer_pid=%d,killer=%d,dst_pid=%d,dst=%d;", sig, task_tgid(current), task_uid(current).val, task_tgid(dst), task_uid(dst).val);
 #ifdef DEBUG
-        printk("re_kernel: %s\n", binder_kmsg);
+        char cmdline[PATH_MAX];
+        memset(&cmdline, 0, PATH_MAX);
+        int res = get_cmdline(current, cmdline, PATH_MAX - 1);
+        cmdline[res] = '\0';
+        printk("re_kernel: %s cmdline=%s,comm=%s\n", binder_kmsg, cmdline, get_task_comm(current));
 #endif /* DEBUG */
         send_netlink_message(binder_kmsg, strlen(binder_kmsg));
     }
@@ -283,6 +296,9 @@ static long calculate_offsets()
     u32 cgroup_exit_count = 0;
     uint32_t* cgroup_exit_src = (uint32_t*)cgroup_exit;
     for (u32 i = 0; i < 0x50; i++) {
+#ifdef DEBUG
+        printk("re_kernel: cgroup_exit %x %llx\n", i, cgroup_exit_src[i]);
+#endif /* DEBUG */
         if (cgroup_exit_src[i] == ARM64_RET) {
             break;
         } else if (cgroup_exit_start && cgroup_exit_count == 2 && (cgroup_exit_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
@@ -316,6 +332,9 @@ static long calculate_offsets()
 
     uint32_t* recalc_sigpending_and_wake_src = (uint32_t*)recalc_sigpending_and_wake;
     for (u32 i = 0; i < 0x20; i++) {
+#ifdef DEBUG
+        printk("re_kernel: recalc_sigpending_and_wake %x %llx\n", i, recalc_sigpending_and_wake_src[i]);
+#endif /* DEBUG */
         if (recalc_sigpending_and_wake_src[i] == ARM64_RET) {
             break;
         } else if ((recalc_sigpending_and_wake_src[i] & MASK_TBZ) == INST_TBZ || (recalc_sigpending_and_wake_src[i] & MASK_TBNZ) == INST_TBNZ) {
@@ -336,14 +355,20 @@ static long calculate_offsets()
         }
     }
     // 获取 binder_proc->alloc
-    void (*binder_proc_dec_tmpref)(struct task_struct* t);
-    lookup_name(binder_proc_dec_tmpref);
+    void (*binder_free_proc)(struct binder_proc* proc);
+    binder_free_proc = (typeof(binder_free_proc))kallsyms_lookup_name("binder_free_proc");
+    if (!binder_free_proc) {
+        binder_free_proc = (typeof(binder_free_proc))kallsyms_lookup_name("binder_proc_dec_tmpref");
+    }
 
-    uint32_t* binder_proc_dec_tmpref_src = (uint32_t*)binder_proc_dec_tmpref;
-    for (u32 i = 0; i < 0xC0; i++) {
-        if ((binder_proc_dec_tmpref_src[i] & MASK_ADD_64_Rn_X19_Rd_X0) == INST_ADD_64_Rn_X19_Rd_X0) {
-            uint32_t sh = bit(binder_proc_dec_tmpref_src[i], 22);
-            uint64_t imm12 = imm12 = bits32(binder_proc_dec_tmpref_src[i], 21, 10);
+    uint32_t* binder_free_proc_src = (uint32_t*)binder_free_proc;
+    for (u32 i = 0; i < 0x70; i++) {
+#ifdef DEBUG
+        printk("re_kernel: binder_free_proc %x %llx\n", i, binder_free_proc_src[i]);
+#endif /* DEBUG */
+        if ((binder_free_proc_src[i] & MASK_ADD_64_Rn_X19_Rd_X0) == INST_ADD_64_Rn_X19_Rd_X0) {
+            uint32_t sh = bit(binder_free_proc_src[i], 22);
+            uint64_t imm12 = imm12 = bits32(binder_free_proc_src[i], 21, 10);
             if (sh) {
                 binder_proc_alloc_offset = sign64_extend((imm12 << 12u), 16u);
             } else {
@@ -361,6 +386,9 @@ static long calculate_offsets()
 
     uint32_t* binder_alloc_init_src = (uint32_t*)binder_alloc_init;
     for (u32 i = 0; i < 0x20; i++) {
+#ifdef DEBUG
+        printk("re_kernel: binder_alloc_init %x %llx\n", i, binder_alloc_init_src[i]);
+#endif /* DEBUG */
         if (binder_alloc_init_src[i] == ARM64_RET) {
             break;
         } else if ((binder_alloc_init_src[i] & MASK_STR_32_x0) == INST_STR_32_x0) {
@@ -387,6 +415,9 @@ static long calculate_offsets()
 
     uint32_t* freezing_slow_path_src = (uint32_t*)freezing_slow_path;
     for (u32 i = 0; i < 0x20; i++) {
+#ifdef DEBUG
+        printk("re_kernel: freezing_slow_path %x %llx\n", i, freezing_slow_path_src[i]);
+#endif /* DEBUG */
         if (freezing_slow_path_src[i] == ARM64_RET) {
             break;
         } else if ((freezing_slow_path_src[i] & MASK_LDR_32_X0) == INST_LDR_32_X0) {
@@ -424,6 +455,9 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
     kfunc_lookup_name(seq_printf);
     kfunc_lookup_name(single_open);
     kfunc_lookup_name(single_release);
+#ifdef DEBUG
+    kfunc_lookup_name(get_cmdline);
+#endif /* DEBUG */
 
     lookup_name(binder_proc_transaction);
     lookup_name(do_send_sig_info);
@@ -441,6 +475,37 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
 
 static long inline_hook_control0(const char* ctl_args, char* __user out_msg, int outlen)
 {
+    printk("re_kernel:\n\
+task_struct_flags_offset=0x%llx\n\
+task_struct_jobctl_offset=0x%llx\n\
+task_struct_pid_offset=0x%llx\n\
+task_struct_group_leader_offset=0x%llx\n\
+task_struct_frozen_offset=0x%llx\n\
+task_struct_css_set_offset=0x%llx\n",
+task_struct_flags_offset,
+task_struct_jobctl_offset,
+task_struct_pid_offset,
+task_struct_group_leader_offset,
+task_struct_frozen_offset,
+task_struct_css_set_offset);
+    printk("re_kernel:\
+binder_proc_alloc_offset=0x%llx\n\
+binder_alloc_pid_offset=0x%llx\n\
+binder_alloc_buffer_size_offset=0x%llx\n\
+binder_alloc_free_async_space_offset=0x%llx\n\
+binder_alloc_vma_offset=0x%llx\n",
+binder_proc_alloc_offset,
+binder_alloc_pid_offset,
+binder_alloc_buffer_size_offset,
+binder_alloc_free_async_space_offset,
+binder_alloc_vma_offset);
+    printk("re_kernel:\
+css_set_dfl_cgrp_offset=0x%llx\n\
+cgroup_flags_offset=0x%llx\n\
+task_struct_frozen_bit=0x%llx\n",
+css_set_dfl_cgrp_offset,
+cgroup_flags_offset,
+task_struct_frozen_bit);
     char msg[64];
     snprintf(msg, sizeof(msg), "_(._.)_");
     compat_copy_to_user(out_msg, msg, sizeof(msg));

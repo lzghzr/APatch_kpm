@@ -232,5 +232,12 @@ static inline int single_open(struct file* file, int (*show)(struct seq_file*, v
   return -ESRCH;
 }
 
+extern int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
+static inline int get_cmdline(struct task_struct* task, char* buffer, int buflen) {
+  kfunc_call(get_cmdline, task, buffer, buflen);
+  kfunc_not_found();
+  return -ESRCH;
+}
+
 
 #endif /* __RE_UTILS_H */
