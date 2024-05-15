@@ -93,7 +93,6 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
         int res = get_cmdline(current, cmdline, PATH_MAX - 1);
         cmdline[res] = '\0';
         printk("dont_kill_freeze: killer=%d,dst=%d,cmdline=%s,comm=%s\n", task_uid(current).val, task_uid(dst).val, cmdline, get_task_comm(current));
-        // printk("dont_kill_freeze: killer=%d,dst=%d,comm=%s\n", task_uid(current).val, task_uid(dst).val, get_task_comm(current));
     }
 #endif /* DEBUG */
     if (sig != SIGKILL || siginfo->si_code != 0)
@@ -109,6 +108,13 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
         && frozen_task_group(dst)) {
         args->ret = -EPERM;
         args->skip_origin = true;
+#ifdef DEBUG
+        char cmdline[PATH_MAX];
+        memset(&cmdline, 0, PATH_MAX);
+        int res = get_cmdline(current, cmdline, PATH_MAX - 1);
+        cmdline[res] = '\0';
+        printk("dont_kill_freeze: skip killer=%d,dst=%d,cmdline=%s,comm=%s\n", task_uid(current).val, task_uid(dst).val, cmdline, get_task_comm(current));
+#endif /* DEBUG */
     }
 }
 
