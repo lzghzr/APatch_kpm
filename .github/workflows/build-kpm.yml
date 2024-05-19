@@ -1,0 +1,69 @@
+name: Build CI
+
+on:
+  push:
+    paths:
+      - ".github/workflows/build-kpm.yml"
+      - "**.c"
+
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Push a new release'
+        required: false
+        default: 'false'
+      version:
+        description: 'release version'
+        required: false
+        default: '2024051900'
+
+jobs:
+  Build-on-Ubuntu:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TZ: UTC-8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          fetch-depth: 1
+
+      - name: Update system and install dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install llvm -y
+
+      - name: Build kpm
+        run: |
+          mkdir target
+
+          for dir in $(ls -d */ | grep -v '^KernelPatch/$'); do
+            make -C ${dir}
+            mv ${dir}*.kpm target
+          done
+
+      - name: Upload artifact
+        if: success()
+        uses: lzghzr/upload-artifact@405e6269d5b1feb22bf2a044deb7950596bed6da
+        with:
+          path: "target/*.kpm"
+          artifact-per-file: true
+          artifact-name-rule: ${name}
+
+      - name: Upload release
+        if: github.event.inputs.release == 'true' && success() && !cancelled()
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: ${{ github.event.inputs.version }}
+          tag: ${{ github.event.inputs.version }}
+          body: This release is built by github-action.
+          artifacts: "target/*.kpm"
+          allowUpdates: true
+          makeLatest: true
+          omitBodyDuringUpdate: true
+          replacesArtifacts: true
