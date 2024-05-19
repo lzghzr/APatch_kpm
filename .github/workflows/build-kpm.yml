@@ -41,7 +41,7 @@ jobs:
         run: |
           mkdir target
 
-          for dir in $(ls -d */ | grep -v '^KernelPatch/$'); do
+          for dir in $(ls -d */ | grep -v '^KernelPatch/$\|^target/$'); do
             make -C ${dir}
             mv ${dir}*.kpm target
           done
