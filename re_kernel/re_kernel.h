@@ -4,8 +4,20 @@
 #include <ktypes.h>
 #include <linux/include/linux/export.h>
 
+#define ALIGN_MASK(x, mask) (((x) + (mask)) & ~(mask))
+#define ALIGN(x, a) ALIGN_MASK(x, (typeof(x))(a)-1)
+
 // android/binder.c
 struct binder_alloc;
+
+enum transaction_flags {
+    TF_ONE_WAY = 0x01,
+    TF_ROOT_OBJECT = 0x04,
+    TF_STATUS_CODE = 0x08,
+    TF_ACCEPT_FDS = 0x10,
+    TF_CLEAR_BUF = 0x20,
+    TF_UPDATE_TXN = 0x40,
+};
 
 typedef atomic_t atomic_long_t;
 struct mutex {
@@ -13,16 +25,62 @@ struct mutex {
     spinlock_t wait_lock;
     // unknow
 };
-
 struct rb_node {
     unsigned long __rb_parent_color;
     struct rb_node* rb_right;
     struct rb_node* rb_left;
 } __attribute__((aligned(sizeof(long))));
-
 struct rb_root {
     struct rb_node* rb_node;
 };
+
+struct binder_work {
+    struct list_head entry;
+    enum binder_work_type {
+        BINDER_WORK_TRANSACTION = 1,
+        BINDER_WORK_TRANSACTION_COMPLETE,
+        BINDER_WORK_RETURN_ERROR,
+        BINDER_WORK_NODE,
+        BINDER_WORK_DEAD_BINDER,
+        BINDER_WORK_DEAD_BINDER_AND_CLEAR,
+        BINDER_WORK_CLEAR_DEATH_NOTIFICATION,
+    } type;
+};
+typedef __u64 binder_size_t;
+typedef __u64 binder_uintptr_t;
+struct binder_node {
+    int debug_id;
+    spinlock_t lock;
+    struct binder_work work;
+    union {
+        struct rb_node rb_node;
+        struct hlist_node dead_node;
+    };
+    struct binder_proc* proc;
+    struct hlist_head refs;
+    int internal_strong_refs;
+    int local_weak_refs;
+    int local_strong_refs;
+    int tmp_refs;
+    binder_uintptr_t ptr;
+    binder_uintptr_t cookie;
+    struct {
+        u8 has_strong_ref : 1;
+        u8 pending_strong_ref : 1;
+        u8 has_weak_ref : 1;
+        u8 pending_weak_ref : 1;
+    };
+    struct {
+        u8 sched_policy : 2;
+        u8 inherit_rt : 1;
+        u8 accept_fds : 1;
+        u8 txn_security_ctx : 1;
+        u8 min_priority;
+    };
+    bool has_async_transaction;
+    struct list_head async_todo;
+};
+
 struct binder_context {
     struct binder_node* binder_context_mgr_node;
     struct mutex context_mgr_node_lock;
@@ -41,21 +99,25 @@ struct binder_proc {
     // unknow
 };
 
+struct binder_buffer {
+    struct list_head entry;
+    struct rb_node rb_node;
+    unsigned free : 1;
+    unsigned allow_user_free : 1;
+    unsigned async_transaction : 1;
+    unsigned debug_id : 29;
+    struct binder_transaction* transaction;
+    struct binder_node* target_node;
+    size_t data_size;
+    size_t offsets_size;
+    size_t extra_buffers_size;
+    void __user* user_data;
+    // unknow
+};
+
 struct binder_priority {
     unsigned int sched_policy;
     int prio;
-};
-struct binder_work {
-    struct list_head entry;
-    enum binder_work_type {
-        BINDER_WORK_TRANSACTION = 1,
-        BINDER_WORK_TRANSACTION_COMPLETE,
-        BINDER_WORK_RETURN_ERROR,
-        BINDER_WORK_NODE,
-        BINDER_WORK_DEAD_BINDER,
-        BINDER_WORK_DEAD_BINDER_AND_CLEAR,
-        BINDER_WORK_CLEAR_DEATH_NOTIFICATION,
-    } type;
 };
 struct binder_transaction {
     int debug_id;
@@ -121,7 +183,7 @@ struct binder_thread {
 };
 
 // linux/netlink.h
-struct sk_buff ;
+struct sk_buff;
 struct net;
 struct sock;
 struct netlink_kernel_cfg {
@@ -228,5 +290,8 @@ enum {
 };
 struct cgroup;
 struct css_set;
+
+// linux/tracepoint-defs.h
+struct tracepoint;
 
 #endif /* __RE_KERNEL_H */

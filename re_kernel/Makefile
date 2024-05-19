@@ -1,4 +1,4 @@
-RK_VERSION := 1.4.0.2
+RK_VERSION := 1.4.0.3
 
 ifndef KP_DIR
     KP_DIR = ../KernelPatch
@@ -35,17 +35,10 @@ debug: CFLAGS += -DDEBUG
 debug: RK_VER := _d
 debug: re_kernel_$(RK_VERSION)_debug.kpm
 
-quiet: CFLAGS += -DQUIET
-quiet: RK_VER := _q
-quiet: re_kernel_$(RK_VERSION)_quiet.kpm
-
 re_kernel_$(RK_VERSION).kpm: ${objs}
 	${CC} -r -o $@ $^
 
 re_kernel_$(RK_VERSION)_debug.kpm: ${objs}
-	${CC} -r -o $@ $^
-
-re_kernel_$(RK_VERSION)_quiet.kpm: ${objs}
 	${CC} -r -o $@ $^
 
 %.o: %.c
