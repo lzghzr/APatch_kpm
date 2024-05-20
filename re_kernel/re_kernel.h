@@ -9,6 +9,7 @@
 
 // android/binder.c
 struct binder_alloc;
+struct binder_transaction_data;
 
 enum transaction_flags {
     TF_ONE_WAY = 0x01,

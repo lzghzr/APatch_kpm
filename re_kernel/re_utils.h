@@ -35,6 +35,8 @@ typedef uint32_t inst_mask_t;
 #define INST_LDRH 0x79400000u
 #define INST_LDRSH 0x79800000u
 #define INST_LDRSH_64_ 0x79800000u
+#define INST_MOV_Rm_4_WZR 0x2A0403E0u
+#define INST_STR_Rn_SP_Rt_4 0xB90003E4u
 #define INST_STR_32_x0 0xB9000000u
 #define INST_CBZ 0x34000000
 #define INST_CBNZ 0x35000000
@@ -57,6 +59,8 @@ typedef uint32_t inst_mask_t;
 #define MASK_LDRH 0xFFC00000u
 #define MASK_LDRSH 0xFF800000u
 #define MASK_LDRSH_64_ 0xFFC00000u
+#define MASK_MOV_Rm_4_WZR 0x7FFFFFE0u
+#define MASK_STR_Rn_SP_Rt_4 0xBFC003E4u
 #define MASK_STR_32_x0 0xFFC003E0u
 #define MASK_CBZ 0x7F000000u
 #define MASK_CBNZ 0x7F000000u
