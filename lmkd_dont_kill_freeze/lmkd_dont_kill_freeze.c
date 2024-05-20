@@ -18,16 +18,18 @@
 #include <uapi/linux/limits.h>
 #endif /* DEBUG */
 
-#include "dont_kill_freeze.h"
+#include "lmkd_dont_kill_freeze.h"
 
-KPM_NAME("dont_kill_freeze");
-KPM_VERSION(DKF_VERSION);
+KPM_NAME("lmkd_dont_kill_freeze");
+KPM_VERSION(LDKF_VERSION);
 KPM_LICENSE("GPL v2");
 KPM_AUTHOR("lzghzr");
-KPM_DESCRIPTION("dont_kill_freeze");
+KPM_DESCRIPTION("lmkd_dont_kill_freeze");
 
 #define MIN_SYSTEM_UID 1000
+#define MAX_SYSTEM_UID 2000
 #define MIN_USERAPP_UID 10000
+#define MAX_USERAPP_UID 90000
 
 #define IZERO (1UL << 0x10)
 #define UZERO (1UL << 0x20)
@@ -45,17 +47,17 @@ css_set_dfl_cgrp_offset = UZERO,
 cgroup_flags_offset = UZERO,
 task_struct_frozen_bit = UZERO;
 
+static uint64_t last_uid = UZERO;
+
 // 判断线程是否进入 frozen 状态
-static inline bool cgroup_task_frozen(struct task_struct* task)
-{
+static inline bool cgroup_task_frozen(struct task_struct* task) {
     if (task_struct_frozen_offset == UZERO) {
         return false;
     }
     unsigned int frozen = *(unsigned int*)((uintptr_t)task + task_struct_frozen_offset);
     return bit(frozen, task_struct_frozen_bit);
 }
-static inline bool cgroup_task_freeze(struct task_struct* task)
-{
+static inline bool cgroup_task_freeze(struct task_struct* task) {
     bool ret = false;
     if (task_struct_css_set_offset == UZERO || css_set_dfl_cgrp_offset == UZERO || cgroup_flags_offset == UZERO) {
         return false;
@@ -67,19 +69,15 @@ static inline bool cgroup_task_freeze(struct task_struct* task)
     ret = bit(cgrp_flags, CGRP_FREEZE);
     return ret;
 }
-static inline bool frozen(struct task_struct* p)
-{
+static inline bool frozen(struct task_struct* p) {
     unsigned int flags = *(unsigned int*)((uintptr_t)p + task_struct_flags_offset);
     return (flags & PF_FROZEN);
 }
-static inline bool frozen_task_group(struct task_struct* task)
-{
+static inline bool frozen_task_group(struct task_struct* task) {
     return (cgroup_task_frozen(task) || cgroup_task_freeze(task) || frozen(task) || cgroup_freezing(task));
 }
 
-
-char ActivityManager[] = "ActivityManager";
-char binder[] = "binder:";
+char lmkd[] = "lmkd";
 static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
     int sig = (int)args->arg0;
     struct kernel_siginfo* siginfo = (struct kernel_siginfo*)args->arg1;
@@ -97,29 +95,22 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
 #endif /* DEBUG */
     if (sig != SIGKILL || siginfo->si_code != 0)
         return;
-    if (task_uid(current).val < MIN_SYSTEM_UID
-        || task_uid(dst).val < MIN_USERAPP_UID
-        || task_uid(current).val == task_uid(dst).val)
+    if (task_uid(dst).val < MIN_USERAPP_UID || task_uid(dst).val > MAX_USERAPP_UID)
         return;
+    last_uid = task_uid(dst).val;
 
     const char* comm = get_task_comm(current);
-    if ((!memcmp(comm, ActivityManager, sizeof(ActivityManager) - 1)
-        || !memcmp(comm, binder, sizeof(binder) - 1))
+    if (!memcmp(comm, lmkd, sizeof(lmkd) - 1)
         && frozen_task_group(dst)) {
         args->ret = -EPERM;
         args->skip_origin = true;
 #ifdef DEBUG
-        char cmdline[PATH_MAX];
-        memset(&cmdline, 0, PATH_MAX);
-        int res = get_cmdline(current, cmdline, PATH_MAX - 1);
-        cmdline[res] = '\0';
-        printk("dont_kill_freeze: skip killer=%d,dst=%d,cmdline=%s,comm=%s\n", task_uid(current).val, task_uid(dst).val, cmdline, get_task_comm(current));
+        printk("dont_kill_freeze: skip\n");
 #endif /* DEBUG */
     }
 }
 
-static long calculate_offsets()
-{
+static long calculate_offsets() {
     // 获取 cgroup 相关偏移，没有就是不支持 CGRP_FREEZE
     // cgroup_exit_count = 1; task->css_set
     // cgroup_exit_count = 2; css_set->dfl_cgrp
@@ -217,8 +208,7 @@ static long calculate_offsets()
     return 0;
 }
 
-static long inline_hook_init(const char* args, const char* event, void* __user reserved)
-{
+static long inline_hook_init(const char* args, const char* event, void* __user reserved) {
     lookup_name(cgroup_freezing);
     lookup_name(do_send_sig_info);
 #ifdef DEBUG
@@ -235,16 +225,14 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
     return 0;
 }
 
-static long inline_hook_control0(const char* ctl_args, char* __user out_msg, int outlen)
-{
+static long inline_hook_control0(const char* ctl_args, char* __user out_msg, int outlen) {
     char msg[64];
     snprintf(msg, sizeof(msg), "_(._.)_");
     compat_copy_to_user(out_msg, msg, sizeof(msg));
     return 0;
 }
 
-static long inline_hook_exit(void* __user reserved)
-{
+static long inline_hook_exit(void* __user reserved) {
     unhook_func(do_send_sig_info);
 
     return 0;

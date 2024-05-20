@@ -1,4 +1,4 @@
-DKF_VERSION := 1.0.0
+LDKF_VERSION := 1.1.0
 
 ifndef KP_DIR
     KP_DIR = ../KernelPatch
@@ -21,24 +21,24 @@ else ifdef NDK_PATH
     LD := $(NDK_PATH)/ld.lld
 endif
 
-CFLAGS = -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -DDKF_VERSION=\"$(DKF_VERSION)$(DKF_VER)\"
+CFLAGS = -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -DLDKF_VERSION=\"$(LDKF_VERSION)$(LDKF_VER)\"
 
 INCLUDE_DIRS := . include patch/include linux/include linux/arch/arm64/include linux/tools/arch/arm64/include
 
 INCLUDE_FLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(KP_DIR)/kernel/$(dir))
 
-objs := dont_kill_freeze.o
+objs := lmkd_dont_kill_freeze.o
 
-all: dont_kill_freeze_$(DKF_VERSION).kpm
+all: lmkd_dont_kill_freeze_$(LDKF_VERSION).kpm
 
 debug: CFLAGS += -DDEBUG
-debug: DKF_VER := _d
-debug: dont_kill_freeze_$(DKF_VERSION)_debug.kpm
+debug: LDKF_VER := _d
+debug: lmkd_dont_kill_freeze_$(LDKF_VERSION)_debug.kpm
 
-dont_kill_freeze_$(DKF_VERSION).kpm: ${objs}
+lmkd_dont_kill_freeze_$(LDKF_VERSION).kpm: ${objs}
 	${CC} -r -o $@ $^
 
-dont_kill_freeze_$(DKF_VERSION)_debug.kpm: ${objs}
+lmkd_dont_kill_freeze_$(LDKF_VERSION)_debug.kpm: ${objs}
 	${CC} -r -o $@ $^
 
 %.o: %.c

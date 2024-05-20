@@ -134,5 +134,6 @@ enum {
   CGRP_FREEZE,
   CGRP_FROZEN,
 };
+struct cgroup;
 
 #endif /* __DONT_KILL_FREEZE_H */
