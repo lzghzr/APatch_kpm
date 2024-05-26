@@ -105,19 +105,19 @@ typedef uint32_t inst_mask_t;
     func = 0;                        \
   }
 
-#define task_uid(task) task_real_uid(task)
-  // ({                                                                                         \
-  //   struct cred *cred = *(struct cred **)((uintptr_t)task + task_struct_offset.cred_offset); \
-  //   kuid_t ___val = *(kuid_t *)((uintptr_t)cred + cred_offset.uid_offset);                   \
-  //   ___val;                                                                                  \
-  // })
-
 #define task_real_uid(task)                                                                       \
   ({                                                                                              \
     struct cred *cred = *(struct cred **)((uintptr_t)task + task_struct_offset.real_cred_offset); \
     kuid_t ___val = *(kuid_t *)((uintptr_t)cred + cred_offset.uid_offset);                        \
     ___val;                                                                                       \
   })
+
+#define task_uid(task) task_real_uid(task)
+  // ({                                                                                         \
+  //   struct cred *cred = *(struct cred **)((uintptr_t)task + task_struct_offset.cred_offset); \
+  //   kuid_t ___val = *(kuid_t *)((uintptr_t)cred + cred_offset.uid_offset);                   \
+  //   ___val;                                                                                  \
+  // })
 
 extern bool kfunc_def(freezing_slow_path)(struct task_struct* p);
 static inline bool freezing_slow_path(struct task_struct* p) {
@@ -214,13 +214,6 @@ static inline int single_open(struct file* file, int (*show)(struct seq_file*, v
   return -ESRCH;
 }
 
-extern int kfunc_def(ipv6_find_hdr)(const struct sk_buff* skb, unsigned int* offset, int target, unsigned short* fragoff, int* flags);
-static inline int ipv6_find_hdr(const struct sk_buff* skb, unsigned int* offset, int target, unsigned short* fragoff, int* flags) {
-  kfunc_call(ipv6_find_hdr, skb, offset, target, fragoff, flags);
-  kfunc_not_found();
-  return -ESRCH;
-}
-
 extern kuid_t kfunc_def(sock_i_uid)(struct sock* sk);
 static inline kuid_t sock_i_uid(struct sock* sk) {
   kfunc_call(sock_i_uid, sk);
@@ -247,18 +240,6 @@ static inline int tracepoint_probe_unregister(struct tracepoint* tp, void* probe
   kfunc_call(tracepoint_probe_unregister, tp, probe, data);
   kfunc_not_found();
   return -ESRCH;
-}
-
-extern int kfunc_def(nf_register_net_hooks)(struct net* net, const struct nf_hook_ops* reg, unsigned int n);
-static inline int nf_register_net_hooks(struct net* net, const struct nf_hook_ops* reg, unsigned int n) {
-  kfunc_call(nf_register_net_hooks, net, reg, n);
-  kfunc_not_found();
-  return -ESRCH;
-}
-
-extern void kfunc_def(nf_unregister_net_hooks)(struct net* net, const struct nf_hook_ops* reg, unsigned int n);
-static inline void nf_unregister_net_hooks(struct net* net, const struct nf_hook_ops* reg, unsigned int n) {
-  kfunc_call_void(nf_unregister_net_hooks, net, reg, n);
 }
 
 extern void kfunc_def(kfree)(const void* objp);

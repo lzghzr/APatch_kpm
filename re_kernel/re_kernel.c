@@ -82,7 +82,6 @@ void kfunc_def(seq_printf)(struct seq_file* m, const char* f, ...);
 int kfunc_def(single_open)(struct file* file, int (*show)(struct seq_file*, void*), void* data);
 int kfunc_def(single_release)(struct inode* inode, struct file* file);
 // netfilter
-int kfunc_def(ipv6_find_hdr)(const struct sk_buff* skb, unsigned int* offset, int target, unsigned short* fragoff, int* flags);
 kuid_t kfunc_def(sock_i_uid)(struct sock* sk);
 // hook binder_proc_transaction
 static int (*binder_proc_transaction)(struct binder_transaction* t, struct binder_proc* proc, struct binder_thread* thread);
@@ -93,6 +92,9 @@ void kfunc_def(kfree)(const void* objp);
 static struct binder_stats kvar_def(binder_stats);
 // hook do_send_sig_info
 static int (*do_send_sig_info)(int sig, struct siginfo* info, struct task_struct* p, enum pid_type type);
+// hook tcp_rcv
+static int (*tcp_v4_rcv)(struct sk_buff* skb);
+static int (*tcp_v6_rcv)(struct sk_buff* skb);
 
 // _raw_spin_lock && _raw_spin_unlock
 void kfunc_def(_raw_spin_lock)(raw_spinlock_t* lock);
@@ -102,9 +104,6 @@ int kfunc_def(tracepoint_probe_register)(struct tracepoint* tp, void* probe, voi
 int kfunc_def(tracepoint_probe_unregister)(struct tracepoint* tp, void* probe, void* data);
 // trace_binder_transaction
 struct tracepoint kvar_def(__tracepoint_binder_transaction);
-// nf_net_hooks
-int kfunc_def(nf_register_net_hooks)(struct net* net, const struct nf_hook_ops* reg, unsigned int n);
-void kfunc_def(nf_unregister_net_hooks)(struct net* net, const struct nf_hook_ops* reg, unsigned int n);
 #ifdef DEBUG
 int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
 #endif /* DEBUG */
@@ -115,7 +114,6 @@ binder_proc_alloc_offset = UZERO, binder_proc_context_offset = UZERO, binder_pro
 binder_alloc_pid_offset = UZERO, binder_alloc_buffer_size_offset = UZERO, binder_alloc_free_async_space_offset = UZERO, binder_alloc_vma_offset = UZERO,
 css_set_dfl_cgrp_offset = UZERO,
 cgroup_flags_offset = UZERO,
-sk_buff_head_offset = UZERO, sk_buff_network_header_offset = UZERO,
 task_struct_frozen_bit = UZERO,
 binder_transaction_buffer_release_ver = UZERO;
 
@@ -454,82 +452,22 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
   }
 }
 
-static inline struct iphdr* ip_hdr(const struct sk_buff* skb) {
-  unsigned char* head = *(unsigned char**)((uintptr_t)skb + sk_buff_head_offset);
-  __u16 network_header = *(__u16*)((uintptr_t)skb + sk_buff_network_header_offset);
-  return (struct iphdr*)(head + network_header);
-}
-
 static inline bool sk_fullsock(const struct sock* sk) {
   return (1 << sk->sk_state) & ~(TCPF_TIME_WAIT | TCPF_NEW_SYN_RECV);
 }
 
-static unsigned int rekernel_pkg_ip4_in(void* priv, struct sk_buff* skb, const struct nf_hook_state* state) {
-  int protocol = ip_hdr(skb)->protocol;
-  if (protocol != IPPROTO_TCP)
-    return NF_ACCEPT;
-
+static void tcp_rcv_before(hook_fargs1_t* args, void* udata) {
+  struct sk_buff* skb = (struct sk_buff*)args->arg0;
   struct sock* sk = skb->sk;;
   if (sk == NULL || !sk_fullsock(sk))
-    return NF_ACCEPT;
+    return;
 
   uid_t uid = sock_i_uid(sk).val;
   if (uid < MIN_USERAPP_UID)
-    return NF_ACCEPT;
+    return;
 
   rekernel_report(NETWORK, NULL, NULL, NULL, uid, NULL, true);
-
-  return NF_ACCEPT;
 }
-
-static unsigned int rekernel_pkg_ip6_in(void* priv, struct sk_buff* skb, const struct nf_hook_state* state) {
-  unsigned int offset = 0;
-  int protohdr = ipv6_find_hdr(skb, &offset, -1, NULL, NULL);
-  if (protohdr != IPPROTO_TCP)
-    return NF_ACCEPT;
-
-  struct sock* sk = skb->sk;
-  if (sk == NULL || !sk_fullsock(sk))
-    return NF_ACCEPT;
-
-  uid_t uid = sock_i_uid(sk).val;
-  if (uid < MIN_USERAPP_UID)
-    return NF_ACCEPT;
-
-  rekernel_report(NETWORK, NULL, NULL, NULL, uid, NULL, true);
-
-  return NF_ACCEPT;
-}
-
-static struct nf_hook_ops_list rekernel_nf_ops_list[] = {
-  {
-    .hook = rekernel_pkg_ip4_in,
-    .pf = NFPROTO_IPV4,
-    .hooknum = NF_INET_LOCAL_IN,
-    .priority = NF_IP_PRI_SELINUX_LAST + 1,
-  },
-  {
-    .hook = rekernel_pkg_ip6_in,
-    .pf = NFPROTO_IPV6,
-    .hooknum = NF_INET_LOCAL_IN,
-    .priority = NF_IP6_PRI_SELINUX_LAST + 1,
-  },
-};
-
-static struct nf_hook_ops rekernel_nf_ops[] = {
-  {
-    .hook = rekernel_pkg_ip4_in,
-    .pf = NFPROTO_IPV4,
-    .hooknum = NF_INET_LOCAL_IN,
-    .priority = NF_IP_PRI_SELINUX_LAST + 1,
-  },
-  {
-    .hook = rekernel_pkg_ip6_in,
-    .pf = NFPROTO_IPV6,
-    .hooknum = NF_INET_LOCAL_IN,
-    .priority = NF_IP6_PRI_SELINUX_LAST + 1,
-  },
-};
 
 static long calculate_offsets() {
     // 获取 cgroup 相关偏移，没有就是不支持 CGRP_FREEZE
@@ -715,29 +653,6 @@ static long calculate_offsets() {
   if (task_struct_flags_offset == UZERO) {
     return -11;
   }
-  // 获取 sk_buff->head, sk_buff->network_header
-  bool (*ip_call_ra_chain)(struct task_struct* p);
-  lookup_name(ip_call_ra_chain);
-
-  uint32_t* ip_call_ra_chain_src = (uint32_t*)ip_call_ra_chain;
-  for (u32 i = 0; i < 0x10; i++) {
-#ifdef DEBUG
-    printk("re_kernel: ip_call_ra_chain %x %llx\n", i, ip_call_ra_chain_src[i]);
-#endif /* DEBUG */
-    if (ip_call_ra_chain_src[i] == ARM64_RET) {
-      break;
-    } else if ((ip_call_ra_chain_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
-      uint64_t imm12 = bits32(ip_call_ra_chain_src[i], 21, 10);
-      sk_buff_head_offset = sign64_extend((imm12 << 0b11u), 16u);
-    } else if ((ip_call_ra_chain_src[i] & MASK_LDRH_X0) == INST_LDRH_X0) {
-      uint64_t imm12 = bits32(ip_call_ra_chain_src[i], 21, 10);
-      sk_buff_network_header_offset = sign64_extend((imm12 << 1u), 16u);
-      break;
-    }
-  }
-  if (sk_buff_head_offset == UZERO || sk_buff_network_header_offset == UZERO) {
-    return -11;
-  }
 
   return 0;
 }
@@ -748,26 +663,25 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   kfunc_lookup_name(__nlmsg_put);
   kfunc_lookup_name(kfree_skb);
   kfunc_lookup_name(netlink_unicast);
+
   kvar_lookup_name(init_net);
   kfunc_lookup_name(__netlink_kernel_create);
   kfunc_lookup_name(netlink_kernel_release);
+
   kfunc_lookup_name(proc_mkdir);
   kfunc_lookup_name(proc_create_data);
   kfunc_lookup_name(proc_remove);
+
   kfunc_lookup_name(seq_read);
   kfunc_lookup_name(seq_lseek);
   kfunc_lookup_name(seq_printf);
   kfunc_lookup_name(single_open);
   kfunc_lookup_name(single_release);
 
-  kfunc_lookup_name(ipv6_find_hdr);
   kfunc_lookup_name(sock_i_uid);
 
   kfunc_lookup_name(tracepoint_probe_register);
   kfunc_lookup_name(tracepoint_probe_unregister);
-
-  kfunc_lookup_name(nf_register_net_hooks);
-  kfunc_lookup_name(nf_unregister_net_hooks);
 
   kfunc_lookup_name(_raw_spin_lock);
   kfunc_lookup_name(_raw_spin_unlock);
@@ -780,6 +694,9 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
 
   lookup_name(binder_proc_transaction);
   lookup_name(do_send_sig_info);
+
+  lookup_name(tcp_v4_rcv);
+  lookup_name(tcp_v6_rcv);
 #ifdef DEBUG
   kfunc_lookup_name(get_cmdline);
 #endif /* DEBUG */
@@ -794,19 +711,11 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
     trace = IZERO;
   }
 
-  if (kver < VERSION(4, 14, 0)) {
-    rc = ((int  (*)(struct net* net, const struct nf_hook_ops_list* reg, unsigned int n))\
-      nf_register_net_hooks)(kvar(init_net), rekernel_nf_ops_list, ARRAY_SIZE(rekernel_nf_ops));
-    if (rc < 0)
-      return rc;
-  } else {
-    rc = nf_register_net_hooks(kvar(init_net), rekernel_nf_ops, ARRAY_SIZE(rekernel_nf_ops));
-    if (rc < 0)
-      return rc;
-  }
-
   hook_func(binder_proc_transaction, 3, binder_proc_transaction_before, NULL, NULL);
   hook_func(do_send_sig_info, 4, do_send_sig_info_before, NULL, NULL);
+
+  hook_func(tcp_v4_rcv, 1, tcp_rcv_before, NULL, NULL);
+  hook_func(tcp_v6_rcv, 1, tcp_rcv_before, NULL, NULL);
 
   return 0;
 }
@@ -838,13 +747,9 @@ binder_alloc_free_async_space_offset,
 binder_alloc_vma_offset);
   printk("\
 re_kernel: css_set_dfl_cgrp_offset=0x%llx\n\
-re_kernel: cgroup_flags_offset=0x%llx\n\
-re_kernel: sk_buff_head_offset=0x%llx\n\
-re_kernel: sk_buff_network_header_offset=0x%llx\n",
+re_kernel: cgroup_flags_offset=0x%llx\n",
 css_set_dfl_cgrp_offset,
-cgroup_flags_offset,
-sk_buff_head_offset,
-sk_buff_network_header_offset);
+cgroup_flags_offset);
   printk("\
 re_kernel: task_struct_frozen_bit=0x%llx\n\
 re_kernel: binder_transaction_buffer_release_ver=0x%llx\n",
@@ -866,15 +771,11 @@ static long inline_hook_exit(void* __user reserved) {
 
   tracepoint_probe_unregister(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
 
-  if (kver < VERSION(4, 14, 0)) {
-    ((int  (*)(struct net* net, const struct nf_hook_ops_list* reg, unsigned int n))\
-      nf_unregister_net_hooks)(kvar(init_net), rekernel_nf_ops_list, ARRAY_SIZE(rekernel_nf_ops));
-  } else {
-    nf_unregister_net_hooks(kvar(init_net), rekernel_nf_ops, ARRAY_SIZE(rekernel_nf_ops));
-  }
-
   unhook_func(binder_proc_transaction);
   unhook_func(do_send_sig_info);
+
+  unhook_func(tcp_v4_rcv);
+  unhook_func(tcp_v6_rcv);
 
   return 0;
 }
