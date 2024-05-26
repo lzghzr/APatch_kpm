@@ -33,6 +33,7 @@ typedef uint32_t inst_mask_t;
 #define INST_LDRB 0x39400000u
 #define INST_LDRB_X0 0x39400000u
 #define INST_LDRH 0x79400000u
+#define INST_LDRH_X0 0x79400000u
 #define INST_LDRSH 0x79800000u
 #define INST_LDRSH_64_ 0x79800000u
 #define INST_MOV_Rm_4_WZR 0x2A0403E0u
@@ -57,6 +58,7 @@ typedef uint32_t inst_mask_t;
 #define MASK_LDRB 0xFFC00000u
 #define MASK_LDRB_X0 0xFFC003E0u
 #define MASK_LDRH 0xFFC00000u
+#define MASK_LDRH_X0 0xFFC003E0u
 #define MASK_LDRSH 0xFF800000u
 #define MASK_LDRSH_64_ 0xFFC00000u
 #define MASK_MOV_Rm_4_WZR 0x7FFFFFE0u
@@ -102,9 +104,6 @@ typedef uint32_t inst_mask_t;
     unhook(func);                    \
     func = 0;                        \
   }
-
-
-#define __task_cred(task)	rcu_dereference((task)->real_cred)
 
 #define task_uid(task) task_real_uid(task)
   // ({                                                                                         \
@@ -215,6 +214,20 @@ static inline int single_open(struct file* file, int (*show)(struct seq_file*, v
   return -ESRCH;
 }
 
+extern int kfunc_def(ipv6_find_hdr)(const struct sk_buff* skb, unsigned int* offset, int target, unsigned short* fragoff, int* flags);
+static inline int ipv6_find_hdr(const struct sk_buff* skb, unsigned int* offset, int target, unsigned short* fragoff, int* flags) {
+  kfunc_call(ipv6_find_hdr, skb, offset, target, fragoff, flags);
+  kfunc_not_found();
+  return -ESRCH;
+}
+
+extern kuid_t kfunc_def(sock_i_uid)(struct sock* sk);
+static inline kuid_t sock_i_uid(struct sock* sk) {
+  kfunc_call(sock_i_uid, sk);
+  kfunc_not_found();
+  return (kuid_t) { 0 };
+}
+
 extern int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
 static inline int get_cmdline(struct task_struct* task, char* buffer, int buflen) {
   kfunc_call(get_cmdline, task, buffer, buflen);
@@ -234,6 +247,18 @@ static inline int tracepoint_probe_unregister(struct tracepoint* tp, void* probe
   kfunc_call(tracepoint_probe_unregister, tp, probe, data);
   kfunc_not_found();
   return -ESRCH;
+}
+
+extern int kfunc_def(nf_register_net_hooks)(struct net* net, const struct nf_hook_ops* reg, unsigned int n);
+static inline int nf_register_net_hooks(struct net* net, const struct nf_hook_ops* reg, unsigned int n) {
+  kfunc_call(nf_register_net_hooks, net, reg, n);
+  kfunc_not_found();
+  return -ESRCH;
+}
+
+extern void kfunc_def(nf_unregister_net_hooks)(struct net* net, const struct nf_hook_ops* reg, unsigned int n);
+static inline void nf_unregister_net_hooks(struct net* net, const struct nf_hook_ops* reg, unsigned int n) {
+  kfunc_call_void(nf_unregister_net_hooks, net, reg, n);
 }
 
 extern void kfunc_def(kfree)(const void* objp);

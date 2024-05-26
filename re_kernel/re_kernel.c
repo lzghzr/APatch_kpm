@@ -36,14 +36,15 @@ KPM_DESCRIPTION("Re:Kernel, support 4.4, 4.9, 4.14, 4.19, 5.4, 5.10, 5.15");
 
 #define NETLINK_REKERNEL_MAX 26
 #define NETLINK_REKERNEL_MIN 22
-#define REKERNEL_USER_PORT 100
-#define REKERNEL_PACKET_SIZE 128
+#define USER_PORT 100
+#define PACKET_SIZE 128
 #define MIN_USERAPP_UID 10000
 #define MAX_SYSTEM_UID 2000
 
 enum report_type {
   BINDER,
-  SIGNAL
+  SIGNAL,
+  NETWORK
 };
 enum binder_type {
   REPLY,
@@ -80,6 +81,9 @@ loff_t kfunc_def(seq_lseek)(struct file* file, loff_t offset, int whence);
 void kfunc_def(seq_printf)(struct seq_file* m, const char* f, ...);
 int kfunc_def(single_open)(struct file* file, int (*show)(struct seq_file*, void*), void* data);
 int kfunc_def(single_release)(struct inode* inode, struct file* file);
+// netfilter
+int kfunc_def(ipv6_find_hdr)(const struct sk_buff* skb, unsigned int* offset, int target, unsigned short* fragoff, int* flags);
+kuid_t kfunc_def(sock_i_uid)(struct sock* sk);
 // hook binder_proc_transaction
 static int (*binder_proc_transaction)(struct binder_transaction* t, struct binder_proc* proc, struct binder_thread* thread);
 // free the outdated transaction and buffer
@@ -98,6 +102,9 @@ int kfunc_def(tracepoint_probe_register)(struct tracepoint* tp, void* probe, voi
 int kfunc_def(tracepoint_probe_unregister)(struct tracepoint* tp, void* probe, void* data);
 // trace_binder_transaction
 struct tracepoint kvar_def(__tracepoint_binder_transaction);
+// nf_net_hooks
+int kfunc_def(nf_register_net_hooks)(struct net* net, const struct nf_hook_ops* reg, unsigned int n);
+void kfunc_def(nf_unregister_net_hooks)(struct net* net, const struct nf_hook_ops* reg, unsigned int n);
 #ifdef DEBUG
 int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
 #endif /* DEBUG */
@@ -108,6 +115,7 @@ binder_proc_alloc_offset = UZERO, binder_proc_context_offset = UZERO, binder_pro
 binder_alloc_pid_offset = UZERO, binder_alloc_buffer_size_offset = UZERO, binder_alloc_free_async_space_offset = UZERO, binder_alloc_vma_offset = UZERO,
 css_set_dfl_cgrp_offset = UZERO,
 cgroup_flags_offset = UZERO,
+sk_buff_head_offset = UZERO, sk_buff_network_header_offset = UZERO,
 task_struct_frozen_bit = UZERO,
 binder_transaction_buffer_release_ver = UZERO;
 
@@ -252,17 +260,27 @@ static int send_netlink_message(char* msg, uint16_t len) {
   }
 
   memcpy(nlmsg_data(nlhdr), msg, len);
-  return netlink_unicast(rekernel_netlink, skbuffer, REKERNEL_USER_PORT, MSG_DONTWAIT);
+  return netlink_unicast(rekernel_netlink, skbuffer, USER_PORT, MSG_DONTWAIT);
 }
 
 static void rekernel_report(int reporttype, int type, pid_t src_pid, struct task_struct* src, pid_t dst_pid, struct task_struct* dst, bool oneway) {
   if (start_rekernel_server() != 0)
     return;
 
+  if (reporttype == NETWORK) {
+    char binder_kmsg[PACKET_SIZE];
+    snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Network,target=%d;", dst_pid);
+#ifdef DEBUG
+    printk("re_kernel: %s\n", binder_kmsg);
+#endif /* DEBUG */
+    send_netlink_message(binder_kmsg, strlen(binder_kmsg));
+    return;
+  }
+
   if (!frozen_task_group(dst))
     return;
 
-  char binder_kmsg[REKERNEL_PACKET_SIZE];
+  char binder_kmsg[PACKET_SIZE];
   switch (reporttype) {
   case BINDER:
     snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Binder,bindertype=%s,oneway=%d,from_pid=%d,from=%d,target_pid=%d,target=%d;", binder_type[type], oneway, src_pid, task_uid(src).val, dst_pid, task_uid(dst).val);
@@ -436,6 +454,83 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
   }
 }
 
+static inline struct iphdr* ip_hdr(const struct sk_buff* skb) {
+  unsigned char* head = *(unsigned char**)((uintptr_t)skb + sk_buff_head_offset);
+  __u16 network_header = *(__u16*)((uintptr_t)skb + sk_buff_network_header_offset);
+  return (struct iphdr*)(head + network_header);
+}
+
+static inline bool sk_fullsock(const struct sock* sk) {
+  return (1 << sk->sk_state) & ~(TCPF_TIME_WAIT | TCPF_NEW_SYN_RECV);
+}
+
+static unsigned int rekernel_pkg_ip4_in(void* priv, struct sk_buff* skb, const struct nf_hook_state* state) {
+  int protocol = ip_hdr(skb)->protocol;
+  if (protocol != IPPROTO_TCP)
+    return NF_ACCEPT;
+
+  struct sock* sk = skb->sk;;
+  if (sk == NULL || !sk_fullsock(sk))
+    return NF_ACCEPT;
+
+  uid_t uid = sock_i_uid(sk).val;
+  if (uid < MIN_USERAPP_UID)
+    return NF_ACCEPT;
+
+  rekernel_report(NETWORK, NULL, NULL, NULL, uid, NULL, true);
+
+  return NF_ACCEPT;
+}
+
+static unsigned int rekernel_pkg_ip6_in(void* priv, struct sk_buff* skb, const struct nf_hook_state* state) {
+  unsigned int offset = 0;
+  int protohdr = ipv6_find_hdr(skb, &offset, -1, NULL, NULL);
+  if (protohdr != IPPROTO_TCP)
+    return NF_ACCEPT;
+
+  struct sock* sk = skb->sk;
+  if (sk == NULL || !sk_fullsock(sk))
+    return NF_ACCEPT;
+
+  uid_t uid = sock_i_uid(sk).val;
+  if (uid < MIN_USERAPP_UID)
+    return NF_ACCEPT;
+
+  rekernel_report(NETWORK, NULL, NULL, NULL, uid, NULL, true);
+
+  return NF_ACCEPT;
+}
+
+static struct nf_hook_ops_list rekernel_nf_ops_list[] = {
+  {
+    .hook = rekernel_pkg_ip4_in,
+    .pf = NFPROTO_IPV4,
+    .hooknum = NF_INET_LOCAL_IN,
+    .priority = NF_IP_PRI_SELINUX_LAST + 1,
+  },
+  {
+    .hook = rekernel_pkg_ip6_in,
+    .pf = NFPROTO_IPV6,
+    .hooknum = NF_INET_LOCAL_IN,
+    .priority = NF_IP6_PRI_SELINUX_LAST + 1,
+  },
+};
+
+static struct nf_hook_ops rekernel_nf_ops[] = {
+  {
+    .hook = rekernel_pkg_ip4_in,
+    .pf = NFPROTO_IPV4,
+    .hooknum = NF_INET_LOCAL_IN,
+    .priority = NF_IP_PRI_SELINUX_LAST + 1,
+  },
+  {
+    .hook = rekernel_pkg_ip6_in,
+    .pf = NFPROTO_IPV6,
+    .hooknum = NF_INET_LOCAL_IN,
+    .priority = NF_IP6_PRI_SELINUX_LAST + 1,
+  },
+};
+
 static long calculate_offsets() {
     // 获取 cgroup 相关偏移，没有就是不支持 CGRP_FREEZE
     // cgroup_exit_count = 1; task->css_set
@@ -508,7 +603,7 @@ static long calculate_offsets() {
   }
   // 获取 binder_transaction_buffer_release 版本, 以参数数量做判断
   uint32_t* binder_transaction_buffer_release_src = (uint32_t*)binder_transaction_buffer_release;
-  for (u32 i = 0; i < 0x20; i++) {
+  for (u32 i = 0; i < 0x10; i++) {
 #ifdef DEBUG
     printk("re_kernel: binder_transaction_buffer_release %x %llx\n", i, binder_transaction_buffer_release_src[i]);
 #endif /* DEBUG */
@@ -620,6 +715,29 @@ static long calculate_offsets() {
   if (task_struct_flags_offset == UZERO) {
     return -11;
   }
+  // 获取 sk_buff->head, sk_buff->network_header
+  bool (*ip_call_ra_chain)(struct task_struct* p);
+  lookup_name(ip_call_ra_chain);
+
+  uint32_t* ip_call_ra_chain_src = (uint32_t*)ip_call_ra_chain;
+  for (u32 i = 0; i < 0x10; i++) {
+#ifdef DEBUG
+    printk("re_kernel: ip_call_ra_chain %x %llx\n", i, ip_call_ra_chain_src[i]);
+#endif /* DEBUG */
+    if (ip_call_ra_chain_src[i] == ARM64_RET) {
+      break;
+    } else if ((ip_call_ra_chain_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
+      uint64_t imm12 = bits32(ip_call_ra_chain_src[i], 21, 10);
+      sk_buff_head_offset = sign64_extend((imm12 << 0b11u), 16u);
+    } else if ((ip_call_ra_chain_src[i] & MASK_LDRH_X0) == INST_LDRH_X0) {
+      uint64_t imm12 = bits32(ip_call_ra_chain_src[i], 21, 10);
+      sk_buff_network_header_offset = sign64_extend((imm12 << 1u), 16u);
+      break;
+    }
+  }
+  if (sk_buff_head_offset == UZERO || sk_buff_network_header_offset == UZERO) {
+    return -11;
+  }
 
   return 0;
 }
@@ -641,8 +759,15 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   kfunc_lookup_name(seq_printf);
   kfunc_lookup_name(single_open);
   kfunc_lookup_name(single_release);
+
+  kfunc_lookup_name(ipv6_find_hdr);
+  kfunc_lookup_name(sock_i_uid);
+
   kfunc_lookup_name(tracepoint_probe_register);
   kfunc_lookup_name(tracepoint_probe_unregister);
+
+  kfunc_lookup_name(nf_register_net_hooks);
+  kfunc_lookup_name(nf_unregister_net_hooks);
 
   kfunc_lookup_name(_raw_spin_lock);
   kfunc_lookup_name(_raw_spin_unlock);
@@ -667,6 +792,17 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   rc = tracepoint_probe_register(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
   if (rc == 0) {
     trace = IZERO;
+  }
+
+  if (kver < VERSION(4, 14, 0)) {
+    rc = ((int  (*)(struct net* net, const struct nf_hook_ops_list* reg, unsigned int n))\
+      nf_register_net_hooks)(kvar(init_net), rekernel_nf_ops_list, ARRAY_SIZE(rekernel_nf_ops));
+    if (rc < 0)
+      return rc;
+  } else {
+    rc = nf_register_net_hooks(kvar(init_net), rekernel_nf_ops, ARRAY_SIZE(rekernel_nf_ops));
+    if (rc < 0)
+      return rc;
   }
 
   hook_func(binder_proc_transaction, 3, binder_proc_transaction_before, NULL, NULL);
@@ -703,10 +839,17 @@ binder_alloc_vma_offset);
   printk("\
 re_kernel: css_set_dfl_cgrp_offset=0x%llx\n\
 re_kernel: cgroup_flags_offset=0x%llx\n\
-re_kernel: task_struct_frozen_bit=0x%llx\n",
+re_kernel: sk_buff_head_offset=0x%llx\n\
+re_kernel: sk_buff_network_header_offset=0x%llx\n",
 css_set_dfl_cgrp_offset,
 cgroup_flags_offset,
-task_struct_frozen_bit);
+sk_buff_head_offset,
+sk_buff_network_header_offset);
+  printk("\
+re_kernel: task_struct_frozen_bit=0x%llx\n\
+re_kernel: binder_transaction_buffer_release_ver=0x%llx\n",
+task_struct_frozen_bit,
+binder_transaction_buffer_release_ver);
   char msg[64];
   snprintf(msg, sizeof(msg), "_(._.)_");
   compat_copy_to_user(out_msg, msg, sizeof(msg));
@@ -722,6 +865,13 @@ static long inline_hook_exit(void* __user reserved) {
   }
 
   tracepoint_probe_unregister(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
+
+  if (kver < VERSION(4, 14, 0)) {
+    ((int  (*)(struct net* net, const struct nf_hook_ops_list* reg, unsigned int n))\
+      nf_unregister_net_hooks)(kvar(init_net), rekernel_nf_ops_list, ARRAY_SIZE(rekernel_nf_ops));
+  } else {
+    nf_unregister_net_hooks(kvar(init_net), rekernel_nf_ops, ARRAY_SIZE(rekernel_nf_ops));
+  }
 
   unhook_func(binder_proc_transaction);
   unhook_func(do_send_sig_info);

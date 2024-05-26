@@ -7,180 +7,182 @@
 #define ALIGN_MASK(x, mask) (((x) + (mask)) & ~(mask))
 #define ALIGN(x, a) ALIGN_MASK(x, (typeof(x))(a)-1)
 
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+
 // android/binder.c
 struct binder_alloc;
 struct binder_transaction_data;
 
 enum transaction_flags {
-    TF_ONE_WAY = 0x01,
-    TF_ROOT_OBJECT = 0x04,
-    TF_STATUS_CODE = 0x08,
-    TF_ACCEPT_FDS = 0x10,
-    TF_CLEAR_BUF = 0x20,
-    TF_UPDATE_TXN = 0x40,
+  TF_ONE_WAY = 0x01,
+  TF_ROOT_OBJECT = 0x04,
+  TF_STATUS_CODE = 0x08,
+  TF_ACCEPT_FDS = 0x10,
+  TF_CLEAR_BUF = 0x20,
+  TF_UPDATE_TXN = 0x40,
 };
 
 typedef atomic_t atomic_long_t;
 struct mutex {
-    atomic_long_t owner;
-    spinlock_t wait_lock;
-    // unknow
+  atomic_long_t owner;
+  spinlock_t wait_lock;
+  // unknow
 };
 struct rb_node {
-    unsigned long __rb_parent_color;
-    struct rb_node* rb_right;
-    struct rb_node* rb_left;
+  unsigned long __rb_parent_color;
+  struct rb_node* rb_right;
+  struct rb_node* rb_left;
 } __attribute__((aligned(sizeof(long))));
 struct rb_root {
-    struct rb_node* rb_node;
+  struct rb_node* rb_node;
 };
 
 struct binder_work {
-    struct list_head entry;
-    enum binder_work_type {
-        BINDER_WORK_TRANSACTION = 1,
-        BINDER_WORK_TRANSACTION_COMPLETE,
-        BINDER_WORK_RETURN_ERROR,
-        BINDER_WORK_NODE,
-        BINDER_WORK_DEAD_BINDER,
-        BINDER_WORK_DEAD_BINDER_AND_CLEAR,
-        BINDER_WORK_CLEAR_DEATH_NOTIFICATION,
-    } type;
+  struct list_head entry;
+  enum binder_work_type {
+    BINDER_WORK_TRANSACTION = 1,
+    BINDER_WORK_TRANSACTION_COMPLETE,
+    BINDER_WORK_RETURN_ERROR,
+    BINDER_WORK_NODE,
+    BINDER_WORK_DEAD_BINDER,
+    BINDER_WORK_DEAD_BINDER_AND_CLEAR,
+    BINDER_WORK_CLEAR_DEATH_NOTIFICATION,
+  } type;
 };
 typedef __u64 binder_size_t;
 typedef __u64 binder_uintptr_t;
 struct binder_node {
-    int debug_id;
-    spinlock_t lock;
-    struct binder_work work;
-    union {
-        struct rb_node rb_node;
-        struct hlist_node dead_node;
-    };
-    struct binder_proc* proc;
-    struct hlist_head refs;
-    int internal_strong_refs;
-    int local_weak_refs;
-    int local_strong_refs;
-    int tmp_refs;
-    binder_uintptr_t ptr;
-    binder_uintptr_t cookie;
-    struct {
-        u8 has_strong_ref : 1;
-        u8 pending_strong_ref : 1;
-        u8 has_weak_ref : 1;
-        u8 pending_weak_ref : 1;
-    };
-    struct {
-        u8 sched_policy : 2;
-        u8 inherit_rt : 1;
-        u8 accept_fds : 1;
-        u8 txn_security_ctx : 1;
-        u8 min_priority;
-    };
-    bool has_async_transaction;
-    struct list_head async_todo;
+  int debug_id;
+  spinlock_t lock;
+  struct binder_work work;
+  union {
+    struct rb_node rb_node;
+    struct hlist_node dead_node;
+  };
+  struct binder_proc* proc;
+  struct hlist_head refs;
+  int internal_strong_refs;
+  int local_weak_refs;
+  int local_strong_refs;
+  int tmp_refs;
+  binder_uintptr_t ptr;
+  binder_uintptr_t cookie;
+  struct {
+    u8 has_strong_ref : 1;
+    u8 pending_strong_ref : 1;
+    u8 has_weak_ref : 1;
+    u8 pending_weak_ref : 1;
+  };
+  struct {
+    u8 sched_policy : 2;
+    u8 inherit_rt : 1;
+    u8 accept_fds : 1;
+    u8 txn_security_ctx : 1;
+    u8 min_priority;
+  };
+  bool has_async_transaction;
+  struct list_head async_todo;
 };
 
 struct binder_context {
-    struct binder_node* binder_context_mgr_node;
-    struct mutex context_mgr_node_lock;
-    // unknow
+  struct binder_node* binder_context_mgr_node;
+  struct mutex context_mgr_node_lock;
+  // unknow
 };
 struct binder_alloc;
 struct binder_proc {
-    struct hlist_node proc_node;
-    struct rb_root threads;
-    struct rb_root nodes;
-    struct rb_root refs_by_desc;
-    struct rb_root refs_by_node;
-    struct list_head waiting_threads;
-    int pid;
-    struct task_struct* tsk;
-    // unknow
+  struct hlist_node proc_node;
+  struct rb_root threads;
+  struct rb_root nodes;
+  struct rb_root refs_by_desc;
+  struct rb_root refs_by_node;
+  struct list_head waiting_threads;
+  int pid;
+  struct task_struct* tsk;
+  // unknow
 };
 
 struct binder_buffer {
-    struct list_head entry;
-    struct rb_node rb_node;
-    unsigned free : 1;
-    unsigned allow_user_free : 1;
-    unsigned async_transaction : 1;
-    unsigned debug_id : 29;
-    struct binder_transaction* transaction;
-    struct binder_node* target_node;
-    size_t data_size;
-    size_t offsets_size;
-    size_t extra_buffers_size;
-    void __user* user_data;
-    // unknow
+  struct list_head entry;
+  struct rb_node rb_node;
+  unsigned free : 1;
+  unsigned allow_user_free : 1;
+  unsigned async_transaction : 1;
+  unsigned debug_id : 29;
+  struct binder_transaction* transaction;
+  struct binder_node* target_node;
+  size_t data_size;
+  size_t offsets_size;
+  size_t extra_buffers_size;
+  void __user* user_data;
+  // unknow
 };
 
 struct binder_priority {
-    unsigned int sched_policy;
-    int prio;
+  unsigned int sched_policy;
+  int prio;
 };
 struct binder_transaction {
-    int debug_id;
-    struct binder_work work;
-    struct binder_thread* from;
-    struct binder_transaction* from_parent;
-    struct binder_proc* to_proc;
-    struct binder_thread* to_thread;
-    struct binder_transaction* to_parent;
-    unsigned need_reply : 1;
-    struct binder_buffer* buffer;
-    unsigned int code;
-    unsigned int flags;
-    struct binder_priority priority;
-    struct binder_priority saved_priority;
-    bool set_priority_called;
-    // unknow
+  int debug_id;
+  struct binder_work work;
+  struct binder_thread* from;
+  struct binder_transaction* from_parent;
+  struct binder_proc* to_proc;
+  struct binder_thread* to_thread;
+  struct binder_transaction* to_parent;
+  unsigned need_reply : 1;
+  struct binder_buffer* buffer;
+  unsigned int code;
+  unsigned int flags;
+  struct binder_priority priority;
+  struct binder_priority saved_priority;
+  bool set_priority_called;
+  // unknow
 };
 
 struct binder_error {
-    struct binder_work work;
-    uint32_t cmd;
+  struct binder_work work;
+  uint32_t cmd;
 };
 struct wait_queue_head {
-    spinlock_t lock;
-    struct list_head head;
+  spinlock_t lock;
+  struct list_head head;
 };
 typedef struct wait_queue_head wait_queue_head_t;
 enum binder_stat_types {
-    BINDER_STAT_PROC,
-    BINDER_STAT_THREAD,
-    BINDER_STAT_NODE,
-    BINDER_STAT_REF,
-    BINDER_STAT_DEATH,
-    BINDER_STAT_TRANSACTION,
-    BINDER_STAT_TRANSACTION_COMPLETE,
-    BINDER_STAT_COUNT
+  BINDER_STAT_PROC,
+  BINDER_STAT_THREAD,
+  BINDER_STAT_NODE,
+  BINDER_STAT_REF,
+  BINDER_STAT_DEATH,
+  BINDER_STAT_TRANSACTION,
+  BINDER_STAT_TRANSACTION_COMPLETE,
+  BINDER_STAT_COUNT
 };
 struct binder_stats {
-    atomic_t br[(((29201u) >> 0) & ((1 << 8) - 1)) + 1];
-    atomic_t bc[(((1078485778) >> 0) & ((1 << 8) - 1)) + 1];
-    atomic_t obj_created[BINDER_STAT_COUNT];
-    atomic_t obj_deleted[BINDER_STAT_COUNT];
+  atomic_t br[(((29201u) >> 0) & ((1 << 8) - 1)) + 1];
+  atomic_t bc[(((1078485778) >> 0) & ((1 << 8) - 1)) + 1];
+  atomic_t obj_created[BINDER_STAT_COUNT];
+  atomic_t obj_deleted[BINDER_STAT_COUNT];
 };
 struct binder_thread {
-    struct binder_proc* proc;
-    struct rb_node rb_node;
-    struct list_head waiting_thread_node;
-    int pid;
-    int looper;
-    bool looper_need_return;
-    struct binder_transaction* transaction_stack;
-    struct list_head todo;
-    bool process_todo;
-    struct binder_error return_error;
-    struct binder_error reply_error;
-    wait_queue_head_t wait;
-    struct binder_stats stats;
-    atomic_t tmp_ref;
-    bool is_dead;
-    struct task_struct* task;
-    // unknow
+  struct binder_proc* proc;
+  struct rb_node rb_node;
+  struct list_head waiting_thread_node;
+  int pid;
+  int looper;
+  bool looper_need_return;
+  struct binder_transaction* transaction_stack;
+  struct list_head todo;
+  bool process_todo;
+  struct binder_error return_error;
+  struct binder_error reply_error;
+  wait_queue_head_t wait;
+  struct binder_stats stats;
+  atomic_t tmp_ref;
+  bool is_dead;
+  struct task_struct* task;
+  // unknow
 };
 
 // linux/netlink.h
@@ -188,21 +190,21 @@ struct sk_buff;
 struct net;
 struct sock;
 struct netlink_kernel_cfg {
-    unsigned int groups;
-    unsigned int flags;
-    void (*input)(struct sk_buff* skb);
-    struct mutex* cb_mutex;
-    int (*bind)(struct net* net, int group);
-    void (*unbind)(struct net* net, int group);
-    bool (*compare)(struct net* net, struct sock* sk);
+  unsigned int groups;
+  unsigned int flags;
+  void (*input)(struct sk_buff* skb);
+  struct mutex* cb_mutex;
+  int (*bind)(struct net* net, int group);
+  void (*unbind)(struct net* net, int group);
+  bool (*compare)(struct net* net, struct sock* sk);
 };
 
 struct nlmsghdr {
-    __u32 nlmsg_len;
-    __u16 nlmsg_type;
-    __u16 nlmsg_flags;
-    __u32 nlmsg_seq;
-    __u32 nlmsg_pid;
+  __u32 nlmsg_len;
+  __u16 nlmsg_type;
+  __u16 nlmsg_flags;
+  __u32 nlmsg_seq;
+  __u32 nlmsg_pid;
 };
 #define NLMSG_ALIGNTO 4U
 #define NLMSG_ALIGN(len) (((len) + NLMSG_ALIGNTO - 1) & ~(NLMSG_ALIGNTO - 1))
@@ -231,44 +233,44 @@ struct pipe_inode_info;
 struct seq_file;
 struct open_flags;
 struct file_operations {
-    struct module* owner;
-    loff_t(*llseek)(struct file*, loff_t, int);
-    ssize_t(*read)(struct file*, char __user*, size_t, loff_t*);
-    ssize_t(*write)(struct file*, const char __user*, size_t, loff_t*);
-    ssize_t(*read_iter)(struct kiocb*, struct iov_iter*);
-    ssize_t(*write_iter)(struct kiocb*, struct iov_iter*);
-    int (*iterate)(struct file*, struct dir_context*);
-    int (*iterate_shared)(struct file*, struct dir_context*);
-    __poll_t(*poll)(struct file*, struct poll_table_struct*);
-    long (*unlocked_ioctl)(struct file*, unsigned int, unsigned long);
-    long (*compat_ioctl)(struct file*, unsigned int, unsigned long);
-    int (*mmap)(struct file*, struct vm_area_struct*);
-    unsigned long mmap_supported_flags;
-    int (*open)(struct inode*, struct file*);
-    int (*flush)(struct file*, fl_owner_t id);
-    int (*release)(struct inode*, struct file*);
-    int (*fsync)(struct file*, loff_t, loff_t, int datasync);
-    int (*fasync)(int, struct file*, int);
-    int (*lock)(struct file*, int, struct file_lock*);
-    ssize_t(*sendpage)(struct file*, struct page*, int, size_t, loff_t*, int);
-    unsigned long (*get_unmapped_area)(struct file*, unsigned long, unsigned long, unsigned long, unsigned long);
-    int (*check_flags)(int);
-    int (*flock)(struct file*, int, struct file_lock*);
-    ssize_t(*splice_write)(struct pipe_inode_info*, struct file*, loff_t*, size_t, unsigned int);
-    ssize_t(*splice_read)(struct file*, loff_t*, struct pipe_inode_info*, size_t, unsigned int);
-    int (*setlease)(struct file*, long, struct file_lock**, void**);
-    long (*fallocate)(struct file* file, int mode, loff_t offset,
-        loff_t len);
-    void (*show_fdinfo)(struct seq_file* m, struct file* f);
-    // unknow
+  struct module* owner;
+  loff_t(*llseek)(struct file*, loff_t, int);
+  ssize_t(*read)(struct file*, char __user*, size_t, loff_t*);
+  ssize_t(*write)(struct file*, const char __user*, size_t, loff_t*);
+  ssize_t(*read_iter)(struct kiocb*, struct iov_iter*);
+  ssize_t(*write_iter)(struct kiocb*, struct iov_iter*);
+  int (*iterate)(struct file*, struct dir_context*);
+  int (*iterate_shared)(struct file*, struct dir_context*);
+  __poll_t(*poll)(struct file*, struct poll_table_struct*);
+  long (*unlocked_ioctl)(struct file*, unsigned int, unsigned long);
+  long (*compat_ioctl)(struct file*, unsigned int, unsigned long);
+  int (*mmap)(struct file*, struct vm_area_struct*);
+  unsigned long mmap_supported_flags;
+  int (*open)(struct inode*, struct file*);
+  int (*flush)(struct file*, fl_owner_t id);
+  int (*release)(struct inode*, struct file*);
+  int (*fsync)(struct file*, loff_t, loff_t, int datasync);
+  int (*fasync)(int, struct file*, int);
+  int (*lock)(struct file*, int, struct file_lock*);
+  ssize_t(*sendpage)(struct file*, struct page*, int, size_t, loff_t*, int);
+  unsigned long (*get_unmapped_area)(struct file*, unsigned long, unsigned long, unsigned long, unsigned long);
+  int (*check_flags)(int);
+  int (*flock)(struct file*, int, struct file_lock*);
+  ssize_t(*splice_write)(struct pipe_inode_info*, struct file*, loff_t*, size_t, unsigned int);
+  ssize_t(*splice_read)(struct file*, loff_t*, struct pipe_inode_info*, size_t, unsigned int);
+  int (*setlease)(struct file*, long, struct file_lock**, void**);
+  long (*fallocate)(struct file* file, int mode, loff_t offset,
+    loff_t len);
+  void (*show_fdinfo)(struct seq_file* m, struct file* f);
+  // unknow
 };
 
 // linux/schde.h
 #define PF_FROZEN 0x00010000
 
 struct task_struct {
-    unsigned int __state;
-    // unknow
+  unsigned int __state;
+  // unknow
 };
 
 // uapi/asm/signal.h
@@ -284,15 +286,330 @@ struct siginfo;
 
 // include/linux/cgroup-defs.h
 enum {
-    CGRP_NOTIFY_ON_RELEASE,
-    CGRP_CPUSET_CLONE_CHILDREN,
-    CGRP_FREEZE,
-    CGRP_FROZEN,
+  CGRP_NOTIFY_ON_RELEASE,
+  CGRP_CPUSET_CLONE_CHILDREN,
+  CGRP_FREEZE,
+  CGRP_FROZEN,
 };
 struct cgroup;
 struct css_set;
 
 // linux/tracepoint-defs.h
 struct tracepoint;
+
+// net/tcp_states.h
+enum {
+  TCP_ESTABLISHED = 1,
+  TCP_SYN_SENT,
+  TCP_SYN_RECV,
+  TCP_FIN_WAIT1,
+  TCP_FIN_WAIT2,
+  TCP_TIME_WAIT,
+  TCP_CLOSE,
+  TCP_CLOSE_WAIT,
+  TCP_LAST_ACK,
+  TCP_LISTEN,
+  TCP_CLOSING,
+  TCP_NEW_SYN_RECV,
+  TCP_MAX_STATES
+};
+
+enum {
+  TCPF_ESTABLISHED = (1 << TCP_ESTABLISHED),
+  TCPF_SYN_SENT = (1 << TCP_SYN_SENT),
+  TCPF_SYN_RECV = (1 << TCP_SYN_RECV),
+  TCPF_FIN_WAIT1 = (1 << TCP_FIN_WAIT1),
+  TCPF_FIN_WAIT2 = (1 << TCP_FIN_WAIT2),
+  TCPF_TIME_WAIT = (1 << TCP_TIME_WAIT),
+  TCPF_CLOSE = (1 << TCP_CLOSE),
+  TCPF_CLOSE_WAIT = (1 << TCP_CLOSE_WAIT),
+  TCPF_LAST_ACK = (1 << TCP_LAST_ACK),
+  TCPF_LISTEN = (1 << TCP_LISTEN),
+  TCPF_CLOSING = (1 << TCP_CLOSING),
+  TCPF_NEW_SYN_RECV = (1 << TCP_NEW_SYN_RECV),
+};
+
+// net/sock.h
+typedef __u32 __bitwise __portpair;
+typedef __u64 __bitwise __addrpair;
+
+struct sock_common {
+  union {
+    __addrpair skc_addrpair;
+    struct {
+      __be32 skc_daddr;
+      __be32 skc_rcv_saddr;
+    };
+  };
+  union {
+    unsigned int skc_hash;
+    __u16 skc_u16hashes[2];
+  };
+  union {
+    __portpair skc_portpair;
+    struct {
+      __be16 skc_dport;
+      __u16 skc_num;
+    };
+  };
+  unsigned short skc_family;
+  volatile unsigned char skc_state;
+  unsigned char skc_reuse : 4;
+  unsigned char skc_reuseport : 1;
+  unsigned char skc_ipv6only : 1;
+  unsigned char skc_net_refcnt : 1;
+  int skc_bound_dev_if;
+  union {
+    struct hlist_node skc_bind_node;
+    struct hlist_node skc_portaddr_node;
+  };
+  struct proto* skc_prot;
+  // unknow
+};
+
+struct sock {
+  struct sock_common __sk_common;
+#define sk_node __sk_common.skc_node
+#define sk_nulls_node __sk_common.skc_nulls_node
+#define sk_refcnt __sk_common.skc_refcnt
+#define sk_tx_queue_mapping __sk_common.skc_tx_queue_mapping
+#ifdef CONFIG_SOCK_RX_QUEUE_MAPPING
+#define sk_rx_queue_mapping __sk_common.skc_rx_queue_mapping
+#endif
+
+#define sk_dontcopy_begin __sk_common.skc_dontcopy_begin
+#define sk_dontcopy_end __sk_common.skc_dontcopy_end
+#define sk_hash __sk_common.skc_hash
+#define sk_portpair __sk_common.skc_portpair
+#define sk_num __sk_common.skc_num
+#define sk_dport __sk_common.skc_dport
+#define sk_addrpair __sk_common.skc_addrpair
+#define sk_daddr __sk_common.skc_daddr
+#define sk_rcv_saddr __sk_common.skc_rcv_saddr
+#define sk_family __sk_common.skc_family
+#define sk_state __sk_common.skc_state
+#define sk_reuse __sk_common.skc_reuse
+#define sk_reuseport __sk_common.skc_reuseport
+#define sk_ipv6only __sk_common.skc_ipv6only
+#define sk_net_refcnt __sk_common.skc_net_refcnt
+#define sk_bound_dev_if __sk_common.skc_bound_dev_if
+#define sk_bind_node __sk_common.skc_bind_node
+#define sk_prot __sk_common.skc_prot
+#define sk_net __sk_common.skc_net
+#define sk_v6_daddr __sk_common.skc_v6_daddr
+#define sk_v6_rcv_saddr __sk_common.skc_v6_rcv_saddr
+#define sk_cookie __sk_common.skc_cookie
+#define sk_incoming_cpu __sk_common.skc_incoming_cpu
+#define sk_flags __sk_common.skc_flags
+#define sk_rxhash __sk_common.skc_rxhash
+  // unknow
+};
+
+// vdso/limits.h
+#define INT_MAX ((int)(~0U >> 1))
+#define INT_MIN (-INT_MAX - 1)
+
+// uapi/linux/netfilter_ipv4.h
+enum nf_ip_hook_priorities {
+  NF_IP_PRI_FIRST = INT_MIN,
+  NF_IP_PRI_RAW_BEFORE_DEFRAG = -450,
+  NF_IP_PRI_CONNTRACK_DEFRAG = -400,
+  NF_IP_PRI_RAW = -300,
+  NF_IP_PRI_SELINUX_FIRST = -225,
+  NF_IP_PRI_CONNTRACK = -200,
+  NF_IP_PRI_MANGLE = -150,
+  NF_IP_PRI_NAT_DST = -100,
+  NF_IP_PRI_FILTER = 0,
+  NF_IP_PRI_SECURITY = 50,
+  NF_IP_PRI_NAT_SRC = 100,
+  NF_IP_PRI_SELINUX_LAST = 225,
+  NF_IP_PRI_CONNTRACK_HELPER = 300,
+  NF_IP_PRI_CONNTRACK_CONFIRM = INT_MAX,
+  NF_IP_PRI_LAST = INT_MAX,
+};
+
+// uapi/linux/netfilter_ipv6.h
+enum nf_ip6_hook_priorities {
+  NF_IP6_PRI_FIRST = INT_MIN,
+  NF_IP6_PRI_RAW_BEFORE_DEFRAG = -450,
+  NF_IP6_PRI_CONNTRACK_DEFRAG = -400,
+  NF_IP6_PRI_RAW = -300,
+  NF_IP6_PRI_SELINUX_FIRST = -225,
+  NF_IP6_PRI_CONNTRACK = -200,
+  NF_IP6_PRI_MANGLE = -150,
+  NF_IP6_PRI_NAT_DST = -100,
+  NF_IP6_PRI_FILTER = 0,
+  NF_IP6_PRI_SECURITY = 50,
+  NF_IP6_PRI_NAT_SRC = 100,
+  NF_IP6_PRI_SELINUX_LAST = 225,
+  NF_IP6_PRI_CONNTRACK_HELPER = 300,
+  NF_IP6_PRI_LAST = INT_MAX,
+};
+
+// uapi/linux/in.h
+enum {
+  IPPROTO_IP = 0,
+#define IPPROTO_IP IPPROTO_IP
+  IPPROTO_ICMP = 1,
+#define IPPROTO_ICMP IPPROTO_ICMP
+  IPPROTO_IGMP = 2,
+#define IPPROTO_IGMP IPPROTO_IGMP
+  IPPROTO_IPIP = 4,
+#define IPPROTO_IPIP IPPROTO_IPIP
+  IPPROTO_TCP = 6,
+#define IPPROTO_TCP IPPROTO_TCP
+  IPPROTO_EGP = 8,
+#define IPPROTO_EGP IPPROTO_EGP
+  IPPROTO_PUP = 12,
+#define IPPROTO_PUP IPPROTO_PUP
+  IPPROTO_UDP = 17,
+#define IPPROTO_UDP IPPROTO_UDP
+  IPPROTO_IDP = 22,
+#define IPPROTO_IDP IPPROTO_IDP
+  IPPROTO_TP = 29,
+#define IPPROTO_TP IPPROTO_TP
+  IPPROTO_DCCP = 33,
+#define IPPROTO_DCCP IPPROTO_DCCP
+  IPPROTO_IPV6 = 41,
+#define IPPROTO_IPV6 IPPROTO_IPV6
+  IPPROTO_RSVP = 46,
+#define IPPROTO_RSVP IPPROTO_RSVP
+  IPPROTO_GRE = 47,
+#define IPPROTO_GRE IPPROTO_GRE
+  IPPROTO_ESP = 50,
+#define IPPROTO_ESP IPPROTO_ESP
+  IPPROTO_AH = 51,
+#define IPPROTO_AH IPPROTO_AH
+  IPPROTO_MTP = 92,
+#define IPPROTO_MTP IPPROTO_MTP
+  IPPROTO_BEETPH = 94,
+#define IPPROTO_BEETPH IPPROTO_BEETPH
+  IPPROTO_ENCAP = 98,
+#define IPPROTO_ENCAP IPPROTO_ENCAP
+  IPPROTO_PIM = 103,
+#define IPPROTO_PIM IPPROTO_PIM
+  IPPROTO_COMP = 108,
+#define IPPROTO_COMP IPPROTO_COMP
+  IPPROTO_SCTP = 132,
+#define IPPROTO_SCTP IPPROTO_SCTP
+  IPPROTO_UDPLITE = 136,
+#define IPPROTO_UDPLITE IPPROTO_UDPLITE
+  IPPROTO_MPLS = 137,
+#define IPPROTO_MPLS IPPROTO_MPLS
+  IPPROTO_ETHERNET = 143,
+#define IPPROTO_ETHERNET IPPROTO_ETHERNET
+  IPPROTO_RAW = 255,
+#define IPPROTO_RAW IPPROTO_RAW
+  IPPROTO_MPTCP = 262,
+#define IPPROTO_MPTCP IPPROTO_MPTCP
+  IPPROTO_MAX
+};
+
+// uapi/linux/netfilter.h
+#define NF_ACCEPT 1
+
+enum nf_inet_hooks {
+  NF_INET_PRE_ROUTING,
+  NF_INET_LOCAL_IN,
+  NF_INET_FORWARD,
+  NF_INET_LOCAL_OUT,
+  NF_INET_POST_ROUTING,
+  NF_INET_NUMHOOKS,
+  NF_INET_INGRESS = NF_INET_NUMHOOKS,
+};
+
+enum {
+  NFPROTO_UNSPEC = 0,
+  NFPROTO_INET = 1,
+  NFPROTO_IPV4 = 2,
+  NFPROTO_ARP = 3,
+  NFPROTO_NETDEV = 5,
+  NFPROTO_BRIDGE = 7,
+  NFPROTO_IPV6 = 10,
+  NFPROTO_DECNET = 12,
+  NFPROTO_NUMPROTO,
+};
+
+// linux/netfilter.h
+typedef u8 u_int8_t;
+
+struct nf_hook_state {
+  unsigned int hook;
+  u_int8_t pf;
+  struct net_device* in;
+  struct net_device* out;
+  struct sock* sk;
+  struct net* net;
+  int (*okfn)(struct net*, struct sock*, struct sk_buff*);
+};
+typedef unsigned int nf_hookfn(void* priv, struct sk_buff* skb, const struct nf_hook_state* state);
+
+struct nf_hook_ops_list {
+  struct list_head list;
+  nf_hookfn* hook;
+  struct net_device* dev;
+  void* priv;
+  u_int8_t pf;
+  unsigned int hooknum;
+  int priority;
+};
+
+struct nf_hook_ops {
+  nf_hookfn* hook;
+  struct net_device* dev;
+  void* priv;
+  u_int8_t pf;
+  unsigned int hooknum;
+  int priority;
+};
+
+// uapi/linux/ip.h
+struct iphdr {
+  __u8 ihl : 4,
+    version : 4;
+  __u8 tos;
+  __be16 tot_len;
+  __be16 id;
+  __be16 frag_off;
+  __u8 ttl;
+  __u8 protocol;
+  __sum16 check;
+  __be32 saddr;
+  __be32 daddr;
+};
+
+// linux/skbuff.h
+typedef s64 ktime_t;
+struct sk_buff {
+  union {
+    struct {
+      struct sk_buff* next;
+      struct sk_buff* prev;
+      union {
+        struct net_device* dev;
+        unsigned long dev_scratch;
+      };
+    };
+    struct rb_node rbnode;
+    struct list_head list;
+  };
+  union {
+    struct sock* sk;
+    int ip_defrag_offset;
+  };
+  union {
+    ktime_t tstamp;
+    u64 skb_mstamp_ns;
+  };
+  char cb[48] __aligned(8);
+  union {
+    struct {
+      unsigned long _skb_refdst;
+      void (*destructor)(struct sk_buff* skb);
+    };
+    struct list_head tcp_tsorted_anchor;
+  };
+  // unknow
+};
 
 #endif /* __RE_KERNEL_H */
