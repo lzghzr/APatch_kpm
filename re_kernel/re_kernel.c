@@ -21,9 +21,9 @@
 #include <linux/string.h>
 #include <asm/atomic.h>
 
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG
 #include <uapi/linux/limits.h>
-#endif /* DEBUG */
+#endif /* CONFIG_DEBUG */
 
 #include "re_kernel.h"
 #include "re_utils.h"
@@ -44,7 +44,9 @@ KPM_DESCRIPTION("Re:Kernel, support 4.4, 4.9, 4.14, 4.19, 5.4, 5.10, 5.15");
 enum report_type {
   BINDER,
   SIGNAL,
-  NETWORK
+#ifdef CONFIG_NETWORK
+  NETWORK,
+#endif /* CONFIG_NETWORK */
 };
 enum binder_type {
   REPLY,
@@ -92,9 +94,12 @@ void kfunc_def(kfree)(const void* objp);
 static struct binder_stats kvar_def(binder_stats);
 // hook do_send_sig_info
 static int (*do_send_sig_info)(int sig, struct siginfo* info, struct task_struct* p, enum pid_type type);
+
+#ifdef CONFIG_NETWORK
 // hook tcp_rcv
 static int (*tcp_v4_rcv)(struct sk_buff* skb);
 static int (*tcp_v6_rcv)(struct sk_buff* skb);
+#endif /* CONFIG_NETWORK */
 
 // _raw_spin_lock && _raw_spin_unlock
 void kfunc_def(_raw_spin_lock)(raw_spinlock_t* lock);
@@ -104,9 +109,9 @@ int kfunc_def(tracepoint_probe_register)(struct tracepoint* tp, void* probe, voi
 int kfunc_def(tracepoint_probe_unregister)(struct tracepoint* tp, void* probe, void* data);
 // trace_binder_transaction
 struct tracepoint kvar_def(__tracepoint_binder_transaction);
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG
 int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
-#endif /* DEBUG */
+#endif /* CONFIG_DEBUG */
 
 // 最好初始化一个大于 0xffffffff 的值, 否则编译器优化后, 全局变量可能出错
 static uint64_t task_struct_flags_offset = UZERO, task_struct_jobctl_offset = UZERO, task_struct_pid_offset = UZERO, task_struct_group_leader_offset = UZERO, task_struct_frozen_offset = UZERO, task_struct_css_set_offset = UZERO,
@@ -265,15 +270,17 @@ static void rekernel_report(int reporttype, int type, pid_t src_pid, struct task
   if (start_rekernel_server() != 0)
     return;
 
+#ifdef CONFIG_NETWORK
   if (reporttype == NETWORK) {
     char binder_kmsg[PACKET_SIZE];
     snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Network,target=%d;", dst_pid);
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG
     printk("re_kernel: %s\n", binder_kmsg);
-#endif /* DEBUG */
+#endif /* CONFIG_DEBUG */
     send_netlink_message(binder_kmsg, strlen(binder_kmsg));
     return;
   }
+#endif /* CONFIG_NETWORK */
 
   if (!frozen_task_group(dst))
     return;
@@ -289,7 +296,7 @@ static void rekernel_report(int reporttype, int type, pid_t src_pid, struct task
   default:
     return;
   }
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG
   char src_cmdline[PATH_MAX], dst_cmdline[PATH_MAX];
   memset(&src_cmdline, 0, PATH_MAX);
   memset(&dst_cmdline, 0, PATH_MAX);
@@ -300,7 +307,7 @@ static void rekernel_report(int reporttype, int type, pid_t src_pid, struct task
   dst_cmdline[res] = '\0';
   printk("re_kernel: %s\n", binder_kmsg);
   printk("re_kernel: src_cmdline=%s,src_comm=%s,dst_cmdline=%s,dst_comm=%s\n", src_cmdline, get_task_comm(src), dst_cmdline, get_task_comm(dst));
-#endif /* DEBUG */
+#endif /* CONFIG_DEBUG */
   send_netlink_message(binder_kmsg, strlen(binder_kmsg));
 }
 
@@ -427,9 +434,9 @@ static void binder_proc_transaction_before(hook_fargs3_t* args, void* udata) {
     binder_node_unlock(node);
 
     if (t_outdated) {
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG
       printk("re_kernel: free_outdated pid=%d,uid=%d,data_size=%d\n", t->to_proc->pid, task_uid(t->to_proc->tsk).val, t_outdated->buffer->data_size);
-#endif /* DEBUG */
+#endif /* CONFIG_DEBUG */
       list_del_init(&t_outdated->work.entry);
       struct binder_buffer* buffer = t_outdated->buffer;
 
@@ -452,6 +459,7 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
   }
 }
 
+#ifdef CONFIG_NETWORK
 static inline bool sk_fullsock(const struct sock* sk) {
   return (1 << sk->sk_state) & ~(TCPF_TIME_WAIT | TCPF_NEW_SYN_RECV);
 }
@@ -468,6 +476,7 @@ static void tcp_rcv_before(hook_fargs1_t* args, void* udata) {
 
   rekernel_report(NETWORK, NULL, NULL, NULL, uid, NULL, true);
 }
+#endif /* CONFIG_NETWORK */
 
 static long calculate_offsets() {
     // 获取 cgroup 相关偏移，没有就是不支持 CGRP_FREEZE
@@ -481,9 +490,9 @@ static long calculate_offsets() {
   u32 cgroup_exit_count = 0;
   uint32_t* cgroup_exit_src = (uint32_t*)cgroup_exit;
   for (u32 i = 0; i < 0x50; i++) {
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG
     printk("re_kernel: cgroup_exit %x %llx\n", i, cgroup_exit_src[i]);
-#endif /* DEBUG */
+#endif /* CONFIG_DEBUG */
     if (cgroup_exit_src[i] == ARM64_RET) {
       break;
     } else if (cgroup_exit_start && cgroup_exit_count == 2 && (cgroup_exit_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
@@ -517,9 +526,9 @@ static long calculate_offsets() {
 
   uint32_t* recalc_sigpending_and_wake_src = (uint32_t*)recalc_sigpending_and_wake;
   for (u32 i = 0; i < 0x20; i++) {
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG
     printk("re_kernel: recalc_sigpending_and_wake %x %llx\n", i, recalc_sigpending_and_wake_src[i]);
-#endif /* DEBUG */
+#endif /* CONFIG_DEBUG */
     if (recalc_sigpending_and_wake_src[i] == ARM64_RET) {
       break;
     } else if ((recalc_sigpending_and_wake_src[i] & MASK_TBZ) == INST_TBZ || (recalc_sigpending_and_wake_src[i] & MASK_TBNZ) == INST_TBNZ) {
@@ -542,9 +551,9 @@ static long calculate_offsets() {
   // 获取 binder_transaction_buffer_release 版本, 以参数数量做判断
   uint32_t* binder_transaction_buffer_release_src = (uint32_t*)binder_transaction_buffer_release;
   for (u32 i = 0; i < 0x10; i++) {
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG
     printk("re_kernel: binder_transaction_buffer_release %x %llx\n", i, binder_transaction_buffer_release_src[i]);
-#endif /* DEBUG */
+#endif /* CONFIG_DEBUG */
     if (binder_transaction_buffer_release_src[i] == ARM64_RET) {
       break;
     } else if ((binder_transaction_buffer_release_src[i] & MASK_STR_Rn_SP_Rt_4) == INST_STR_Rn_SP_Rt_4) {
@@ -583,9 +592,9 @@ static long calculate_offsets() {
 
   uint32_t* binder_free_proc_src = (uint32_t*)binder_free_proc;
   for (u32 i = 0; i < 0x70; i++) {
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG
     printk("re_kernel: binder_free_proc %x %llx\n", i, binder_free_proc_src[i]);
-#endif /* DEBUG */
+#endif /* CONFIG_DEBUG */
     if ((binder_free_proc_src[i] & MASK_ADD_64_Rn_X19_Rd_X0) == INST_ADD_64_Rn_X19_Rd_X0) {
       uint32_t sh = bit(binder_free_proc_src[i], 22);
       uint64_t imm12 = imm12 = bits32(binder_free_proc_src[i], 21, 10);
@@ -606,9 +615,9 @@ static long calculate_offsets() {
 
   uint32_t* binder_alloc_init_src = (uint32_t*)binder_alloc_init;
   for (u32 i = 0; i < 0x20; i++) {
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG
     printk("re_kernel: binder_alloc_init %x %llx\n", i, binder_alloc_init_src[i]);
-#endif /* DEBUG */
+#endif /* CONFIG_DEBUG */
     if (binder_alloc_init_src[i] == ARM64_RET) {
       break;
     } else if ((binder_alloc_init_src[i] & MASK_STR_32_x0) == INST_STR_32_x0) {
@@ -635,9 +644,9 @@ static long calculate_offsets() {
 
   uint32_t* freezing_slow_path_src = (uint32_t*)freezing_slow_path;
   for (u32 i = 0; i < 0x20; i++) {
-#ifdef DEBUG
+#ifdef CONFIG_DEBUG
     printk("re_kernel: freezing_slow_path %x %llx\n", i, freezing_slow_path_src[i]);
-#endif /* DEBUG */
+#endif /* CONFIG_DEBUG */
     if (freezing_slow_path_src[i] == ARM64_RET) {
       break;
     } else if ((freezing_slow_path_src[i] & MASK_LDR_32_X0) == INST_LDR_32_X0) {
@@ -695,11 +704,13 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   lookup_name(binder_proc_transaction);
   lookup_name(do_send_sig_info);
 
+#ifdef CONFIG_NETWORK
   lookup_name(tcp_v4_rcv);
   lookup_name(tcp_v6_rcv);
-#ifdef DEBUG
+#endif /* CONFIG_NETWORK */
+#ifdef CONFIG_DEBUG
   kfunc_lookup_name(get_cmdline);
-#endif /* DEBUG */
+#endif /* CONFIG_DEBUG */
 
   int rc = 0;
   rc = calculate_offsets();
@@ -714,8 +725,10 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   hook_func(binder_proc_transaction, 3, binder_proc_transaction_before, NULL, NULL);
   hook_func(do_send_sig_info, 4, do_send_sig_info_before, NULL, NULL);
 
+#ifdef CONFIG_NETWORK
   hook_func(tcp_v4_rcv, 1, tcp_rcv_before, NULL, NULL);
   hook_func(tcp_v6_rcv, 1, tcp_rcv_before, NULL, NULL);
+#endif /* CONFIG_NETWORK */
 
   return 0;
 }
@@ -774,8 +787,10 @@ static long inline_hook_exit(void* __user reserved) {
   unhook_func(binder_proc_transaction);
   unhook_func(do_send_sig_info);
 
+#ifdef CONFIG_NETWORK
   unhook_func(tcp_v4_rcv);
   unhook_func(tcp_v6_rcv);
+#endif /* CONFIG_NETWORK */
 
   return 0;
 }
