@@ -591,7 +591,7 @@ static long calculate_offsets() {
   }
 
   uint32_t* binder_free_proc_src = (uint32_t*)binder_free_proc;
-  for (u32 i = 0; i < 0x70; i++) {
+  for (u32 i = 0; i < 0xA0; i++) {
 #ifdef CONFIG_DEBUG
     printk("re_kernel: binder_free_proc %x %llx\n", i, binder_free_proc_src[i]);
 #endif /* CONFIG_DEBUG */
