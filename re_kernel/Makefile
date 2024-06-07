@@ -1,4 +1,4 @@
-RK_VERSION := 6.0.2
+RK_VERSION := 6.0.3
 
 ifndef KP_DIR
     KP_DIR = ../KernelPatch

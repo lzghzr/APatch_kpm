@@ -2,12 +2,17 @@
 #define __RE_KERNEL_H
 
 #include <ktypes.h>
-#include <linux/include/linux/export.h>
+
+#define THIS_MODULE ((struct module *)0)
 
 #define ALIGN_MASK(x, mask) (((x) + (mask)) & ~(mask))
 #define ALIGN(x, a) ALIGN_MASK(x, (typeof(x))(a)-1)
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+
+// linux/sched/jobctl.h
+#define JOBCTL_TRAP_FREEZE_BIT 23
+#define JOBCTL_TRAP_FREEZE (1UL << JOBCTL_TRAP_FREEZE_BIT)
 
 // android/binder.c
 struct binder_alloc;
@@ -268,11 +273,6 @@ struct file_operations {
 // linux/schde.h
 #define PF_FROZEN 0x00010000
 
-struct task_struct {
-  unsigned int __state;
-  // unknow
-};
-
 // uapi/asm/signal.h
 #define SIGQUIT 3
 #define SIGABRT 6
@@ -283,16 +283,6 @@ struct siginfo;
 
 // linux/socket.h
 #define MSG_DONTWAIT 0x40
-
-// include/linux/cgroup-defs.h
-enum {
-  CGRP_NOTIFY_ON_RELEASE,
-  CGRP_CPUSET_CLONE_CHILDREN,
-  CGRP_FREEZE,
-  CGRP_FROZEN,
-};
-struct cgroup;
-struct css_set;
 
 // linux/tracepoint-defs.h
 struct tracepoint;
