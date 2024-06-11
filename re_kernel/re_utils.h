@@ -80,7 +80,8 @@ typedef uint32_t inst_mask_t;
 #define MASK_TBNZ 0x7F000000u
 #define MASK_TBNZ_5 0xFFF80000u
 
-#define ARM64_RET 0xD65F03C0
+#define ARM64_MOV_x29_SP 0x910003FDu
+#define ARM64_RET 0xD65F03C0u
 
 #define lookup_name(func)                                  \
   func = 0;                                                \

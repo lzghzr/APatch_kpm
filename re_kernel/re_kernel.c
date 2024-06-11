@@ -542,11 +542,13 @@ static long calculate_offsets() {
   }
 
   uint32_t* binder_free_proc_src = (uint32_t*)binder_free_proc;
-  for (u32 i = 0; i < 0xA0; i++) {
+  for (u32 i = 0x10; i < 0x100; i++) {
 #ifdef CONFIG_DEBUG
     printk("re_kernel: binder_free_proc %x %llx\n", i, binder_free_proc_src[i]);
 #endif /* CONFIG_DEBUG */
-    if ((binder_free_proc_src[i] & MASK_ADD_64_Rn_X19_Rd_X0) == INST_ADD_64_Rn_X19_Rd_X0 && (binder_free_proc_src[i + 1] & MASK_BL) == INST_BL) {
+    if (binder_free_proc_src[i] == ARM64_MOV_x29_SP) {
+      break;
+    } else if ((binder_free_proc_src[i] & MASK_ADD_64_Rn_X19_Rd_X0) == INST_ADD_64_Rn_X19_Rd_X0 && (binder_free_proc_src[i + 1] & MASK_BL) == INST_BL) {
       uint32_t sh = bit(binder_free_proc_src[i], 22);
       uint64_t imm12 = imm12 = bits32(binder_free_proc_src[i], 21, 10);
       if (sh) {
