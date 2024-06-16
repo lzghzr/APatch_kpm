@@ -480,11 +480,11 @@ static long calculate_offsets() {
       break;
     } else if ((binder_transaction_buffer_release_src[i] & MASK_STR_Rn_SP_Rt_4) == INST_STR_Rn_SP_Rt_4) {
       binder_transaction_buffer_release_ver5 = IZERO;
-    } else if ((binder_transaction_buffer_release_src[i] & MASK_MOV_Rm_4_WZR) == INST_MOV_Rm_4_WZR) {
+    } else if ((binder_transaction_buffer_release_src[i] & MASK_MOV_Rm_4_Rn_WZR) == INST_MOV_Rm_4_Rn_WZR) {
       binder_transaction_buffer_release_ver5 = IZERO;
     } else if ((binder_transaction_buffer_release_src[i] & MASK_STR_Rn_SP_Rt_3) == INST_STR_Rn_SP_Rt_3) {
       binder_transaction_buffer_release_ver4 = IZERO;
-    } else if ((binder_transaction_buffer_release_src[i] & MASK_MOV_Rm_3_WZR) == INST_MOV_Rm_3_WZR) {
+    } else if ((binder_transaction_buffer_release_src[i] & MASK_MOV_Rm_3_Rn_WZR) == INST_MOV_Rm_3_Rn_WZR) {
       binder_transaction_buffer_release_ver4 = IZERO;
     }
   }
@@ -499,8 +499,8 @@ static long calculate_offsets() {
 #endif /* CONFIG_DEBUG */
     if (do_signal_stop_src[i] == ARM64_RET) {
       break;
-    } else if ((do_signal_stop_src[i] & MASK_MRS_SP_EL0) == INST_MRS_SP_EL0 && (do_signal_stop_src[i + 1] & MASK_LDR_64_) == INST_LDR_64_) {
-      uint64_t imm12 = bits32(do_signal_stop_src[i + 1], 21, 10);
+    } else if ((do_signal_stop_src[i] & MASK_LDR_64_) == INST_LDR_64_ && (do_signal_stop_src[i - 1] & MASK_MRS_SP_EL0) == INST_MRS_SP_EL0) {
+      uint64_t imm12 = bits32(do_signal_stop_src[i], 21, 10);
       task_struct_jobctl_offset = sign64_extend((imm12 << 0b11u), 16u);
       break;
     }
@@ -522,7 +522,7 @@ static long calculate_offsets() {
       break;
     } else if (binder_transaction_src[i] == 0xAA0003F6u) { // mov x22, x0
       mov_x22_x0 = true;
-    } else if ((!mov_x22_x0 && (binder_transaction_src[i] & MASK_LDR_64_X0) == INST_LDR_64_X0)
+    } else if ((binder_transaction_src[i] & MASK_LDR_64_X0) == INST_LDR_64_X0
       || (mov_x22_x0 && (binder_transaction_src[i] & MASK_LDR_64_X22) == INST_LDR_64_X22)) {
       uint64_t imm12 = bits32(binder_transaction_src[i], 21, 10);
       binder_proc_context_offset = sign64_extend((imm12 << 0b11u), 16u);
@@ -621,6 +621,7 @@ static long calculate_offsets() {
 
 static long inline_hook_init(const char* args, const char* event, void* __user reserved) {
   lookup_name(cgroup_freezing);
+
   kfunc_lookup_name(__alloc_skb);
   kfunc_lookup_name(__nlmsg_put);
   kfunc_lookup_name(kfree_skb);
@@ -699,16 +700,23 @@ task_struct_jobctl_offset,
 task_struct_pid_offset,
 task_struct_group_leader_offset);
   printk("\
-re_kernel: binder_proc_alloc_offset=0x%llx\n\
 re_kernel: binder_alloc_pid_offset=0x%llx\n\
 re_kernel: binder_alloc_buffer_size_offset=0x%llx\n\
 re_kernel: binder_alloc_free_async_space_offset=0x%llx\n\
 re_kernel: binder_alloc_vma_offset=0x%llx\n",
-binder_proc_alloc_offset,
 binder_alloc_pid_offset,
 binder_alloc_buffer_size_offset,
 binder_alloc_free_async_space_offset,
 binder_alloc_vma_offset);
+  printk("\
+re_kernel: binder_proc_alloc_offset=0x%llx\n\
+re_kernel: binder_proc_context_offset=0x%llx\n\
+re_kernel: binder_proc_inner_lock_offset=0x%llx\n\
+re_kernel: binder_proc_outer_lock_offset=0x%llx\n",
+binder_proc_alloc_offset,
+binder_proc_context_offset,
+binder_proc_inner_lock_offset,
+binder_proc_outer_lock_offset);
   printk("\
 re_kernel: binder_transaction_buffer_release_ver5=0x%llx\n\
 re_kernel: binder_transaction_buffer_release_ver4=0x%llx\n",
