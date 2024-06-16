@@ -116,7 +116,7 @@ int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
 #endif /* CONFIG_DEBUG */
 
 // 最好初始化一个大于 0xffffffff 的值, 否则编译器优化后, 全局变量可能出错
-static uint64_t task_struct_flags_offset = UZERO, task_struct_jobctl_offset = UZERO, task_struct_pid_offset = UZERO, task_struct_group_leader_offset = UZERO,
+static uint64_t task_struct_jobctl_offset = UZERO, task_struct_pid_offset = UZERO, task_struct_group_leader_offset = UZERO,
 binder_proc_alloc_offset = UZERO, binder_proc_context_offset = UZERO, binder_proc_inner_lock_offset = UZERO, binder_proc_outer_lock_offset = UZERO,
 binder_alloc_pid_offset = UZERO, binder_alloc_buffer_size_offset = UZERO, binder_alloc_free_async_space_offset = UZERO, binder_alloc_vma_offset = UZERO,
 binder_transaction_buffer_release_ver5 = UZERO, binder_transaction_buffer_release_ver4 = UZERO;
@@ -160,14 +160,9 @@ static inline bool jobctl_frozen(struct task_struct* task) {
   unsigned long jobctl = *(unsigned long*)((uintptr_t)task + task_struct_jobctl_offset);
   return ((jobctl & JOBCTL_TRAP_FREEZE) != 0);
 }
-// cgroupv1_freeze
-static inline bool frozen(struct task_struct* task) {
-  unsigned int flags = *(unsigned int*)((uintptr_t)task + task_struct_flags_offset);
-  return (flags & PF_FROZEN);
-}
 // 判断线程是否进入 frozen 状态
 static inline bool frozen_task_group(struct task_struct* task) {
-  return (jobctl_frozen(task) || frozen(task) || cgroup_freezing(task));
+  return (jobctl_frozen(task) || cgroup_freezing(task));
 }
 
 // 创建 netlink 服务
@@ -591,30 +586,6 @@ static long calculate_offsets() {
   if (binder_alloc_pid_offset == UZERO || task_struct_pid_offset == UZERO || task_struct_group_leader_offset == UZERO) {
     return -11;
   }
-  // 获取 task_struct->flags
-  bool (*freezing_slow_path)(struct task_struct* p);
-  lookup_name(freezing_slow_path);
-
-  uint32_t* freezing_slow_path_src = (uint32_t*)freezing_slow_path;
-  for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    printk("re_kernel: freezing_slow_path %x %llx\n", i, freezing_slow_path_src[i]);
-#endif /* CONFIG_DEBUG */
-    if (freezing_slow_path_src[i] == ARM64_RET) {
-      break;
-    } else if ((freezing_slow_path_src[i] & MASK_LDR_32_X0) == INST_LDR_32_X0) {
-      uint64_t imm12 = bits32(freezing_slow_path_src[i], 21, 10);
-      task_struct_flags_offset = sign64_extend((imm12 << 0b10u), 16u);
-      break;
-    } else if ((freezing_slow_path_src[i] & MASK_LDR_64_X0) == INST_LDR_64_X0) {
-      uint64_t imm12 = bits32(freezing_slow_path_src[i], 21, 10);
-      task_struct_flags_offset = sign64_extend((imm12 << 0b11u), 16u);
-      break;
-    }
-  }
-  if (task_struct_flags_offset == UZERO) {
-    return -11;
-  }
 
   return 0;
 }
@@ -691,11 +662,9 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
 
 static long inline_hook_control0(const char* ctl_args, char* __user out_msg, int outlen) {
   printk("\
-re_kernel: task_struct_flags_offset=0x%llx\n\
 re_kernel: task_struct_jobctl_offset=0x%llx\n\
 re_kernel: task_struct_pid_offset=0x%llx\n\
 re_kernel: task_struct_group_leader_offset=0x%llx\n",
-task_struct_flags_offset,
 task_struct_jobctl_offset,
 task_struct_pid_offset,
 task_struct_group_leader_offset);

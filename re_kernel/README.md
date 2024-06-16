@@ -4,7 +4,7 @@
 
 ## 更新记录
 ### 6.0.5
-去除一个 binder_proc->context 的搜索限制条件
+去除一个 binder_proc->context 的搜索限制条件，移除 frozen()
 ### 6.0.4
 再次扩大 binder_proc->alloc 的搜索范围
 ### 6.0.3
