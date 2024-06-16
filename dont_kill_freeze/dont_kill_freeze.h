@@ -19,45 +19,16 @@
 typedef uint32_t inst_type_t;
 typedef uint32_t inst_mask_t;
 
-#define INST_ADD_64 0x91000000u
-#define INST_ADD_64_Rn_X0 0x91000000u
-#define INST_ADD_64_Rn_X19_Rd_X0 0x91000260u
-#define INST_ADD_64_Rd_X0 0x91000000u
-#define INST_ADD_64_Rd_X1 0x91000001u
-#define INST_LDR_32_ 0xB9400000u
 #define INST_LDR_32_X0 0xB9400000u
 #define INST_LDR_64_ 0xF9400000u
 #define INST_LDR_64_X0 0xF9400000u
-#define INST_LDR_64_SP 0xF94003E0u
-#define INST_LDRB 0x39400000u
-#define INST_LDRB_X0 0x39400000u
-#define INST_LDRH 0x79400000u
+#define INST_MRS_SP_EL0 0xD5384100u
 #define INST_STR_32_x0 0xB9000000u
-#define INST_CBZ 0x34000000
-#define INST_CBNZ 0x35000000
-#define INST_TBZ 0x36000000u
-#define INST_TBNZ 0x37000000u
-#define INST_TBNZ_5 0x37280000u
 
-#define MASK_ADD_64 0xFF800000u
-#define MASK_ADD_64_Rn_X0 0xFF8003E0u
-#define MASK_ADD_64_Rn_X19_Rd_X0 0xFF8003FFu
-#define MASK_ADD_64_Rd_X0 0xFF80001Fu
-#define MASK_ADD_64_Rd_X1 0xFF80001Fu
-#define MASK_LDR_32_ 0xFFC00000u
 #define MASK_LDR_32_X0 0xFFC003E0u
 #define MASK_LDR_64_ 0xFFC00000u
 #define MASK_LDR_64_X0 0xFFC003E0u
-#define MASK_LDR_64_SP 0xFFC003E0u
-#define MASK_LDRB 0xFFC00000u
-#define MASK_LDRB_X0 0xFFC003E0u
-#define MASK_LDRH 0xFFC00000u
-#define MASK_STR_32_x0 0xFFC003E0u
-#define MASK_CBZ 0x7F000000u
-#define MASK_CBNZ 0x7F000000u
-#define MASK_TBZ 0x7F000000u
-#define MASK_TBNZ 0x7F000000u
-#define MASK_TBNZ_5 0xFFF80000u
+#define MASK_MRS_SP_EL0 0xFFFFFFE0u
 
 #define ARM64_RET 0xD65F03C0
 
@@ -94,13 +65,6 @@ typedef uint32_t inst_mask_t;
     func = 0;                        \
   }
 
-#define task_uid(task) task_real_uid(task)
-  // ({                                                                                         \
-  //   struct cred *cred = *(struct cred **)((uintptr_t)task + task_struct_offset.cred_offset); \
-  //   kuid_t ___val = *(kuid_t *)((uintptr_t)cred + cred_offset.uid_offset);                   \
-  //   ___val;                                                                                  \
-  // })
-
 #define task_real_uid(task)                                                                       \
   ({                                                                                              \
     struct cred *cred = *(struct cred **)((uintptr_t)task + task_struct_offset.real_cred_offset); \
@@ -108,6 +72,16 @@ typedef uint32_t inst_mask_t;
     ___val;                                                                                       \
   })
 
+#define task_uid(task) task_real_uid(task)
+  // ({                                                                                         \
+  //   struct cred *cred = *(struct cred **)((uintptr_t)task + task_struct_offset.cred_offset); \
+  //   kuid_t ___val = *(kuid_t *)((uintptr_t)cred + cred_offset.uid_offset);                   \
+  //   ___val;                                                                                  \
+  // })
+
+// linux/sched/jobctl.h
+#define JOBCTL_TRAP_FREEZE_BIT 23
+#define JOBCTL_TRAP_FREEZE (1UL << JOBCTL_TRAP_FREEZE_BIT)
 
 // uapi/asm/signal.h
 #define SIGKILL 9
