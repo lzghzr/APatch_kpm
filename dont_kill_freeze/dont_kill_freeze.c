@@ -14,9 +14,9 @@
 #include <linux/string.h>
 #include <uapi/asm-generic/errno.h>
 
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_CMDLINE
 #include <uapi/linux/limits.h>
-#endif /* CONFIG_DEBUG */
+#endif /* CONFIG_DEBUG_CMDLINE */
 
 #include "dont_kill_freeze.h"
 
@@ -38,11 +38,11 @@ KPM_DESCRIPTION("dont_kill_freeze");
 static bool (*cgroup_freezing)(struct task_struct* task);
 // hook do_send_sig_info
 static int (*do_send_sig_info)(int sig, struct siginfo* info, struct task_struct* p, enum pid_type type);
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_CMDLINE
 static int (*get_cmdline)(struct task_struct* task, char* buffer, int buflen);
-#endif /* CONFIG_DEBUG */
+#endif /* CONFIG_DEBUG_CMDLINE */
 
-static uint64_t task_struct_flags_offset = UZERO, task_struct_jobctl_offset = UZERO;
+static uint64_t task_struct_jobctl_offset = UZERO;
 static uint64_t last_uid = UZERO;
 
 // cgroupv2_freeze
@@ -50,43 +50,47 @@ static inline bool jobctl_frozen(struct task_struct* task) {
   unsigned long jobctl = *(unsigned long*)((uintptr_t)task + task_struct_jobctl_offset);
   return ((jobctl & JOBCTL_TRAP_FREEZE) != 0);
 }
-// cgroupv1_freeze
-static inline bool frozen(struct task_struct* task) {
-  unsigned int flags = *(unsigned int*)((uintptr_t)task + task_struct_flags_offset);
-  return (flags & PF_FROZEN);
-}
 // 判断线程是否进入 frozen 状态
 static inline bool frozen_task_group(struct task_struct* task) {
-  return (jobctl_frozen(task) || frozen(task) || cgroup_freezing(task));
+  return (jobctl_frozen(task) || cgroup_freezing(task));
 }
 
-char ActivityManager[] = "ActivityManager";
-char lmkd[] = "lmkd";
+char android_display[] = "android.display";
+// 有些内核可能是 "Binder:"
+char binder[] = "binder:";
 static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
   int sig = (int)args->arg0;
   struct kernel_siginfo* siginfo = (struct kernel_siginfo*)args->arg1;
   struct task_struct* dst = (struct task_struct*)args->arg2;
-
-#ifdef CONFIG_DEBUG
+// cmdline 速度非常非常慢
+#ifdef CONFIG_DEBUG_CMDLINE
   if (sig == SIGKILL
-    && task_uid(dst).val >= MIN_USERAPP_UID) {
+    && task_uid(dst).val > MIN_USERAPP_UID) {
     char cmdline[PATH_MAX];
     memset(&cmdline, 0, PATH_MAX);
     int res = get_cmdline(current, cmdline, PATH_MAX - 1);
     cmdline[res] = '\0';
-    printk("dont_kill_freeze: killer=%d,dst=%d,cmdline=%s,comm=%s\n", task_uid(current).val, task_uid(dst).val, cmdline, get_task_comm(current));
+    printk("dont_kill_freeze:cmdline=%s\n", cmdline);
+  }
+#endif /* CONFIG_DEBUG_CMDLINE */
+#ifdef CONFIG_DEBUG
+  if (sig == SIGKILL
+    && task_uid(dst).val > MIN_USERAPP_UID) {
+    printk("dont_kill_freeze: killer=%d,comm=%s,dst=%d,frozen=%d\n", task_uid(current).val, get_task_comm(current), task_uid(dst).val, frozen_task_group(dst));
   }
 #endif /* CONFIG_DEBUG */
   if (sig != SIGKILL || siginfo->si_code != 0)
     return;
   if (task_uid(current).val < MIN_SYSTEM_UID
+    || task_uid(current).val > MAX_SYSTEM_UID
     || task_uid(dst).val == last_uid
     || task_uid(dst).val < MIN_USERAPP_UID
     || task_uid(dst).val > MAX_USERAPP_UID)
     return;
 
   const char* comm = get_task_comm(current);
-  if ((!memcmp(comm, lmkd, sizeof(lmkd) - 1) || !memcmp(comm, ActivityManager, sizeof(ActivityManager) - 1))
+  if (memcmp(comm + 1, binder + 1, sizeof(binder) - 2)
+    && memcmp(comm, android_display, sizeof(android_display) - 1)
     && frozen_task_group(dst)) {
     args->ret = -EPERM;
     args->skip_origin = true;
@@ -119,30 +123,6 @@ static long calculate_offsets() {
   if (task_struct_jobctl_offset == UZERO) {
     return -11;
   }
-  // 获取 task_struct->flags
-  bool (*freezing_slow_path)(struct task_struct* p);
-  lookup_name(freezing_slow_path);
-
-  uint32_t* freezing_slow_path_src = (uint32_t*)freezing_slow_path;
-  for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_CONFIG_DEBUG
-    printk("dont_kill_freeze: freezing_slow_path %x %llx\n", i, freezing_slow_path_src[i]);
-#endif /* CONFIG_CONFIG_DEBUG */
-    if (freezing_slow_path_src[i] == ARM64_RET) {
-      break;
-    } else if ((freezing_slow_path_src[i] & MASK_LDR_32_X0) == INST_LDR_32_X0) {
-      uint64_t imm12 = bits32(freezing_slow_path_src[i], 21, 10);
-      task_struct_flags_offset = sign64_extend((imm12 << 0b10u), 16u);
-      break;
-    } else if ((freezing_slow_path_src[i] & MASK_LDR_64_X0) == INST_LDR_64_X0) {
-      uint64_t imm12 = bits32(freezing_slow_path_src[i], 21, 10);
-      task_struct_flags_offset = sign64_extend((imm12 << 0b11u), 16u);
-      break;
-    }
-  }
-  if (task_struct_flags_offset == UZERO) {
-    return -11;
-  }
 
   return 0;
 }
@@ -150,9 +130,9 @@ static long calculate_offsets() {
 static long inline_hook_init(const char* args, const char* event, void* __user reserved) {
   lookup_name(cgroup_freezing);
   lookup_name(do_send_sig_info);
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_CMDLINE
   lookup_name(get_cmdline);
-#endif /* CONFIG_DEBUG */
+#endif /* CONFIG_DEBUG_CMDLINE */
 
   int rc = calculate_offsets();
   if (rc < 0) {
