@@ -104,18 +104,18 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
 
 static long calculate_offsets() {
   // 获取 task_struct->jobctl
-  void (*do_signal_stop)(struct task_struct* t);
-  lookup_name(do_signal_stop);
+  void (*task_clear_jobctl_trapping)(struct task_struct* t);
+  lookup_name(task_clear_jobctl_trapping);
 
-  uint32_t* do_signal_stop_src = (uint32_t*)do_signal_stop;
-  for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_CONFIG_DEBUG
-    printk("dont_kill_freeze: do_signal_stop %x %llx\n", i, do_signal_stop_src[i]);
-#endif /* CONFIG_CONFIG_DEBUG */
-    if (do_signal_stop_src[i] == ARM64_RET) {
+  uint32_t* task_clear_jobctl_trapping_src = (uint32_t*)task_clear_jobctl_trapping;
+  for (u32 i = 0; i < 0x10; i++) {
+#ifdef CONFIG_DEBUG
+    printk("dont_kill_freeze: task_clear_jobctl_trapping %x %llx\n", i, task_clear_jobctl_trapping_src[i]);
+#endif /* CONFIG_DEBUG */
+    if (task_clear_jobctl_trapping_src[i] == ARM64_RET) {
       break;
-    } else if ((do_signal_stop_src[i] & MASK_LDR_64_) == INST_LDR_64_ && (do_signal_stop_src[i - 1] & MASK_MRS_SP_EL0) == INST_MRS_SP_EL0) {
-      uint64_t imm12 = bits32(do_signal_stop_src[i], 21, 10);
+    } else if ((task_clear_jobctl_trapping_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0) {
+      uint64_t imm12 = bits32(task_clear_jobctl_trapping_src[i], 21, 10);
       task_struct_jobctl_offset = sign64_extend((imm12 << 0b11u), 16u);
       break;
     }

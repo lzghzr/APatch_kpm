@@ -19,16 +19,9 @@
 typedef uint32_t inst_type_t;
 typedef uint32_t inst_mask_t;
 
-#define INST_LDR_32_X0 0xB9400000u
-#define INST_LDR_64_ 0xF9400000u
-#define INST_LDR_64_X0 0xF9400000u
-#define INST_MRS_SP_EL0 0xD5384100u
-#define INST_STR_32_x0 0xB9000000u
+#define INST_LDR_64_Rn_X0 0xF9400000u
 
-#define MASK_LDR_32_X0 0xFFC003E0u
-#define MASK_LDR_64_ 0xFFC00000u
-#define MASK_LDR_64_X0 0xFFC003E0u
-#define MASK_MRS_SP_EL0 0xFFFFFFE0u
+#define MASK_LDR_64_Rn_X0 0xFFC003E0u
 
 #define ARM64_RET 0xD65F03C0
 
