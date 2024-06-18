@@ -119,6 +119,7 @@ int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
 static uint64_t task_struct_jobctl_offset = UZERO, task_struct_pid_offset = UZERO, task_struct_group_leader_offset = UZERO,
 binder_proc_alloc_offset = UZERO, binder_proc_context_offset = UZERO, binder_proc_inner_lock_offset = UZERO, binder_proc_outer_lock_offset = UZERO,
 binder_alloc_pid_offset = UZERO, binder_alloc_buffer_size_offset = UZERO, binder_alloc_free_async_space_offset = UZERO, binder_alloc_vma_offset = UZERO,
+// 实际上会被编译器优化为 bool
 binder_transaction_buffer_release_ver5 = UZERO, binder_transaction_buffer_release_ver4 = UZERO;
 
 static struct sock* rekernel_netlink;
@@ -283,6 +284,10 @@ static void rekernel_report(int reporttype, int type, pid_t src_pid, struct task
     return;
   }
 #ifdef CONFIG_DEBUG
+  printk("re_kernel: %s\n", binder_kmsg);
+  printk("re_kernel: src_comm=%s,dst_comm=%s\n", get_task_comm(src), get_task_comm(dst));
+#endif /* CONFIG_DEBUG */
+#ifdef CONFIG_DEBUG_CMDLINE
   char src_cmdline[PATH_MAX], dst_cmdline[PATH_MAX];
   memset(&src_cmdline, 0, PATH_MAX);
   memset(&dst_cmdline, 0, PATH_MAX);
@@ -291,9 +296,8 @@ static void rekernel_report(int reporttype, int type, pid_t src_pid, struct task
   src_cmdline[res] = '\0';
   res = get_cmdline(dst, dst_cmdline, PATH_MAX - 1);
   dst_cmdline[res] = '\0';
-  printk("re_kernel: %s\n", binder_kmsg);
-  printk("re_kernel: src_cmdline=%s,src_comm=%s,dst_cmdline=%s,dst_comm=%s\n", src_cmdline, get_task_comm(src), dst_cmdline, get_task_comm(dst));
-#endif /* CONFIG_DEBUG */
+  printk("re_kernel: src_cmdline=%s,dst_cmdline=%s\n", src_cmdline, dst_cmdline);
+#endif /* CONFIG_DEBUG_CMDLINE */
   send_netlink_message(binder_kmsg, strlen(binder_kmsg));
 }
 
@@ -517,7 +521,7 @@ static long calculate_offsets() {
       break;
     } else if (binder_transaction_src[i] == 0xAA0003F6u) { // mov x22, x0
       mov_x22_x0 = true;
-    } else if ((binder_transaction_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0
+    } else if (((binder_transaction_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0 && (binder_transaction_src[i] & MASK_LDR_64_Rn_X0_Rt_X0) != INST_LDR_64_Rn_X0_Rt_X0)
       || (mov_x22_x0 && (binder_transaction_src[i] & MASK_LDR_64_X22) == INST_LDR_64_X22)) {
       uint64_t imm12 = bits32(binder_transaction_src[i], 21, 10);
       binder_proc_context_offset = sign64_extend((imm12 << 0b11u), 16u);
