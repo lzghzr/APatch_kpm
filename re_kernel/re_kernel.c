@@ -83,8 +83,6 @@ loff_t kfunc_def(seq_lseek)(struct file* file, loff_t offset, int whence);
 void kfunc_def(seq_printf)(struct seq_file* m, const char* f, ...);
 int kfunc_def(single_open)(struct file* file, int (*show)(struct seq_file*, void*), void* data);
 int kfunc_def(single_release)(struct inode* inode, struct file* file);
-// netfilter
-kuid_t kfunc_def(sock_i_uid)(struct sock* sk);
 // hook binder_proc_transaction
 static int (*binder_proc_transaction)(struct binder_transaction* t, struct binder_proc* proc, struct binder_thread* thread);
 // free the outdated transaction and buffer
@@ -98,6 +96,8 @@ static struct binder_stats kvar_def(binder_stats);
 static int (*do_send_sig_info)(int sig, struct siginfo* info, struct task_struct* p, enum pid_type type);
 
 #ifdef CONFIG_NETWORK
+// netfilter
+kuid_t kfunc_def(sock_i_uid)(struct sock* sk);
 // hook tcp_rcv
 static int (*tcp_v4_rcv)(struct sk_buff* skb);
 static int (*tcp_v6_rcv)(struct sk_buff* skb);
@@ -111,9 +111,9 @@ int kfunc_def(tracepoint_probe_register)(struct tracepoint* tp, void* probe, voi
 int kfunc_def(tracepoint_probe_unregister)(struct tracepoint* tp, void* probe, void* data);
 // trace_binder_transaction
 struct tracepoint kvar_def(__tracepoint_binder_transaction);
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_CMDLINE
 int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
-#endif /* CONFIG_DEBUG */
+#endif /* CONFIG_DEBUG_CMDLINE */
 
 // 最好初始化一个大于 0xffffffff 的值, 否则编译器优化后, 全局变量可能出错
 static uint64_t task_struct_jobctl_offset = UZERO, task_struct_pid_offset = UZERO, task_struct_group_leader_offset = UZERO,
@@ -616,8 +616,6 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   kfunc_lookup_name(single_open);
   kfunc_lookup_name(single_release);
 
-  kfunc_lookup_name(sock_i_uid);
-
   kfunc_lookup_name(tracepoint_probe_register);
   kfunc_lookup_name(tracepoint_probe_unregister);
 
@@ -636,12 +634,14 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   lookup_name(do_send_sig_info);
 
 #ifdef CONFIG_NETWORK
+  kfunc_lookup_name(sock_i_uid);
+
   lookup_name(tcp_v4_rcv);
   lookup_name(tcp_v6_rcv);
 #endif /* CONFIG_NETWORK */
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_CMDLINE
   kfunc_lookup_name(get_cmdline);
-#endif /* CONFIG_DEBUG */
+#endif /* CONFIG_DEBUG_CMDLINE */
 
   int rc = 0;
   rc = calculate_offsets();
