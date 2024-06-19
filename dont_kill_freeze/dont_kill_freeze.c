@@ -61,9 +61,9 @@ static inline bool frozen_task_group(struct task_struct* task) {
   return (jobctl_frozen(task) || cgroup_freezing(task));
 }
 
-static inline long get_oom_score_adj(struct task_struct* task) {
+static inline short get_oom_score_adj(struct task_struct* task) {
   struct signal_struct* signal = *(struct signal_struct**)((uintptr_t)task + task_struct_signal_offset);
-  long oom_score_adj = *(long*)((uintptr_t)signal + signal_struct_oom_score_adj_offset);
+  short oom_score_adj = *(short*)((uintptr_t)signal + signal_struct_oom_score_adj_offset);
   return oom_score_adj;
 }
 
@@ -74,7 +74,8 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
 #ifdef CONFIG_DEBUG
   if (sig == SIGKILL
     && task_uid(dst).val > MIN_USERAPP_UID) {
-    printk("dont_kill_freeze: killer=%d,comm=%s,dst=%d,frozen=%d\n", task_uid(current).val, get_task_comm(current), task_uid(dst).val, frozen_task_group(dst));
+    printk("dont_kill_freeze: killer=%d,comm=%s,dst=%d,oom_score_adj=%d,frozen=%d\n",
+      task_uid(current).val, get_task_comm(current), task_uid(dst).val, get_oom_score_adj(dst), frozen_task_group(dst));
   }
 #endif /* CONFIG_DEBUG */
 // cmdline 速度非常非常慢
