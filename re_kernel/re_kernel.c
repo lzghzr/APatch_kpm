@@ -117,7 +117,7 @@ int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
 
 // 最好初始化一个大于 0xffffffff 的值, 否则编译器优化后, 全局变量可能出错
 static uint64_t task_struct_jobctl_offset = UZERO, task_struct_pid_offset = UZERO, task_struct_group_leader_offset = UZERO,
-binder_proc_alloc_offset = UZERO, binder_proc_context_offset = UZERO, binder_proc_inner_lock_offset = UZERO, binder_proc_outer_lock_offset = UZERO,
+binder_proc_alloc_offset = UZERO, binder_proc_context_offset = UZERO, binder_proc_inner_lock_offset = UZERO, binder_proc_outer_lock_offset = UZERO, binder_proc_is_frozen = UZERO,
 binder_alloc_pid_offset = UZERO, binder_alloc_buffer_size_offset = UZERO, binder_alloc_free_async_space_offset = UZERO, binder_alloc_vma_offset = UZERO,
 // 实际上会被编译器优化为 bool
 binder_transaction_buffer_release_ver5 = UZERO, binder_transaction_buffer_release_ver4 = UZERO;
@@ -154,6 +154,15 @@ static inline void binder_inner_proc_lock(struct binder_proc* proc) {
 static inline void binder_inner_proc_unlock(struct binder_proc* proc) {
   spinlock_t* inner_lock = (spinlock_t*)((uintptr_t)proc + binder_proc_inner_lock_offset);
   spin_unlock(inner_lock);
+}
+
+// binder_is_frozen
+static inline bool binder_is_frozen(struct binder_proc* proc) {
+  bool is_frozen = false;
+  if (binder_proc_is_frozen != UZERO) {
+    is_frozen = *(bool*)((uintptr_t)proc + binder_proc_is_frozen);
+  }
+  return is_frozen;
 }
 
 // cgroupv2_freeze
@@ -331,6 +340,9 @@ static void binder_overflow_handler(pid_t src_pid, struct task_struct* src, pid_
 static void rekernel_binder_transaction(void* data, bool reply, struct binder_transaction* t, struct binder_node* target_node) {
   if (!t->to_proc)
     return;
+  // binder 冻结时不再传递消息
+  if (binder_is_frozen(t->to_proc))
+    return;
 
   if (reply) {
     binder_reply_handler(task_pid(current), current, t->to_proc->pid, t->to_proc->tsk, false);
@@ -398,6 +410,10 @@ static inline void binder_stats_deleted(enum binder_stat_types type) {
 static void binder_proc_transaction_before(hook_fargs3_t* args, void* udata) {
   struct binder_transaction* t = (struct binder_transaction*)args->arg0;
   struct binder_proc* proc = (struct binder_proc*)args->arg1;
+  // binder 冻结时不再清理过时消息
+  if (binder_is_frozen(proc))
+    return;
+
   // 兼容不支持 trace 的内核
   if (trace == UZERO) {
     rekernel_binder_transaction(NULL, false, t, NULL);
@@ -485,6 +501,25 @@ static long calculate_offsets() {
       binder_transaction_buffer_release_ver4 = IZERO;
     } else if ((binder_transaction_buffer_release_src[i] & MASK_MOV_Rm_3_Rn_WZR) == INST_MOV_Rm_3_Rn_WZR) {
       binder_transaction_buffer_release_ver4 = IZERO;
+    }
+  }
+  // 获取 binder_proc->is_frozen, 没有就是不支持
+  uint32_t* binder_proc_transaction_src = (uint32_t*)binder_proc_transaction;
+  for (u32 i = 0; i < 0x100; i++) {
+#ifdef CONFIG_DEBUG
+    printk("re_kernel: binder_proc_transaction %x %llx\n", i, binder_proc_transaction_src[i]);
+#endif /* CONFIG_DEBUG */
+    if (binder_proc_transaction_src[i] == ARM64_RET) {
+      break;
+    } else if ((binder_proc_transaction_src[i] & MASK_MOVZ_imm16_0x7212) == INST_MOVZ_imm16_0x7212) {
+      for (u32 j = 0; j < 0x5; j++) {
+        if ((binder_proc_transaction_src[i - j] & MASK_LDRB) == INST_LDRB) {
+          uint64_t imm12 = bits32(binder_proc_transaction_src[i - j], 21, 10);
+          binder_proc_is_frozen = sign64_extend((imm12), 16u);
+          break;
+        }
+      }
+      break;
     }
   }
   // 获取 task_struct->jobctl
@@ -685,11 +720,13 @@ binder_alloc_vma_offset);
 re_kernel: binder_proc_alloc_offset=0x%llx\n\
 re_kernel: binder_proc_context_offset=0x%llx\n\
 re_kernel: binder_proc_inner_lock_offset=0x%llx\n\
-re_kernel: binder_proc_outer_lock_offset=0x%llx\n",
+re_kernel: binder_proc_outer_lock_offset=0x%llx\n\
+re_kernel: binder_proc_is_frozen=0x%llx\n",
 binder_proc_alloc_offset,
 binder_proc_context_offset,
 binder_proc_inner_lock_offset,
-binder_proc_outer_lock_offset);
+binder_proc_outer_lock_offset,
+binder_proc_is_frozen);
   printk("\
 re_kernel: binder_transaction_buffer_release_ver5=0x%llx\n\
 re_kernel: binder_transaction_buffer_release_ver4=0x%llx\n",

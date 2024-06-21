@@ -4,7 +4,10 @@
 
 ## 更新记录
 ### 6.0.5
-变更 binder_proc->context 的搜索条件，变更 task_struct->jobctl 获取方式，移除 frozen()
+变更 binder_proc->context 的搜索条件<br />
+变更 task_struct->jobctl 获取方式<br />
+移除 frozen()<br />
+binder 被冻结时不再有动作
 ### 6.0.4
 再次扩大 binder_proc->alloc 的搜索范围
 ### 6.0.3
