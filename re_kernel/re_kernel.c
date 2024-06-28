@@ -89,7 +89,7 @@ static int (*binder_proc_transaction)(struct binder_transaction* t, struct binde
 static void (*binder_transaction_buffer_release)(struct binder_proc* proc, struct binder_thread* thread, struct binder_buffer* buffer, binder_size_t off_end_offset, bool is_failure);
 static void (*binder_transaction_buffer_release_v4)(struct binder_proc* proc, struct binder_buffer* buffer, binder_size_t failed_at, bool is_failure);
 static void (*binder_transaction_buffer_release_v3)(struct binder_proc* proc, struct binder_buffer* buffer, binder_size_t* failed_at);
-static void(*binder_alloc_free_buf)(struct binder_alloc* alloc, struct binder_buffer* buffer);
+static void (*binder_alloc_free_buf)(struct binder_alloc* alloc, struct binder_buffer* buffer);
 void kfunc_def(kfree)(const void* objp);
 static struct binder_stats kvar_def(binder_stats);
 // hook do_send_sig_info
@@ -348,10 +348,6 @@ static void rekernel_binder_transaction(void* data, bool reply, struct binder_tr
       binder_trans_handler(t->from->proc->pid, t->from->proc->tsk, t->to_proc->pid, t->to_proc->tsk, false);
     }
   } else { // oneway=1
-    // binder 冻结时增加 TF_UPDATE_TXN
-    if (binder_is_frozen(t->to_proc)) {
-      t->flags |= TF_UPDATE_TXN;
-    }
     // binder_trans_handler(task_pid(current), current, t->to_proc->pid, t->to_proc->tsk, true);
 
     struct binder_alloc* target_alloc = (struct binder_alloc*)((uintptr_t)t->to_proc + binder_proc_alloc_offset);
@@ -415,19 +411,21 @@ static void binder_proc_transaction_before(hook_fargs3_t* args, void* udata) {
   if (trace == UZERO) {
     rekernel_binder_transaction(NULL, false, t, NULL);
   }
-  // binder 冻结时不再清理过时消息
-  if (t->to_proc && binder_is_frozen(t->to_proc))
+  if (!(t->flags & TF_ONE_WAY))
     return;
 
-  if ((t->flags & TF_ONE_WAY)
-    && t->to_proc
-    && t->to_proc->tsk
-    && frozen_task_group(t->to_proc->tsk)) {
+  // binder 冻结时不再清理过时消息并增加 TF_UPDATE_TXN
+  if (binder_is_frozen(proc)) {
+    t->flags |= TF_UPDATE_TXN;
+    return;
+  }
+
+  if (frozen_task_group(proc->tsk)) {
     struct binder_node* node = t->buffer->target_node;
     if (!node)
       return;
 
-    struct binder_alloc* target_alloc = (struct binder_alloc*)((uintptr_t)t->to_proc + binder_proc_alloc_offset);
+    struct binder_alloc* target_alloc = (struct binder_alloc*)((uintptr_t)proc + binder_proc_alloc_offset);
 
     binder_node_lock(node);
     binder_inner_proc_lock(proc);
@@ -441,14 +439,14 @@ static void binder_proc_transaction_before(hook_fargs3_t* args, void* udata) {
     binder_node_unlock(node);
 
     if (t_outdated) {
-#ifdef CONFIG_DEBUG
-      printk("re_kernel: free_outdated pid=%d,uid=%d,data_size=%d\n", t->to_proc->pid, task_uid(t->to_proc->tsk).val, t_outdated->buffer->data_size);
-#endif /* CONFIG_DEBUG */
       struct binder_buffer* buffer = t_outdated->buffer;
+#ifdef CONFIG_DEBUG
+      printk("re_kernel: free_outdated pid=%d,uid=%d,data_size=%d\n", proc->pid, task_uid(proc->tsk).val, buffer->data_size);
+#endif /* CONFIG_DEBUG */
 
       t_outdated->buffer = NULL;
       buffer->transaction = NULL;
-      binder_release_entire_buffer(t->to_proc, NULL, buffer, false);
+      binder_release_entire_buffer(proc, NULL, buffer, false);
       binder_alloc_free_buf(target_alloc, buffer);
       kfree(t_outdated);
       binder_stats_deleted(BINDER_STAT_TRANSACTION);
@@ -700,38 +698,24 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
 }
 
 static long inline_hook_control0(const char* ctl_args, char* __user out_msg, int outlen) {
-  printk("\
-re_kernel: task_struct_jobctl_offset=0x%llx\n\
-re_kernel: task_struct_pid_offset=0x%llx\n\
-re_kernel: task_struct_group_leader_offset=0x%llx\n",
-task_struct_jobctl_offset,
-task_struct_pid_offset,
-task_struct_group_leader_offset);
-  printk("\
-re_kernel: binder_alloc_pid_offset=0x%llx\n\
-re_kernel: binder_alloc_buffer_size_offset=0x%llx\n\
-re_kernel: binder_alloc_free_async_space_offset=0x%llx\n\
-re_kernel: binder_alloc_vma_offset=0x%llx\n",
-binder_alloc_pid_offset,
-binder_alloc_buffer_size_offset,
-binder_alloc_free_async_space_offset,
-binder_alloc_vma_offset);
-  printk("\
-re_kernel: binder_proc_alloc_offset=0x%llx\n\
-re_kernel: binder_proc_context_offset=0x%llx\n\
-re_kernel: binder_proc_inner_lock_offset=0x%llx\n\
-re_kernel: binder_proc_outer_lock_offset=0x%llx\n\
-re_kernel: binder_proc_is_frozen_offset=0x%llx\n",
-binder_proc_alloc_offset,
-binder_proc_context_offset,
-binder_proc_inner_lock_offset,
-binder_proc_outer_lock_offset,
-binder_proc_is_frozen_offset);
-  printk("\
-re_kernel: binder_transaction_buffer_release_ver5=0x%llx\n\
-re_kernel: binder_transaction_buffer_release_ver4=0x%llx\n",
-binder_transaction_buffer_release_ver5,
-binder_transaction_buffer_release_ver4);
+  printk("re_kernel: task_struct_jobctl_offset=0x%llx\n", task_struct_jobctl_offset);
+  printk("re_kernel: task_struct_pid_offset=0x%llx\n", task_struct_pid_offset);
+  printk("re_kernel: task_struct_group_leader_offset=0x%llx\n", task_struct_group_leader_offset);
+
+  printk("re_kernel: binder_proc_alloc_offset=0x%llx\n", binder_proc_alloc_offset);
+  printk("re_kernel: binder_proc_context_offset=0x%llx\n", binder_proc_context_offset);
+  printk("re_kernel: binder_proc_inner_lock_offset=0x%llx\n", binder_proc_inner_lock_offset);
+  printk("re_kernel: binder_proc_outer_lock_offset=0x%llx\n", binder_proc_outer_lock_offset);
+  printk("re_kernel: binder_proc_is_frozen_offset=0x%llx\n", binder_proc_is_frozen_offset);
+
+  printk("re_kernel: binder_alloc_pid_offset=0x%llx\n", binder_alloc_pid_offset);
+  printk("re_kernel: binder_alloc_buffer_size_offset=0x%llx\n", binder_alloc_buffer_size_offset);
+  printk("re_kernel: binder_alloc_free_async_space_offset=0x%llx\n", binder_alloc_free_async_space_offset);
+  printk("re_kernel: binder_alloc_vma_offset=0x%llx\n", binder_alloc_vma_offset);
+
+  printk("re_kernel: binder_transaction_buffer_release_ver5=0x%llx\n", binder_transaction_buffer_release_ver5);
+  printk("re_kernel: binder_transaction_buffer_release_ver4=0x%llx\n", binder_transaction_buffer_release_ver4);
+
   char msg[64];
   snprintf(msg, sizeof(msg), "_(._.)_");
   compat_copy_to_user(out_msg, msg, sizeof(msg));
