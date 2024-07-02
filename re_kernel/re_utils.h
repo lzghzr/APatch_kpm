@@ -22,7 +22,7 @@ typedef uint32_t inst_mask_t;
 
 #define INST_ADD_64 0x91000000u
 #define INST_ADD_64_Rn_X0 0x91000000u
-#define INST_ADD_64_Rn_X19_Rd_X0 0x91000260u
+#define INST_ADD_64_Rd_X0_Rn_X19 0x91000260u
 #define INST_ADD_64_Rd_X0 0x91000000u
 #define INST_ADD_64_Rd_X1 0x91000001u
 #define INST_BL 0x94000000
@@ -56,7 +56,7 @@ typedef uint32_t inst_mask_t;
 
 #define MASK_ADD_64 0xFF800000u
 #define MASK_ADD_64_Rn_X0 0xFF8003E0u
-#define MASK_ADD_64_Rn_X19_Rd_X0 0xFF8003FFu
+#define MASK_ADD_64_Rd_X0_Rn_X19 0xFF8003FFu
 #define MASK_ADD_64_Rd_X0 0xFF80001Fu
 #define MASK_ADD_64_Rd_X1 0xFF80001Fu
 #define MASK_BL 0xFC000000

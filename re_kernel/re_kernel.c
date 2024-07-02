@@ -414,9 +414,8 @@ static void binder_proc_transaction_before(hook_fargs3_t* args, void* udata) {
   if (!(t->flags & TF_ONE_WAY))
     return;
 
-  // binder 冻结时不再清理过时消息并增加 TF_UPDATE_TXN
+  // binder 冻结时不再清理过时消息
   if (binder_is_frozen(proc)) {
-    t->flags |= TF_UPDATE_TXN;
     return;
   }
 
@@ -501,6 +500,10 @@ static long calculate_offsets() {
       binder_transaction_buffer_release_ver4 = IZERO;
     }
   }
+#ifdef CONFIG_DEBUG
+  printk("re_kernel: binder_transaction_buffer_release_ver5=0x%llx\n", binder_transaction_buffer_release_ver5);
+  printk("re_kernel: binder_transaction_buffer_release_ver4=0x%llx\n", binder_transaction_buffer_release_ver4);
+#endif /* CONFIG_DEBUG */
   // 获取 binder_proc->is_frozen, 没有就是不支持
   uint32_t* binder_proc_transaction_src = (uint32_t*)binder_proc_transaction;
   for (u32 i = 0; i < 0x100; i++) {
@@ -520,6 +523,9 @@ static long calculate_offsets() {
       break;
     }
   }
+#ifdef CONFIG_DEBUG
+  printk("re_kernel: binder_proc_is_frozen_offset=0x%llx\n", binder_proc_is_frozen_offset);
+#endif /* CONFIG_DEBUG */
   // 获取 task_struct->jobctl
   void (*task_clear_jobctl_trapping)(struct task_struct* t);
   lookup_name(task_clear_jobctl_trapping);
@@ -537,6 +543,9 @@ static long calculate_offsets() {
       break;
     }
   }
+#ifdef CONFIG_DEBUG
+  printk("re_kernel: task_struct_jobctl_offset=0x%llx\n", task_struct_jobctl_offset);
+#endif /* CONFIG_DEBUG */
   if (task_struct_jobctl_offset == UZERO) {
     return -11;
   }
@@ -563,6 +572,11 @@ static long calculate_offsets() {
       break;
     }
   }
+#ifdef CONFIG_DEBUG
+  printk("re_kernel: binder_proc_context_offset=0x%llx\n", binder_proc_context_offset);
+  printk("re_kernel: binder_proc_inner_lock_offset=0x%llx\n", binder_proc_inner_lock_offset);
+  printk("re_kernel: binder_proc_outer_lock_offset=0x%llx\n", binder_proc_outer_lock_offset);
+#endif /* CONFIG_DEBUG */
   if (binder_proc_context_offset == UZERO || binder_proc_inner_lock_offset == UZERO || binder_proc_outer_lock_offset == UZERO) {
     return -11;
   }
@@ -580,7 +594,7 @@ static long calculate_offsets() {
 #endif /* CONFIG_DEBUG */
     if (binder_free_proc_src[i] == ARM64_MOV_x29_SP) {
       break;
-    } else if ((binder_free_proc_src[i] & MASK_ADD_64_Rn_X19_Rd_X0) == INST_ADD_64_Rn_X19_Rd_X0 && (binder_free_proc_src[i + 1] & MASK_BL) == INST_BL) {
+    } else if ((binder_free_proc_src[i] & MASK_ADD_64_Rd_X0_Rn_X19) == INST_ADD_64_Rd_X0_Rn_X19 && (binder_free_proc_src[i + 1] & MASK_BL) == INST_BL) {
       uint32_t sh = bit(binder_free_proc_src[i], 22);
       uint64_t imm12 = imm12 = bits32(binder_free_proc_src[i], 21, 10);
       if (sh) {
@@ -591,6 +605,9 @@ static long calculate_offsets() {
       break;
     }
   }
+#ifdef CONFIG_DEBUG
+  printk("re_kernel: binder_proc_alloc_offset=0x%llx\n", binder_proc_alloc_offset);
+#endif /* CONFIG_DEBUG */
   if (binder_proc_alloc_offset == UZERO) {
     return -11;
   }
@@ -620,6 +637,14 @@ static long calculate_offsets() {
       task_struct_group_leader_offset = sign64_extend((imm12 << 0b11u), 16u);
     }
   }
+#ifdef CONFIG_DEBUG
+  printk("re_kernel: binder_alloc_pid_offset=0x%llx\n", binder_alloc_pid_offset);
+  printk("re_kernel: binder_alloc_buffer_size_offset=0x%llx\n", binder_alloc_buffer_size_offset);
+  printk("re_kernel: binder_alloc_free_async_space_offset=0x%llx\n", binder_alloc_free_async_space_offset);
+  printk("re_kernel: binder_alloc_vma_offset=0x%llx\n", binder_alloc_vma_offset);
+  printk("re_kernel: task_struct_pid_offset=0x%llx\n", task_struct_pid_offset);
+  printk("re_kernel: task_struct_group_leader_offset=0x%llx\n", task_struct_group_leader_offset);
+#endif /* CONFIG_DEBUG */
   if (binder_alloc_pid_offset == UZERO || task_struct_pid_offset == UZERO || task_struct_group_leader_offset == UZERO) {
     return -11;
   }
@@ -698,24 +723,6 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
 }
 
 static long inline_hook_control0(const char* ctl_args, char* __user out_msg, int outlen) {
-  printk("re_kernel: task_struct_jobctl_offset=0x%llx\n", task_struct_jobctl_offset);
-  printk("re_kernel: task_struct_pid_offset=0x%llx\n", task_struct_pid_offset);
-  printk("re_kernel: task_struct_group_leader_offset=0x%llx\n", task_struct_group_leader_offset);
-
-  printk("re_kernel: binder_proc_alloc_offset=0x%llx\n", binder_proc_alloc_offset);
-  printk("re_kernel: binder_proc_context_offset=0x%llx\n", binder_proc_context_offset);
-  printk("re_kernel: binder_proc_inner_lock_offset=0x%llx\n", binder_proc_inner_lock_offset);
-  printk("re_kernel: binder_proc_outer_lock_offset=0x%llx\n", binder_proc_outer_lock_offset);
-  printk("re_kernel: binder_proc_is_frozen_offset=0x%llx\n", binder_proc_is_frozen_offset);
-
-  printk("re_kernel: binder_alloc_pid_offset=0x%llx\n", binder_alloc_pid_offset);
-  printk("re_kernel: binder_alloc_buffer_size_offset=0x%llx\n", binder_alloc_buffer_size_offset);
-  printk("re_kernel: binder_alloc_free_async_space_offset=0x%llx\n", binder_alloc_free_async_space_offset);
-  printk("re_kernel: binder_alloc_vma_offset=0x%llx\n", binder_alloc_vma_offset);
-
-  printk("re_kernel: binder_transaction_buffer_release_ver5=0x%llx\n", binder_transaction_buffer_release_ver5);
-  printk("re_kernel: binder_transaction_buffer_release_ver4=0x%llx\n", binder_transaction_buffer_release_ver4);
-
   char msg[64];
   snprintf(msg, sizeof(msg), "_(._.)_");
   compat_copy_to_user(out_msg, msg, sizeof(msg));

@@ -4,7 +4,8 @@
 
 ## 更新记录
 ### 6.0.6
-优化 binder 被冻结时的体验
+优化 binder 被冻结时的体验<br />
+为了兼容5.4内核, 不再增加 TF_UPDATE_TXN
 ### 6.0.5
 变更 binder_proc->context 的搜索条件<br />
 变更 task_struct->jobctl 获取方式<br />
