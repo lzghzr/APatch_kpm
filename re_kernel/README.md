@@ -3,9 +3,10 @@
 配合墓碑模块，当应用收到 `binder` 同步信息时，临时解冻被冻结的应用
 
 ## 更新记录
-### 6.0.6
-优化 binder 被冻结时的体验<br />
+### 6.0.7
 为了兼容5.4内核, 不再增加 TF_UPDATE_TXN
+### 6.0.6
+优化 binder 被冻结时的体验
 ### 6.0.5
 变更 binder_proc->context 的搜索条件<br />
 变更 task_struct->jobctl 获取方式<br />
