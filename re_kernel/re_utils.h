@@ -214,21 +214,6 @@ static inline void proc_remove(struct proc_dir_entry* de) {
   kfunc_call_void(proc_remove, de);
 }
 
-extern void kfunc_def(seq_printf)(struct seq_file* m, const char* f, ...);
-static inline void seq_printf(struct seq_file* m, const char* f, ...) {
-  va_list args;
-  va_start(args, f);
-  kfunc(seq_printf)(m, f, args);
-  va_end(args);
-}
-
-extern int kfunc_def(single_open)(struct file* file, int (*show)(struct seq_file*, void*), void* data);
-static inline int single_open(struct file* file, int (*show)(struct seq_file*, void*), void* data) {
-  kfunc_call(single_open, file, show, data);
-  kfunc_not_found();
-  return -ESRCH;
-}
-
 extern kuid_t kfunc_def(sock_i_uid)(struct sock* sk);
 static inline kuid_t sock_i_uid(struct sock* sk) {
   kfunc_call(sock_i_uid, sk);

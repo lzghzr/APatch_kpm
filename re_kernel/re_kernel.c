@@ -77,12 +77,6 @@ void kfunc_def(netlink_kernel_release)(struct sock* sk);
 struct proc_dir_entry* kfunc_def(proc_mkdir)(const char* name, struct proc_dir_entry* parent);
 struct proc_dir_entry* kfunc_def(proc_create_data)(const char* name, umode_t mode, struct proc_dir_entry* parent, const struct file_operations* proc_fops, void* data);
 void kfunc_def(proc_remove)(struct proc_dir_entry* de);
-
-ssize_t kfunc_def(seq_read)(struct file* file, char __user* buf, size_t size, loff_t* ppos);
-loff_t kfunc_def(seq_lseek)(struct file* file, loff_t offset, int whence);
-void kfunc_def(seq_printf)(struct seq_file* m, const char* f, ...);
-int kfunc_def(single_open)(struct file* file, int (*show)(struct seq_file*, void*), void* data);
-int kfunc_def(single_release)(struct inode* inode, struct file* file);
 // hook binder_proc_transaction
 static int (*binder_proc_transaction)(struct binder_transaction* t, struct binder_proc* proc, struct binder_thread* thread);
 // free the outdated transaction and buffer
@@ -176,40 +170,13 @@ static inline bool frozen_task_group(struct task_struct* task) {
 }
 
 // 创建 netlink 服务
-static __noinline void netlink_rcv_msg(struct sk_buff* skb) { }
-
-static int rekernel_unit_show(struct seq_file* m, void* v) {
-  kfunc(seq_printf)(m, "%d\n", rekernel_netlink_unit);
-  return 0;
-}
-static __noinline int rekernel_unit_open(struct inode* inode, struct file* file) {
-  return single_open(file, rekernel_unit_show, NULL);
-}
-static __noinline ssize_t seq_read(struct file* file, char __user* buf, size_t size, loff_t* ppos) {
-  return kfunc(seq_read)(file, buf, size, ppos);
-}
-static __noinline loff_t seq_lseek(struct file* file, loff_t offset, int whence) {
-  return kfunc(seq_lseek)(file, offset, whence);
-}
-static __noinline int single_release(struct inode* inode, struct file* file) {
-  return kfunc(single_release)(inode, file);
-}
-static const struct file_operations rekernel_unit_fops = {
-    .open = rekernel_unit_open,
-    .read = seq_read,
-    .llseek = seq_lseek,
-    .release = single_release,
-    .owner = THIS_MODULE,
-};
+static const struct file_operations rekernel_unit_fops = {};
 
 static int start_rekernel_server(void) {
   if (rekernel_netlink_unit != UZERO) {
     return 0;
   }
-
-  struct netlink_kernel_cfg rekernel_cfg = {
-      .input = netlink_rcv_msg,
-  };
+  struct netlink_kernel_cfg rekernel_cfg = {};
 
   for (rekernel_netlink_unit = NETLINK_REKERNEL_MAX; rekernel_netlink_unit >= NETLINK_REKERNEL_MIN; rekernel_netlink_unit--) {
     rekernel_netlink = netlink_kernel_create(kvar(init_net), rekernel_netlink_unit, &rekernel_cfg);
@@ -229,7 +196,7 @@ static int start_rekernel_server(void) {
   } else {
     char buff[32];
     sprintf(buff, "%d", rekernel_netlink_unit);
-    rekernel_unit_entry = proc_create(buff, 0644, rekernel_dir, &rekernel_unit_fops);
+    rekernel_unit_entry = proc_create(buff, 0400, rekernel_dir, &rekernel_unit_fops);
     if (!rekernel_unit_entry) {
       printk("create rekernel unit failed!\n");
     }
@@ -365,7 +332,7 @@ static bool binder_can_update_transaction(struct binder_transaction* t1, struct 
   if (t1->to_proc->tsk == t2->to_proc->tsk
     && t1->code == t2->code
     && t1->flags == t2->flags
-    // && t1->buffer->pid == t2->buffer->pid // 4.19 以下无此数据
+    && binder_proc_is_frozen_offset == UZERO ? true : t1->buffer->pid == t2->buffer->pid // 4.19 以下无此数据
     && t1->buffer->target_node->ptr == t2->buffer->target_node->ptr
     && t1->buffer->target_node->cookie == t2->buffer->target_node->cookie)
     return true;
@@ -415,9 +382,8 @@ static void binder_proc_transaction_before(hook_fargs3_t* args, void* udata) {
     return;
 
   // binder 冻结时不再清理过时消息
-  if (binder_is_frozen(proc)) {
+  if (binder_is_frozen(proc))
     return;
-  }
 
   if (frozen_task_group(proc->tsk)) {
     struct binder_node* node = t->buffer->target_node;
@@ -667,12 +633,6 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   kfunc_lookup_name(proc_mkdir);
   kfunc_lookup_name(proc_create_data);
   kfunc_lookup_name(proc_remove);
-
-  kfunc_lookup_name(seq_read);
-  kfunc_lookup_name(seq_lseek);
-  kfunc_lookup_name(seq_printf);
-  kfunc_lookup_name(single_open);
-  kfunc_lookup_name(single_release);
 
   kfunc_lookup_name(tracepoint_probe_register);
   kfunc_lookup_name(tracepoint_probe_unregister);
