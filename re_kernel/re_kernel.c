@@ -109,9 +109,10 @@ struct tracepoint kvar_def(__tracepoint_binder_transaction);
 int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
 #endif /* CONFIG_DEBUG_CMDLINE */
 
-// 最好初始化一个大于 0xffffffff 的值, 否则编译器优化后, 全局变量可能出错
+// 最好初始化一个大于 0xFFFFFFFF 的值, 否则编译器优化后, 全局变量可能出错
 static uint64_t task_struct_jobctl_offset = UZERO, task_struct_pid_offset = UZERO, task_struct_group_leader_offset = UZERO,
-binder_proc_alloc_offset = UZERO, binder_proc_context_offset = UZERO, binder_proc_inner_lock_offset = UZERO, binder_proc_outer_lock_offset = UZERO, binder_proc_is_frozen_offset = UZERO,
+binder_proc_outstanding_txns_offset = UZERO, binder_proc_is_frozen_offset = UZERO,
+binder_proc_alloc_offset = UZERO, binder_proc_context_offset = UZERO, binder_proc_inner_lock_offset = UZERO, binder_proc_outer_lock_offset = UZERO,
 binder_alloc_pid_offset = UZERO, binder_alloc_buffer_size_offset = UZERO, binder_alloc_free_async_space_offset = UZERO, binder_alloc_vma_offset = UZERO,
 // 实际上会被编译器优化为 bool
 binder_transaction_buffer_release_ver5 = UZERO, binder_transaction_buffer_release_ver4 = UZERO;
@@ -354,6 +355,13 @@ static struct binder_transaction* binder_find_outdated_transaction_ilocked(struc
   return NULL;
 }
 
+static inline void outstanding_txns_dec(struct binder_proc* proc) {
+  if (binder_proc_outstanding_txns_offset != UZERO) {
+    int* outstanding_txns = (int*)((uintptr_t)proc + binder_proc_outstanding_txns_offset);
+    (*outstanding_txns)--;
+  }
+}
+
 static inline void binder_release_entire_buffer(struct binder_proc* proc, struct binder_thread* thread, struct binder_buffer* buffer, bool is_failure) {
   if (binder_transaction_buffer_release_ver5 == IZERO) {
     binder_size_t off_end_offset = ALIGN(buffer->data_size, sizeof(void*));
@@ -374,48 +382,54 @@ static inline void binder_stats_deleted(enum binder_stat_types type) {
 static void binder_proc_transaction_before(hook_fargs3_t* args, void* udata) {
   struct binder_transaction* t = (struct binder_transaction*)args->arg0;
   struct binder_proc* proc = (struct binder_proc*)args->arg1;
+  struct binder_node* node = t->buffer->target_node;
+  args->local.data0 = NULL;
   // 兼容不支持 trace 的内核
   if (trace == UZERO) {
     rekernel_binder_transaction(NULL, false, t, NULL);
   }
-  if (!(t->flags & TF_ONE_WAY))
+  if (!node || !(t->flags & TF_ONE_WAY))
     return;
 
   // binder 冻结时不再清理过时消息
-  if (binder_is_frozen(proc))
+  if (binder_is_frozen(proc) || !frozen_task_group(proc->tsk))
     return;
 
-  if (frozen_task_group(proc->tsk)) {
-    struct binder_node* node = t->buffer->target_node;
-    if (!node)
-      return;
-
-    struct binder_alloc* target_alloc = (struct binder_alloc*)((uintptr_t)proc + binder_proc_alloc_offset);
-
-    binder_node_lock(node);
-    binder_inner_proc_lock(proc);
-
-    struct binder_transaction* t_outdated = binder_find_outdated_transaction_ilocked(t, &node->async_todo);
-    if (t_outdated) {
-      list_del_init(&t_outdated->work.entry);
-    }
-
-    binder_inner_proc_unlock(proc);
+  binder_node_lock(node);
+  if (!node->has_async_transaction) {
     binder_node_unlock(node);
+    return;
+  }
+  binder_inner_proc_lock(proc);
 
-    if (t_outdated) {
-      struct binder_buffer* buffer = t_outdated->buffer;
+  struct binder_transaction* t_outdated = binder_find_outdated_transaction_ilocked(t, &node->async_todo);
+  if (t_outdated) {
+    list_del_init(&t_outdated->work.entry);
+    outstanding_txns_dec(proc);
+    args->local.data0 = (uint64_t)t_outdated;
+  }
+
+  binder_inner_proc_unlock(proc);
+  binder_node_unlock(node);
+}
+
+static void binder_proc_transaction_after(hook_fargs3_t* args, void* udata) {
+  struct binder_transaction* t_outdated = (struct binder_transaction*)args->local.data0;
+
+  if (t_outdated) {
+    struct binder_proc* proc = (struct binder_proc*)args->arg1;
+    struct binder_alloc* target_alloc = (struct binder_alloc*)((uintptr_t)proc + binder_proc_alloc_offset);
+    struct binder_buffer* buffer = t_outdated->buffer;
 #ifdef CONFIG_DEBUG
-      printk("re_kernel: free_outdated pid=%d,uid=%d,data_size=%d\n", proc->pid, task_uid(proc->tsk).val, buffer->data_size);
+    printk("re_kernel: free_outdated pid=%d,uid=%d,data_size=%d\n", proc->pid, task_uid(proc->tsk).val, buffer->data_size);
 #endif /* CONFIG_DEBUG */
 
-      t_outdated->buffer = NULL;
-      buffer->transaction = NULL;
-      binder_release_entire_buffer(proc, NULL, buffer, false);
-      binder_alloc_free_buf(target_alloc, buffer);
-      kfree(t_outdated);
-      binder_stats_deleted(BINDER_STAT_TRANSACTION);
-    }
+    t_outdated->buffer = NULL;
+    buffer->transaction = NULL;
+    binder_release_entire_buffer(proc, NULL, buffer, false);
+    binder_alloc_free_buf(target_alloc, buffer);
+    kfree(t_outdated);
+    binder_stats_deleted(BINDER_STAT_TRANSACTION);
   }
 }
 
@@ -482,7 +496,8 @@ static long calculate_offsets() {
       for (u32 j = 0; j < 0x5; j++) {
         if ((binder_proc_transaction_src[i - j] & MASK_LDRB) == INST_LDRB) {
           uint64_t imm12 = bits32(binder_proc_transaction_src[i - j], 21, 10);
-          binder_proc_is_frozen_offset = sign64_extend((imm12), 16u);
+          binder_proc_is_frozen_offset = sign64_extend((imm12), 16u);               // 0x71
+          binder_proc_outstanding_txns_offset = binder_proc_is_frozen_offset - 0x5; // 0x6C
           break;
         }
       }
@@ -490,6 +505,7 @@ static long calculate_offsets() {
     }
   }
 #ifdef CONFIG_DEBUG
+  printk("re_kernel: binder_proc_outstanding_txns_offset=0x%llx\n", binder_proc_outstanding_txns_offset);
   printk("re_kernel: binder_proc_is_frozen_offset=0x%llx\n", binder_proc_is_frozen_offset);
 #endif /* CONFIG_DEBUG */
   // 获取 task_struct->jobctl
@@ -671,7 +687,7 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
     trace = IZERO;
   }
 
-  hook_func(binder_proc_transaction, 3, binder_proc_transaction_before, NULL, NULL);
+  hook_func(binder_proc_transaction, 3, binder_proc_transaction_before, binder_proc_transaction_after, NULL);
   hook_func(do_send_sig_info, 4, do_send_sig_info_before, NULL, NULL);
 
 #ifdef CONFIG_NETWORK
