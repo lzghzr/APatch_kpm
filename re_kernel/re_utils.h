@@ -78,8 +78,8 @@ typedef uint32_t inst_mask_t;
 #define MASK_MOV_Rm_3_Rn_WZR 0x7FFFFFE0u
 #define MASK_MOV_Rm_4_Rn_WZR 0x7FFFFFE0u
 #define MASK_MRS_SP_EL0 0xFFFFFFE0u
-#define MASK_STR_Rn_SP_Rt_3 0xBFC003E4u
-#define MASK_STR_Rn_SP_Rt_4 0xBFC003E4u
+#define MASK_STR_Rn_SP_Rt_3 0xBFC003FFu
+#define MASK_STR_Rn_SP_Rt_4 0xBFC003FFu
 #define MASK_STR_32_x0 0xFFC003E0u
 #define MASK_STR_Rt_WZR 0xFFC0001Fu
 #define MASK_CBZ 0x7F000000u
@@ -135,10 +135,10 @@ typedef uint32_t inst_mask_t;
   })
 
 #define task_uid(task) task_real_uid(task)
-  // ({                                                                                         \
-  //   struct cred *cred = *(struct cred **)((uintptr_t)task + task_struct_offset.cred_offset); \
-  //   kuid_t ___val = *(kuid_t *)((uintptr_t)cred + cred_offset.uid_offset);                   \
-  //   ___val;                                                                                  \
+  // ({
+  //   struct cred *cred = *(struct cred **)((uintptr_t)task + task_struct_offset.cred_offset);
+  //   kuid_t ___val = *(kuid_t *)((uintptr_t)cred + cred_offset.uid_offset);
+  //   ___val;
   // })
 
 extern struct sk_buff* kfunc_def(__alloc_skb)(unsigned int size, gfp_t gfp_mask, int flags, int node);
