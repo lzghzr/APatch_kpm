@@ -11,6 +11,8 @@
 #include <linux/cred.h>
 #include <linux/sched.h>
 
+#define logkm(fmt, ...) printk("lmkd_dont_kill: " fmt, ##__VA_ARGS__)
+
 #define lookup_name(func)                                  \
   func = 0;                                                \
   func = (typeof(func))kallsyms_lookup_name(#func);        \

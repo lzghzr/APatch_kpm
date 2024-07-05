@@ -22,7 +22,7 @@
 #include "hr_utils.h"
 
 KPM_NAME("hosts_redirect");
-KPM_VERSION(HR_VERSION);
+KPM_VERSION(MYKPM_VERSION);
 KPM_LICENSE("GPL v2");
 KPM_AUTHOR("lzghzr");
 KPM_DESCRIPTION("redirect /system/etc/hosts to /data/adb/hosts/{n}");
@@ -97,7 +97,7 @@ static void do_filp_open_before(hook_fargs3_t* args, void* udata) {
         memset(&buf, 0, PATH_MAX);
         char* pwd_path = d_path(pwd, buf, PATH_MAX);
 #ifdef DEBUG
-        printk("hosts_redirect: pwd_path=%s\n", pwd_path);
+        logkm("pwd_path=%s\n", pwd_path);
 #endif /* DEBUG */
 
         * buf = '\0';
@@ -107,7 +107,7 @@ static void do_filp_open_before(hook_fargs3_t* args, void* udata) {
         }
         strncat(buf, pathname->name, strlen(pathname->name));
 #ifdef DEBUG
-        printk("hosts_redirect: full_path=%s\n", buf);
+        logkm("full_path=%s\n", buf);
 #endif /* DEBUG */
 
         struct path path;
@@ -116,7 +116,7 @@ static void do_filp_open_before(hook_fargs3_t* args, void* udata) {
           memset(&buf, 0, PATH_MAX);
           char* hosts_name = d_path(&path, buf, PATH_MAX);
 #ifdef DEBUG
-          printk("hosts_redirect: hosts_name=%s\n", hosts_name);
+          logkm("hosts_name=%s\n", hosts_name);
 #endif /* DEBUG */
           if (likely(!IS_ERR(hosts_name) && !strcmp(hosts_name, hosts_source))) {
             args->local.data0 = (uint64_t)pathname->name;
@@ -161,6 +161,9 @@ static long calculate_offsets() {
 
   uint32_t* proc_cwd_link_src = (uint32_t*)proc_cwd_link;
   for (u32 i = 0; i < 0x30; i++) {
+#ifdef CONFIG_DEBUG
+    logkm("proc_cwd_link %x %llx\n", i, proc_cwd_link[i]);
+#endif /* CONFIG_DEBUG */
     if (proc_cwd_link_src[i] == ARM64_RET) {
       break;
     } else if ((proc_cwd_link_src[i] & MASK_LDP_64_) == INST_LDP_64_) {
@@ -192,6 +195,12 @@ static long calculate_offsets() {
       }
     }
   }
+#ifdef CONFIG_DEBUG
+  logkm("task_struct_fs_offset=0x%llx\n", task_struct_fs_offset);
+  logkm("task_struct_alloc_lock_offset=0x%llx\n", task_struct_alloc_lock_offset);
+  logkm("fs_struct_pwd_offset=0x%llx\n", fs_struct_pwd_offset);
+  logkm("fs_struct_lock_offset=0x%llx\n", fs_struct_lock_offset);
+#endif /* CONFIG_DEBUG */
   if (task_struct_fs_offset == UZERO || task_struct_alloc_lock_offset == UZERO || fs_struct_pwd_offset == UZERO || fs_struct_lock_offset == UZERO) {
     return -11;
   }

@@ -1,4 +1,4 @@
-HR_VERSION := 1.2.0
+MYKPM_VERSION := 1.2.0
 
 ifndef KP_DIR
     KP_DIR = ../KernelPatch
@@ -21,7 +21,7 @@ else ifdef NDK_PATH
     LD := $(NDK_PATH)/ld.lld
 endif
 
-CFLAGS = -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -DHR_VERSION=\"$(HR_VERSION)$(HR_VER)\"
+CFLAGS = -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -DMYKPM_VERSION=\"$(MYKPM_VERSION)$(HR_VER)\"
 
 INCLUDE_DIRS := . include patch/include linux/include linux/arch/arm64/include linux/tools/arch/arm64/include
 
@@ -29,16 +29,16 @@ INCLUDE_FLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(KP_DIR)/kernel/$(dir))
 
 objs := hosts_redirect.o
 
-all: hosts_redirect_$(HR_VERSION).kpm
+all: hosts_redirect_$(MYKPM_VERSION).kpm
 
 debug: CFLAGS += -DDEBUG
 debug: HR_VER := _d
-debug: hosts_redirect_$(HR_VERSION)_debug.kpm
+debug: hosts_redirect_$(MYKPM_VERSION)_debug.kpm
 
-hosts_redirect_$(HR_VERSION).kpm: ${objs}
+hosts_redirect_$(MYKPM_VERSION).kpm: ${objs}
 	${CC} -r -o $@ $^
 
-hosts_redirect_$(HR_VERSION)_debug.kpm: ${objs}
+hosts_redirect_$(MYKPM_VERSION)_debug.kpm: ${objs}
 	${CC} -r -o $@ $^
 
 %.o: %.c

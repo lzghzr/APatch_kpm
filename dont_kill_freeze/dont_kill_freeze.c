@@ -74,7 +74,7 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
 #ifdef CONFIG_DEBUG
   if (sig == SIGKILL
     && task_uid(dst).val > MIN_USERAPP_UID) {
-    printk("dont_kill_freeze: killer=%d,comm=%s,dst=%d,oom_score_adj=%d,frozen=%d\n",
+    logkm("killer=%d,comm=%s,dst=%d,oom_score_adj=%d,frozen=%d\n",
       task_uid(current).val, get_task_comm(current), task_uid(dst).val, get_oom_score_adj(dst), frozen_task_group(dst));
   }
 #endif /* CONFIG_DEBUG */
@@ -86,7 +86,7 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
     memset(&cmdline, 0, PATH_MAX);
     int res = get_cmdline(current, cmdline, PATH_MAX - 1);
     cmdline[res] = '\0';
-    printk("dont_kill_freeze: cmdline=%s\n", cmdline);
+    logkm("cmdline=%s\n", cmdline);
   }
 #endif /* CONFIG_DEBUG_CMDLINE */
   if (sig != SIGKILL || siginfo->si_code != 0)
@@ -105,7 +105,7 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
     args->ret = -EPERM;
     args->skip_origin = true;
 #ifdef CONFIG_DEBUG
-    printk("dont_kill_freeze: skip\n");
+    logkm("skip\n");
 #endif /* CONFIG_DEBUG */
   } else {
     last_uid = task_uid(dst).val;
@@ -120,7 +120,7 @@ static long calculate_offsets() {
   uint32_t* task_clear_jobctl_trapping_src = (uint32_t*)task_clear_jobctl_trapping;
   for (u32 i = 0; i < 0x10; i++) {
 #ifdef CONFIG_DEBUG
-    printk("dont_kill_freeze: task_clear_jobctl_trapping %x %llx\n", i, task_clear_jobctl_trapping_src[i]);
+    logkm("task_clear_jobctl_trapping %x %llx\n", i, task_clear_jobctl_trapping_src[i]);
 #endif /* CONFIG_DEBUG */
     if (task_clear_jobctl_trapping_src[i] == ARM64_RET) {
       break;
@@ -130,6 +130,9 @@ static long calculate_offsets() {
       break;
     }
   }
+#ifdef CONFIG_DEBUG
+  logkm("task_struct_jobctl_offset=%llx\n", task_struct_jobctl_offset);
+#endif /* CONFIG_DEBUG */
   if (task_struct_jobctl_offset == UZERO) {
     return -11;
   }
@@ -140,7 +143,7 @@ static long calculate_offsets() {
   uint32_t* out_of_memory_src = (uint32_t*)out_of_memory;
   for (u32 i = 0; i < 0xa0; i++) {
 #ifdef CONFIG_DEBUG
-    printk("dont_kill_freeze: out_of_memory %x %llx\n", i, out_of_memory_src[i]);
+    logkm("out_of_memory %x %llx\n", i, out_of_memory_src[i]);
 #endif /* CONFIG_DEBUG */
     if ((out_of_memory_src[i] & MASK_LDR_64_) == INST_LDR_64_ && (out_of_memory_src[i + 1] & MASK_LDRSH) == INST_LDRSH) {
       uint64_t imm12 = 0;
@@ -152,6 +155,10 @@ static long calculate_offsets() {
       break;
     }
   }
+#ifdef CONFIG_DEBUG
+  logkm("task_struct_signal_offset=%llx\n", task_struct_signal_offset);
+  logkm("signal_struct_oom_score_adj_offset=%llx\n", signal_struct_oom_score_adj_offset);
+#endif /* CONFIG_DEBUG */
   if (task_struct_signal_offset == UZERO || signal_struct_oom_score_adj_offset == UZERO) {
     return -11;
   }

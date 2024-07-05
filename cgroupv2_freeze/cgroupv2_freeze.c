@@ -287,7 +287,7 @@ static long calculate_offsets() {
   uint32_t* css_task_iter_start_src = (uint32_t*)css_task_iter_start;
   for (u32 i = 0; i < 0x10; i++) {
 #ifdef CONFIG_DEBUG
-    printk("cgroupv2_freeze: css_task_iter_start %x %llx\n", i, css_task_iter_start_src[i]);
+    logkm("css_task_iter_start %x %llx\n", i, css_task_iter_start_src[i]);
 #endif /* CONFIG_DEBUG */
     if (css_task_iter_start_src[i] == ARM64_RET) {
       break;
@@ -296,11 +296,14 @@ static long calculate_offsets() {
       break;
     }
   }
+#ifdef CONFIG_DEBUG
+  logkm("css_task_iter_start_ver5=0x%llx\n", css_task_iter_start_ver5);
+#endif /* CONFIG_DEBUG */
   // 获取 cgroup_kn_lock_live 版本, 以参数数量做判断
   uint32_t* cgroup_kn_lock_live_src = (uint32_t*)cgroup_kn_lock_live;
   for (u32 i = 0; i < 0x10; i++) {
 #ifdef CONFIG_DEBUG
-    printk("cgroupv2_freeze: cgroup_kn_lock_live %x %llx\n", i, cgroup_kn_lock_live_src[i]);
+    logkm("cgroup_kn_lock_live %x %llx\n", i, cgroup_kn_lock_live_src[i]);
 #endif /* CONFIG_DEBUG */
     if (cgroup_kn_lock_live_src[i] == ARM64_RET) {
       break;
@@ -309,26 +312,35 @@ static long calculate_offsets() {
       break;
     }
   }
+#ifdef CONFIG_DEBUG
+  logkm("cgroup_kn_lock_live_ver5=0x%llx\n", cgroup_kn_lock_live_ver5);
+#endif /* CONFIG_DEBUG */
   // 获取 cftype 版本, 以绑定函数做判断
   int (*cgroup_file_open)(struct kernfs_open_file* of) = NULL;
   cgroup_file_open = (typeof(cgroup_file_open))kallsyms_lookup_name("cgroup_file_open");
 
 #ifdef CONFIG_DEBUG
-  printk("cgroupv2_freeze: cgroup_file_open %llx\n", cgroup_file_open);
+  logkm("cgroup_file_open %llx\n", cgroup_file_open);
 #endif /* CONFIG_DEBUG */
   if (cgroup_file_open) {
     cftype_ver5 = IZERO;
   }
+#ifdef CONFIG_DEBUG
+  logkm("cftype_ver5=0x%llx\n", cftype_ver5);
+#endif /* CONFIG_DEBUG */
   // 获取 cgroup_base_files 版本, 以变量名做判断
   struct cftype* cgroup_base_files = NULL;
   cgroup_base_files = (typeof(cgroup_base_files))kallsyms_lookup_name("cgroup_base_files");
 
 #ifdef CONFIG_DEBUG
-  printk("cgroupv2_freeze: cgroup_base_files %llx\n", cgroup_base_files);
+  logkm("cgroup_base_files %llx\n", cgroup_base_files);
 #endif /* CONFIG_DEBUG */
   if (cgroup_base_files) {
     cgroup_base_files_ver5 = IZERO;
   }
+#ifdef CONFIG_DEBUG
+  logkm("cgroup_base_files_ver5=0x%llx\n", cgroup_base_files_ver5);
+#endif /* CONFIG_DEBUG */
   // 获取 task_struct->jobctl
   void (*task_clear_jobctl_trapping)(struct task_struct* t);
   lookup_name(task_clear_jobctl_trapping);
@@ -336,7 +348,7 @@ static long calculate_offsets() {
   uint32_t* task_clear_jobctl_trapping_src = (uint32_t*)task_clear_jobctl_trapping;
   for (u32 i = 0; i < 0x10; i++) {
 #ifdef CONFIG_DEBUG
-    printk("cgroupv2_freeze: task_clear_jobctl_trapping %x %llx\n", i, task_clear_jobctl_trapping_src[i]);
+    logkm("task_clear_jobctl_trapping %x %llx\n", i, task_clear_jobctl_trapping_src[i]);
 #endif /* CONFIG_DEBUG */
     if (task_clear_jobctl_trapping_src[i] == ARM64_RET) {
       break;
@@ -346,6 +358,9 @@ static long calculate_offsets() {
       break;
     }
   }
+#ifdef CONFIG_DEBUG
+  logkm("task_struct_jobctl_offset=0x%llx\n", task_struct_jobctl_offset);
+#endif /* CONFIG_DEBUG */
   if (task_struct_jobctl_offset == UZERO) {
     return -11;
   }
@@ -356,7 +371,7 @@ static long calculate_offsets() {
   uint32_t* tty_audit_fork_src = (uint32_t*)tty_audit_fork;
   for (u32 i = 0; i < 0x20; i++) {
 #ifdef CONFIG_DEBUG
-    printk("cgroupv2_freeze: tty_audit_fork %x %llx\n", i, tty_audit_fork_src[i]);
+    logkm("tty_audit_fork %x %llx\n", i, tty_audit_fork_src[i]);
 #endif /* CONFIG_DEBUG */
     if (tty_audit_fork_src[i] == ARM64_RET) {
       break;
@@ -366,6 +381,9 @@ static long calculate_offsets() {
       break;
     }
   }
+#ifdef CONFIG_DEBUG
+  logkm("task_struct_signal_offset=0x%llx\n", task_struct_signal_offset);
+#endif /* CONFIG_DEBUG */
   if (task_struct_signal_offset == UZERO) {
     return -11;
   }
@@ -376,7 +394,7 @@ static long calculate_offsets() {
   uint32_t* zap_other_threads_src = (uint32_t*)zap_other_threads;
   for (u32 i = 0; i < 0x20; i++) {
 #ifdef CONFIG_DEBUG
-    printk("cgroupv2_freeze: zap_other_threads %x %llx\n", i, zap_other_threads_src[i]);
+    logkm("zap_other_threads %x %llx\n", i, zap_other_threads_src[i]);
 #endif /* CONFIG_DEBUG */
     if (zap_other_threads_src[i] == ARM64_RET) {
       break;
@@ -387,7 +405,11 @@ static long calculate_offsets() {
       break;
     }
   }
-  if (signal_struct_flags_offset == UZERO || signal_struct_group_exit_task_offset == UZERO) {
+#ifdef CONFIG_DEBUG
+  logkm("signal_struct_group_exit_task_offset=0x%llx\n", signal_struct_group_exit_task_offset);
+  logkm("signal_struct_flags_offset=0x%llx\n", signal_struct_flags_offset);
+#endif /* CONFIG_DEBUG */
+  if (signal_struct_group_exit_task_offset == UZERO || signal_struct_flags_offset == UZERO) {
     return -11;
   }
   // 获取 task_struct->flags
@@ -397,7 +419,7 @@ static long calculate_offsets() {
   uint32_t* freezing_slow_path_src = (uint32_t*)freezing_slow_path;
   for (u32 i = 0; i < 0x20; i++) {
 #ifdef CONFIG_DEBUG
-    printk("cgroupv2_freeze: freezing_slow_path %x %llx\n", i, freezing_slow_path_src[i]);
+    logkm("freezing_slow_path %x %llx\n", i, freezing_slow_path_src[i]);
 #endif /* CONFIG_DEBUG */
     if (freezing_slow_path_src[i] == ARM64_RET) {
       break;
@@ -411,6 +433,9 @@ static long calculate_offsets() {
       break;
     }
   }
+#ifdef CONFIG_DEBUG
+  logkm("task_struct_flags_offset=0x%llx\n", task_struct_flags_offset);
+#endif /* CONFIG_DEBUG */
   if (task_struct_flags_offset == UZERO) {
     return -11;
   }
@@ -421,7 +446,7 @@ static long calculate_offsets() {
   uint32_t* schedule_timeout_interruptible_src = (uint32_t*)schedule_timeout_interruptible;
   for (u32 i = 0; i < 0x20; i++) {
 #ifdef CONFIG_DEBUG
-    printk("cgroupv2_freeze: schedule_timeout_interruptible %x %llx\n", i, schedule_timeout_interruptible_src[i]);
+    logkm("schedule_timeout_interruptible %x %llx\n", i, schedule_timeout_interruptible_src[i]);
 #endif /* CONFIG_DEBUG */
     if (schedule_timeout_interruptible_src[i] == ARM64_RET) {
       break;
@@ -431,6 +456,9 @@ static long calculate_offsets() {
       break;
     }
   }
+#ifdef CONFIG_DEBUG
+  logkm("task_struct_state_offset=0x%llx\n", task_struct_state_offset);
+#endif /* CONFIG_DEBUG */
   if (task_struct_state_offset == UZERO) {
     return -11;
   }
@@ -441,7 +469,7 @@ static long calculate_offsets() {
   uint32_t* cgroup_subtree_control_show_src = (uint32_t*)cgroup_subtree_control_show;
   for (u32 i = 0; i < 0x20; i++) {
 #ifdef CONFIG_DEBUG
-    printk("cgroupv2_freeze: cgroup_subtree_control_show %x %llx\n", i, cgroup_subtree_control_show_src[i]);
+    logkm("cgroup_subtree_control_show %x %llx\n", i, cgroup_subtree_control_show_src[i]);
 #endif /* CONFIG_DEBUG */
     if (cgroup_subtree_control_show_src[i] == ARM64_RET) {
       break;
@@ -451,6 +479,9 @@ static long calculate_offsets() {
       break;
     }
   }
+#ifdef CONFIG_DEBUG
+  logkm("seq_file_private_offset=0x%llx\n", seq_file_private_offset);
+#endif /* CONFIG_DEBUG */
   if (seq_file_private_offset == UZERO) {
     return -11;
   }
@@ -461,7 +492,7 @@ static long calculate_offsets() {
   uint32_t* cgroup_freezing_src = (uint32_t*)cgroup_freezing;
   for (u32 i = 0; i < 0x20; i++) {
 #ifdef CONFIG_DEBUG
-    printk("cgroupv2_freeze: cgroup_freezing %x %llx\n", i, cgroup_freezing_src[i]);
+    logkm("cgroup_freezing %x %llx\n", i, cgroup_freezing_src[i]);
 #endif /* CONFIG_DEBUG */
     if (cgroup_freezing_src[i] == ARM64_RET) {
       break;
@@ -472,6 +503,9 @@ static long calculate_offsets() {
       break;
     }
   }
+#ifdef CONFIG_DEBUG
+  logkm("freezer_state_offset=0x%llx\n", freezer_state_offset);
+#endif /* CONFIG_DEBUG */
   if (freezer_state_offset == UZERO) {
     return -11;
   }
@@ -543,26 +577,6 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
 }
 
 static long inline_hook_control0(const char* ctl_args, char* __user out_msg, int outlen) {
-  printk("\
-cgroupv2_freeze: task_struct_state_offset=0x%llx\n\
-cgroupv2_freeze: task_struct_flags_offset=0x%llx\n\
-cgroupv2_freeze: task_struct_jobctl_offset=0x%llx\n\
-cgroupv2_freeze: task_struct_signal_offset=0x%llx\n",
-task_struct_state_offset,
-task_struct_flags_offset,
-task_struct_jobctl_offset,
-task_struct_signal_offset);
-  printk("\
-cgroupv2_freeze: signal_struct_group_exit_task_offset=0x%llx\n\
-cgroupv2_freeze: signal_struct_flags_offset=0x%llx\n\
-cgroupv2_freeze: seq_file_private_offset=0x%llx\n\
-cgroupv2_freeze: freezer_state_offset=0x%llx\n\
-cgroupv2_freeze: cgroup_flags_offset=0x%llx\n",
-signal_struct_group_exit_task_offset,
-signal_struct_flags_offset,
-seq_file_private_offset,
-freezer_state_offset,
-cgroup_flags_offset);
   char msg[64];
   snprintf(msg, sizeof(msg), "_(._.)_");
   compat_copy_to_user(out_msg, msg, sizeof(msg));

@@ -94,6 +94,8 @@ typedef uint32_t inst_mask_t;
 #define ARM64_MOV_x29_SP 0x910003FDu
 #define ARM64_RET 0xD65F03C0u
 
+#define logkm(fmt, ...) printk("re_kernel: " fmt, ##__VA_ARGS__)
+
 #define lookup_name(func)                                  \
   func = 0;                                                \
   func = (typeof(func))kallsyms_lookup_name(#func);        \
