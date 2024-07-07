@@ -47,6 +47,7 @@ struct binder_work {
   enum binder_work_type {
     BINDER_WORK_TRANSACTION = 1,
     BINDER_WORK_TRANSACTION_COMPLETE,
+    BINDER_WORK_TRANSACTION_ONEWAY_SPAM_SUSPECT, // 6.1
     BINDER_WORK_RETURN_ERROR,
     BINDER_WORK_NODE,
     BINDER_WORK_DEAD_BINDER,
@@ -111,9 +112,12 @@ struct binder_buffer {
   struct list_head entry;
   struct rb_node rb_node;
   unsigned free : 1;
+  unsigned clear_on_free : 1; // 6.1
   unsigned allow_user_free : 1;
   unsigned async_transaction : 1;
-  unsigned debug_id : 29;
+  unsigned oneway_spam_suspect : 1; // 6.1
+  // unsigned debug_id : 29;
+  unsigned debug_id : 27; // 6.1
   struct binder_transaction* transaction;
   struct binder_node* target_node;
   size_t data_size;
@@ -131,24 +135,22 @@ struct binder_transaction {
   int debug_id;
   struct binder_work work;
   struct binder_thread* from;
-  struct binder_transaction* from_parent;
-  struct binder_proc* to_proc;
-  struct binder_thread* to_thread;
-  struct binder_transaction* to_parent;
-  unsigned need_reply : 1;
-  struct binder_buffer* buffer;
-  unsigned int code;
-  unsigned int flags;
-  struct binder_priority priority;
-  struct binder_priority saved_priority;
-  bool set_priority_called;
   // unknow
+  // pid_t from_pid; // 6.1
+  // pid_t from_tid; // 6.1
+  // struct binder_transaction* from_parent;
+  // struct binder_proc* to_proc;
+  // struct binder_thread* to_thread;
+  // struct binder_transaction* to_parent;
+  // unsigned need_reply : 1;
+  // struct binder_buffer* buffer;
+  // unsigned int code;
+  // unsigned int flags;
+  // struct binder_priority priority;
+  // struct binder_priority saved_priority;
+  // bool set_priority_called;
 };
 
-struct binder_error {
-  struct binder_work work;
-  uint32_t cmd;
-};
 struct wait_queue_head {
   spinlock_t lock;
   struct list_head head;
@@ -165,28 +167,15 @@ enum binder_stat_types {
   BINDER_STAT_COUNT
 };
 struct binder_stats {
-  atomic_t br[(((29201u) >> 0) & ((1 << 8) - 1)) + 1];
-  atomic_t bc[(((1078485778) >> 0) & ((1 << 8) - 1)) + 1];
+  atomic_t br[18];
+  // atomic_t br[20]; // 6.1
+  atomic_t bc[19];
   atomic_t obj_created[BINDER_STAT_COUNT];
   atomic_t obj_deleted[BINDER_STAT_COUNT];
 };
+
 struct binder_thread {
   struct binder_proc* proc;
-  struct rb_node rb_node;
-  struct list_head waiting_thread_node;
-  int pid;
-  int looper;
-  bool looper_need_return;
-  struct binder_transaction* transaction_stack;
-  struct list_head todo;
-  bool process_todo;
-  struct binder_error return_error;
-  struct binder_error reply_error;
-  wait_queue_head_t wait;
-  struct binder_stats stats;
-  atomic_t tmp_ref;
-  bool is_dead;
-  struct task_struct* task;
   // unknow
 };
 
