@@ -561,6 +561,9 @@ static long calculate_offsets() {
   logkm("binder_proc_outstanding_txns_offset=0x%llx\n", binder_proc_outstanding_txns_offset);
   logkm("binder_proc_is_frozen_offset=0x%llx\n", binder_proc_is_frozen_offset);
 #endif /* CONFIG_DEBUG */
+  if (binder_transaction_buffer_offset == UZERO) {
+    return -11;
+  }
   // 获取 task_struct->jobctl
   void (*task_clear_jobctl_trapping)(struct task_struct* t);
   lookup_name(task_clear_jobctl_trapping);
@@ -612,7 +615,7 @@ static long calculate_offsets() {
   logkm("binder_proc_inner_lock_offset=0x%llx\n", binder_proc_inner_lock_offset);
   logkm("binder_proc_outer_lock_offset=0x%llx\n", binder_proc_outer_lock_offset);
 #endif /* CONFIG_DEBUG */
-  if (binder_proc_context_offset == UZERO || binder_proc_inner_lock_offset == UZERO || binder_proc_outer_lock_offset == UZERO) {
+  if (binder_proc_context_offset == UZERO) {
     return -11;
   }
   // 获取 binder_proc->alloc
