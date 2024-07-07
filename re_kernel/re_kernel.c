@@ -512,14 +512,16 @@ static long calculate_offsets() {
         }
       }
       break;
-    } else if ((binder_transaction_buffer_release_src[i] & MASK_STR_Rn_SP_Rt_4) == INST_STR_Rn_SP_Rt_4) {
-      binder_transaction_buffer_release_ver5 = IZERO;
-    } else if ((binder_transaction_buffer_release_src[i] & MASK_MOV_Rm_4_Rn_WZR) == INST_MOV_Rm_4_Rn_WZR) {
-      binder_transaction_buffer_release_ver5 = IZERO;
-    } else if ((binder_transaction_buffer_release_src[i] & MASK_STR_Rn_SP_Rt_3) == INST_STR_Rn_SP_Rt_3) {
-      binder_transaction_buffer_release_ver4 = IZERO;
-    } else if ((binder_transaction_buffer_release_src[i] & MASK_MOV_Rm_3_Rn_WZR) == INST_MOV_Rm_3_Rn_WZR) {
-      binder_transaction_buffer_release_ver4 = IZERO;
+    } else if (i < 0x10) {
+      if ((binder_transaction_buffer_release_src[i] & MASK_STR_Rn_SP_Rt_4) == INST_STR_Rn_SP_Rt_4) {
+        binder_transaction_buffer_release_ver5 = IZERO;
+      } else if ((binder_transaction_buffer_release_src[i] & MASK_MOV_Rm_4_Rn_WZR) == INST_MOV_Rm_4_Rn_WZR) {
+        binder_transaction_buffer_release_ver5 = IZERO;
+      } else if ((binder_transaction_buffer_release_src[i] & MASK_STR_Rn_SP_Rt_3) == INST_STR_Rn_SP_Rt_3) {
+        binder_transaction_buffer_release_ver4 = IZERO;
+      } else if ((binder_transaction_buffer_release_src[i] & MASK_MOV_Rm_3_Rn_WZR) == INST_MOV_Rm_3_Rn_WZR) {
+        binder_transaction_buffer_release_ver4 = IZERO;
+      }
     }
   }
 #ifdef CONFIG_DEBUG
