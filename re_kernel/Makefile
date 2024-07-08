@@ -1,4 +1,4 @@
-MYKPM_VERSION := 6.0.7
+MYKPM_VERSION := 6.0.8
 
 ifndef KP_DIR
     KP_DIR = ../KernelPatch

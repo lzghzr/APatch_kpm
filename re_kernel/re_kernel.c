@@ -32,7 +32,7 @@ KPM_NAME("re_kernel");
 KPM_VERSION(MYKPM_VERSION);
 KPM_LICENSE("GPL v3");
 KPM_AUTHOR("Nep-Timeline, lzghzr");
-KPM_DESCRIPTION("Re:Kernel, support 4.4, 4.9, 4.14, 4.19, 5.4, 5.10, 5.15, 6.1");
+KPM_DESCRIPTION("Re:Kernel, support 4.4 ~ 6.1");
 
 #define NETLINK_REKERNEL_MAX 26
 #define NETLINK_REKERNEL_MIN 22
@@ -111,28 +111,18 @@ int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
 #endif /* CONFIG_DEBUG_CMDLINE */
 
 // 最好初始化一个大于 0xFFFFFFFF 的值, 否则编译器优化后, 全局变量可能出错
-static uint64_t task_struct_jobctl_offset = UZERO, task_struct_pid_offset = UZERO, task_struct_group_leader_offset = UZERO,
+static uint64_t task_struct_jobctl_offset = UZERO, task_struct_pid_offset = UZERO, task_struct_tgid_offset = UZERO, task_struct_group_leader_offset = UZERO,
 binder_transaction_to_proc_offset = UZERO, binder_transaction_buffer_offset = UZERO, binder_transaction_code_offset = UZERO, binder_transaction_flags_offset = UZERO,
 binder_proc_outstanding_txns_offset = UZERO, binder_proc_is_frozen_offset = UZERO,
 binder_proc_alloc_offset = UZERO, binder_proc_context_offset = UZERO, binder_proc_inner_lock_offset = UZERO, binder_proc_outer_lock_offset = UZERO,
 binder_alloc_pid_offset = UZERO, binder_alloc_buffer_size_offset = UZERO, binder_alloc_free_async_space_offset = UZERO, binder_alloc_vma_offset = UZERO,
 // 实际上会被编译器优化为 bool
 binder_transaction_buffer_release_ver6 = UZERO, binder_transaction_buffer_release_ver5 = UZERO, binder_transaction_buffer_release_ver4 = UZERO;
+#include "re_offsets.c"
 
 static struct sock* rekernel_netlink;
 static unsigned long rekernel_netlink_unit = UZERO, trace = UZERO;
 static struct proc_dir_entry* rekernel_dir, * rekernel_unit_entry;
-
-// pid
-static inline pid_t task_pid(struct task_struct* task) {
-  pid_t pid = *(pid_t*)((uintptr_t)task + task_struct_pid_offset);
-  return pid;
-}
-// tgid
-static inline pid_t task_tgid(struct task_struct* task) {
-  pid_t tgid = *(pid_t*)((uintptr_t)task + task_struct_pid_offset + 0x4);
-  return tgid;
-}
 
 // binder_node_lock
 static inline void binder_node_lock(struct binder_node* node) {
@@ -152,39 +142,19 @@ static inline void binder_inner_proc_unlock(struct binder_proc* proc) {
   spinlock_t* inner_lock = (spinlock_t*)((uintptr_t)proc + binder_proc_inner_lock_offset);
   spin_unlock(inner_lock);
 }
-// binder_transaction_to_proc
-static inline struct binder_proc* binder_transaction_to_proc(struct binder_transaction* t) {
-  struct binder_proc* to_proc = *(struct binder_proc**)((uintptr_t)t + binder_transaction_to_proc_offset);
-  return to_proc;
-}
-// binder_transaction_buffer
-static inline struct binder_buffer* binder_transaction_buffer(struct binder_transaction* t) {
-  struct binder_buffer* buffer = *(struct binder_buffer**)((uintptr_t)t + binder_transaction_buffer_offset);
-  return buffer;
-}
-// binder_transaction_code
-static inline unsigned int binder_transaction_code(struct binder_transaction* t) {
-  unsigned int code = *(unsigned int*)((uintptr_t)t + binder_transaction_code_offset);
-  return code;
-}
-// binder_transaction_flags
-static inline unsigned int binder_transaction_flags(struct binder_transaction* t) {
-  unsigned int flags = *(unsigned int*)((uintptr_t)t + binder_transaction_flags_offset);
-  return flags;
-}
 
 // binder_is_frozen
 static inline bool binder_is_frozen(struct binder_proc* proc) {
   bool is_frozen = false;
   if (binder_proc_is_frozen_offset != UZERO) {
-    is_frozen = *(bool*)((uintptr_t)proc + binder_proc_is_frozen_offset);
+    is_frozen = binder_proc_is_frozen(proc);
   }
   return is_frozen;
 }
 
 // cgroupv2_freeze
 static inline bool jobctl_frozen(struct task_struct* task) {
-  unsigned long jobctl = *(unsigned long*)((uintptr_t)task + task_struct_jobctl_offset);
+  unsigned long jobctl = task_jobctl(task);
   return ((jobctl & JOBCTL_TRAP_FREEZE) != 0);
 }
 // 判断线程是否进入 frozen 状态
@@ -341,9 +311,9 @@ static void rekernel_binder_transaction(void* data, bool reply, struct binder_tr
   } else { // oneway=1
     // binder_trans_handler(task_pid(current), current, to_proc->pid, to_proc->tsk, true);
 
-    struct binder_alloc* target_alloc = (struct binder_alloc*)((uintptr_t)to_proc + binder_proc_alloc_offset);
-    size_t free_async_space = *(size_t*)((uintptr_t)target_alloc + binder_alloc_free_async_space_offset);
-    size_t buffer_size = *(size_t*)((uintptr_t)target_alloc + binder_alloc_buffer_size_offset);
+    struct binder_alloc* target_alloc = binder_proc_alloc(to_proc);
+    size_t free_async_space = binder_alloc_free_async_space(target_alloc);
+    size_t buffer_size = binder_alloc_buffer_size(target_alloc);
     if (free_async_space < (buffer_size / 10 + 0x300)) {
       binder_overflow_handler(task_pid(current), current, to_proc->pid, to_proc->tsk, true);
     }
@@ -394,7 +364,7 @@ static inline void outstanding_txns_dec(struct binder_proc* proc) {
 }
 
 static inline void binder_release_entire_buffer(struct binder_proc* proc, struct binder_thread* thread, struct binder_buffer* buffer, bool is_failure) {
-  if (binder_transaction_buffer_release_ver6 == IZERO && binder_transaction_buffer_release_ver5 == IZERO) {
+  if (binder_transaction_buffer_release_ver6 == IZERO) {
     binder_transaction_buffer_release_v6(proc, thread, buffer, 0, is_failure);
   } else if (binder_transaction_buffer_release_ver5 == IZERO) {
     binder_size_t off_end_offset = ALIGN(buffer->data_size, sizeof(void*));
@@ -454,7 +424,7 @@ static void binder_proc_transaction_after(hook_fargs3_t* args, void* udata) {
 
   if (t_outdated) {
     struct binder_proc* proc = (struct binder_proc*)args->arg1;
-    struct binder_alloc* target_alloc = (struct binder_alloc*)((uintptr_t)proc + binder_proc_alloc_offset);
+    struct binder_alloc* target_alloc = binder_proc_alloc(proc);
     struct binder_buffer* buffer = binder_transaction_buffer(t_outdated);
 #ifdef CONFIG_DEBUG
     logkm("free_outdated pid=%d,uid=%d,data_size=%d\n", proc->pid, task_uid(proc->tsk).val, buffer->data_size);
@@ -504,15 +474,7 @@ static long calculate_offsets() {
 #ifdef CONFIG_DEBUG
     logkm("binder_transaction_buffer_release %x %llx\n", i, binder_transaction_buffer_release_src[i]);
 #endif /* CONFIG_DEBUG */
-    if ((binder_transaction_buffer_release_src[i] & MASK_AND_64_imm_0XFFFFFFFFFFFFFFF8) == INST_AND_64_imm_0XFFFFFFFFFFFFFFF8) {
-      for (u32 j = 1; j < 0x3; j++) {
-        if ((binder_transaction_buffer_release_src[i + j] & MASK_CBZ) == INST_CBZ
-          || (binder_transaction_buffer_release_src[i + j] & MASK_TBNZ) == INST_TBNZ) {
-          binder_transaction_buffer_release_ver6 = IZERO;
-        }
-      }
-      break;
-    } else if (i < 0x10) {
+    if (i < 0x10) {
       if ((binder_transaction_buffer_release_src[i] & MASK_STR_Rn_SP_Rt_4) == INST_STR_Rn_SP_Rt_4) {
         binder_transaction_buffer_release_ver5 = IZERO;
       } else if ((binder_transaction_buffer_release_src[i] & MASK_MOV_Rm_4_Rn_WZR) == INST_MOV_Rm_4_Rn_WZR) {
@@ -522,6 +484,17 @@ static long calculate_offsets() {
       } else if ((binder_transaction_buffer_release_src[i] & MASK_MOV_Rm_3_Rn_WZR) == INST_MOV_Rm_3_Rn_WZR) {
         binder_transaction_buffer_release_ver4 = IZERO;
       }
+    } else if (binder_transaction_buffer_release_ver5 == UZERO) {
+      break;
+    } else if ((binder_transaction_buffer_release_src[i] & MASK_AND_64_imm_0XFFFFFFFFFFFFFFF8) == INST_AND_64_imm_0XFFFFFFFFFFFFFFF8) {
+      for (u32 j = 1; j < 0x3; j++) {
+        if ((binder_transaction_buffer_release_src[i + j] & MASK_CBZ) == INST_CBZ
+          || (binder_transaction_buffer_release_src[i + j] & MASK_TBNZ) == INST_TBNZ) {
+          binder_transaction_buffer_release_ver6 = IZERO;
+          break;
+        }
+      }
+      break;
     }
   }
 #ifdef CONFIG_DEBUG
@@ -672,6 +645,7 @@ static long calculate_offsets() {
     } else if ((binder_alloc_init_src[i] & MASK_LDR_32_) == INST_LDR_32_) {
       uint64_t imm12 = bits32(binder_alloc_init_src[i], 21, 10);
       task_struct_pid_offset = sign64_extend((imm12 << 0b10u), 16u);          // 0x5D8
+      task_struct_tgid_offset = task_struct_pid_offset + 0x4;                 // 0x5DC
     } else if ((binder_alloc_init_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
       uint64_t imm12 = bits32(binder_alloc_init_src[i], 21, 10);
       task_struct_group_leader_offset = sign64_extend((imm12 << 0b11u), 16u); // 0x618
@@ -683,6 +657,7 @@ static long calculate_offsets() {
   logkm("binder_alloc_free_async_space_offset=0x%llx\n", binder_alloc_free_async_space_offset);
   logkm("binder_alloc_vma_offset=0x%llx\n", binder_alloc_vma_offset);
   logkm("task_struct_pid_offset=0x%llx\n", task_struct_pid_offset);
+  logkm("task_struct_tgid_offset=0x%llx\n", task_struct_tgid_offset);
   logkm("task_struct_group_leader_offset=0x%llx\n", task_struct_group_leader_offset);
 #endif /* CONFIG_DEBUG */
   if (binder_alloc_pid_offset == UZERO || task_struct_pid_offset == UZERO || task_struct_group_leader_offset == UZERO) {
