@@ -21,7 +21,7 @@ else ifdef NDK_PATH
     LD := $(NDK_PATH)/ld.lld
 endif
 
-CFLAGS = -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -DMYKPM_VERSION=\"$(MYKPM_VERSION)$(RK_VER)\"
+CFLAGS = -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -DMYKPM_VERSION=\"$(MYKPM_VERSION)$(MYKPM_VER)\"
 
 INCLUDE_DIRS := . include patch/include linux/include linux/arch/arm64/include linux/tools/arch/arm64/include
 
@@ -34,11 +34,11 @@ all: base network
 base: re_kernel_$(MYKPM_VERSION).kpm
 
 network: CFLAGS += -DCONFIG_NETWORK
-network: RK_VER := _n
+network: MYKPM_VER := _n
 network: re_kernel_$(MYKPM_VERSION)_network.kpm
 
 debug: CFLAGS += -DCONFIG_DEBUG
-debug: RK_VER := _d
+debug: MYKPM_VER := _d
 debug: re_kernel_$(MYKPM_VERSION)_debug.kpm
 
 re_kernel_$(MYKPM_VERSION).kpm: ${objs}
