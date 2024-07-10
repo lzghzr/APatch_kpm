@@ -345,13 +345,18 @@ static bool binder_can_update_transaction(struct binder_transaction* t1, struct 
 
 static struct binder_transaction* binder_find_outdated_transaction_ilocked(struct binder_transaction* t, struct list_head* target_list) {
   struct binder_work* w;
+  bool second = false;
 
   list_for_each_entry(w, target_list, entry) {
     if (w->type != BINDER_WORK_TRANSACTION)
       continue;
     struct binder_transaction* t_queued = container_of(w, struct binder_transaction, work);
-    if (binder_can_update_transaction(t_queued, t))
-      return t_queued;
+    if (binder_can_update_transaction(t_queued, t)) {
+      if (second)
+        return t_queued;
+      else
+        second = true;
+    }
   }
   return NULL;
 }
@@ -388,7 +393,6 @@ static void binder_proc_transaction_before(hook_fargs3_t* args, void* udata) {
 
   struct binder_buffer* buffer = binder_transaction_buffer(t);
   struct binder_node* node = buffer->target_node;
-  args->local.data0 = NULL;
   // 兼容不支持 trace 的内核
   if (trace == UZERO) {
     rekernel_binder_transaction(NULL, false, t, NULL);
@@ -412,15 +416,10 @@ static void binder_proc_transaction_before(hook_fargs3_t* args, void* udata) {
   if (t_outdated) {
     list_del_init(&t_outdated->work.entry);
     outstanding_txns_dec(proc);
-    args->local.data0 = (uint64_t)t_outdated;
   }
 
   binder_inner_proc_unlock(proc);
   binder_node_unlock(node);
-}
-
-static void binder_proc_transaction_after(hook_fargs3_t* args, void* udata) {
-  struct binder_transaction* t_outdated = (struct binder_transaction*)args->local.data0;
 
   if (t_outdated) {
     struct binder_proc* proc = (struct binder_proc*)args->arg1;
@@ -721,7 +720,7 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
     trace = IZERO;
   }
 
-  hook_func(binder_proc_transaction, 3, binder_proc_transaction_before, binder_proc_transaction_after, NULL);
+  hook_func(binder_proc_transaction, 3, binder_proc_transaction_before, NULL, NULL);
   hook_func(do_send_sig_info, 4, do_send_sig_info_before, NULL, NULL);
 
 #ifdef CONFIG_NETWORK
