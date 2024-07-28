@@ -118,11 +118,9 @@ binder_proc_alloc_offset = UZERO, binder_proc_context_offset = UZERO, binder_pro
 binder_alloc_pid_offset = UZERO, binder_alloc_buffer_size_offset = UZERO, binder_alloc_free_async_space_offset = UZERO, binder_alloc_vma_offset = UZERO,
 // 实际上会被编译器优化为 bool
 binder_transaction_buffer_release_ver6 = UZERO, binder_transaction_buffer_release_ver5 = UZERO, binder_transaction_buffer_release_ver4 = UZERO;
-#include "re_offsets.c"
 
-static struct sock* rekernel_netlink;
-static unsigned long rekernel_netlink_unit = UZERO, trace = UZERO;
-static struct proc_dir_entry* rekernel_dir, * rekernel_unit_entry;
+static unsigned long trace = UZERO;
+#include "re_offsets.c"
 
 // binder_node_lock
 static inline void binder_node_lock(struct binder_node* node) {
@@ -163,6 +161,9 @@ static inline bool frozen_task_group(struct task_struct* task) {
 }
 
 // 创建 netlink 服务
+static struct sock* rekernel_netlink;
+static unsigned long rekernel_netlink_unit = UZERO;
+static struct proc_dir_entry* rekernel_dir, * rekernel_unit_entry;
 static const struct file_operations rekernel_unit_fops = {};
 
 static int start_rekernel_server(void) {
@@ -347,7 +348,7 @@ static struct binder_transaction* binder_find_outdated_transaction_ilocked(struc
   struct binder_work* w;
   bool second = false;
 
-  list_for_each_entry(w, target_list, entry) {
+  list_for_each_entry_reverse(w, target_list, entry) {
     if (w->type != BINDER_WORK_TRANSACTION)
       continue;
     struct binder_transaction* t_queued = container_of(w, struct binder_transaction, work);
@@ -443,7 +444,7 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
   struct task_struct* dst = (struct task_struct*)args->arg2;
 
   if (sig == SIGKILL || sig == SIGTERM || sig == SIGABRT || sig == SIGQUIT) {
-    rekernel_report(SIGNAL, sig, task_tgid(current), current, task_tgid(dst), dst, NULL);
+    rekernel_report(SIGNAL, sig, task_tgid(current), current, task_tgid(dst), dst, false);
   }
 }
 
