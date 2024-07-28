@@ -212,41 +212,29 @@ struct cftype {
   struct cgroup_subsys* ss;
   struct list_head node;
   struct kernfs_ops* kf_ops;
-  int (*open)(struct kernfs_open_file* of);
-  void (*release)(struct kernfs_open_file* of);
-  u64(*read_u64)(struct cgroup_subsys_state* css, struct cftype* cft);
+  int (*open)(struct kernfs_open_file* of); // unknow v4
+  void (*release)(struct kernfs_open_file* of);  // unknow v4
+  // u64(*read_u64)(struct cgroup_subsys_state* css, struct cftype* cft);
+  int (*seq_show_v4)(struct seq_file* sf, void* v);
   s64(*read_s64)(struct cgroup_subsys_state* css, struct cftype* cft);
   int (*seq_show)(struct seq_file* sf, void* v);
   void* (*seq_start)(struct seq_file* sf, loff_t* ppos);
   void* (*seq_next)(struct seq_file* sf, void* v, loff_t* ppos);
   void (*seq_stop)(struct seq_file* sf, void* v);
-  int (*write_u64)(struct cgroup_subsys_state* css, struct cftype* cft, u64 val);
+  // int (*write_u64)(struct cgroup_subsys_state* css, struct cftype* cft, u64 val);
+  ssize_t(*write_v4)(struct kernfs_open_file* of, char* buf, size_t nbytes, loff_t off);
   int (*write_s64)(struct cgroup_subsys_state* css, struct cftype* cft, s64 val);
   ssize_t(*write)(struct kernfs_open_file* of, char* buf, size_t nbytes, loff_t off);
   unsigned int (*poll)(struct kernfs_open_file* of, struct poll_table_struct* pt);
 };
 
-struct cftype_v4 {
-  char name[MAX_CFTYPE_NAME];
-  unsigned long private;
-  size_t max_write_len;
-  unsigned int flags;
-  unsigned int file_offset;
-  struct cgroup_subsys* ss;
-  struct list_head node;
-  struct kernfs_ops* kf_ops;
-  // int (*open)(struct kernfs_open_file* of);
-  // void (*release)(struct kernfs_open_file* of);
-  u64(*read_u64)(struct cgroup_subsys_state* css, struct cftype* cft);
-  s64(*read_s64)(struct cgroup_subsys_state* css, struct cftype* cft);
-  int (*seq_show)(struct seq_file* sf, void* v);
-  void* (*seq_start)(struct seq_file* sf, loff_t* ppos);
-  void* (*seq_next)(struct seq_file* sf, void* v, loff_t* ppos);
-  void (*seq_stop)(struct seq_file* sf, void* v);
-  int (*write_u64)(struct cgroup_subsys_state* css, struct cftype* cft, u64 val);
-  int (*write_s64)(struct cgroup_subsys_state* css, struct cftype* cft, s64 val);
-  ssize_t(*write)(struct kernfs_open_file* of, char* buf, size_t nbytes, loff_t off);
-  unsigned int (*poll)(struct kernfs_open_file* of, struct poll_table_struct* pt);
+// fs/internal.h
+struct open_flags {
+  int open_flag;
+  umode_t mode;
+  int acc_mode;
+  int intent;
+  int lookup_flags;
 };
 
 #endif /* __CGROUP_FREEZE_H */
