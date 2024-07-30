@@ -82,8 +82,7 @@ seq_file_private_offset = UZERO,
 freezer_state_offset = UZERO, cgroup_flags_offset = UZERO,
 css_set_dfl_cgrp_offset = UZERO,
 subprocess_info_path_offset = UZERO, subprocess_info_argv_offset = UZERO,
-css_task_iter_start_ver5 = UZERO, cgroup_kn_lock_live_ver5 = UZERO, cftype_ver5 = UZERO, cgroup_base_files_ver5 = UZERO,
-call_usermodehelper_enable = UZERO;
+css_task_iter_start_ver5 = UZERO, cgroup_kn_lock_live_ver5 = UZERO, cftype_ver5 = UZERO, cgroup_base_files_ver5 = UZERO;
 #include "cfv2_offsets.c"
 
 // 为待冻结的 task 以及 cgroup 添加必要的标志
@@ -335,7 +334,7 @@ static void proc_pid_wchan_before(hook_fargs4_t* args, void* udata) {
 
 static void call_usermodehelper_exec_before(hook_fargs1_t* args, void* udata) {
   struct subprocess_info* sub_info = (struct subprocess_info*)args->arg0;
-  if (!sub_info || call_usermodehelper_enable == UZERO)
+  if (!sub_info)
     return;
 
   char** argv = subprocess_info_argv(sub_info);
@@ -345,12 +344,13 @@ static void call_usermodehelper_exec_before(hook_fargs1_t* args, void* udata) {
 static void run_cmd(char* cmd[]) {
   char* envp[] = { "HOME=/", "PATH=/sbin:/bin", NULL };
   bool sel = true;
+  hook_err_t err = 0;
 
-  call_usermodehelper_enable = IZERO;
   if (selinux_enforcing) {
     sel = *selinux_enforcing;
     *selinux_enforcing = false;
   } else {
+    err = hook_wrap1(kf_call_usermodehelper_exec, call_usermodehelper_exec_before, NULL, NULL);
     sel = selinux_state->enforcing;
     selinux_state->enforcing = false;
   }
@@ -360,10 +360,12 @@ static void run_cmd(char* cmd[]) {
     call_usermodehelper(argv[0], argv, envp, UMH_WAIT_PROC);
   }
 
-  call_usermodehelper_enable = UZERO;
   if (selinux_enforcing) {
     *selinux_enforcing = sel;
   } else {
+    if (!err) {
+      unhook(kf_call_usermodehelper_exec);
+    }
     selinux_state->enforcing = sel;
   }
 }
@@ -767,7 +769,6 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
     hook_func(__kernfs_create_file, 8, NULL, __kernfs_create_file_after, NULL);
   }
 
-  hook_func(kf_call_usermodehelper_exec, 1, call_usermodehelper_exec_before, NULL, NULL);
   if (!event || strcmp(event, "load-file")) {
     hook_func(do_filp_open, 3, NULL, do_filp_open_after, NULL);
   }
@@ -789,7 +790,6 @@ static long inline_hook_exit(void* __user reserved) {
   unhook_func(cgroup_procs_write);
   unhook_func(css_set_move_task);
   unhook_func(__kernfs_create_file);
-  unhook_func(kf_call_usermodehelper_exec);
   unhook_func(do_filp_open);
 
   return 0;

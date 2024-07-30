@@ -3,6 +3,8 @@
 为低版本内核添加 cgroup.freeze
 
 ## 更新记录
+### pre
+临时 hook `call_usermodehelper_exec`
 ### 1.0.6
 为高版本内核禁用 `CONFIG_STATIC_USERMODEHELPER`
 ### 1.0.5
