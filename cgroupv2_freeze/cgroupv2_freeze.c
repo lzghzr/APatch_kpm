@@ -59,7 +59,9 @@ int kfunc_def(kstrtoint)(const char* s, unsigned int base, int* res);
 char* kfunc_def(strim)(char* s);
 // run_cmd
 int kfunc_def(call_usermodehelper)(const char* path, char** argv, char** envp, int wait);
+int kfunc_def(call_usermodehelper_exec)(struct subprocess_info* info, int wait);
 static int* selinux_enforcing;
+struct selinux_state* selinux_state;
 
 // hook cgroup_addrm_files
 static int (*cgroup_addrm_files)(struct cgroup_subsys_state* css, struct cgroup* cgrp, struct cftype cfts[], bool is_add);
@@ -79,7 +81,9 @@ signal_struct_group_exit_task_offset = UZERO, signal_struct_flags_offset = UZERO
 seq_file_private_offset = UZERO,
 freezer_state_offset = UZERO, cgroup_flags_offset = UZERO,
 css_set_dfl_cgrp_offset = UZERO,
-css_task_iter_start_ver5 = UZERO, cgroup_kn_lock_live_ver5 = UZERO, cftype_ver5 = UZERO, cgroup_base_files_ver5 = UZERO;
+subprocess_info_path_offset = UZERO, subprocess_info_argv_offset = UZERO,
+css_task_iter_start_ver5 = UZERO, cgroup_kn_lock_live_ver5 = UZERO, cftype_ver5 = UZERO, cgroup_base_files_ver5 = UZERO,
+call_usermodehelper_enable = UZERO;
 #include "cfv2_offsets.c"
 
 // 为待冻结的 task 以及 cgroup 添加必要的标志
@@ -329,15 +333,39 @@ static void proc_pid_wchan_before(hook_fargs4_t* args, void* udata) {
   }
 }
 
+static void call_usermodehelper_exec_before(hook_fargs1_t* args, void* udata) {
+  struct subprocess_info* sub_info = (struct subprocess_info*)args->arg0;
+  if (!sub_info || call_usermodehelper_enable == UZERO)
+    return;
+
+  char** argv = subprocess_info_argv(sub_info);
+  *(char**)((uintptr_t)sub_info + subprocess_info_path_offset) = argv[0];
+}
+
 static void run_cmd(char* cmd[]) {
   char* envp[] = { "HOME=/", "PATH=/sbin:/bin", NULL };
+  bool sel = true;
 
-  *selinux_enforcing = false;
+  call_usermodehelper_enable = IZERO;
+  if (selinux_enforcing) {
+    sel = *selinux_enforcing;
+    *selinux_enforcing = false;
+  } else {
+    sel = selinux_state->enforcing;
+    selinux_state->enforcing = false;
+  }
+
   for (int i = 0; cmd[i]; i++) {
     char* argv[] = { "/bin/sh", "-c", cmd[i], NULL };
     call_usermodehelper(argv[0], argv, envp, UMH_WAIT_PROC);
   }
-  *selinux_enforcing = true;
+
+  call_usermodehelper_enable = UZERO;
+  if (selinux_enforcing) {
+    *selinux_enforcing = sel;
+  } else {
+    selinux_state->enforcing = sel;
+  }
 }
 
 static const char apm[] = "/data/adb/modules/";
@@ -639,6 +667,28 @@ static long calculate_offsets() {
   if (css_set_dfl_cgrp_offset == UZERO) {
     return -11;
   }
+  // 获取 subprocess_info->path, subprocess_info->argv
+  uint32_t* call_usermodehelper_exec_src = (uint32_t*)kfunc(call_usermodehelper_exec);
+  for (u32 i = 0; i < 0x20; i++) {
+#ifdef CONFIG_DEBUG
+    logkm("call_usermodehelper_exec %x %llx\n", i, call_usermodehelper_exec_src[i]);
+#endif /* CONFIG_DEBUG */
+    if (call_usermodehelper_exec_src[i] == ARM64_RET) {
+      break;
+    } else if ((call_usermodehelper_exec_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0) {
+      uint64_t imm12 = bits32(call_usermodehelper_exec_src[i], 21, 10);
+      subprocess_info_path_offset = sign64_extend((imm12 << 0b11u), 16u);
+      subprocess_info_argv_offset = subprocess_info_path_offset + 0x8;
+      break;
+    }
+  }
+#ifdef CONFIG_DEBUG
+  logkm("subprocess_info_path_offset=0x%llx\n", subprocess_info_path_offset);
+  logkm("subprocess_info_argv_offset=0x%llx\n", subprocess_info_argv_offset);
+#endif /* CONFIG_DEBUG */
+  if (subprocess_info_path_offset == UZERO || subprocess_info_argv_offset == UZERO) {
+    return -11;
+  }
 
   return 0;
 }
@@ -674,7 +724,12 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   kfunc_lookup_name(strim);
 
   kfunc_lookup_name(call_usermodehelper);
-  lookup_name(selinux_enforcing);
+  kfunc_lookup_name(call_usermodehelper_exec);
+
+  selinux_enforcing = (typeof(selinux_enforcing))kallsyms_lookup_name("selinux_enforcing");
+  selinux_state = (typeof(selinux_state))kallsyms_lookup_name("selinux_state");
+  if (!selinux_enforcing && !selinux_state)
+    return -21;
 
   lookup_name(cgroup_addrm_files);
   lookup_name(cgroup_init_cftypes);
@@ -712,6 +767,7 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
     hook_func(__kernfs_create_file, 8, NULL, __kernfs_create_file_after, NULL);
   }
 
+  hook_func(kf_call_usermodehelper_exec, 1, call_usermodehelper_exec_before, NULL, NULL);
   if (!event || strcmp(event, "load-file")) {
     hook_func(do_filp_open, 3, NULL, do_filp_open_after, NULL);
   }
@@ -733,6 +789,7 @@ static long inline_hook_exit(void* __user reserved) {
   unhook_func(cgroup_procs_write);
   unhook_func(css_set_move_task);
   unhook_func(__kernfs_create_file);
+  unhook_func(kf_call_usermodehelper_exec);
   unhook_func(do_filp_open);
 
   return 0;

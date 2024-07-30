@@ -237,4 +237,16 @@ struct open_flags {
   int lookup_flags;
 };
 
+// security.h
+struct selinux_state {
+  bool disabled;
+  bool enforcing;
+  bool checkreqprot;
+  bool initialized;
+  // unknow
+};
+
+// linux/umh.h
+struct subprocess_info;
+
 #endif /* __CGROUP_FREEZE_H */

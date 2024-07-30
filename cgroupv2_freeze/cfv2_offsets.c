@@ -53,3 +53,8 @@ static inline struct cgroup* css_set_dfl_cgrp(struct css_set* cset) {
   struct cgroup* cgrp = *(struct cgroup**)((uintptr_t)cset + css_set_dfl_cgrp_offset);
   return cgrp;
 }
+// subprocess_info_argv
+static inline char** subprocess_info_argv(struct subprocess_info* sub_info) {
+  char** argv = *(char***)((uintptr_t)sub_info + subprocess_info_argv_offset);
+  return argv;
+}
