@@ -332,7 +332,7 @@ static void proc_pid_wchan_before(hook_fargs4_t* args, void* udata) {
   }
 }
 
-static void call_usermodehelper_exec_before(hook_fargs1_t* args, void* udata) {
+static void call_usermodehelper_exec_before(hook_fargs2_t* args, void* udata) {
   struct subprocess_info* sub_info = (struct subprocess_info*)args->arg0;
   if (!sub_info)
     return;
@@ -350,7 +350,7 @@ static void run_cmd(char* cmd[]) {
     sel = *selinux_enforcing;
     *selinux_enforcing = false;
   } else {
-    err = hook_wrap1(kf_call_usermodehelper_exec, call_usermodehelper_exec_before, NULL, NULL);
+    err = hook_wrap2(kf_call_usermodehelper_exec, call_usermodehelper_exec_before, NULL, NULL);
     sel = selinux_state->enforcing;
     selinux_state->enforcing = false;
   }
