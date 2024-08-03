@@ -3,6 +3,8 @@
 为低版本内核添加 cgroup.freeze
 
 ## 更新记录
+### 1.0.8
+修复冻结失效
 ### 1.0.7
 临时 hook `call_usermodehelper_exec`
 ### 1.0.6

@@ -25,7 +25,7 @@ static inline unsigned long* task_jobctl_ptr(struct task_struct* task) {
 }
 // task_signal
 static inline struct signal_struct* task_signal(struct task_struct* task) {
-  struct signal_struct* signal = (struct signal_struct*)((uintptr_t)task + task_struct_signal_offset);
+  struct signal_struct* signal = *(struct signal_struct**)((uintptr_t)task + task_struct_signal_offset);
   return signal;
 }
 // signal_group_exit_task
