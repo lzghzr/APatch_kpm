@@ -721,7 +721,9 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
     trace = IZERO;
   }
 
+#ifndef CONFIG_HARMONY
   hook_func(binder_proc_transaction, 3, binder_proc_transaction_before, NULL, NULL);
+#endif
   hook_func(do_send_sig_info, 4, do_send_sig_info_before, NULL, NULL);
 
 #ifdef CONFIG_NETWORK

@@ -132,6 +132,9 @@ struct binder_priority {
   int prio;
 };
 struct binder_transaction {
+#ifdef CONFIG_HARMONY
+  int* harmony;
+#endif
   int debug_id;
   struct binder_work work;
   struct binder_thread* from;
