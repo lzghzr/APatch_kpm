@@ -54,11 +54,17 @@ struct binder_work {
     BINDER_WORK_DEAD_BINDER_AND_CLEAR,
     BINDER_WORK_CLEAR_DEATH_NOTIFICATION,
   } type;
+#ifdef CONFIG_HARMONY
+  char harmony[0x8];
+#endif
 };
 typedef __u64 binder_size_t;
 typedef __u64 binder_uintptr_t;
 struct binder_node {
   int debug_id;
+#ifdef CONFIG_HARMONY
+  char harmony[0x4];
+#endif
   spinlock_t lock;
   struct binder_work work;
   union {
@@ -132,13 +138,9 @@ struct binder_priority {
   int prio;
 };
 struct binder_transaction {
-#ifdef CONFIG_HARMONY
-  int* harmony;
-#endif
   int debug_id;
   struct binder_work work;
   struct binder_thread* from;
-  // unknow
   // pid_t from_pid; // 6.1
   // pid_t from_tid; // 6.1
   // struct binder_transaction* from_parent;

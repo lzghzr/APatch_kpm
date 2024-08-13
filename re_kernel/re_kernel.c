@@ -132,12 +132,12 @@ static inline void binder_node_unlock(struct binder_node* node) {
 }
 // binder_inner_proc_lock
 static inline void binder_inner_proc_lock(struct binder_proc* proc) {
-  spinlock_t* inner_lock = (spinlock_t*)((uintptr_t)proc + binder_proc_inner_lock_offset);
+  spinlock_t* inner_lock = binder_proc_inner_lock(proc);
   spin_lock(inner_lock);
 }
 // binder_inner_proc_unlock
 static inline void binder_inner_proc_unlock(struct binder_proc* proc) {
-  spinlock_t* inner_lock = (spinlock_t*)((uintptr_t)proc + binder_proc_inner_lock_offset);
+  spinlock_t* inner_lock = binder_proc_inner_lock(proc);
   spin_unlock(inner_lock);
 }
 
@@ -364,7 +364,7 @@ static struct binder_transaction* binder_find_outdated_transaction_ilocked(struc
 
 static inline void outstanding_txns_dec(struct binder_proc* proc) {
   if (binder_proc_outstanding_txns_offset != UZERO) {
-    int* outstanding_txns = (int*)((uintptr_t)proc + binder_proc_outstanding_txns_offset);
+    int* outstanding_txns = binder_proc_outstanding_txns(proc);
     (*outstanding_txns)--;
   }
 }
@@ -721,9 +721,7 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
     trace = IZERO;
   }
 
-#ifndef CONFIG_HARMONY
   hook_func(binder_proc_transaction, 3, binder_proc_transaction_before, NULL, NULL);
-#endif
   hook_func(do_send_sig_info, 4, do_send_sig_info_before, NULL, NULL);
 
 #ifdef CONFIG_NETWORK

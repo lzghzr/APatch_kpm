@@ -23,6 +23,16 @@ static inline struct binder_alloc* binder_proc_alloc(struct binder_proc* proc) {
     struct binder_alloc* alloc = (struct binder_alloc*)((uintptr_t)proc + binder_proc_alloc_offset);
     return alloc;
 }
+//  binder_proc_inner_lock
+static inline spinlock_t* binder_proc_inner_lock(struct binder_proc* proc) {
+    spinlock_t* inner_lock = (spinlock_t*)((uintptr_t)proc + binder_proc_inner_lock_offset);
+    return inner_lock;
+}
+//  binder_proc_outstanding_txns
+static inline int* binder_proc_outstanding_txns(struct binder_proc* proc) {
+    int* outstanding_txns = (int*)((uintptr_t)proc + binder_proc_outstanding_txns_offset);
+    return outstanding_txns;
+}
 // binder_alloc_free_async_space
 static inline size_t binder_alloc_free_async_space(struct binder_alloc* alloc) {
     size_t free_async_space = *(size_t*)((uintptr_t)alloc + binder_alloc_free_async_space_offset);
