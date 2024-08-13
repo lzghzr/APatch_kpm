@@ -3,6 +3,8 @@
 为低版本内核添加 cgroup.freeze
 
 ## 更新记录
+### pre
+v2 检测函数由 `do_freezer_trap` 改为 `cgroup_freeze_write`
 ### 1.0.8
 修复冻结失效
 ### 1.0.7

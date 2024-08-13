@@ -696,10 +696,10 @@ static long calculate_offsets() {
 }
 
 static long inline_hook_init(const char* args, const char* event, void* __user reserved) {
-  // 有 do_freezer_trap 函数说明本身就支持cgroupv2 freezer
-  void (*do_freezer_trap)(void);
-  do_freezer_trap = (typeof(do_freezer_trap))kallsyms_lookup_name("do_freezer_trap");
-  if (do_freezer_trap)
+  // 有 cgroup_freeze_write 函数说明本身就支持cgroupv2 freezer
+  void (*kf_cgroup_freeze_write)(void);
+  kf_cgroup_freeze_write = (typeof(kf_cgroup_freeze_write))kallsyms_lookup_name("cgroup_freeze_write");
+  if (kf_cgroup_freeze_write)
     return -24;
 
   lookup_name(do_filp_open);
