@@ -54,46 +54,40 @@ struct binder_work {
     BINDER_WORK_DEAD_BINDER_AND_CLEAR,
     BINDER_WORK_CLEAR_DEATH_NOTIFICATION,
   } type;
-#ifdef CONFIG_HARMONY
-  char harmony[0x8];
-#endif
 };
 typedef __u64 binder_size_t;
 typedef __u64 binder_uintptr_t;
 struct binder_node {
   int debug_id;
-#ifdef CONFIG_HARMONY
-  char harmony[0x4];
-#endif
-  spinlock_t lock;
-  struct binder_work work;
-  union {
-    struct rb_node rb_node;
-    struct hlist_node dead_node;
-  };
-  struct binder_proc* proc;
-  struct hlist_head refs;
-  int internal_strong_refs;
-  int local_weak_refs;
-  int local_strong_refs;
-  int tmp_refs;
-  binder_uintptr_t ptr;
-  binder_uintptr_t cookie;
-  struct {
-    u8 has_strong_ref : 1;
-    u8 pending_strong_ref : 1;
-    u8 has_weak_ref : 1;
-    u8 pending_weak_ref : 1;
-  };
-  struct {
-    u8 sched_policy : 2;
-    u8 inherit_rt : 1;
-    u8 accept_fds : 1;
-    u8 txn_security_ctx : 1;
-    u8 min_priority;
-  };
-  bool has_async_transaction;
-  struct list_head async_todo;
+  // spinlock_t lock; // harmony
+  // struct binder_work work;
+  // union {
+  //   struct rb_node rb_node;
+  //   struct hlist_node dead_node;
+  // };
+  // struct binder_proc* proc;
+  // struct hlist_head refs;
+  // int internal_strong_refs;
+  // int local_weak_refs;
+  // int local_strong_refs;
+  // int tmp_refs;
+  // binder_uintptr_t ptr;
+  // binder_uintptr_t cookie;
+  // struct {
+  //   u8 has_strong_ref : 1;
+  //   u8 pending_strong_ref : 1;
+  //   u8 has_weak_ref : 1;
+  //   u8 pending_weak_ref : 1;
+  // };
+  // struct {
+  //   u8 sched_policy : 2;
+  //   u8 inherit_rt : 1;
+  //   u8 accept_fds : 1;
+  //   u8 txn_security_ctx : 1;
+  //   u8 min_priority;
+  // };
+  // bool has_async_transaction;
+  // struct list_head async_todo;
 };
 
 struct binder_context {
@@ -140,7 +134,7 @@ struct binder_priority {
 struct binder_transaction {
   int debug_id;
   struct binder_work work;
-  struct binder_thread* from;
+  // struct binder_thread* from; // harmony
   // pid_t from_pid; // 6.1
   // pid_t from_tid; // 6.1
   // struct binder_transaction* from_parent;

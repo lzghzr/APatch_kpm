@@ -43,6 +43,11 @@ static inline size_t binder_alloc_buffer_size(struct binder_alloc* alloc) {
     size_t buffer_size = *(size_t*)((uintptr_t)alloc + binder_alloc_buffer_size_offset);
     return buffer_size;
 }
+// binder_transaction_from
+static inline struct binder_thread* binder_transaction_from(struct binder_transaction* t) {
+    struct binder_thread* from = *(struct binder_thread**)((uintptr_t)t + binder_transaction_from_offset);
+    return from;
+}
 // binder_transaction_to_proc
 static inline struct binder_proc* binder_transaction_to_proc(struct binder_transaction* t) {
     struct binder_proc* to_proc = *(struct binder_proc**)((uintptr_t)t + binder_transaction_to_proc_offset);
@@ -62,4 +67,29 @@ static inline unsigned int binder_transaction_code(struct binder_transaction* t)
 static inline unsigned int binder_transaction_flags(struct binder_transaction* t) {
     unsigned int flags = *(unsigned int*)((uintptr_t)t + binder_transaction_flags_offset);
     return flags;
+}
+// binder_node_lock_ptr
+static inline spinlock_t* binder_node_lock_ptr(struct binder_node* node) {
+    spinlock_t* lock = (spinlock_t*)((uintptr_t)node + binder_node_lock_offset);
+    return lock;
+}
+// binder_node_ptr
+static inline binder_uintptr_t binder_node_ptr(struct binder_node* node) {
+    binder_uintptr_t ptr = *(binder_uintptr_t*)((uintptr_t)node + binder_node_ptr_offset);
+    return ptr;
+}
+// binder_node_cookie
+static inline binder_uintptr_t binder_node_cookie(struct binder_node* node) {
+    binder_uintptr_t cookie = *(binder_uintptr_t*)((uintptr_t)node + binder_node_cookie_offset);
+    return cookie;
+}
+// binder_node_has_async_transaction
+static inline bool binder_node_has_async_transaction(struct binder_node* node) {
+    bool has_async_transaction = *(bool*)((uintptr_t)node + binder_node_has_async_transaction_offset);
+    return has_async_transaction;
+}
+// binder_node_async_todo
+static inline struct list_head* binder_node_async_todo(struct binder_node* node) {
+    struct list_head* async_todo = (struct list_head*)((uintptr_t)node + binder_node_async_todo_offset);
+    return async_todo;
 }

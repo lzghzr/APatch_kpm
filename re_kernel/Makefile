@@ -1,4 +1,4 @@
-MYKPM_VERSION := 6.0.9
+MYKPM_VERSION := 6.0.10
 
 ifndef KP_DIR
     KP_DIR = ../KernelPatch
@@ -29,17 +29,13 @@ INCLUDE_FLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(KP_DIR)/kernel/$(dir))
 
 objs := re_kernel.c
 
-all: base network harmony
+all: base network
 
 base: re_kernel_$(MYKPM_VERSION).kpm
 
 network: CFLAGS += -DCONFIG_NETWORK
 network: MYKPM_VER := _n
 network: re_kernel_$(MYKPM_VERSION)_network.kpm
-
-harmony: CFLAGS += -DCONFIG_HARMONY
-harmony: MYKPM_VER := _h
-harmony: re_kernel_$(MYKPM_VERSION)_harmony.kpm
 
 debug: CFLAGS += -DCONFIG_DEBUG
 debug: MYKPM_VER := _d
@@ -49,9 +45,6 @@ re_kernel_$(MYKPM_VERSION).kpm: ${objs}
 	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $^ -r -o $@
 
 re_kernel_$(MYKPM_VERSION)_network.kpm: ${objs}
-	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $^ -r -o $@
-
-re_kernel_$(MYKPM_VERSION)_harmony.kpm: ${objs}
 	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $^ -r -o $@
 
 re_kernel_$(MYKPM_VERSION)_debug.kpm: ${objs}
