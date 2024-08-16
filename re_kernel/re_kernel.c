@@ -358,7 +358,7 @@ static struct binder_transaction* binder_find_outdated_transaction_ilocked(struc
   struct binder_work* w;
   bool second = false;
 
-  list_for_each_entry_reverse(w, target_list, entry) {
+  list_for_each_entry(w, target_list, entry) {
     if (w->type != BINDER_WORK_TRANSACTION)
       continue;
     struct binder_transaction* t_queued = container_of(w, struct binder_transaction, work);
