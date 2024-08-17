@@ -524,15 +524,18 @@ static long calculate_offsets() {
       break;
     } else if (binder_node_has_async_transaction_offset == UZERO && (binder_proc_transaction_src[i] & MASK_STRB) == INST_STRB) {
       uint64_t imm12 = bits32(binder_proc_transaction_src[i], 21, 10);
-      binder_node_has_async_transaction_offset = sign64_extend((imm12), 16u);         // 0x6B
-      binder_node_ptr_offset = binder_node_has_async_transaction_offset - 0x13;       // 0x58
-      binder_node_cookie_offset = binder_node_has_async_transaction_offset - 0xB;     // 0x60
-      binder_node_async_todo_offset = binder_node_has_async_transaction_offset + 0x5; // 0x70
+      uint64_t offset = sign64_extend((imm12), 16u);
+      if (offset != 0x6B && offset != 0x7B)
+        continue;
+      binder_node_has_async_transaction_offset = offset; // 0x6B
+      binder_node_ptr_offset = offset - 0x13;            // 0x58
+      binder_node_cookie_offset = offset - 0xB;          // 0x60
+      binder_node_async_todo_offset = offset + 0x5;      // 0x70
       // 目前只有 harmony 内核需要特殊设置
-      if (binder_node_has_async_transaction_offset == 0x6B) {
+      if (offset == 0x6B) {
         binder_node_lock_offset = 0x4;
         binder_transaction_from_offset = 0x20;
-      } else if (binder_node_has_async_transaction_offset == 0x7B) {
+      } else if (offset == 0x7B) {
         binder_node_lock_offset = 0x8;
         binder_transaction_from_offset = 0x28;
       }

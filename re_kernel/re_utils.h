@@ -45,6 +45,7 @@ typedef uint32_t inst_mask_t;
 #define INST_MOV_Rm_2_Rn_WZR 0x2A0203E0u
 #define INST_MOV_Rm_3_Rn_WZR 0x2A0303E0u
 #define INST_MOV_Rm_4_Rn_WZR 0x2A0403E0u
+#define INST_MOV_Rm_WZR 0x2A1F03E0u
 #define INST_MRS_SP_EL0 0xD5384100u
 #define INST_STR_Rn_SP_Rt_3 0xB90003E3u
 #define INST_STR_Rn_SP_Rt_4 0xB90003E4u
@@ -83,6 +84,7 @@ typedef uint32_t inst_mask_t;
 #define MASK_MOV_Rm_2_Rn_WZR 0x7FFFFFE0u
 #define MASK_MOV_Rm_3_Rn_WZR 0x7FFFFFE0u
 #define MASK_MOV_Rm_4_Rn_WZR 0x7FFFFFE0u
+#define MASK_MOV_Rm_WZR 0x7FFFFFE0u
 #define MASK_MRS_SP_EL0 0xFFFFFFE0u
 #define MASK_STR_Rn_SP_Rt_3 0xBFC003FFu
 #define MASK_STR_Rn_SP_Rt_4 0xBFC003FFu
