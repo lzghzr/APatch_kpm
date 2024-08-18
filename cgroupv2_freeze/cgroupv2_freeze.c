@@ -375,20 +375,27 @@ static void do_filp_open_after(hook_fargs3_t* args, void* udata) {
   struct filename* pathname = (struct filename*)args->arg1;
   if (!memcmp(pathname->name, apm, sizeof(apm) - 1)) {
     char* cmd[] = {
-      "if [ ! -d \"/sys/fs/cgroup/uid_0\" ]; then\
-      umount /sys/fs/cgroup/freezer;\
-      umount /sys/fs/cgroup;\
-      \
-      chown system:system /sys/fs/cgroup/;\
-      mount -t cgroup -o nosuid,nodev,noexec,cpuacct none /sys/fs/cgroup/;\
-      \
-      mkdir /sys/fs/cgroup/frozen/;\
-      chown -R system:system /sys/fs/cgroup/frozen/;\
-      echo 1 > /sys/fs/cgroup/frozen/cgroup.freeze;\
-      \
-      mkdir /sys/fs/cgroup/unfrozen/;\
-      chown -R system:system /sys/fs/cgroup/unfrozen/;\
-      fi",
+"if [ ! -d \"/sys/fs/cgroup/uid_0\" ]; then\
+  umount /sys/fs/cgroup/freezer;\
+  umount /sys/fs/cgroup;\
+\
+  chown system:system /sys/fs/cgroup/;\
+\
+  if [ -d \"/dev/cg2_bpf/uid_0\" ]; then\
+    mount -t cgroup2 none /sys/fs/cgroup/;\
+  elif [ -d \"/acct/uid_0\" ]; then\
+    mount -t cgroup -o cpuacct none /sys/fs/cgroup/;\
+  else\
+    exit;\
+  fi;\
+\
+  mkdir /sys/fs/cgroup/frozen/;\
+  chown -R system:system /sys/fs/cgroup/frozen/;\
+  echo 1 > /sys/fs/cgroup/frozen/cgroup.freeze;\
+\
+  mkdir /sys/fs/cgroup/unfrozen/;\
+  chown -R system:system /sys/fs/cgroup/unfrozen/;\
+fi",
       NULL
     };
     run_cmd(cmd);
@@ -648,21 +655,46 @@ static long calculate_offsets() {
   }
   // 获取 css_set->dfl_cgrp
   void (*link_css_set)(struct list_head* tmp_links, struct css_set* cset, struct cgroup* cgrp);
-  lookup_name(link_css_set);
+  link_css_set = (typeof(link_css_set))kallsyms_lookup_name("link_css_set");
 
-  uint32_t* link_css_set_src = (uint32_t*)link_css_set;
-  for (u32 i = 0; i < 0x20; i++) {
+  if (link_css_set) {
+    uint32_t* link_css_set_src = (uint32_t*)link_css_set;
+    for (u32 i = 0; i < 0x20; i++) {
 #ifdef CONFIG_DEBUG
-    logkm("link_css_set %x %llx\n", i, link_css_set_src[i]);
+      logkm("link_css_set %x %llx\n", i, link_css_set_src[i]);
 #endif /* CONFIG_DEBUG */
-    if (link_css_set_src[i] == ARM64_RET) {
-      break;
-    } else if ((link_css_set_src[i] & MASK_STR_64) == INST_STR_64) {
-      uint64_t imm12 = bits32(link_css_set_src[i], 21, 10);
-      css_set_dfl_cgrp_offset = sign64_extend((imm12 << 0b11u), 16u);
-      break;
+      if (link_css_set_src[i] == ARM64_RET) {
+        break;
+      } else if ((link_css_set_src[i] & MASK_STR_64) == INST_STR_64) {
+        uint64_t imm12 = bits32(link_css_set_src[i], 21, 10);
+        css_set_dfl_cgrp_offset = sign64_extend((imm12 << 0b11u), 16u);
+        break;
+      }
+    }
+  } else {
+    unsigned long long (*bpf_get_current_cgroup_id)(void);
+    bpf_get_current_cgroup_id = (typeof(bpf_get_current_cgroup_id))kallsyms_lookup_name("bpf_get_current_cgroup_id");
+
+    if (bpf_get_current_cgroup_id) {
+      uint32_t* bpf_get_current_cgroup_id_src = (uint32_t*)bpf_get_current_cgroup_id;
+      for (u32 i = 0; i < 0x10; i++) {
+#ifdef CONFIG_DEBUG
+        logkm("bpf_get_current_cgroup_id %x %llx\n", i, bpf_get_current_cgroup_id_src[i]);
+#endif /* CONFIG_DEBUG */
+        if (bpf_get_current_cgroup_id_src[i] == ARM64_RET) {
+          break;
+        } else if ((bpf_get_current_cgroup_id_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
+          uint64_t imm12 = bits32(bpf_get_current_cgroup_id_src[i], 21, 10);
+          uint64_t offset = sign64_extend((imm12 << 0b11u), 16u);
+          if (offset < 0x100) {
+            css_set_dfl_cgrp_offset = offset;
+            break;
+          }
+        }
+      }
     }
   }
+
 #ifdef CONFIG_DEBUG
   logkm("css_set_dfl_cgrp_offset=0x%llx\n", css_set_dfl_cgrp_offset);
 #endif /* CONFIG_DEBUG */

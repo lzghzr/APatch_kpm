@@ -3,6 +3,8 @@
 为低版本内核添加 cgroup.freeze
 
 ## 更新记录
+### 1.0.10
+优化 `MIUI` 内核
 ### 1.0.9
 v2 检测函数由 `do_freezer_trap` 改为 `cgroup_freeze_write`
 ### 1.0.8
