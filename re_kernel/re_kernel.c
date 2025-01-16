@@ -525,19 +525,19 @@ static long calculate_offsets() {
     } else if (binder_node_has_async_transaction_offset == UZERO && (binder_proc_transaction_src[i] & MASK_STRB) == INST_STRB) {
       uint64_t imm12 = bits32(binder_proc_transaction_src[i], 21, 10);
       uint64_t offset = sign64_extend((imm12), 16u);
-      if (offset != 0x6B && offset != 0x7B)
+      if (offset < 0x6B || offset > 0x7B)
         continue;
       binder_node_has_async_transaction_offset = offset; // 0x6B
       binder_node_ptr_offset = offset - 0x13;            // 0x58
       binder_node_cookie_offset = offset - 0xB;          // 0x60
       binder_node_async_todo_offset = offset + 0x5;      // 0x70
       // 目前只有 harmony 内核需要特殊设置
-      if (offset == 0x6B) {
-        binder_node_lock_offset = 0x4;
-        binder_transaction_from_offset = 0x20;
-      } else if (offset == 0x7B) {
+      if (offset == 0x7B) {
         binder_node_lock_offset = 0x8;
         binder_transaction_from_offset = 0x28;
+      } else {
+        binder_node_lock_offset = 0x4;
+        binder_transaction_from_offset = 0x20;
       }
     } else if (binder_transaction_buffer_offset == UZERO && (binder_proc_transaction_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0) {
       uint64_t imm12 = bits32(binder_proc_transaction_src[i], 21, 10);
@@ -601,7 +601,7 @@ static long calculate_offsets() {
   void (*binder_transaction)(struct binder_proc* proc, struct binder_thread* thread, struct binder_transaction_data* tr, int reply, binder_size_t extra_buffers_size);
   lookup_name(binder_transaction);
 
-  bool mov_x22_x0 = false;
+  bool mov_x22x23_x0 = false;
   uint32_t* binder_transaction_src = (uint32_t*)binder_transaction;
   for (u32 i = 0; i < 0x20; i++) {
 #ifdef CONFIG_DEBUG
@@ -609,10 +609,10 @@ static long calculate_offsets() {
 #endif /* CONFIG_DEBUG */
     if (binder_transaction_src[i] == ARM64_RET) {
       break;
-    } else if (binder_transaction_src[i] == 0xAA0003F6u) { // mov x22, x0
-      mov_x22_x0 = true;
+    } else if ((binder_transaction_src[i] & MASK_MOV_Rm_x0_Rd_x22x23) == INST_MOV_Rm_x0_Rd_x22x23) { // mov x22, x0 OR mov x23, x0
+      mov_x22x23_x0 = true;
     } else if (((binder_transaction_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0 && (binder_transaction_src[i] & MASK_LDR_64_Rn_X0_Rt_X0) != INST_LDR_64_Rn_X0_Rt_X0)
-      || (mov_x22_x0 && (binder_transaction_src[i] & MASK_LDR_64_X22) == INST_LDR_64_X22)) {
+      || (mov_x22x23_x0 && (binder_transaction_src[i] & MASK_LDR_64_X22X23) == INST_LDR_64_X22X23)) {
       uint64_t imm12 = bits32(binder_transaction_src[i], 21, 10);
       binder_proc_context_offset = sign64_extend((imm12 << 0b11u), 16u); // 0x240
       binder_proc_inner_lock_offset = binder_proc_context_offset + 0x8;  // 0x248
@@ -649,6 +649,9 @@ static long calculate_offsets() {
         binder_proc_alloc_offset = sign64_extend((imm12 << 12u), 16u); // 0x1A8
       } else {
         binder_proc_alloc_offset = sign64_extend((imm12), 16u);        // 0x1A8
+      }
+      if (binder_proc_alloc_offset > binder_proc_context_offset) {
+        continue;
       }
       break;
     }

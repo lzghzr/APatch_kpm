@@ -32,7 +32,7 @@ typedef uint32_t inst_mask_t;
 #define INST_LDR_64_ 0xF9400000u
 #define INST_LDR_64_Rn_X0 0xF9400000u
 #define INST_LDR_64_Rn_X0_Rt_X0 0xF9400000u
-#define INST_LDR_64_X22 0xF94002C0u
+#define INST_LDR_64_X22X23 0xF94002C0u
 #define INST_LDR_64_SP 0xF94003E0u
 #define INST_LDRB 0x39400000u
 #define INST_LDRB_X0 0x39400000u
@@ -41,6 +41,7 @@ typedef uint32_t inst_mask_t;
 #define INST_LDRSH 0x79800000u
 #define INST_LDRSH_64_ 0x79800000u
 #define INST_MOV_Rd_0 0x2A0003E0u
+#define INST_MOV_Rm_x0_Rd_x22x23 0xAA0003F6u
 #define INST_MOV_Rm_1_Rn_WZR 0x2A0103E0u
 #define INST_MOV_Rm_2_Rn_WZR 0x2A0203E0u
 #define INST_MOV_Rm_3_Rn_WZR 0x2A0303E0u
@@ -71,7 +72,7 @@ typedef uint32_t inst_mask_t;
 #define MASK_LDR_64_ 0xFFC00000u
 #define MASK_LDR_64_Rn_X0 0xFFC003E0u
 #define MASK_LDR_64_Rn_X0_Rt_X0 0xFFC003FFu
-#define MASK_LDR_64_X22 0xFFC003E0u
+#define MASK_LDR_64_X22X23 0xFFC003C0u
 #define MASK_LDR_64_SP 0xFFC003E0u
 #define MASK_LDRB 0xFFC00000u
 #define MASK_LDRB_X0 0xFFC003E0u
@@ -80,6 +81,7 @@ typedef uint32_t inst_mask_t;
 #define MASK_LDRSH 0xFF800000u
 #define MASK_LDRSH_64_ 0xFFC00000u
 #define MASK_MOV_Rd_0 0x7FE0FFFFu
+#define MASK_MOV_Rm_x0_Rd_x22x23 0xFFFFFFFEu
 #define MASK_MOV_Rm_1_Rn_WZR 0x7FFFFFE0u
 #define MASK_MOV_Rm_2_Rn_WZR 0x7FFFFFE0u
 #define MASK_MOV_Rm_3_Rn_WZR 0x7FFFFFE0u
