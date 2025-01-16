@@ -388,7 +388,8 @@ static void do_filp_open_after(hook_fargs3_t* args, void* udata) {
   else\
     exit;\
   fi;\
-\
+fi;\
+if [ ! -d \"/sys/fs/cgroup/frozen\" ] && [ -f \"/sys/fs/cgroup/uid_0/cgroup.freeze\" ]; then\
   mkdir /sys/fs/cgroup/frozen/;\
   chown -R system:system /sys/fs/cgroup/frozen/;\
   echo 1 > /sys/fs/cgroup/frozen/cgroup.freeze;\
