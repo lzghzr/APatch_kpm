@@ -21,6 +21,7 @@ typedef uint32_t inst_type_t;
 typedef uint32_t inst_mask_t;
 
 #define INST_ADRP 0x90000000
+#define INST_CMP_64_Xn_Xm 0xEB00001F
 #define INST_MRS_SP_EL0 0xD5384100u
 #define INST_LDR_32_ 0xB9400000u
 #define INST_LDR_32_X0 0xB9400000u
@@ -36,6 +37,7 @@ typedef uint32_t inst_mask_t;
 #define INST_UXTB_Rn_1 0x53001C20u
 
 #define MASK_ADRP 0x9F000000
+#define MASK_CMP_64_Xn_Xm 0xFFE0FC1F
 #define MASK_MRS_SP_EL0 0xFFFFFFE0u
 #define MASK_LDR_32_ 0xFFC00000u
 #define MASK_LDR_32_X0 0xFFC003E0u
