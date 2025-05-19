@@ -166,8 +166,8 @@ enum binder_stat_types {
   BINDER_STAT_COUNT
 };
 struct binder_stats {
-  atomic_t br[18];
-  // atomic_t br[20]; // 6.1
+  // atomic_t br[18];
+  atomic_t br[20]; // 6.1
   atomic_t bc[19];
   atomic_t obj_created[BINDER_STAT_COUNT];
   atomic_t obj_deleted[BINDER_STAT_COUNT];

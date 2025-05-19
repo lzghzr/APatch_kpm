@@ -25,6 +25,7 @@ typedef uint32_t inst_mask_t;
 #define INST_ADD_64_Rd_X0_Rn_X19 0x91000260u
 #define INST_ADD_64_Rd_X0 0x91000000u
 #define INST_ADD_64_Rd_X1 0x91000001u
+#define INST_ADRP 0x90000000
 #define INST_AND_64_imm_0XFFFFFFFFFFFFFFF8 0x927DF000u
 #define INST_BL 0x94000000
 #define INST_LDR_32_ 0xB9400000u
@@ -48,10 +49,12 @@ typedef uint32_t inst_mask_t;
 #define INST_MOV_Rm_4_Rn_WZR 0x2A0403E0u
 #define INST_MOV_Rm_WZR 0x2A1F03E0u
 #define INST_MRS_SP_EL0 0xD5384100u
+#define INST_ORR 0x2A000000u
 #define INST_STR_Rn_SP_Rt_3 0xB90003E3u
 #define INST_STR_Rn_SP_Rt_4 0xB90003E4u
 #define INST_STR_32_x0 0xB9000000u
 #define INST_STR_32_Rt_WZR 0xB900001Fu
+#define INST_STR_64 0xF9000000u
 #define INST_STR_64_Rt_WZR 0xF900001Fu
 #define INST_STRB 0x39000000u
 #define INST_CBZ 0x34000000
@@ -65,6 +68,7 @@ typedef uint32_t inst_mask_t;
 #define MASK_ADD_64_Rd_X0_Rn_X19 0xFF8003FFu
 #define MASK_ADD_64_Rd_X0 0xFF80001Fu
 #define MASK_ADD_64_Rd_X1 0xFF80001Fu
+#define MASK_ADRP 0x9F000000
 #define MASK_AND_64_imm_0XFFFFFFFFFFFFFFF8 0xFFFFFC00u
 #define MASK_BL 0xFC000000
 #define MASK_LDR_32_ 0xFFC00000u
@@ -88,10 +92,12 @@ typedef uint32_t inst_mask_t;
 #define MASK_MOV_Rm_4_Rn_WZR 0x7FFFFFE0u
 #define MASK_MOV_Rm_WZR 0x7FFFFFE0u
 #define MASK_MRS_SP_EL0 0xFFFFFFE0u
+#define MASK_ORR 0x7FE00000u
 #define MASK_STR_Rn_SP_Rt_3 0xBFC003FFu
 #define MASK_STR_Rn_SP_Rt_4 0xBFC003FFu
 #define MASK_STR_32_x0 0xFFC003E0u
 #define MASK_STR_32_Rt_WZR 0xFFC0001Fu
+#define MASK_STR_64 0xFFC00000u
 #define MASK_STR_64_Rt_WZR 0xFFC0001Fu
 #define MASK_STRB 0xFFC00000u
 #define MASK_CBZ 0x7F000000u
@@ -99,9 +105,6 @@ typedef uint32_t inst_mask_t;
 #define MASK_TBZ 0x7F000000u
 #define MASK_TBNZ 0x7F000000u
 #define MASK_TBNZ_5 0xFFF80000u
-
-#define INST_MOVZ_imm16_0x7212 0x528E4240u
-#define MASK_MOVZ_imm16_0x7212 0x7F9FFFE0u
 
 #define ARM64_MOV_x29_SP 0x910003FDu
 #define ARM64_RET 0xD65F03C0u
@@ -154,6 +157,16 @@ typedef uint32_t inst_mask_t;
   //   kuid_t ___val = *(kuid_t *)((uintptr_t)cred + cred_offset.uid_offset);
   //   ___val;
   // })
+
+enum inst_type {
+  ARM64_ADD_64,
+  ARM64_ADRP,
+  ARM64_STRB,
+  ARM64_STR_32,
+  ARM64_STR_64,
+  ARM64_LDR_32,
+  ARM64_LDR_64,
+};
 
 extern struct sk_buff* kfunc_def(__alloc_skb)(unsigned int size, gfp_t gfp_mask, int flags, int node);
 static inline struct sk_buff* alloc_skb(unsigned int size, gfp_t priority) {
