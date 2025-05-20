@@ -6,7 +6,11 @@ endif
 
 OS_NAME = $(shell uname | tr A-Z a-z)
 MACHINE = $(shell uname -m)
-NDK_BIN_DIR := toolchains/llvm/prebuilt/$(OS_NAME)-$(MACHINE)/bin
+HOST_TAG = $(OS_NAME)-$(MACHINE)
+ifeq ($(HOST_TAG), darwin-arm64)
+    HOST_TAG = darwin-x86_64
+endif
+NDK_BIN_DIR := toolchains/llvm/prebuilt/$(HOST_TAG)/bin
 ifdef ANDROID_NDK_LATEST_HOME
     NDK_PATH ?= $(ANDROID_NDK_LATEST_HOME)/$(NDK_BIN_DIR)
 else ifdef ANDROID_NDK
