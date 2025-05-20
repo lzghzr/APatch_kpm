@@ -505,6 +505,8 @@ static uint64_t calculate_imm(uint32_t inst, enum inst_type inst_type, uint64_t 
   case ARM64_STR_64:
   case ARM64_LDR_64:
     return sign64_extend((imm12 << 0b11u), 16u);
+  default:
+    return UZERO;
   }
 }
 
@@ -555,10 +557,10 @@ static long calculate_offsets() {
       uint64_t offset = calculate_imm(binder_proc_transaction_src[i], ARM64_STRB, NULL);
       if (offset < 0x6B || offset > 0x7B)
         continue;
-      binder_node_has_async_transaction_offset = offset; // 0x6B
-      binder_node_ptr_offset = offset - 0x13;            // 0x58
-      binder_node_cookie_offset = offset - 0xB;          // 0x60
-      binder_node_async_todo_offset = offset + 0x5;      // 0x70
+      binder_node_has_async_transaction_offset = offset;
+      binder_node_ptr_offset = offset - 0x13;
+      binder_node_cookie_offset = offset - 0xB;
+      binder_node_async_todo_offset = offset + 0x5;
       // 目前只有 harmony 内核需要特殊设置
       if (offset == 0x7B) {
         binder_node_lock_offset = 0x8;
@@ -568,30 +570,30 @@ static long calculate_offsets() {
         binder_transaction_from_offset = 0x20;
       }
     } else if (binder_transaction_buffer_offset == UZERO && (binder_proc_transaction_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0) {
-      binder_transaction_buffer_offset = calculate_imm(binder_proc_transaction_src[i], ARM64_LDR_64, NULL); // 0x50
-      binder_transaction_to_proc_offset = binder_transaction_buffer_offset - 0x20;                          // 0x30
-      binder_transaction_code_offset = binder_transaction_buffer_offset + 0x8;                              // 0x58
-      binder_transaction_flags_offset = binder_transaction_buffer_offset + 0xC;                             // 0x5C
+      binder_transaction_buffer_offset = calculate_imm(binder_proc_transaction_src[i], ARM64_LDR_64, NULL);
+      binder_transaction_to_proc_offset = binder_transaction_buffer_offset - 0x20;
+      binder_transaction_code_offset = binder_transaction_buffer_offset + 0x8;
+      binder_transaction_flags_offset = binder_transaction_buffer_offset + 0xC;
     } else if ((binder_proc_transaction_src[i] & MASK_ORR) == INST_ORR && (binder_proc_transaction_src[i + 1] & MASK_STRB) == INST_STRB) {
       uint64_t binder_proc_sync_recv_offset = calculate_imm(binder_proc_transaction_src[i + 1], ARM64_STRB, NULL);
-      binder_proc_is_frozen_offset = binder_proc_sync_recv_offset - 1;          // 0x71
-      binder_proc_outstanding_txns_offset = binder_proc_sync_recv_offset - 0x6; // 0x6C
+      binder_proc_is_frozen_offset = binder_proc_sync_recv_offset - 1;
+      binder_proc_outstanding_txns_offset = binder_proc_sync_recv_offset - 0x6;
       break;
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("binder_transaction_from_offset=0x%llx\n", binder_transaction_from_offset);
-  logkm("binder_transaction_to_proc_offset=0x%llx\n", binder_transaction_to_proc_offset);
-  logkm("binder_transaction_buffer_offset=0x%llx\n", binder_transaction_buffer_offset);
-  logkm("binder_transaction_code_offset=0x%llx\n", binder_transaction_code_offset);
-  logkm("binder_transaction_flags_offset=0x%llx\n", binder_transaction_flags_offset);
-  logkm("binder_node_lock_offset=0x%llx\n", binder_node_lock_offset);
-  logkm("binder_node_ptr_offset=0x%llx\n", binder_node_ptr_offset);
-  logkm("binder_node_cookie_offset=0x%llx\n", binder_node_cookie_offset);
-  logkm("binder_node_has_async_transaction_offset=0x%llx\n", binder_node_has_async_transaction_offset);
-  logkm("binder_node_async_todo_offset=0x%llx\n", binder_node_async_todo_offset);
-  logkm("binder_proc_outstanding_txns_offset=0x%llx\n", binder_proc_outstanding_txns_offset);
-  logkm("binder_proc_is_frozen_offset=0x%llx\n", binder_proc_is_frozen_offset);
+  logkm("binder_transaction_from_offset=0x%llx\n", binder_transaction_from_offset); // 0x20
+  logkm("binder_transaction_to_proc_offset=0x%llx\n", binder_transaction_to_proc_offset); // 0x30
+  logkm("binder_transaction_buffer_offset=0x%llx\n", binder_transaction_buffer_offset); // 0x50
+  logkm("binder_transaction_code_offset=0x%llx\n", binder_transaction_code_offset); // 0x58
+  logkm("binder_transaction_flags_offset=0x%llx\n", binder_transaction_flags_offset); // 0x5C
+  logkm("binder_node_lock_offset=0x%llx\n", binder_node_lock_offset); // 0x4
+  logkm("binder_node_ptr_offset=0x%llx\n", binder_node_ptr_offset); // 0x58
+  logkm("binder_node_cookie_offset=0x%llx\n", binder_node_cookie_offset); // 0x60
+  logkm("binder_node_has_async_transaction_offset=0x%llx\n", binder_node_has_async_transaction_offset); // 0x6B
+  logkm("binder_node_async_todo_offset=0x%llx\n", binder_node_async_todo_offset); // 0x70
+  logkm("binder_proc_outstanding_txns_offset=0x%llx\n", binder_proc_outstanding_txns_offset); // 0x6C
+  logkm("binder_proc_is_frozen_offset=0x%llx\n", binder_proc_is_frozen_offset); // 0x71
 #endif /* CONFIG_DEBUG */
   if (binder_node_lock_offset == UZERO || binder_node_has_async_transaction_offset == UZERO || binder_transaction_buffer_offset == UZERO) {
     return -11;
@@ -608,12 +610,12 @@ static long calculate_offsets() {
     if (task_clear_jobctl_trapping_src[i] == ARM64_RET) {
       break;
     } else if ((task_clear_jobctl_trapping_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0) {
-      task_struct_jobctl_offset = calculate_imm(task_clear_jobctl_trapping_src[i], ARM64_LDR_64, NULL); // 0x580
+      task_struct_jobctl_offset = calculate_imm(task_clear_jobctl_trapping_src[i], ARM64_LDR_64, NULL);
       break;
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("task_struct_jobctl_offset=0x%llx\n", task_struct_jobctl_offset);
+  logkm("task_struct_jobctl_offset=0x%llx\n", task_struct_jobctl_offset); // 0x580
 #endif /* CONFIG_DEBUG */
   if (task_struct_jobctl_offset == UZERO) {
     return -11;
@@ -634,16 +636,16 @@ static long calculate_offsets() {
       mov_x22x23_x0 = true;
     } else if (((binder_transaction_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0 && (binder_transaction_src[i] & MASK_LDR_64_Rn_X0_Rt_X0) != INST_LDR_64_Rn_X0_Rt_X0)
       || (mov_x22x23_x0 && (binder_transaction_src[i] & MASK_LDR_64_X22X23) == INST_LDR_64_X22X23)) {
-      binder_proc_context_offset = calculate_imm(binder_transaction_src[i], ARM64_LDR_64, NULL); // 0x240
-      binder_proc_inner_lock_offset = binder_proc_context_offset + 0x8;                          // 0x248
-      binder_proc_outer_lock_offset = binder_proc_context_offset + 0xC;                          // 0x24C
+      binder_proc_context_offset = calculate_imm(binder_transaction_src[i], ARM64_LDR_64, NULL);
+      binder_proc_inner_lock_offset = binder_proc_context_offset + 0x8;
+      binder_proc_outer_lock_offset = binder_proc_context_offset + 0xC;
       break;
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("binder_proc_context_offset=0x%llx\n", binder_proc_context_offset);
-  logkm("binder_proc_inner_lock_offset=0x%llx\n", binder_proc_inner_lock_offset);
-  logkm("binder_proc_outer_lock_offset=0x%llx\n", binder_proc_outer_lock_offset);
+  logkm("binder_proc_context_offset=0x%llx\n", binder_proc_context_offset); // 0x240
+  logkm("binder_proc_inner_lock_offset=0x%llx\n", binder_proc_inner_lock_offset); // 0x248
+  logkm("binder_proc_outer_lock_offset=0x%llx\n", binder_proc_outer_lock_offset); // 0x24C
 #endif /* CONFIG_DEBUG */
   if (binder_proc_context_offset == UZERO) {
     return -11;
@@ -663,7 +665,7 @@ static long calculate_offsets() {
     if (binder_free_proc_src[i] == ARM64_MOV_x29_SP) {
       break;
     } else if ((binder_free_proc_src[i] & MASK_ADD_64_Rd_X0_Rn_X19) == INST_ADD_64_Rd_X0_Rn_X19 && (binder_free_proc_src[i + 1] & MASK_BL) == INST_BL) {
-      binder_proc_alloc_offset = calculate_imm(binder_free_proc_src[i], ARM64_ADD_64, NULL); // 0x1A8
+      binder_proc_alloc_offset = calculate_imm(binder_free_proc_src[i], ARM64_ADD_64, NULL);
       if (binder_proc_alloc_offset > binder_proc_context_offset) {
         continue;
       }
@@ -671,7 +673,7 @@ static long calculate_offsets() {
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("binder_proc_alloc_offset=0x%llx\n", binder_proc_alloc_offset);
+  logkm("binder_proc_alloc_offset=0x%llx\n", binder_proc_alloc_offset); // 0x1A8
 #endif /* CONFIG_DEBUG */
   if (binder_proc_alloc_offset == UZERO) {
     return -11;
@@ -689,30 +691,30 @@ static long calculate_offsets() {
       for (u32 j = 1; j < 0x10; j++) {
         if ((binder_alloc_init_src[i - j] & MASK_ADD_64) == INST_ADD_64) {
           uint64_t binder_alloc_buffers_offset = calculate_imm(binder_alloc_init_src[i - j], ARM64_ADD_64, NULL);
-          binder_alloc_vma_offset = binder_alloc_buffers_offset - 0x18;              // 0x30
-          binder_alloc_free_async_space_offset = binder_alloc_buffers_offset + 0x20; // 0x68
-          binder_alloc_buffer_size_offset = binder_alloc_buffers_offset + 0x30;      // 0x78
+          binder_alloc_vma_offset = binder_alloc_buffers_offset - 0x18;
+          binder_alloc_free_async_space_offset = binder_alloc_buffers_offset + 0x20;
+          binder_alloc_buffer_size_offset = binder_alloc_buffers_offset + 0x30;
           break;
         }
       }
       break;
     } else if (binder_alloc_pid_offset == UZERO && (binder_alloc_init_src[i] & MASK_STR_32_x0) == INST_STR_32_x0) {
-      binder_alloc_pid_offset = calculate_imm(binder_alloc_init_src[i], ARM64_STR_32, NULL); // 0x84
+      binder_alloc_pid_offset = calculate_imm(binder_alloc_init_src[i], ARM64_STR_32, NULL);
     } else if (binder_alloc_pid_offset == UZERO && (binder_alloc_init_src[i] & MASK_LDR_32_) == INST_LDR_32_) {
-      task_struct_pid_offset = calculate_imm(binder_alloc_init_src[i], ARM64_LDR_32, NULL); // 0x5D8
-      task_struct_tgid_offset = task_struct_pid_offset + 0x4;                               // 0x5DC
+      task_struct_pid_offset = calculate_imm(binder_alloc_init_src[i], ARM64_LDR_32, NULL);
+      task_struct_tgid_offset = task_struct_pid_offset + 0x4;
     } else if (binder_alloc_pid_offset == UZERO && (binder_alloc_init_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
-      task_struct_group_leader_offset = calculate_imm(binder_alloc_init_src[i], ARM64_LDR_64, NULL); // 0x618
+      task_struct_group_leader_offset = calculate_imm(binder_alloc_init_src[i], ARM64_LDR_64, NULL);
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("binder_alloc_pid_offset=0x%llx\n", binder_alloc_pid_offset);
-  logkm("binder_alloc_buffer_size_offset=0x%llx\n", binder_alloc_buffer_size_offset);
-  logkm("binder_alloc_free_async_space_offset=0x%llx\n", binder_alloc_free_async_space_offset);
-  logkm("binder_alloc_vma_offset=0x%llx\n", binder_alloc_vma_offset);
-  logkm("task_struct_pid_offset=0x%llx\n", task_struct_pid_offset);
-  logkm("task_struct_tgid_offset=0x%llx\n", task_struct_tgid_offset);
-  logkm("task_struct_group_leader_offset=0x%llx\n", task_struct_group_leader_offset);
+  logkm("binder_alloc_pid_offset=0x%llx\n", binder_alloc_pid_offset); // 0x84
+  logkm("binder_alloc_buffer_size_offset=0x%llx\n", binder_alloc_buffer_size_offset); // 0x78
+  logkm("binder_alloc_free_async_space_offset=0x%llx\n", binder_alloc_free_async_space_offset); // 0x68
+  logkm("binder_alloc_vma_offset=0x%llx\n", binder_alloc_vma_offset); // 0x30
+  logkm("task_struct_pid_offset=0x%llx\n", task_struct_pid_offset); // 0x5D8
+  logkm("task_struct_tgid_offset=0x%llx\n", task_struct_tgid_offset); // 0x5DC
+  logkm("task_struct_group_leader_offset=0x%llx\n", task_struct_group_leader_offset); // 0x618
 #endif /* CONFIG_DEBUG */
   if (binder_alloc_pid_offset == UZERO || task_struct_pid_offset == UZERO || task_struct_group_leader_offset == UZERO) {
     return -11;
@@ -752,7 +754,7 @@ static long calculate_offsets() {
   }
 #ifdef CONFIG_DEBUG
   logkm("binder_stats=0x%llx\n", kvar(binder_stats));
-  logkm("binder_stats_deleted_addr=0x%llx\n", binder_stats_deleted_addr);
+  logkm("binder_stats_deleted_addr=0x%llx\n", binder_stats_deleted_addr); // binder_stats + 0xCC
 #endif /* CONFIG_DEBUG */
   if (binder_stats_deleted_addr == UZERO) {
     return -11;
