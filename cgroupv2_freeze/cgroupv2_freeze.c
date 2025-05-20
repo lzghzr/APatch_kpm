@@ -201,7 +201,7 @@ static void cgroup_addrm_files_after(hook_fargs4_t* args, void* udata) {
     return;
 
   ((typeof(cgroup_addrm_files))
-    hook_chain_origin_func(args))((struct cgroup_subsys_state*)args->arg0, (struct cgroup*)args->arg1, cgroup_freeze_files, (bool)args->arg3);
+    wrap_get_origin_func(args))((struct cgroup_subsys_state*)args->arg0, (struct cgroup*)args->arg1, cgroup_freeze_files, (bool)args->arg3);
 }
 
 static const char uid_[] = "uid_";
