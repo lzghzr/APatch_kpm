@@ -1,4 +1,4 @@
-MYKPM_VERSION := 1.2.0
+MYKPM_VERSION := 2.0.0
 
 ifndef KP_DIR
     KP_DIR = ../KernelPatch
@@ -35,7 +35,7 @@ objs := hosts_redirect.o
 
 all: hosts_redirect_$(MYKPM_VERSION).kpm
 
-debug: CFLAGS += -DDEBUG
+debug: CFLAGS += -DCONFIG_DEBUG
 debug: HR_VER := _d
 debug: hosts_redirect_$(MYKPM_VERSION)_debug.kpm
 

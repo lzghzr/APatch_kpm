@@ -72,6 +72,12 @@ typedef uint32_t inst_mask_t;
     func = 0;                          \
   }
 
+enum inst_type {
+  ARM64_ADD_64,
+  ARM64_LDP_64,
+  ARM64_LDR_64,
+};
+
 extern char* kfunc_def(d_path)(const struct path* path, char* buf, int buflen);
 static inline char* d_path(const struct path* path, char* buf, int buflen) {
   kfunc_call(d_path, path, buf, buflen);
