@@ -4,6 +4,7 @@
  * Copyright (C) 2024 lzghzr. All Rights Reserved.
  */
 
+#include <accctl.h>
 #include <compiler.h>
 #include <hook.h>
 #include <kpmodule.h>
@@ -44,20 +45,6 @@ fs_struct_pwd_offset = UZERO, fs_struct_lock_offset = UZERO;
 char hosts_source[] = "/system/etc/hosts";
 char hosts_target[] = "/data/adb/hosts/0";
 
-static uid_t current_uid() {
-  struct cred* cred = *(struct cred**)((uintptr_t)current + task_struct_offset.cred_offset);
-  uid_t uid = *(uid_t*)((uintptr_t)cred + cred_offset.uid_offset);
-  return uid;
-}
-
-static inline void set_priv_selinx_allow(struct task_struct* task, int val) {
-  struct task_ext* ext = get_task_ext(task);
-  if (likely(task_ext_valid(ext))) {
-    ext->priv_selinux_allow = val;
-    dsb(ish);
-  }
-}
-
 static bool endWith(const char* str, const char* suffix) {
   if (!str || !suffix)
     return false;
@@ -80,7 +67,7 @@ static void do_filp_open_before(hook_fargs3_t* args, void* udata) {
   if (unlikely(!strcmp(pathname->name, hosts_source))) {
     args->local.data0 = (uint64_t)pathname->name;
     pathname->name = hosts_target;
-    set_priv_selinx_allow(current, true);
+    set_priv_sel_allow(current, true);
   } else if (unlikely(endWith(pathname->name, "hosts"))) {
     struct task_struct* task = current;
     spinlock_t task_lock = *(spinlock_t*)((uintptr_t)task + task_struct_alloc_lock_offset);
@@ -121,7 +108,7 @@ static void do_filp_open_before(hook_fargs3_t* args, void* udata) {
           if (likely(!IS_ERR(hosts_name) && !strcmp(hosts_name, hosts_source))) {
             args->local.data0 = (uint64_t)pathname->name;
             pathname->name = hosts_target;
-            set_priv_selinx_allow(task, true);
+            set_priv_sel_allow(task, true);
           }
         }
       }
@@ -133,7 +120,7 @@ static void do_filp_open_before(hook_fargs3_t* args, void* udata) {
 
 static void do_filp_open_after(hook_fargs3_t* args, void* udata) {
   if (unlikely(args->local.data0)) {
-    set_priv_selinx_allow(current, false);
+    set_priv_sel_allow(current, false);
     struct filename* pathname = (struct filename*)args->arg1;
     pathname->name = (char*)args->local.data0;
   }
