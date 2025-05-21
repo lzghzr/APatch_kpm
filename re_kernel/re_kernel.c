@@ -656,6 +656,10 @@ static long calculate_offsets() {
   if (!binder_free_proc) {
     binder_free_proc = (typeof(binder_free_proc))kallsyms_lookup_name("binder_proc_dec_tmpref");
   }
+  pr_info("kernel function binder_free_proc addr: %llx\n", binder_free_proc);
+  if (!binder_free_proc) {
+    return -21;
+  }
 
   uint32_t* binder_free_proc_src = (uint32_t*)binder_free_proc;
   for (u32 i = 0x10; i < 0x100; i++) {
@@ -728,26 +732,41 @@ static long calculate_offsets() {
   if (!binder_free_transaction) {
     binder_free_transaction = (typeof(binder_free_transaction))kallsyms_lookup_name("binder_send_failed_reply");
   }
+  pr_info("kernel function binder_free_transaction addr: %llx\n", binder_free_transaction);
+  if (!binder_free_transaction) {
+    return -21;
+  }
 
   uint32_t* binder_free_transaction_src = (uint32_t*)binder_free_transaction;
   for (u32 i = 0; i < 0x100; i++) {
 #ifdef CONFIG_DEBUG
     logkm("binder_free_transaction %x %llx\n", i, binder_free_transaction_src[i]);
 #endif /* CONFIG_DEBUG */
-    if ((binder_free_transaction_src[i] & MASK_ADRP) == INST_ADRP && (binder_free_transaction_src[i + 1] & MASK_ADD_64) == INST_ADD_64) {
+    if ((binder_free_transaction_src[i] & MASK_ADRP) == INST_ADRP) {
       uint64_t inst_addr = (uint64_t)binder_free_transaction + i * 4;
-      binder_stats_deleted_addr = calculate_imm(binder_free_transaction_src[i], ARM64_ADRP, inst_addr);
-      binder_stats_deleted_addr += calculate_imm(binder_free_transaction_src[i + 1], ARM64_ADD_64, NULL);
-      uint64_t offset = binder_stats_deleted_addr - (uint64_t)kvar(binder_stats);
-
-      if (offset == 0) {
-        if ((binder_free_transaction_src[i + 2] & MASK_ADD_64) == INST_ADD_64) {
-          binder_stats_deleted_addr += calculate_imm(binder_free_transaction_src[i + 2], ARM64_ADD_64, NULL);
-        } else {
-          binder_stats_deleted_addr += 0xC4;
+      uint64_t adrp_addr = calculate_imm(binder_free_transaction_src[i], ARM64_ADRP, inst_addr);
+      if (adrp_addr == ((uint64_t)kvar(binder_stats) & 0xFFFFFFFFFFFFF000)) {
+        uint64_t binder_stats_addr = (uint64_t)kvar(binder_stats) & 0xFFF;
+        for (u32 j = 0; j < 0x10; j++) {
+          if ((binder_free_transaction_src[i + j] & MASK_ADD_64) == INST_ADD_64) {
+            uint64_t adrl_addr = calculate_imm(binder_free_transaction_src[i + j], ARM64_ADD_64, NULL);
+            uint64_t deleted_offset = adrl_addr - binder_stats_addr;
+            if (deleted_offset == 0) {
+              for (u32 k = 0; k < 0x10; k++) {
+                if ((binder_free_transaction_src[i + j + k] & MASK_ADD_64) == INST_ADD_64) {
+                  uint64_t offset = calculate_imm(binder_free_transaction_src[i + j + k], ARM64_ADD_64, NULL);
+                  if (offset > 0xC0 && offset < 0xE0) {
+                    binder_stats_deleted_addr = adrp_addr + adrl_addr + offset;
+                    break;
+                  }
+                }
+              }
+            } else if (deleted_offset > 0xC0 && deleted_offset < 0xE0) {
+              binder_stats_deleted_addr = adrp_addr + adrl_addr;
+              break;
+            }
+          }
         }
-        break;
-      } else if (offset > 0 && offset < 0x100) {
         break;
       }
     }

@@ -3,6 +3,8 @@
 配合墓碑模块，当应用收到 `binder` 同步信息时，临时解冻被冻结的应用
 
 ## 更新记录
+### 6.0.13
+修复 6.0.12 引入的错误
 ### 6.0.12
 修复 binder_stats_deleted(BINDER_STAT_TRANSACTION) 地址错误<br />
 理论上支持 6.6
