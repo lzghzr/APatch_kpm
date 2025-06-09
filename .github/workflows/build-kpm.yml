@@ -42,8 +42,10 @@ jobs:
           mkdir target
 
           for dir in $(ls -d */ | grep -v '^KernelPatch/$\|^target/$'); do
-            make -C ${dir}
-            mv ${dir}*.kpm target
+            if [ ! -f ${dir}archive ]; then
+              make -C ${dir}
+              mv ${dir}*.kpm target
+            fi
           done
 
       - name: Upload artifact
