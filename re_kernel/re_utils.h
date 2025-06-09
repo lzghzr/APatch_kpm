@@ -210,6 +210,13 @@ static inline int netlink_unicast(struct sock* ssk, struct sk_buff* skb, u32 por
   return -ESRCH;
 }
 
+extern int kfunc_def(netlink_rcv_skb)(struct sk_buff* skb, int (*cb)(struct sk_buff*, struct nlmsghdr*, struct netlink_ext_ack*));
+static inline int netlink_rcv_skb(struct sk_buff* skb, int (*cb)(struct sk_buff*, struct nlmsghdr*, struct netlink_ext_ack*)) {
+  kfunc_call(netlink_rcv_skb, skb, cb);
+  kfunc_not_found();
+  return -ESRCH;
+}
+
 extern struct sock* kfunc_def(__netlink_kernel_create)(struct net* net, int unit, struct module* module, struct netlink_kernel_cfg* cfg);
 static inline struct sock* netlink_kernel_create(struct net* net, int unit, struct netlink_kernel_cfg* cfg) {
   kfunc_call(__netlink_kernel_create, net, unit, THIS_MODULE, cfg);

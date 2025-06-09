@@ -69,6 +69,8 @@ struct sk_buff* kfunc_def(__alloc_skb)(unsigned int size, gfp_t gfp_mask, int fl
 struct nlmsghdr* kfunc_def(__nlmsg_put)(struct sk_buff* skb, u32 portid, u32 seq, int type, int len, int flags);
 void kfunc_def(kfree_skb)(struct sk_buff* skb);
 int kfunc_def(netlink_unicast)(struct sock* ssk, struct sk_buff* skb, u32 portid, int nonblock);
+// netlink_rcv
+int kfunc_def(netlink_rcv_skb)(struct sk_buff* skb, int (*cb)(struct sk_buff*, struct nlmsghdr*, struct netlink_ext_ack*));
 // start_rekernel_server
 static struct net kvar_def(init_net);
 struct sock* kfunc_def(__netlink_kernel_create)(struct net* net, int unit, struct module* module, struct netlink_kernel_cfg* cfg);
@@ -165,17 +167,56 @@ static inline bool frozen_task_group(struct task_struct* task) {
   return (jobctl_frozen(task) || cgroup_freezing(task));
 }
 
-// 创建 netlink 服务
+// netlink
+int netlink_count = 0;
 static struct sock* rekernel_netlink;
 static unsigned long rekernel_netlink_unit = UZERO;
 static struct proc_dir_entry* rekernel_dir, * rekernel_unit_entry;
 static const struct file_operations rekernel_unit_fops = {};
+// 发送 netlink 消息
+static int send_netlink_message(char* msg, uint16_t len) {
+  struct sk_buff* skbuffer;
+  struct nlmsghdr* nlhdr;
 
+  skbuffer = nlmsg_new(len, GFP_ATOMIC);
+  if (!skbuffer) {
+    printk("netlink alloc failure.\n");
+    return -ENOMEM;
+  }
+
+  nlhdr = nlmsg_put(skbuffer, 0, 0, rekernel_netlink_unit, len, 0);
+  if (!nlhdr) {
+    printk("nlmsg_put failaure.\n");
+    nlmsg_free(skbuffer);
+    return -EMSGSIZE;
+  }
+
+  memcpy(nlmsg_data(nlhdr), msg, len);
+  return netlink_unicast(rekernel_netlink, skbuffer, USER_PORT, MSG_DONTWAIT);
+}
+// 接收 netlink 消息
+static int netlink_rcv_msg(struct sk_buff* skb, struct nlmsghdr* nlh, struct netlink_ext_ack* extack) {
+  char* umsg = nlmsg_data(nlh);
+  if (!umsg)
+    return -EINVAL;
+
+  netlink_count++;
+  char netlink_kmsg[PACKET_SIZE];
+  snprintf(netlink_kmsg, sizeof(netlink_kmsg), "Successfully received data packet! %d", netlink_count);
+  logkm("kernel recv packet from user: %s\n", umsg);
+  return send_netlink_message(netlink_kmsg, strlen(netlink_kmsg));
+}
+static void netlink_rcv(struct sk_buff* skb) {
+  netlink_rcv_skb(skb, &netlink_rcv_msg);
+}
+// 创建 netlink 服务
 static int start_rekernel_server(void) {
   if (rekernel_netlink_unit != UZERO) {
     return 0;
   }
-  struct netlink_kernel_cfg rekernel_cfg = {};
+  struct netlink_kernel_cfg rekernel_cfg = {
+    .input = netlink_rcv,
+  };
 
   for (rekernel_netlink_unit = NETLINK_REKERNEL_MAX; rekernel_netlink_unit >= NETLINK_REKERNEL_MIN; rekernel_netlink_unit--) {
     rekernel_netlink = netlink_kernel_create(kvar(init_net), rekernel_netlink_unit, &rekernel_cfg);
@@ -202,27 +243,6 @@ static int start_rekernel_server(void) {
   }
 
   return 0;
-}
-// 发送 netlink 消息
-static int send_netlink_message(char* msg, uint16_t len) {
-  struct sk_buff* skbuffer;
-  struct nlmsghdr* nlhdr;
-
-  skbuffer = nlmsg_new(len, GFP_ATOMIC);
-  if (!skbuffer) {
-    printk("netlink alloc failure.\n");
-    return -1;
-  }
-
-  nlhdr = nlmsg_put(skbuffer, 0, 0, rekernel_netlink_unit, len, 0);
-  if (!nlhdr) {
-    printk("nlmsg_put failaure.\n");
-    nlmsg_free(skbuffer);
-    return -1;
-  }
-
-  memcpy(nlmsg_data(nlhdr), msg, len);
-  return netlink_unicast(rekernel_netlink, skbuffer, USER_PORT, MSG_DONTWAIT);
 }
 
 static void rekernel_report(int reporttype, int type, pid_t src_pid, struct task_struct* src, pid_t dst_pid, struct task_struct* dst, bool oneway) {
@@ -624,7 +644,6 @@ static long calculate_offsets() {
   void (*binder_transaction)(struct binder_proc* proc, struct binder_thread* thread, struct binder_transaction_data* tr, int reply, binder_size_t extra_buffers_size);
   lookup_name(binder_transaction);
 
-  bool mov_x22x23_x0 = false;
   uint32_t* binder_transaction_src = (uint32_t*)binder_transaction;
   for (u32 i = 0; i < 0x20; i++) {
 #ifdef CONFIG_DEBUG
@@ -632,13 +651,13 @@ static long calculate_offsets() {
 #endif /* CONFIG_DEBUG */
     if (binder_transaction_src[i] == ARM64_RET) {
       break;
-    } else if ((binder_transaction_src[i] & MASK_MOV_Rm_x0_Rd_x22x23) == INST_MOV_Rm_x0_Rd_x22x23) { // mov x22, x0 OR mov x23, x0
-      mov_x22x23_x0 = true;
-    } else if (((binder_transaction_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0 && (binder_transaction_src[i] & MASK_LDR_64_Rn_X0_Rt_X0) != INST_LDR_64_Rn_X0_Rt_X0)
-      || (mov_x22x23_x0 && (binder_transaction_src[i] & MASK_LDR_64_X22X23) == INST_LDR_64_X22X23)) {
-      binder_proc_context_offset = calculate_imm(binder_transaction_src[i], ARM64_LDR_64, NULL);
-      binder_proc_inner_lock_offset = binder_proc_context_offset + 0x8;
-      binder_proc_outer_lock_offset = binder_proc_context_offset + 0xC;
+    } else if (((binder_transaction_src[i] & MASK_LDR_64_) == INST_LDR_64_)) {
+      uint64_t offset = calculate_imm(binder_transaction_src[i], ARM64_LDR_64, NULL);
+      if (offset < 0x200 || offset > 0x300)
+        continue;
+      binder_proc_context_offset = offset;
+      binder_proc_inner_lock_offset = offset + 0x8;
+      binder_proc_outer_lock_offset = offset + 0xC;
       break;
     }
   }
@@ -789,6 +808,7 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   kfunc_lookup_name(__nlmsg_put);
   kfunc_lookup_name(kfree_skb);
   kfunc_lookup_name(netlink_unicast);
+  kfunc_lookup_name(netlink_rcv_skb);
 
   kvar_lookup_name(init_net);
   kfunc_lookup_name(__netlink_kernel_create);

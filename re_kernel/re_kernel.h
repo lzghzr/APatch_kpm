@@ -10,14 +10,11 @@
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
-// linux/sched/jobctl.h
+// include/linux/sched/jobctl.h
 #define JOBCTL_TRAP_FREEZE_BIT 23
 #define JOBCTL_TRAP_FREEZE (1UL << JOBCTL_TRAP_FREEZE_BIT)
 
-// android/binder.c
-struct binder_alloc;
-struct binder_transaction_data;
-
+// include/uapi/linux/android/binder.h
 enum transaction_flags {
   TF_ONE_WAY = 0x01,
   TF_ROOT_OBJECT = 0x04,
@@ -27,12 +24,30 @@ enum transaction_flags {
   TF_UPDATE_TXN = 0x40,
 };
 
-typedef atomic_t atomic_long_t;
-struct mutex {
-  atomic_long_t owner;
-  spinlock_t wait_lock;
-  // unknow
+typedef __u64 binder_size_t;
+typedef __u64 binder_uintptr_t;
+struct binder_transaction_data {
+  union {
+    __u32 handle;
+    binder_uintptr_t ptr;
+  } target;
+  binder_uintptr_t cookie;
+  __u32 code;
+  __u32 flags;
+  pid_t sender_pid;
+  uid_t sender_euid;
+  binder_size_t data_size;
+  binder_size_t offsets_size;
+  union {
+    struct {
+      binder_uintptr_t buffer;
+      binder_uintptr_t offsets;
+    } ptr;
+    __u8 buf[8];
+  } data;
 };
+
+// include/linux/rbtree_types.h
 struct rb_node {
   unsigned long __rb_parent_color;
   struct rb_node* rb_right;
@@ -42,6 +57,28 @@ struct rb_root {
   struct rb_node* rb_node;
 };
 
+// drivers/android/binder_alloc.h
+struct binder_alloc;
+
+struct binder_buffer {
+  struct list_head entry;
+  struct rb_node rb_node;
+  unsigned free : 1;
+  unsigned clear_on_free : 1; // 6.1
+  unsigned allow_user_free : 1;
+  unsigned async_transaction : 1;
+  unsigned oneway_spam_suspect : 1; // 6.1
+  // unsigned debug_id : 29;
+  unsigned debug_id : 27; // 6.1
+  struct binder_transaction* transaction;
+  struct binder_node* target_node;
+  size_t data_size;
+  size_t offsets_size;
+  size_t extra_buffers_size;
+  void __user* user_data;
+  int pid;
+};
+// drivers/android/binder_internal.h
 struct binder_work {
   struct list_head entry;
   enum binder_work_type {
@@ -55,8 +92,7 @@ struct binder_work {
     BINDER_WORK_CLEAR_DEATH_NOTIFICATION,
   } type;
 };
-typedef __u64 binder_size_t;
-typedef __u64 binder_uintptr_t;
+
 struct binder_node {
   int debug_id;
   // spinlock_t lock; // harmony
@@ -90,12 +126,6 @@ struct binder_node {
   // struct list_head async_todo;
 };
 
-struct binder_context {
-  struct binder_node* binder_context_mgr_node;
-  struct mutex context_mgr_node_lock;
-  // unknow
-};
-struct binder_alloc;
 struct binder_proc {
   struct hlist_node proc_node;
   struct rb_root threads;
@@ -108,29 +138,6 @@ struct binder_proc {
   // unknow
 };
 
-struct binder_buffer {
-  struct list_head entry;
-  struct rb_node rb_node;
-  unsigned free : 1;
-  unsigned clear_on_free : 1; // 6.1
-  unsigned allow_user_free : 1;
-  unsigned async_transaction : 1;
-  unsigned oneway_spam_suspect : 1; // 6.1
-  // unsigned debug_id : 29;
-  unsigned debug_id : 27; // 6.1
-  struct binder_transaction* transaction;
-  struct binder_node* target_node;
-  size_t data_size;
-  size_t offsets_size;
-  size_t extra_buffers_size;
-  void __user* user_data;
-  int pid;
-};
-
-struct binder_priority {
-  unsigned int sched_policy;
-  int prio;
-};
 struct binder_transaction {
   int debug_id;
   struct binder_work work;
@@ -150,11 +157,6 @@ struct binder_transaction {
   // bool set_priority_called;
 };
 
-struct wait_queue_head {
-  spinlock_t lock;
-  struct list_head head;
-};
-typedef struct wait_queue_head wait_queue_head_t;
 enum binder_stat_types {
   BINDER_STAT_PROC,
   BINDER_STAT_THREAD,
@@ -175,17 +177,39 @@ struct binder_stats {
 
 struct binder_thread {
   struct binder_proc* proc;
-  // unknow
+  // struct rb_node rb_node;
+  // struct list_head waiting_thread_node;
+  // int pid;
+  // int looper;
+  // bool looper_need_return;
+  // struct binder_transaction* transaction_stack;
+  // struct list_head todo;
+  // bool process_todo;
 };
 
 // linux/netlink.h
+#define NETLINK_MAX_COOKIE_LEN	20
 struct sk_buff;
 struct net;
 struct sock;
 struct netlink_kernel_cfg {
-  char unknow[0x30];
+  unsigned int	groups;
+  unsigned int	flags;
+  void		(*input)(struct sk_buff* skb);
+  struct mutex* cb_mutex;
+  int		(*bind)(struct net* net, int group);
+  void		(*unbind)(struct net* net, int group);
+  bool		(*compare)(struct net* net, struct sock* sk);
+};
+struct netlink_ext_ack {
+  const char* _msg;
+  const struct nlattr* bad_attr;
+  const struct nla_policy* policy;
+  u8 cookie[NETLINK_MAX_COOKIE_LEN];
+  u8 cookie_len;
 };
 
+// tools/include/uapi/linux/netlink.h
 struct nlmsghdr {
   __u32 nlmsg_len;
   __u16 nlmsg_type;
@@ -197,6 +221,7 @@ struct nlmsghdr {
 #define NLMSG_ALIGN(len) (((len) + NLMSG_ALIGNTO - 1) & ~(NLMSG_ALIGNTO - 1))
 #define NLMSG_HDRLEN ((int)NLMSG_ALIGN(sizeof(struct nlmsghdr)))
 #define NLMSG_LENGTH(len) ((len) + NLMSG_HDRLEN)
+#define NLMSG_DATA(nlh)  ((void*)(((char*)nlh) + NLMSG_LENGTH(0)))
 
 // linux/gfp.h
 #define NUMA_NO_NODE (-1)
