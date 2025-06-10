@@ -3,6 +3,9 @@
 配合墓碑模块，当应用收到 `binder` 同步信息时，临时解冻被冻结的应用
 
 ## 更新记录
+### 7.0.0
+PACKET_SIZE 从 128 增加到 256<br />
+异步 netlink_kmsg 新增 `rpc_name` 和 `code` 字段
 ### 6.0.14
 新增 netlink hello<br />
 ### 6.0.13

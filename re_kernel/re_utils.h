@@ -168,6 +168,33 @@ enum inst_type {
   ARM64_LDR_64,
 };
 
+struct struct_offset {
+  int16_t binder_alloc_buffer_size;
+  int16_t binder_alloc_buffer;
+  int16_t binder_alloc_free_async_space;
+  int16_t binder_alloc_pid;
+  int16_t binder_node_async_todo;
+  int16_t binder_node_cookie;
+  int16_t binder_node_has_async_transaction;
+  int16_t binder_node_lock;
+  int16_t binder_node_ptr;
+  int16_t binder_proc_alloc;
+  int16_t binder_proc_context;
+  int16_t binder_proc_inner_lock;
+  int16_t binder_proc_is_frozen;
+  int16_t binder_proc_outer_lock;
+  int16_t binder_proc_outstanding_txns;
+  int16_t binder_transaction_buffer;
+  int16_t binder_transaction_code;
+  int16_t binder_transaction_flags;
+  int16_t binder_transaction_from;
+  int16_t binder_transaction_to_proc;
+  int16_t task_struct_group_leader;
+  int16_t task_struct_jobctl;
+  int16_t task_struct_pid;
+  int16_t task_struct_tgid;
+};
+
 extern struct sk_buff* kfunc_def(__alloc_skb)(unsigned int size, gfp_t gfp_mask, int flags, int node);
 static inline struct sk_buff* alloc_skb(unsigned int size, gfp_t priority) {
   kfunc_call(__alloc_skb, size, priority, 0, NUMA_NO_NODE);
@@ -274,11 +301,6 @@ static inline int tracepoint_probe_unregister(struct tracepoint* tp, void* probe
   kfunc_call(tracepoint_probe_unregister, tp, probe, data);
   kfunc_not_found();
   return -ESRCH;
-}
-
-extern void kfunc_def(kfree)(const void* objp);
-static inline void kfree(const void* objp) {
-  kfunc_call_void(kfree, objp);
 }
 
 #endif /* __RE_UTILS_H */
