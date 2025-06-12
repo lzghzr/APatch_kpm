@@ -89,4 +89,26 @@ typedef uint32_t inst_mask_t;
     func = 0;                        \
   }
 
+enum inst_type {
+  ARM64_LDR_32,
+  ARM64_LDR_64,
+  ARM64_STR_32,
+  ARM64_STR_64,
+};
+struct struct_offset {
+  int16_t cgroup_flags;
+  int16_t css_set_dfl_cgrp;
+  int16_t freezer_state;
+  int16_t seq_file_private;
+  int16_t signal_struct_flags;
+  int16_t signal_struct_group_exit_task;
+  int16_t subprocess_info_argv;
+  int16_t subprocess_info_path;
+  int16_t task_struct_css_set;
+  int16_t task_struct_flags;
+  int16_t task_struct_jobctl;
+  int16_t task_struct_signal;
+  int16_t task_struct_state;
+};
+
 #endif /* __CF_UTILS_H */

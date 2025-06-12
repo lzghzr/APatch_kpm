@@ -71,7 +71,6 @@ struct ksignal;
 #define JOBCTL_PENDING_MASK (JOBCTL_STOP_PENDING | JOBCTL_TRAP_MASK)
 
 struct signal_struct;
-
 struct task_struct {
   unsigned int __state;
   // unknow

@@ -76,13 +76,8 @@ static ssize_t(*kernfs_setattr)(struct kernfs_node* kn, const struct iattr* iatt
 // hook get_signal
 static bool(*get_signal)(struct ksignal* ksig);
 
-static uint64_t task_struct_state_offset = UZERO, task_struct_flags_offset = UZERO, task_struct_jobctl_offset = UZERO, task_struct_signal_offset = UZERO, task_struct_css_set_offset = UZERO,
-signal_struct_group_exit_task_offset = UZERO, signal_struct_flags_offset = UZERO,
-seq_file_private_offset = UZERO,
-freezer_state_offset = UZERO, cgroup_flags_offset = UZERO,
-css_set_dfl_cgrp_offset = UZERO,
-subprocess_info_path_offset = UZERO, subprocess_info_argv_offset = UZERO,
-css_task_iter_start_ver5 = UZERO, cgroup_kn_lock_live_ver5 = UZERO, cftype_ver5 = UZERO, cgroup_base_files_ver5 = UZERO;
+struct struct_offset struct_offset = {};
+static uint64_t css_task_iter_start_ver5 = UZERO, cgroup_kn_lock_live_ver5 = UZERO, cftype_ver5 = UZERO, cgroup_base_files_ver5 = UZERO;
 #include "cfv2_offsets.c"
 
 // 为待冻结的 task 以及 cgroup 添加必要的标志
@@ -291,9 +286,9 @@ static inline int signal_group_exit(struct signal_struct* sig) {
 
 static void do_freezer_trap(void) {
   unsigned long jobctl = task_jobctl(current);
-  if ((jobctl & (JOBCTL_PENDING_MASK | JOBCTL_TRAP_FREEZE)) != JOBCTL_TRAP_FREEZE) {
+  if ((jobctl & (JOBCTL_PENDING_MASK | JOBCTL_TRAP_FREEZE)) != JOBCTL_TRAP_FREEZE)
     return;
-  }
+
   volatile long* state = task_state_ptr(current);
   unsigned int* flags = task_flags_ptr(current);
 
@@ -338,7 +333,7 @@ static void call_usermodehelper_exec_before(hook_fargs2_t* args, void* udata) {
     return;
 
   char** argv = subprocess_info_argv(sub_info);
-  *(char**)((uintptr_t)sub_info + subprocess_info_path_offset) = argv[0];
+  *(char**)((uintptr_t)sub_info + struct_offset.subprocess_info_path) = argv[0];
 }
 
 static void run_cmd(char* cmd[]) {
@@ -405,6 +400,20 @@ fi",
   }
 }
 
+static uint64_t calculate_imm(uint32_t inst, enum inst_type inst_type, uint64_t inst_addr) {
+  uint64_t imm12 = bits32(inst, 21, 10);
+  switch (inst_type) {
+  case ARM64_STR_32:
+  case ARM64_LDR_32:
+    return sign64_extend((imm12 << 0b10u), 16u);
+  case ARM64_STR_64:
+  case ARM64_LDR_64:
+    return sign64_extend((imm12 << 0b11u), 16u);
+  default:
+    return UZERO;
+  }
+}
+
 static long calculate_offsets() {
   // 获取 css_task_iter_start 版本, 以参数数量做判断
   uint32_t* css_task_iter_start_src = (uint32_t*)css_task_iter_start;
@@ -422,6 +431,7 @@ static long calculate_offsets() {
 #ifdef CONFIG_DEBUG
   logkm("css_task_iter_start_ver5=0x%llx\n", css_task_iter_start_ver5);
 #endif /* CONFIG_DEBUG */
+
   // 获取 cgroup_kn_lock_live 版本, 以参数数量做判断
   uint32_t* cgroup_kn_lock_live_src = (uint32_t*)cgroup_kn_lock_live;
   for (u32 i = 0; i < 0x10; i++) {
@@ -438,6 +448,7 @@ static long calculate_offsets() {
 #ifdef CONFIG_DEBUG
   logkm("cgroup_kn_lock_live_ver5=0x%llx\n", cgroup_kn_lock_live_ver5);
 #endif /* CONFIG_DEBUG */
+
   // 获取 cftype 版本, 以绑定函数做判断
   int (*cgroup_file_open)(struct kernfs_open_file* of) = NULL;
   cgroup_file_open = (typeof(cgroup_file_open))kallsyms_lookup_name("cgroup_file_open");
@@ -451,6 +462,7 @@ static long calculate_offsets() {
 #ifdef CONFIG_DEBUG
   logkm("cftype_ver5=0x%llx\n", cftype_ver5);
 #endif /* CONFIG_DEBUG */
+
   // 获取 cgroup_base_files 版本, 以变量名做判断
   struct cftype* cgroup_base_files = NULL;
   cgroup_base_files = (typeof(cgroup_base_files))kallsyms_lookup_name("cgroup_base_files");
@@ -464,6 +476,7 @@ static long calculate_offsets() {
 #ifdef CONFIG_DEBUG
   logkm("cgroup_base_files_ver5=0x%llx\n", cgroup_base_files_ver5);
 #endif /* CONFIG_DEBUG */
+
   // 获取 task_struct->jobctl
   void (*task_clear_jobctl_trapping)(struct task_struct* t);
   lookup_name(task_clear_jobctl_trapping);
@@ -476,17 +489,16 @@ static long calculate_offsets() {
     if (task_clear_jobctl_trapping_src[i] == ARM64_RET) {
       break;
     } else if ((task_clear_jobctl_trapping_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0) {
-      uint64_t imm12 = bits32(task_clear_jobctl_trapping_src[i], 21, 10);
-      task_struct_jobctl_offset = sign64_extend((imm12 << 0b11u), 16u);
+      struct_offset.task_struct_jobctl = calculate_imm(task_clear_jobctl_trapping_src[i], ARM64_LDR_64, NULL);
       break;
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("task_struct_jobctl_offset=0x%llx\n", task_struct_jobctl_offset);
+  logkm("task_struct_jobctl=0x%llx\n", struct_offset.task_struct_jobctl);
 #endif /* CONFIG_DEBUG */
-  if (task_struct_jobctl_offset == UZERO) {
+  if (!struct_offset.task_struct_jobctl)
     return -11;
-  }
+
   // 获取 task_struct->signal
   void (*tty_audit_fork)(struct signal_struct* sig);
   lookup_name(tty_audit_fork);
@@ -499,17 +511,16 @@ static long calculate_offsets() {
     if (tty_audit_fork_src[i] == ARM64_RET) {
       break;
     } else if ((tty_audit_fork_src[i] & MASK_LDR_64_) == INST_LDR_64_ && (tty_audit_fork_src[i - 1] & MASK_MRS_SP_EL0) == INST_MRS_SP_EL0) {
-      uint64_t imm12 = bits32(tty_audit_fork_src[i], 21, 10);
-      task_struct_signal_offset = sign64_extend((imm12 << 0b11u), 16u);
+      struct_offset.task_struct_signal = calculate_imm(tty_audit_fork_src[i], ARM64_LDR_64, NULL);
       break;
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("task_struct_signal_offset=0x%llx\n", task_struct_signal_offset);
+  logkm("task_struct_signal=0x%llx\n", struct_offset.task_struct_signal);
 #endif /* CONFIG_DEBUG */
-  if (task_struct_signal_offset == UZERO) {
+  if (!struct_offset.task_struct_signal)
     return -11;
-  }
+
   // 获取 signal_struct->flags, signal_struct->group_exit_task
   void (*zap_other_threads)(struct task_struct* t);
   lookup_name(zap_other_threads);
@@ -522,19 +533,19 @@ static long calculate_offsets() {
     if (zap_other_threads_src[i] == ARM64_RET) {
       break;
     } else if ((zap_other_threads_src[i] & MASK_STR_Rt_WZR) == INST_STR_Rt_WZR) {
-      uint64_t imm12 = bits32(zap_other_threads_src[i], 21, 10);
-      signal_struct_group_exit_task_offset = sign64_extend((imm12 << 0b10u), 16u) - 0x8; // signal_struct->group_stop_count
-      signal_struct_flags_offset = signal_struct_group_exit_task_offset + 0xC;
+      uint64_t offset = calculate_imm(zap_other_threads_src[i], ARM64_STR_32, NULL); // signal_struct->group_stop_count
+      struct_offset.signal_struct_group_exit_task = offset - 0x8;
+      struct_offset.signal_struct_flags = offset + 0x4;
       break;
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("signal_struct_group_exit_task_offset=0x%llx\n", signal_struct_group_exit_task_offset);
-  logkm("signal_struct_flags_offset=0x%llx\n", signal_struct_flags_offset);
+  logkm("signal_struct_group_exit_task=0x%llx\n", struct_offset.signal_struct_group_exit_task);
+  logkm("signal_struct_flags=0x%llx\n", struct_offset.signal_struct_flags);
 #endif /* CONFIG_DEBUG */
-  if (signal_struct_group_exit_task_offset == UZERO || signal_struct_flags_offset == UZERO) {
+  if (!struct_offset.signal_struct_group_exit_task)
     return -11;
-  }
+
   // 获取 task_struct->flags
   bool (*freezing_slow_path)(struct task_struct* p);
   lookup_name(freezing_slow_path);
@@ -547,21 +558,19 @@ static long calculate_offsets() {
     if (freezing_slow_path_src[i] == ARM64_RET) {
       break;
     } else if ((freezing_slow_path_src[i] & MASK_LDR_32_X0) == INST_LDR_32_X0) {
-      uint64_t imm12 = bits32(freezing_slow_path_src[i], 21, 10);
-      task_struct_flags_offset = sign64_extend((imm12 << 0b10u), 16u);
+      struct_offset.task_struct_flags = calculate_imm(freezing_slow_path_src[i], ARM64_LDR_32, NULL);
       break;
     } else if ((freezing_slow_path_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0) {
-      uint64_t imm12 = bits32(freezing_slow_path_src[i], 21, 10);
-      task_struct_flags_offset = sign64_extend((imm12 << 0b11u), 16u);
+      struct_offset.task_struct_flags = calculate_imm(freezing_slow_path_src[i], ARM64_LDR_64, NULL);
       break;
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("task_struct_flags_offset=0x%llx\n", task_struct_flags_offset);
+  logkm("task_struct_flags=0x%llx\n", struct_offset.task_struct_flags);
 #endif /* CONFIG_DEBUG */
-  if (task_struct_flags_offset == UZERO) {
+  if (!struct_offset.task_struct_flags)
     return -11;
-  }
+
   // 获取 task_struct->state
   bool (*schedule_timeout_interruptible)(struct task_struct* p);
   lookup_name(schedule_timeout_interruptible);
@@ -574,17 +583,16 @@ static long calculate_offsets() {
     if (schedule_timeout_interruptible_src[i] == ARM64_RET) {
       break;
     } else if ((schedule_timeout_interruptible_src[i] & MASK_STR_64) == INST_STR_64) {
-      uint64_t imm12 = bits32(schedule_timeout_interruptible_src[i], 21, 10);
-      task_struct_state_offset = sign64_extend((imm12 << 0b11u), 16u);
+      struct_offset.task_struct_state = calculate_imm(schedule_timeout_interruptible_src[i], ARM64_STR_64, NULL);
       break;
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("task_struct_state_offset=0x%llx\n", task_struct_state_offset);
+  logkm("task_struct_state=0x%llx\n", struct_offset.task_struct_state);
 #endif /* CONFIG_DEBUG */
-  if (task_struct_state_offset == UZERO) {
+  if (!struct_offset.task_struct_state)
     return -11;
-  }
+
   // 获取 seq_file->private
   int (*cgroup_subtree_control_show)(struct seq_file* seq, void* v);
   lookup_name(cgroup_subtree_control_show);
@@ -597,17 +605,16 @@ static long calculate_offsets() {
     if (cgroup_subtree_control_show_src[i] == ARM64_RET) {
       break;
     } else if ((cgroup_subtree_control_show_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
-      uint64_t imm12 = bits32(cgroup_subtree_control_show_src[i], 21, 10);
-      seq_file_private_offset = sign64_extend((imm12 << 0b11u), 16u);
+      struct_offset.seq_file_private = calculate_imm(cgroup_subtree_control_show_src[i], ARM64_LDR_64, NULL);
       break;
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("seq_file_private_offset=0x%llx\n", seq_file_private_offset);
+  logkm("seq_file_private=0x%llx\n", struct_offset.seq_file_private);
 #endif /* CONFIG_DEBUG */
-  if (seq_file_private_offset == UZERO) {
+  if (!struct_offset.seq_file_private)
     return -11;
-  }
+
   // 获取 freezer->state
   void (*cgroup_freezing)(struct task_struct* task);
   lookup_name(cgroup_freezing);
@@ -620,18 +627,17 @@ static long calculate_offsets() {
     if (cgroup_freezing_src[i] == ARM64_RET) {
       break;
     } else if ((cgroup_freezing_src[i] & MASK_LDR_32_) == INST_LDR_32_ && (cgroup_freezing_src[i + 1] & MASK_TST_32_6) == INST_TST_32_6) {
-      uint64_t imm12 = bits32(cgroup_freezing_src[i], 21, 10);
-      freezer_state_offset = sign64_extend((imm12 << 0b10u), 16u);
-      cgroup_flags_offset = freezer_state_offset;
+      struct_offset.freezer_state = calculate_imm(cgroup_freezing_src[i], ARM64_LDR_32, NULL);
+      struct_offset.cgroup_flags = struct_offset.freezer_state;
       break;
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("freezer_state_offset=0x%llx\n", freezer_state_offset);
+  logkm("freezer_state=0x%llx\n", struct_offset.freezer_state);
 #endif /* CONFIG_DEBUG */
-  if (freezer_state_offset == UZERO) {
+  if (!struct_offset.freezer_state)
     return -11;
-  }
+
   // 获取 task_struct->css_set
   void (*cgroup_fork)(struct task_struct* child);
   lookup_name(cgroup_fork);
@@ -644,82 +650,39 @@ static long calculate_offsets() {
     if (cgroup_fork_src[i] == ARM64_RET) {
       break;
     } else if ((cgroup_fork_src[i] & MASK_STR_64) == INST_STR_64) {
-      uint64_t imm12 = bits32(cgroup_fork_src[i], 21, 10);
-      task_struct_css_set_offset = sign64_extend((imm12 << 0b11u), 16u);
+      struct_offset.task_struct_css_set = calculate_imm(cgroup_fork_src[i], ARM64_STR_64, NULL);
       break;
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("task_struct_css_set_offset=0x%llx\n", task_struct_css_set_offset);
+  logkm("task_struct_css_set=0x%llx\n", struct_offset.task_struct_css_set);
 #endif /* CONFIG_DEBUG */
-  if (task_struct_css_set_offset == UZERO) {
+  if (!struct_offset.task_struct_css_set)
     return -11;
-  }
+
   // 获取 css_set->dfl_cgrp
-  void (*link_css_set)(struct list_head* tmp_links, struct css_set* cset, struct cgroup* cgrp);
-  link_css_set = (typeof(link_css_set))kallsyms_lookup_name("link_css_set");
-
-  unsigned long long (*bpf_get_current_cgroup_id)(void);
-  bpf_get_current_cgroup_id = (typeof(bpf_get_current_cgroup_id))kallsyms_lookup_name("bpf_get_current_cgroup_id");
-
-  ssize_t(*cgroup_file_write)(struct kernfs_open_file* of, char* buf, size_t nbytes, loff_t off);
-  cgroup_file_write = (typeof(cgroup_file_write))kallsyms_lookup_name("cgroup_file_write");
-
-  if (link_css_set) {
-    uint32_t* link_css_set_src = (uint32_t*)link_css_set;
-    for (u32 i = 0; i < 0x20; i++) {
+  struct css_set kvar_def(init_css_set);
+  kvar_lookup_name(init_css_set);
+  // 4.4 4.9 未发现 0x48 以外的偏移
+  // 4.14 4.19 新增 init_css_set->dom_cset = &init_css_set ,可据此计算偏移
+  struct_offset.css_set_dfl_cgrp = 0x48;
+  uint64_t* init_css_set_src = (uint64_t*)kvar(init_css_set);
+  for (u32 i = 0; i < 0x10; i++) {
 #ifdef CONFIG_DEBUG
-      logkm("link_css_set %x %llx\n", i, link_css_set_src[i]);
+    logkm("init_css_set %x %llx\n", i, init_css_set_src[i]);
 #endif /* CONFIG_DEBUG */
-      if (link_css_set_src[i] == ARM64_RET) {
-        break;
-      } else if ((link_css_set_src[i] & MASK_STR_64) == INST_STR_64) {
-        uint64_t imm12 = bits32(link_css_set_src[i], 21, 10);
-        css_set_dfl_cgrp_offset = sign64_extend((imm12 << 0b11u), 16u);
-        break;
-      }
-    }
-  } else if (bpf_get_current_cgroup_id) {
-    uint32_t* bpf_get_current_cgroup_id_src = (uint32_t*)bpf_get_current_cgroup_id;
-    for (u32 i = 0; i < 0x10; i++) {
-#ifdef CONFIG_DEBUG
-      logkm("bpf_get_current_cgroup_id %x %llx\n", i, bpf_get_current_cgroup_id_src[i]);
-#endif /* CONFIG_DEBUG */
-      if (bpf_get_current_cgroup_id_src[i] == ARM64_RET) {
-        break;
-      } else if ((bpf_get_current_cgroup_id_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
-        uint64_t imm12 = bits32(bpf_get_current_cgroup_id_src[i], 21, 10);
-        uint64_t offset = sign64_extend((imm12 << 0b11u), 16u);
-        if (offset < 0x100) {
-          css_set_dfl_cgrp_offset = offset;
-          break;
-        }
-      }
-    }
-  } else if (cgroup_file_write) {
-    uint32_t* cgroup_file_write_src = (uint32_t*)cgroup_file_write;
-    for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-      logkm("cgroup_file_write %x %llx\n", i, cgroup_file_write_src[i]);
-#endif /* CONFIG_DEBUG */
-      if (cgroup_file_write_src[i] == ARM64_RET) {
-        break;
-      } else if ((cgroup_file_write_src[i] & MASK_LDR_64_) == INST_LDR_64_ &&
-        (cgroup_file_write_src[i - 1] & MASK_LDR_64_) == INST_LDR_64_ &&
-        (cgroup_file_write_src[i + 1] & MASK_CMP_64_Xn_Xm) == INST_CMP_64_Xn_Xm) {
-        uint64_t imm12 = bits32(cgroup_file_write_src[i], 21, 10);
-        css_set_dfl_cgrp_offset = sign64_extend((imm12 << 0b11u), 16u);
-        break;
-      }
+    if (init_css_set_src[i] == (uint64_t)kvar(init_css_set)) {
+      struct_offset.css_set_dfl_cgrp = (i + 1) * 8;
+      break;
     }
   }
-
 #ifdef CONFIG_DEBUG
-  logkm("css_set_dfl_cgrp_offset=0x%llx\n", css_set_dfl_cgrp_offset);
+  logkm("init_css_set=0x%llx\n", kvar(init_css_set));
+  logkm("css_set_dfl_cgrp=0x%llx\n", struct_offset.css_set_dfl_cgrp);
 #endif /* CONFIG_DEBUG */
-  if (css_set_dfl_cgrp_offset == UZERO) {
+  if (!struct_offset.css_set_dfl_cgrp)
     return -11;
-  }
+
   // 获取 subprocess_info->path, subprocess_info->argv
   uint32_t* call_usermodehelper_exec_src = (uint32_t*)kfunc(call_usermodehelper_exec);
   for (u32 i = 0; i < 0x20; i++) {
@@ -729,19 +692,17 @@ static long calculate_offsets() {
     if (call_usermodehelper_exec_src[i] == ARM64_RET) {
       break;
     } else if ((call_usermodehelper_exec_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0) {
-      uint64_t imm12 = bits32(call_usermodehelper_exec_src[i], 21, 10);
-      subprocess_info_path_offset = sign64_extend((imm12 << 0b11u), 16u);
-      subprocess_info_argv_offset = subprocess_info_path_offset + 0x8;
+      struct_offset.subprocess_info_path = calculate_imm(call_usermodehelper_exec_src[i], ARM64_LDR_64, NULL);
+      struct_offset.subprocess_info_argv = struct_offset.subprocess_info_path + 0x8;
       break;
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("subprocess_info_path_offset=0x%llx\n", subprocess_info_path_offset);
-  logkm("subprocess_info_argv_offset=0x%llx\n", subprocess_info_argv_offset);
+  logkm("subprocess_info_path=0x%llx\n", struct_offset.subprocess_info_path);
+  logkm("subprocess_info_argv=0x%llx\n", struct_offset.subprocess_info_argv);
 #endif /* CONFIG_DEBUG */
-  if (subprocess_info_path_offset == UZERO || subprocess_info_argv_offset == UZERO) {
+  if (!struct_offset.subprocess_info_path)
     return -11;
-  }
 
   return 0;
 }
