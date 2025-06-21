@@ -1,4 +1,4 @@
-MYKPM_VERSION := 7.0.1
+MYKPM_VERSION := 7.0.2
 
 ifndef KP_DIR
     KP_DIR = ../KernelPatch
@@ -34,6 +34,7 @@ INCLUDE_FLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(KP_DIR)/kernel/$(dir))
 objs := re_kernel.c
 
 all: base network
+debug: base_debug network_debug
 
 base: re_kernel_$(MYKPM_VERSION).kpm
 
@@ -41,9 +42,13 @@ network: CFLAGS += -DCONFIG_NETWORK
 network: MYKPM_VER := _n
 network: re_kernel_$(MYKPM_VERSION)_network.kpm
 
-debug: CFLAGS += -DCONFIG_DEBUG
-debug: MYKPM_VER := _d
-debug: re_kernel_$(MYKPM_VERSION)_debug.kpm
+base_debug: CFLAGS += -DCONFIG_DEBUG
+base_debug: MYKPM_VER := _d
+base_debug: re_kernel_$(MYKPM_VERSION)_debug.kpm
+
+network_debug: CFLAGS += -DCONFIG_NETWORK -DCONFIG_DEBUG
+network_debug: MYKPM_VER := _nd
+network_debug: re_kernel_$(MYKPM_VERSION)_network_debug.kpm
 
 re_kernel_$(MYKPM_VERSION).kpm: ${objs}
 	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $^ -r -o $@
@@ -52,6 +57,9 @@ re_kernel_$(MYKPM_VERSION)_network.kpm: ${objs}
 	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $^ -r -o $@
 
 re_kernel_$(MYKPM_VERSION)_debug.kpm: ${objs}
+	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $^ -r -o $@
+
+re_kernel_$(MYKPM_VERSION)_network_debug.kpm: ${objs}
 	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $^ -r -o $@
 
 .PHONY: clean
