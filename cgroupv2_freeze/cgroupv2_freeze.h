@@ -2,6 +2,7 @@
 #define __CGROUP_FREEZE_H
 
 #include <ktypes.h>
+#include <linux/spinlock.h>
 #include <linux/thread_info.h>
 
 // KernelPatch/kernel/linux/include/linux/bitops.h
@@ -26,23 +27,18 @@ static inline int test_bit(int nr, const volatile unsigned long* addr) {
 }
 
 // linux/thread_info.h
-static inline void set_ti_thread_flag(struct thread_info* ti, int flag) {
-  set_bit(flag, (unsigned long*)&ti->flags);
-}
+static inline void set_ti_thread_flag(struct thread_info* ti, int flag) { set_bit(flag, (unsigned long*)&ti->flags); }
 
 static inline void clear_ti_thread_flag(struct thread_info* ti, int flag) {
   clear_bit(flag, (unsigned long*)&ti->flags);
 }
 
-#define set_thread_flag(flag) \
-  set_ti_thread_flag(current_thread_info(), flag)
+#define set_thread_flag(flag) set_ti_thread_flag(current_thread_info(), flag)
 
-#define clear_thread_flag(flag) \
-  clear_ti_thread_flag(current_thread_info(), flag)
+#define clear_thread_flag(flag) clear_ti_thread_flag(current_thread_info(), flag)
 
-#define css_for_each_descendant_pre(pos, css)               \
-  for ((pos) = css_next_descendant_pre(NULL, (css)); (pos); \
-       (pos) = css_next_descendant_pre((pos), (css)))
+#define css_for_each_descendant_pre(pos, css) \
+  for ((pos) = css_next_descendant_pre(NULL, (css)); (pos); (pos) = css_next_descendant_pre((pos), (css)))
 
 // linux/lockdep.h
 struct lock_class_key;
@@ -151,8 +147,10 @@ struct kernfs_open_file {
 };
 
 // linux/uidgid.h
-#define KUIDT_INIT(value) (kuid_t){ value }
-#define KGIDT_INIT(value) (kgid_t){ value }
+#define KUIDT_INIT(value) \
+  (kuid_t) { value }
+#define KGIDT_INIT(value) \
+  (kgid_t) { value }
 
 // linux/time64.h
 typedef __s64 time64_t;
@@ -211,19 +209,20 @@ struct cftype {
   struct cgroup_subsys* ss;
   struct list_head node;
   struct kernfs_ops* kf_ops;
-  int (*open)(struct kernfs_open_file* of); // unknow v4
+  int (*open)(struct kernfs_open_file* of);      // unknow v4
   void (*release)(struct kernfs_open_file* of);  // unknow v4
   // u64(*read_u64)(struct cgroup_subsys_state* css, struct cftype* cft);
   int (*seq_show_v4)(struct seq_file* sf, void* v);
-  s64(*read_s64)(struct cgroup_subsys_state* css, struct cftype* cft);
+  s64 (*read_s64)(struct cgroup_subsys_state* css, struct cftype* cft);
   int (*seq_show)(struct seq_file* sf, void* v);
   void* (*seq_start)(struct seq_file* sf, loff_t* ppos);
   void* (*seq_next)(struct seq_file* sf, void* v, loff_t* ppos);
   void (*seq_stop)(struct seq_file* sf, void* v);
-  // int (*write_u64)(struct cgroup_subsys_state* css, struct cftype* cft, u64 val);
-  ssize_t(*write_v4)(struct kernfs_open_file* of, char* buf, size_t nbytes, loff_t off);
+  // int (*write_u64)(struct cgroup_subsys_state* css, struct cftype* cft, u64
+  // val);
+  ssize_t (*write_v4)(struct kernfs_open_file* of, char* buf, size_t nbytes, loff_t off);
   int (*write_s64)(struct cgroup_subsys_state* css, struct cftype* cft, s64 val);
-  ssize_t(*write)(struct kernfs_open_file* of, char* buf, size_t nbytes, loff_t off);
+  ssize_t (*write)(struct kernfs_open_file* of, char* buf, size_t nbytes, loff_t off);
   unsigned int (*poll)(struct kernfs_open_file* of, struct poll_table_struct* pt);
 };
 

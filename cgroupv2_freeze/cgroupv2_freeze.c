@@ -4,20 +4,19 @@
  * Copyright (C) 2024 lzghzr. All Rights Reserved.
  */
 
+#include "cgroupv2_freeze.h"
+
 #include <compiler.h>
-#include <hook.h>
 #include <kpmodule.h>
 #include <kputils.h>
 #include <linux/err.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>
-#include <linux/list.h>
 #include <linux/printk.h>
-#include <linux/sched.h>
 #include <linux/string.h>
 #include <linux/umh.h>
 
-#include "cgroupv2_freeze.h"
+#include "../kpm_utils.h"
 #include "cfv2_utils.h"
 
 KPM_NAME("cgroupv2_freeze");
@@ -47,7 +46,8 @@ static void (*css_task_iter_start_v4)(struct cgroup_subsys_state* css, struct cs
 static struct task_struct* (*css_task_iter_next)(struct css_task_iter* it);
 static void (*css_task_iter_end)(struct css_task_iter* it);
 // cgroup_freeze
-static struct cgroup_subsys_state* (*css_next_descendant_pre)(struct cgroup_subsys_state* pos, struct cgroup_subsys_state* root);
+static struct cgroup_subsys_state* (*css_next_descendant_pre)(struct cgroup_subsys_state* pos,
+                                                              struct cgroup_subsys_state* root);
 // cgroup_freeze_show
 struct cgroup_subsys_state* kfunc_def(of_css)(struct kernfs_open_file* of);
 void kfunc_def(seq_printf)(struct seq_file* m, const char* f, ...);
@@ -64,20 +64,25 @@ static int* selinux_enforcing;
 struct selinux_state* selinux_state;
 
 // hook cgroup_addrm_files
-static int (*cgroup_addrm_files)(struct cgroup_subsys_state* css, struct cgroup* cgrp, struct cftype cfts[], bool is_add);
+static int (*cgroup_addrm_files)(struct cgroup_subsys_state* css, struct cgroup* cgrp, struct cftype cfts[],
+                                 bool is_add);
 static int (*cgroup_init_cftypes)(struct cgroup_subsys* ss, struct cftype* cfts);
 // hook cgroup_procs_write
-static ssize_t(*cgroup_procs_write)(struct kernfs_open_file* of, char* buf, size_t nbytes, loff_t off);
+static ssize_t (*cgroup_procs_write)(struct kernfs_open_file* of, char* buf, size_t nbytes, loff_t off);
 // hook css_set_move_task
-static void (*css_set_move_task)(struct task_struct* task, struct css_set* from_cset, struct css_set* to_cset, bool use_mg_tasks);
+static void (*css_set_move_task)(struct task_struct* task, struct css_set* from_cset, struct css_set* to_cset,
+                                 bool use_mg_tasks);
 // hook __kernfs_create_file
-static ssize_t(*__kernfs_create_file)(struct kernfs_node* parent, const char* name, umode_t mode, loff_t size, const struct kernfs_ops* ops, void* priv, const void* ns, struct lock_class_key* key);
-static ssize_t(*kernfs_setattr)(struct kernfs_node* kn, const struct iattr* iattr);
+static ssize_t (*__kernfs_create_file)(struct kernfs_node* parent, const char* name, umode_t mode, loff_t size,
+                                       const struct kernfs_ops* ops, void* priv, const void* ns,
+                                       struct lock_class_key* key);
+static ssize_t (*kernfs_setattr)(struct kernfs_node* kn, const struct iattr* iattr);
 // hook get_signal
-static bool(*get_signal)(struct ksignal* ksig);
+static bool (*get_signal)(struct ksignal* ksig);
 
 struct struct_offset struct_offset = {};
-static uint64_t css_task_iter_start_ver5 = UZERO, cgroup_kn_lock_live_ver5 = UZERO, cftype_ver5 = UZERO, cgroup_base_files_ver5 = UZERO;
+static uint64_t css_task_iter_start_ver5 = UZERO, cgroup_kn_lock_live_ver5 = UZERO, cftype_ver5 = UZERO,
+                cgroup_base_files_ver5 = UZERO;
 #include "cfv2_offsets.c"
 
 // 为待冻结的 task 以及 cgroup 添加必要的标志
@@ -183,11 +188,11 @@ static ssize_t cgroup_freeze_write(struct kernfs_open_file* of, char* buf, size_
 }
 
 static struct cftype cgroup_freeze_files[] = {
-  {
-    .name = "cgroup.freeze",
-    .flags = CFTYPE_NOT_ON_ROOT,
-  },
-  { },
+    {
+        .name = "cgroup.freeze",
+        .flags = CFTYPE_NOT_ON_ROOT,
+    },
+    {},
 };
 
 static void cgroup_addrm_files_after(hook_fargs4_t* args, void* udata) {
@@ -195,8 +200,8 @@ static void cgroup_addrm_files_after(hook_fargs4_t* args, void* udata) {
   if (ret)
     return;
 
-  ((typeof(cgroup_addrm_files))
-    wrap_get_origin_func(args))((struct cgroup_subsys_state*)args->arg0, (struct cgroup*)args->arg1, cgroup_freeze_files, (bool)args->arg3);
+  ((typeof(cgroup_addrm_files))wrap_get_origin_func(args))(
+      (struct cgroup_subsys_state*)args->arg0, (struct cgroup*)args->arg1, cgroup_freeze_files, (bool)args->arg3);
 }
 
 static const char uid_[] = "uid_";
@@ -213,14 +218,13 @@ static void cgroup_procs_write_after(hook_fargs4_t* args, void* udata) {
   struct kernfs_node* kn = NULL;
 
   // 处理 v1 frozen 模式
-  if (!strcmp(of->kn->parent->name, "frozen")
-    || !strcmp(of->kn->parent->name, "unfrozen")) {
+  if (!strcmp(of->kn->parent->name, "frozen") || !strcmp(of->kn->parent->name, "unfrozen")) {
     kn = of->kn->parent;
   }
   // 处理 v1 uid 模式
   if (!memcmp(of->kn->parent->name, pid_, sizeof(pid_) - 1)
-    && (memcmp(of->kn->parent->parent->name, uid_0, sizeof(uid_0)))
-    && !memcmp(of->kn->parent->parent->name, uid_, sizeof(uid_) - 1)) {
+      && (memcmp(of->kn->parent->parent->name, uid_0, sizeof(uid_0)))
+      && !memcmp(of->kn->parent->parent->name, uid_, sizeof(uid_) - 1)) {
     kn = of->kn->parent->parent;
   }
   if (!kn)
@@ -270,9 +274,11 @@ static void __kernfs_create_file_after(hook_fargs8_t* args, void* udata) {
     return;
 
   if (!strcmp(kn->name, "cgroup.freeze")) {
-    struct iattr iattr = { .ia_valid = ATTR_UID | ATTR_GID,
-                          .ia_uid = GLOBAL_SYSTEM_UID,
-                          .ia_gid = GLOBAL_SYSTEM_GID, };
+    struct iattr iattr = {
+        .ia_valid = ATTR_UID | ATTR_GID,
+        .ia_uid = GLOBAL_SYSTEM_UID,
+        .ia_gid = GLOBAL_SYSTEM_GID,
+    };
 
     kernfs_setattr(kn, &iattr);
   }
@@ -337,7 +343,7 @@ static void call_usermodehelper_exec_before(hook_fargs2_t* args, void* udata) {
 }
 
 static void run_cmd(char* cmd[]) {
-  char* envp[] = { "HOME=/", "PATH=/sbin:/bin", NULL };
+  char* envp[] = {"HOME=/", "PATH=/sbin:/bin", NULL};
   bool sel = true;
   hook_err_t err = 0;
 
@@ -351,7 +357,7 @@ static void run_cmd(char* cmd[]) {
   }
 
   for (int i = 0; cmd[i]; i++) {
-    char* argv[] = { "/bin/sh", "-c", cmd[i], NULL };
+    char* argv[] = {"/bin/sh", "-c", cmd[i], NULL};
     call_usermodehelper(argv[0], argv, envp, UMH_WAIT_PROC);
   }
 
@@ -370,7 +376,7 @@ static void do_filp_open_after(hook_fargs3_t* args, void* udata) {
   struct filename* pathname = (struct filename*)args->arg1;
   if (!memcmp(pathname->name, apm, sizeof(apm) - 1)) {
     char* cmd[] = {
-"if [ ! -d \"/sys/fs/cgroup/uid_0\" ]; then\
+        "if [ ! -d \"/sys/fs/cgroup/uid_0\" ]; then\
   umount /sys/fs/cgroup/freezer;\
   umount /sys/fs/cgroup;\
 \
@@ -393,318 +399,10 @@ if [ ! -d \"/sys/fs/cgroup/frozen\" ]; then\
   mkdir /sys/fs/cgroup/unfrozen/;\
   chown -R system:system /sys/fs/cgroup/unfrozen/;\
 fi",
-      NULL
-    };
+        NULL};
     run_cmd(cmd);
     unhook_func(do_filp_open);
   }
-}
-
-static uint64_t calculate_imm(uint32_t inst, enum inst_type inst_type, uint64_t inst_addr) {
-  uint64_t imm12 = bits32(inst, 21, 10);
-  switch (inst_type) {
-  case ARM64_STR_32:
-  case ARM64_LDR_32:
-    return sign64_extend((imm12 << 0b10u), 16u);
-  case ARM64_STR_64:
-  case ARM64_LDR_64:
-    return sign64_extend((imm12 << 0b11u), 16u);
-  default:
-    return UZERO;
-  }
-}
-
-static long calculate_offsets() {
-  // 获取 css_task_iter_start 版本, 以参数数量做判断
-  uint32_t* css_task_iter_start_src = (uint32_t*)css_task_iter_start;
-  for (u32 i = 0; i < 0x10; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("css_task_iter_start %x %llx\n", i, css_task_iter_start_src[i]);
-#endif /* CONFIG_DEBUG */
-    if (css_task_iter_start_src[i] == ARM64_RET) {
-      break;
-    } else if ((css_task_iter_start_src[i] & MASK_MOV_Rm_2_Rn_WZR) == INST_MOV_Rm_2_Rn_WZR) {
-      css_task_iter_start_ver5 = IZERO;
-      break;
-    }
-  }
-#ifdef CONFIG_DEBUG
-  logkm("css_task_iter_start_ver5=0x%llx\n", css_task_iter_start_ver5);
-#endif /* CONFIG_DEBUG */
-
-  // 获取 cgroup_kn_lock_live 版本, 以参数数量做判断
-  uint32_t* cgroup_kn_lock_live_src = (uint32_t*)cgroup_kn_lock_live;
-  for (u32 i = 0; i < 0x10; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("cgroup_kn_lock_live %x %llx\n", i, cgroup_kn_lock_live_src[i]);
-#endif /* CONFIG_DEBUG */
-    if (cgroup_kn_lock_live_src[i] == ARM64_RET) {
-      break;
-    } else if ((cgroup_kn_lock_live_src[i] & MASK_MOV_Rm_1_Rn_WZR) == INST_MOV_Rm_1_Rn_WZR || (cgroup_kn_lock_live_src[i] & MASK_UXTB_Rn_1) == INST_UXTB_Rn_1) {
-      cgroup_kn_lock_live_ver5 = IZERO;
-      break;
-    }
-  }
-#ifdef CONFIG_DEBUG
-  logkm("cgroup_kn_lock_live_ver5=0x%llx\n", cgroup_kn_lock_live_ver5);
-#endif /* CONFIG_DEBUG */
-
-  // 获取 cftype 版本, 以绑定函数做判断
-  int (*cgroup_file_open)(struct kernfs_open_file* of) = NULL;
-  cgroup_file_open = (typeof(cgroup_file_open))kallsyms_lookup_name("cgroup_file_open");
-
-#ifdef CONFIG_DEBUG
-  logkm("cgroup_file_open %llx\n", cgroup_file_open);
-#endif /* CONFIG_DEBUG */
-  if (cgroup_file_open) {
-    cftype_ver5 = IZERO;
-  }
-#ifdef CONFIG_DEBUG
-  logkm("cftype_ver5=0x%llx\n", cftype_ver5);
-#endif /* CONFIG_DEBUG */
-
-  // 获取 cgroup_base_files 版本, 以变量名做判断
-  struct cftype* cgroup_base_files = NULL;
-  cgroup_base_files = (typeof(cgroup_base_files))kallsyms_lookup_name("cgroup_base_files");
-
-#ifdef CONFIG_DEBUG
-  logkm("cgroup_base_files %llx\n", cgroup_base_files);
-#endif /* CONFIG_DEBUG */
-  if (cgroup_base_files) {
-    cgroup_base_files_ver5 = IZERO;
-  }
-#ifdef CONFIG_DEBUG
-  logkm("cgroup_base_files_ver5=0x%llx\n", cgroup_base_files_ver5);
-#endif /* CONFIG_DEBUG */
-
-  // 获取 task_struct->jobctl
-  void (*task_clear_jobctl_trapping)(struct task_struct* t);
-  lookup_name(task_clear_jobctl_trapping);
-
-  uint32_t* task_clear_jobctl_trapping_src = (uint32_t*)task_clear_jobctl_trapping;
-  for (u32 i = 0; i < 0x10; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("task_clear_jobctl_trapping %x %llx\n", i, task_clear_jobctl_trapping_src[i]);
-#endif /* CONFIG_DEBUG */
-    if (task_clear_jobctl_trapping_src[i] == ARM64_RET) {
-      break;
-    } else if ((task_clear_jobctl_trapping_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0) {
-      struct_offset.task_struct_jobctl = calculate_imm(task_clear_jobctl_trapping_src[i], ARM64_LDR_64, NULL);
-      break;
-    }
-  }
-#ifdef CONFIG_DEBUG
-  logkm("task_struct_jobctl=0x%llx\n", struct_offset.task_struct_jobctl);
-#endif /* CONFIG_DEBUG */
-  if (!struct_offset.task_struct_jobctl)
-    return -11;
-
-  // 获取 task_struct->signal
-  void (*tty_audit_fork)(struct signal_struct* sig);
-  lookup_name(tty_audit_fork);
-
-  uint32_t* tty_audit_fork_src = (uint32_t*)tty_audit_fork;
-  for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("tty_audit_fork %x %llx\n", i, tty_audit_fork_src[i]);
-#endif /* CONFIG_DEBUG */
-    if (tty_audit_fork_src[i] == ARM64_RET) {
-      break;
-    } else if ((tty_audit_fork_src[i] & MASK_LDR_64_) == INST_LDR_64_ && (tty_audit_fork_src[i - 1] & MASK_MRS_SP_EL0) == INST_MRS_SP_EL0) {
-      struct_offset.task_struct_signal = calculate_imm(tty_audit_fork_src[i], ARM64_LDR_64, NULL);
-      break;
-    }
-  }
-#ifdef CONFIG_DEBUG
-  logkm("task_struct_signal=0x%llx\n", struct_offset.task_struct_signal);
-#endif /* CONFIG_DEBUG */
-  if (!struct_offset.task_struct_signal)
-    return -11;
-
-  // 获取 signal_struct->flags, signal_struct->group_exit_task
-  void (*zap_other_threads)(struct task_struct* t);
-  lookup_name(zap_other_threads);
-
-  uint32_t* zap_other_threads_src = (uint32_t*)zap_other_threads;
-  for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("zap_other_threads %x %llx\n", i, zap_other_threads_src[i]);
-#endif /* CONFIG_DEBUG */
-    if (zap_other_threads_src[i] == ARM64_RET) {
-      break;
-    } else if ((zap_other_threads_src[i] & MASK_STR_Rt_WZR) == INST_STR_Rt_WZR) {
-      uint64_t offset = calculate_imm(zap_other_threads_src[i], ARM64_STR_32, NULL); // signal_struct->group_stop_count
-      struct_offset.signal_struct_group_exit_task = offset - 0x8;
-      struct_offset.signal_struct_flags = offset + 0x4;
-      break;
-    }
-  }
-#ifdef CONFIG_DEBUG
-  logkm("signal_struct_group_exit_task=0x%llx\n", struct_offset.signal_struct_group_exit_task);
-  logkm("signal_struct_flags=0x%llx\n", struct_offset.signal_struct_flags);
-#endif /* CONFIG_DEBUG */
-  if (!struct_offset.signal_struct_group_exit_task)
-    return -11;
-
-  // 获取 task_struct->flags
-  bool (*freezing_slow_path)(struct task_struct* p);
-  lookup_name(freezing_slow_path);
-
-  uint32_t* freezing_slow_path_src = (uint32_t*)freezing_slow_path;
-  for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("freezing_slow_path %x %llx\n", i, freezing_slow_path_src[i]);
-#endif /* CONFIG_DEBUG */
-    if (freezing_slow_path_src[i] == ARM64_RET) {
-      break;
-    } else if ((freezing_slow_path_src[i] & MASK_LDR_32_X0) == INST_LDR_32_X0) {
-      struct_offset.task_struct_flags = calculate_imm(freezing_slow_path_src[i], ARM64_LDR_32, NULL);
-      break;
-    } else if ((freezing_slow_path_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0) {
-      struct_offset.task_struct_flags = calculate_imm(freezing_slow_path_src[i], ARM64_LDR_64, NULL);
-      break;
-    }
-  }
-#ifdef CONFIG_DEBUG
-  logkm("task_struct_flags=0x%llx\n", struct_offset.task_struct_flags);
-#endif /* CONFIG_DEBUG */
-  if (!struct_offset.task_struct_flags)
-    return -11;
-
-  // 获取 task_struct->state
-  bool (*schedule_timeout_interruptible)(struct task_struct* p);
-  lookup_name(schedule_timeout_interruptible);
-
-  uint32_t* schedule_timeout_interruptible_src = (uint32_t*)schedule_timeout_interruptible;
-  for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("schedule_timeout_interruptible %x %llx\n", i, schedule_timeout_interruptible_src[i]);
-#endif /* CONFIG_DEBUG */
-    if (schedule_timeout_interruptible_src[i] == ARM64_RET) {
-      break;
-    } else if ((schedule_timeout_interruptible_src[i] & MASK_STR_64) == INST_STR_64) {
-      struct_offset.task_struct_state = calculate_imm(schedule_timeout_interruptible_src[i], ARM64_STR_64, NULL);
-      break;
-    }
-  }
-#ifdef CONFIG_DEBUG
-  logkm("task_struct_state=0x%llx\n", struct_offset.task_struct_state);
-#endif /* CONFIG_DEBUG */
-  if (!struct_offset.task_struct_state)
-    return -11;
-
-  // 获取 seq_file->private
-  int (*cgroup_subtree_control_show)(struct seq_file* seq, void* v);
-  lookup_name(cgroup_subtree_control_show);
-
-  uint32_t* cgroup_subtree_control_show_src = (uint32_t*)cgroup_subtree_control_show;
-  for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("cgroup_subtree_control_show %x %llx\n", i, cgroup_subtree_control_show_src[i]);
-#endif /* CONFIG_DEBUG */
-    if (cgroup_subtree_control_show_src[i] == ARM64_RET) {
-      break;
-    } else if ((cgroup_subtree_control_show_src[i] & MASK_LDR_64_) == INST_LDR_64_) {
-      struct_offset.seq_file_private = calculate_imm(cgroup_subtree_control_show_src[i], ARM64_LDR_64, NULL);
-      break;
-    }
-  }
-#ifdef CONFIG_DEBUG
-  logkm("seq_file_private=0x%llx\n", struct_offset.seq_file_private);
-#endif /* CONFIG_DEBUG */
-  if (!struct_offset.seq_file_private)
-    return -11;
-
-  // 获取 freezer->state
-  void (*cgroup_freezing)(struct task_struct* task);
-  lookup_name(cgroup_freezing);
-
-  uint32_t* cgroup_freezing_src = (uint32_t*)cgroup_freezing;
-  for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("cgroup_freezing %x %llx\n", i, cgroup_freezing_src[i]);
-#endif /* CONFIG_DEBUG */
-    if (cgroup_freezing_src[i] == ARM64_RET) {
-      break;
-    } else if ((cgroup_freezing_src[i] & MASK_LDR_32_) == INST_LDR_32_ && (cgroup_freezing_src[i + 1] & MASK_TST_32_6) == INST_TST_32_6) {
-      struct_offset.freezer_state = calculate_imm(cgroup_freezing_src[i], ARM64_LDR_32, NULL);
-      struct_offset.cgroup_flags = struct_offset.freezer_state;
-      break;
-    }
-  }
-#ifdef CONFIG_DEBUG
-  logkm("freezer_state=0x%llx\n", struct_offset.freezer_state);
-#endif /* CONFIG_DEBUG */
-  if (!struct_offset.freezer_state)
-    return -11;
-
-  // 获取 task_struct->css_set
-  void (*cgroup_fork)(struct task_struct* child);
-  lookup_name(cgroup_fork);
-
-  uint32_t* cgroup_fork_src = (uint32_t*)cgroup_fork;
-  for (u32 i = 0; i < 0x10; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("cgroup_fork %x %llx\n", i, cgroup_fork_src[i]);
-#endif /* CONFIG_DEBUG */
-    if (cgroup_fork_src[i] == ARM64_RET) {
-      break;
-    } else if ((cgroup_fork_src[i] & MASK_STR_64) == INST_STR_64) {
-      struct_offset.task_struct_css_set = calculate_imm(cgroup_fork_src[i], ARM64_STR_64, NULL);
-      break;
-    }
-  }
-#ifdef CONFIG_DEBUG
-  logkm("task_struct_css_set=0x%llx\n", struct_offset.task_struct_css_set);
-#endif /* CONFIG_DEBUG */
-  if (!struct_offset.task_struct_css_set)
-    return -11;
-
-  // 获取 css_set->dfl_cgrp
-  struct css_set kvar_def(init_css_set);
-  kvar_lookup_name(init_css_set);
-  // 4.4 4.9 未发现 0x48 以外的偏移
-  // 4.14 4.19 新增 init_css_set->dom_cset = &init_css_set ,可据此计算偏移
-  struct_offset.css_set_dfl_cgrp = 0x48;
-  uint64_t* init_css_set_src = (uint64_t*)kvar(init_css_set);
-  for (u32 i = 0; i < 0x10; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("init_css_set %x %llx\n", i, init_css_set_src[i]);
-#endif /* CONFIG_DEBUG */
-    if (init_css_set_src[i] == (uint64_t)kvar(init_css_set)) {
-      struct_offset.css_set_dfl_cgrp = (i + 1) * 8;
-      break;
-    }
-  }
-#ifdef CONFIG_DEBUG
-  logkm("init_css_set=0x%llx\n", kvar(init_css_set));
-  logkm("css_set_dfl_cgrp=0x%llx\n", struct_offset.css_set_dfl_cgrp);
-#endif /* CONFIG_DEBUG */
-  if (!struct_offset.css_set_dfl_cgrp)
-    return -11;
-
-  // 获取 subprocess_info->path, subprocess_info->argv
-  uint32_t* call_usermodehelper_exec_src = (uint32_t*)kfunc(call_usermodehelper_exec);
-  for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("call_usermodehelper_exec %x %llx\n", i, call_usermodehelper_exec_src[i]);
-#endif /* CONFIG_DEBUG */
-    if (call_usermodehelper_exec_src[i] == ARM64_RET) {
-      break;
-    } else if ((call_usermodehelper_exec_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0) {
-      struct_offset.subprocess_info_path = calculate_imm(call_usermodehelper_exec_src[i], ARM64_LDR_64, NULL);
-      struct_offset.subprocess_info_argv = struct_offset.subprocess_info_path + 0x8;
-      break;
-    }
-  }
-#ifdef CONFIG_DEBUG
-  logkm("subprocess_info_path=0x%llx\n", struct_offset.subprocess_info_path);
-  logkm("subprocess_info_argv=0x%llx\n", struct_offset.subprocess_info_argv);
-#endif /* CONFIG_DEBUG */
-  if (!struct_offset.subprocess_info_path)
-    return -11;
-
-  return 0;
 }
 
 static long inline_hook_init(const char* args, const char* event, void* __user reserved) {
