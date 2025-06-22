@@ -3,10 +3,10 @@
 
 #include <ktypes.h>
 
-#define THIS_MODULE ((struct module *)0)
+#define THIS_MODULE ((struct module*)0)
 
 #define ALIGN_MASK(x, mask) (((x) + (mask)) & ~(mask))
-#define ALIGN(x, a) ALIGN_MASK(x, (typeof(x))(a)-1)
+#define ALIGN(x, a) ALIGN_MASK(x, (typeof(x))(a) - 1)
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
 
@@ -64,12 +64,12 @@ struct binder_buffer {
   struct list_head entry;
   struct rb_node rb_node;
   unsigned free : 1;
-  unsigned clear_on_free : 1; // 6.1
+  unsigned clear_on_free : 1;  // 6.1
   unsigned allow_user_free : 1;
   unsigned async_transaction : 1;
-  unsigned oneway_spam_suspect : 1; // 6.1
+  unsigned oneway_spam_suspect : 1;  // 6.1
   // unsigned debug_id : 29;
-  unsigned debug_id : 27; // 6.1
+  unsigned debug_id : 27;  // 6.1
   struct binder_transaction* transaction;
   struct binder_node* target_node;
   size_t data_size;
@@ -84,7 +84,7 @@ struct binder_work {
   enum binder_work_type {
     BINDER_WORK_TRANSACTION = 1,
     BINDER_WORK_TRANSACTION_COMPLETE,
-    BINDER_WORK_TRANSACTION_ONEWAY_SPAM_SUSPECT, // 6.1
+    BINDER_WORK_TRANSACTION_ONEWAY_SPAM_SUSPECT,  // 6.1
     BINDER_WORK_RETURN_ERROR,
     BINDER_WORK_NODE,
     BINDER_WORK_DEAD_BINDER,
@@ -169,7 +169,7 @@ enum binder_stat_types {
 };
 struct binder_stats {
   // atomic_t br[18];
-  atomic_t br[20]; // 6.1
+  atomic_t br[20];  // 6.1
   atomic_t bc[19];
   atomic_t obj_created[BINDER_STAT_COUNT];
   atomic_t obj_deleted[BINDER_STAT_COUNT];
@@ -188,18 +188,18 @@ struct binder_thread {
 };
 
 // linux/netlink.h
-#define NETLINK_MAX_COOKIE_LEN	20
+#define NETLINK_MAX_COOKIE_LEN 20
 struct sk_buff;
 struct net;
 struct sock;
 struct netlink_kernel_cfg {
-  unsigned int	groups;
-  unsigned int	flags;
-  void		(*input)(struct sk_buff* skb);
+  unsigned int groups;
+  unsigned int flags;
+  void (*input)(struct sk_buff* skb);
   struct mutex* cb_mutex;
-  int		(*bind)(struct net* net, int group);
-  void		(*unbind)(struct net* net, int group);
-  bool		(*compare)(struct net* net, struct sock* sk);
+  int (*bind)(struct net* net, int group);
+  void (*unbind)(struct net* net, int group);
+  bool (*compare)(struct net* net, struct sock* sk);
 };
 struct netlink_ext_ack {
   const char* _msg;
@@ -221,7 +221,7 @@ struct nlmsghdr {
 #define NLMSG_ALIGN(len) (((len) + NLMSG_ALIGNTO - 1) & ~(NLMSG_ALIGNTO - 1))
 #define NLMSG_HDRLEN ((int)NLMSG_ALIGN(sizeof(struct nlmsghdr)))
 #define NLMSG_LENGTH(len) ((len) + NLMSG_HDRLEN)
-#define NLMSG_DATA(nlh)  ((void*)(((char*)nlh) + NLMSG_LENGTH(0)))
+#define NLMSG_DATA(nlh) ((void*)(((char*)nlh) + NLMSG_LENGTH(0)))
 
 // linux/gfp.h
 #define NUMA_NO_NODE (-1)
