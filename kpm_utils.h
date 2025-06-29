@@ -105,17 +105,17 @@
     int sf = inst_get_##abbr##_sf(code);                      \
     int N = inst_get_##abbr##_n(code);                        \
     if (sf == 0 && N != 0)                                    \
-      return -2;                                              \
+      return -10;                                             \
     int immr = inst_get_##abbr##_immr(code);                  \
     int imms = inst_get_##abbr##_imms(code);                  \
     int len = 31 - __builtin_clz((N << 6) | (~imms & 0x3f));  \
     if (len < 0)                                              \
-      return -3;                                              \
+      return -11;                                             \
     int size = (1 << len);                                    \
     int R = immr & (size - 1);                                \
     int S = imms & (size - 1);                                \
     if (S == size - 1)                                        \
-      return -4;                                              \
+      return -12;                                             \
     long pattern = (1ULL << (S + 1)) - 1;                     \
     for (int i = 0; i < R; ++i) pattern = ror(pattern, size); \
     int regSize = (sf == 0) ? 32 : 64;                        \
