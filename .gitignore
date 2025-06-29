@@ -24,3 +24,5 @@
 # Other
 *.bak
 *_test
+vmlinux.h
+*.vmlinux.c

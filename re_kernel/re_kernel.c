@@ -28,7 +28,7 @@ KPM_NAME("re_kernel");
 KPM_VERSION(MYKPM_VERSION);
 KPM_LICENSE("GPL v3");
 KPM_AUTHOR("Nep-Timeline, lzghzr");
-KPM_DESCRIPTION("Re:Kernel, support 4.4 ~ 6.1");
+KPM_DESCRIPTION("Re:Kernel, support 4.4 ~ 6.6");
 
 #define NETLINK_REKERNEL_MAX 26
 #define NETLINK_REKERNEL_MIN 22
@@ -96,6 +96,7 @@ static void (*binder_transaction_buffer_release_v3)(struct binder_proc* proc, st
                                                     binder_size_t* failed_at);
 static void (*binder_alloc_free_buf)(struct binder_alloc* alloc, struct binder_buffer* buffer);
 void kfunc_def(kfree)(const void* objp);
+struct binder_stats kvar_def(binder_stats);
 // hook do_send_sig_info
 static int (*do_send_sig_info)(int sig, struct siginfo* info, struct task_struct* p, enum pid_type type);
 // hook binder_transaction
@@ -126,14 +127,18 @@ struct tracepoint kvar_def(__tracepoint_binder_transaction);
 int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
 #endif /* CONFIG_DEBUG_CMDLINE */
 
-struct struct_offset struct_offset = {};
 // 最好初始化一个大于 0xFFFFFFFF 的值, 否则编译器优化后, 全局变量可能出错
-static uint64_t binder_stats_deleted_addr = UZERO,
-                // 实际上会被编译器优化为 bool
-    binder_transaction_buffer_release_ver6 = UZERO, binder_transaction_buffer_release_ver5 = UZERO,
+// 实际上会被编译器优化为 bool
+static uint64_t binder_transaction_buffer_release_ver6 = UZERO, binder_transaction_buffer_release_ver5 = UZERO,
                 binder_transaction_buffer_release_ver4 = UZERO;
 
 static unsigned long trace = UZERO, ext_tr_offset = UZERO;
+
+#ifndef CONFIG_VMLINUX
+struct struct_offset struct_offset = {};
+#else
+#include "re_offsets.vmlinux.c"
+#endif
 #include "re_offsets.c"
 
 // binder_node_lock
@@ -160,7 +165,7 @@ static inline void binder_inner_proc_unlock(struct binder_proc* proc) {
 // binder_is_frozen
 static inline bool binder_is_frozen(struct binder_proc* proc) {
   bool is_frozen = false;
-  if (struct_offset.binder_proc_is_frozen) {
+  if (struct_offset.binder_proc_is_frozen > 0) {
     is_frozen = binder_proc_is_frozen(proc);
   }
   return is_frozen;
@@ -415,7 +420,7 @@ static bool binder_can_update_transaction(struct binder_transaction* t1, struct 
   if ((t1_flags & t2_flags & TF_ONE_WAY) != TF_ONE_WAY || !t1_to_proc || !t2_to_proc)
     return false;
   if (t1_to_proc->tsk == t2_to_proc->tsk && t1_code == t2_code && t1_flags == t2_flags
-      && (struct_offset.binder_proc_is_frozen ? t1_buffer->pid == t2_buffer->pid : true)  // 4.19 以下无此数据
+      && (struct_offset.binder_proc_is_frozen > 0 ? t1_buffer->pid == t2_buffer->pid : true)  // 4.19 以下无此数据
       && t1_ptr == t2_ptr && t1_cookie == t2_cookie)
     return true;
   return false;
@@ -442,7 +447,7 @@ static struct binder_transaction* binder_find_outdated_transaction_ilocked(struc
 }
 
 static inline void outstanding_txns_dec(struct binder_proc* proc) {
-  if (struct_offset.binder_proc_outstanding_txns) {
+  if (struct_offset.binder_proc_outstanding_txns > 0) {
     int* outstanding_txns = binder_proc_outstanding_txns(proc);
     (*outstanding_txns)--;
   }
@@ -465,7 +470,9 @@ static inline void binder_release_entire_buffer(struct binder_proc* proc, struct
 }
 
 static inline void binder_stats_deleted(enum binder_stat_types type) {
-  atomic_inc((atomic_t*)binder_stats_deleted_addr);
+  atomic_t* binder_stats_deleted_addr =
+      (atomic_t*)((uintptr_t)kvar(binder_stats) + struct_offset.binder_stats_deleted_transaction);
+  atomic_inc(binder_stats_deleted_addr);
 }
 
 static void binder_proc_transaction_before(hook_fargs3_t* args, void* udata) {
@@ -599,6 +606,7 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
       (typeof(binder_transaction_buffer_release_v3))binder_transaction_buffer_release;
   lookup_name(binder_alloc_free_buf);
   kfunc_lookup_name(kfree);
+  kvar_lookup_name(binder_stats);
   kfunc_lookup_name(kvfree);
   kfunc_lookup_name(memdup_user);
 

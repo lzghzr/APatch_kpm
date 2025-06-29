@@ -134,6 +134,8 @@ static long calculate_offsets() {
   logkm("binder_transaction_buffer_release_ver5=0x%llx\n", binder_transaction_buffer_release_ver5);
   logkm("binder_transaction_buffer_release_ver4=0x%llx\n", binder_transaction_buffer_release_ver4);
 #endif /* CONFIG_DEBUG */
+
+#ifndef CONFIG_VMLINUX
   // 获取 binder_proc->is_frozen, 没有就是不支持
   uint32_t* binder_proc_transaction_src = (uint32_t*)binder_proc_transaction;
   for (u32 i = 0; i < 0x70; i++) {
@@ -316,8 +318,6 @@ static long calculate_offsets() {
     return -11;
 
   // 获取 binder_stats_deleted_addr
-  struct binder_stats kvar_def(binder_stats);
-  kvar_lookup_name(binder_stats);
   void (*binder_free_transaction)(struct binder_transaction* t);
   lookup_name_continue(binder_free_transaction);
   if (!binder_free_transaction) {
@@ -346,13 +346,13 @@ static long calculate_offsets() {
                 if (inst_get_add_imm_sf(binder_free_transaction_src[i + j + k]) == 1) {
                   uint64_t offset = inst_get_add_imm_imm(binder_free_transaction_src[i + j + k]);
                   if (offset > 0xC0 && offset < 0xE0) {
-                    binder_stats_deleted_addr = adrp_addr + adrl_addr + offset;
+                    struct_offset.binder_stats_deleted_transaction = offset;
                     break;
                   }
                 }
               }
             } else if (deleted_offset > 0xC0 && deleted_offset < 0xE0) {
-              binder_stats_deleted_addr = adrp_addr + adrl_addr;
+              struct_offset.binder_stats_deleted_transaction = deleted_offset;
               break;
             }
           }
@@ -362,11 +362,12 @@ static long calculate_offsets() {
     }
   }
 #ifdef CONFIG_DEBUG
-  logkm("binder_stats=0x%llx\n", kvar(binder_stats));
-  logkm("binder_stats_deleted_addr=0x%llx\n", binder_stats_deleted_addr);  // binder_stats + 0xCC
-#endif                                                                     /* CONFIG_DEBUG */
-  if (binder_stats_deleted_addr == UZERO)
+  logkm("binder_stats_deleted_transaction=0x%llx\n",
+        struct_offset.binder_stats_deleted_transaction);  // 0xCC
+#endif                                                    /* CONFIG_DEBUG */
+  if (struct_offset.binder_stats_deleted_transaction <= 0)
     return -11;
+#endif /* CONFIG_VMLINUX */
 
   return 0;
 }

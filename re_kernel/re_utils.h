@@ -26,6 +26,7 @@ struct struct_offset {
   int16_t binder_proc_is_frozen;
   int16_t binder_proc_outer_lock;
   int16_t binder_proc_outstanding_txns;
+  int16_t binder_stats_deleted_transaction;
   int16_t binder_transaction_buffer;
   int16_t binder_transaction_code;
   int16_t binder_transaction_flags;
