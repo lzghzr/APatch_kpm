@@ -182,7 +182,6 @@ static inline bool frozen_task_group(struct task_struct* task) {
 }
 
 // netlink
-static int netlink_count = 0;
 static struct sock* rekernel_netlink;
 static unsigned long rekernel_netlink_unit = UZERO;
 static struct proc_dir_entry *rekernel_dir, *rekernel_unit_entry;
@@ -211,15 +210,20 @@ static int send_netlink_message(char* msg) {
 }
 // 接收 netlink 消息
 static int netlink_rcv_msg(struct sk_buff* skb, struct nlmsghdr* nlh, struct netlink_ext_ack* extack) {
-  char* umsg = nlmsg_data(nlh);
+  char* umsg = NLMSG_DATA(nlh);
   if (!umsg)
     return -EINVAL;
 
-  netlink_count++;
-  char netlink_kmsg[PACKET_SIZE];
-  snprintf(netlink_kmsg, sizeof(netlink_kmsg), "Successfully received data packet! %d", netlink_count);
+#ifdef CONFIG_DEBUG
   logkm("kernel recv packet from user: %s\n", umsg);
-  return send_netlink_message(netlink_kmsg);
+#endif /* CONFIG_DEBUG */
+
+  if (!strcmp(umsg, "#proc_remove")) {
+    if (rekernel_dir) {
+      proc_remove(rekernel_dir);
+    }
+  }
+  return 0;
 }
 static void netlink_rcv(struct sk_buff* skb) { netlink_rcv_skb(skb, &netlink_rcv_msg); }
 // 创建 netlink 服务
