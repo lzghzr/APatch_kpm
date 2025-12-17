@@ -210,7 +210,7 @@ static int send_netlink_message(char* msg) {
 }
 // 接收 netlink 消息
 static int netlink_rcv_msg(struct sk_buff* skb, struct nlmsghdr* nlh, struct netlink_ext_ack* extack) {
-  char* umsg = NLMSG_DATA(nlh);
+  char* umsg = nlmsg_data(nlh);
   if (!umsg)
     return -EINVAL;
 
@@ -218,7 +218,7 @@ static int netlink_rcv_msg(struct sk_buff* skb, struct nlmsghdr* nlh, struct net
   logkm("kernel recv packet from user: %s\n", umsg);
 #endif /* CONFIG_DEBUG */
 
-  if (!strcmp(umsg, "#proc_remove")) {
+  if (!memcmp(umsg, "#proc_remove", nlmsg_len(nlh))) {
     if (rekernel_dir) {
       proc_remove(rekernel_dir);
     }
