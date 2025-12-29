@@ -31,6 +31,11 @@ int main() {
     .task_struct_jobctl = 0x%lx,\n\
     .task_struct_pid = 0x%lx,\n\
     .task_struct_tgid = 0x%lx,\n\
+    .sk_buff_len = 0x%lx,\n\
+    .sk_buff_transport_header = 0x%lx,\n\
+    .sk_buff_network_header = 0x%lx,\n\
+    .sk_buff_head = 0x%lx,\n\
+    .sk_buff_data = 0x%lx,\n\
 };\n",
       offsetof(struct binder_alloc, buffer_size), offsetof(struct binder_alloc, buffer),
       offsetof(struct binder_alloc, free_async_space), offsetof(struct binder_alloc, pid),
@@ -43,7 +48,9 @@ int main() {
       offsetof(struct binder_transaction, code), offsetof(struct binder_transaction, flags),
       offsetof(struct binder_transaction, from), offsetof(struct binder_transaction, to_proc),
       offsetof(struct task_struct, group_leader), offsetof(struct task_struct, jobctl),
-      offsetof(struct task_struct, pid), offsetof(struct task_struct, tgid));
+      offsetof(struct task_struct, pid), offsetof(struct task_struct, tgid), offsetof(struct sk_buff, len),
+      offsetof(struct sk_buff, transport_header), offsetof(struct sk_buff, network_header),
+      offsetof(struct sk_buff, head), offsetof(struct sk_buff, data));
 
   return 0;
 }

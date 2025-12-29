@@ -260,7 +260,30 @@ struct file_operations {
 struct siginfo;
 
 // linux/socket.h
+#define MSG_OOB 1
+#define MSG_PEEK 2
+#define MSG_DONTROUTE 4
+#define MSG_TRYHARD 4
+#define MSG_CTRUNC 8
+#define MSG_PROBE 0x10
+#define MSG_TRUNC 0x20
 #define MSG_DONTWAIT 0x40
+#define MSG_EOR 0x80
+#define MSG_WAITALL 0x100
+#define MSG_FIN 0x200
+#define MSG_SYN 0x400
+#define MSG_CONFIRM 0x800
+#define MSG_RST 0x1000
+#define MSG_ERRQUEUE 0x2000
+#define MSG_NOSIGNAL 0x4000
+#define MSG_MORE 0x8000
+#define MSG_WAITFORONE 0x10000
+#define MSG_SENDPAGE_NOPOLICY 0x10000
+#define MSG_SENDPAGE_NOTLAST 0x20000
+#define MSG_BATCH 0x40000
+#define MSG_EOF MSG_FIN
+#define MSG_NO_SHARED_FRAGS 0x80000
+#define MSG_SENDPAGE_DECRYPTED 0x100000
 
 // linux/tracepoint-defs.h
 struct tracepoint;
@@ -341,9 +364,7 @@ struct sock {
 #define sk_nulls_node __sk_common.skc_nulls_node
 #define sk_refcnt __sk_common.skc_refcnt
 #define sk_tx_queue_mapping __sk_common.skc_tx_queue_mapping
-#ifdef CONFIG_SOCK_RX_QUEUE_MAPPING
 #define sk_rx_queue_mapping __sk_common.skc_rx_queue_mapping
-#endif
 
 #define sk_dontcopy_begin __sk_common.skc_dontcopy_begin
 #define sk_dontcopy_end __sk_common.skc_dontcopy_end
@@ -406,5 +427,71 @@ struct sk_buff {
   };
   // unknow
 };
+
+// uapi/linux/tcp.h
+struct tcphdr {
+  __be16 source;
+  __be16 dest;
+  __be32 seq;
+  __be32 ack_seq;
+  __u16 res1 : 4, doff : 4, fin : 1, syn : 1, rst : 1, psh : 1, ack : 1, urg : 1, ece : 1, cwr : 1;
+  __be16 window;
+  __sum16 check;
+  __be16 urg_ptr;
+};
+
+// uapi/linux/ip.h
+struct iphdr {
+  __u8 ihl : 4, version : 4;
+  __u8 tos;
+  __be16 tot_len;
+  __be16 id;
+  __be16 frag_off;
+  __u8 ttl;
+  __u8 protocol;
+  __sum16 check;
+  __be32 saddr;
+  __be32 daddr;
+};
+
+// uapi/linux/ipv6.h
+struct ipv6hdr {
+  __u8 priority : 4, version : 4;
+  __u8 flow_lbl[3];
+
+  __be16 payload_len;
+  __u8 nexthdr;
+  __u8 hop_limit;
+
+  // unknow
+  // struct in6_addr saddr;
+  // struct in6_addr daddr;
+};
+
+// uapi/linux/swab.h
+#define ___constant_swab16(x) ((__u16)((((__u16)(x) & (__u16)0x00ffU) << 8) | (((__u16)(x) & (__u16)0xff00U) >> 8)))
+
+#define ___constant_swab32(x)                                                                     \
+  ((__u32)((((__u32)(x) & (__u32)0x000000ffUL) << 24) | (((__u32)(x) & (__u32)0x0000ff00UL) << 8) \
+           | (((__u32)(x) & (__u32)0x00ff0000UL) >> 8) | (((__u32)(x) & (__u32)0xff000000UL) >> 24)))
+
+#define ___constant_swab64(x)                                                                                         \
+  ((__u64)((((__u64)(x) & (__u64)0x00000000000000ffULL) << 56) | (((__u64)(x) & (__u64)0x000000000000ff00ULL) << 40)  \
+           | (((__u64)(x) & (__u64)0x0000000000ff0000ULL) << 24) | (((__u64)(x) & (__u64)0x00000000ff000000ULL) << 8) \
+           | (((__u64)(x) & (__u64)0x000000ff00000000ULL) >> 8) | (((__u64)(x) & (__u64)0x0000ff0000000000ULL) >> 24) \
+           | (((__u64)(x) & (__u64)0x00ff000000000000ULL) >> 40)                                                      \
+           | (((__u64)(x) & (__u64)0xff00000000000000ULL) >> 56)))
+
+#define ___constant_swahw32(x) \
+  ((__u32)((((__u32)(x) & (__u32)0x0000ffffUL) << 16) | (((__u32)(x) & (__u32)0xffff0000UL) >> 16)))
+
+#define ___constant_swahb32(x) \
+  ((__u32)((((__u32)(x) & (__u32)0x00ff00ffUL) << 8) | (((__u32)(x) & (__u32)0xff00ff00UL) >> 8)))
+
+#define swab16(x) ___constant_swab16(x)
+#define swab32(x) ___constant_swab32(x)
+#define swab64(x) ___constant_swab64(x)
+#define swahw32(x) ___constant_swahw32(x)
+#define swahb32(x) ___constant_swahb32(x)
 
 #endif /* __RE_KERNEL_H */

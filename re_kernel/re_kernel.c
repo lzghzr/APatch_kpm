@@ -110,8 +110,8 @@ void kfunc_def(kvfree)(const void* addr);
 // netfilter
 kuid_t kfunc_def(sock_i_uid)(struct sock* sk);
 // hook tcp_rcv
-static int (*tcp_v4_rcv)(struct sk_buff* skb);
-static int (*tcp_v6_rcv)(struct sk_buff* skb);
+static int (*tcp_v4_do_rcv)(struct sock* sk, struct sk_buff* skb);
+static int (*tcp_v6_do_rcv)(struct sock* sk, struct sk_buff* skb);
 static int ipv4_version = 4, ipv6_version = 6;
 #endif /* CONFIG_NETWORK */
 
@@ -134,11 +134,7 @@ static uint64_t binder_transaction_buffer_release_ver6 = UZERO, binder_transacti
 
 static unsigned long trace = UZERO, ext_tr_offset = UZERO;
 
-#ifndef CONFIG_VMLINUX
 struct struct_offset struct_offset = {};
-#else
-#include "re_offsets.vmlinux.c"
-#endif
 #include "re_offsets.c"
 
 // binder_node_lock
@@ -270,7 +266,8 @@ static void rekernel_report(int reporttype, int type, pid_t src_pid, struct task
 #ifdef CONFIG_NETWORK
   if (reporttype == NETWORK) {
     char binder_kmsg[PACKET_SIZE];
-    snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Network,target=%d,proto=ipv%d;", dst_pid, src_pid);
+    snprintf(binder_kmsg, sizeof(binder_kmsg), "type=Network,target=%d,proto=ipv%d,data_len=%d;", dst_pid, type,
+             src_pid);
 #ifdef CONFIG_DEBUG
     logkm("%s\n", binder_kmsg);
 #endif /* CONFIG_DEBUG */
@@ -557,23 +554,28 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
 }
 
 #ifdef CONFIG_NETWORK
-static inline bool sk_fullsock(const struct sock* sk) {
-  return (1 << sk->sk_state) & ~(TCPF_TIME_WAIT | TCPF_NEW_SYN_RECV);
+static inline unsigned char* skb_transport_header(const struct sk_buff* skb) {
+  return sk_buff_head(skb) + sk_buff_transport_header(skb);
+}
+static inline int skb_transport_offset(const struct sk_buff* skb) {
+  return skb_transport_header(skb) - sk_buff_data(skb);
 }
 
 static void tcp_rcv_before(hook_fargs1_t* args, void* udata) {
-  struct sk_buff* skb = (struct sk_buff*)args->arg0;
-  struct sock* sk = skb->sk;
-  ;
-  if (sk == NULL || !sk_fullsock(sk))
-    return;
+  struct sock* sk = (struct sock*)args->arg0;
+  struct sk_buff* skb = (struct sk_buff*)args->arg1;
 
   uid_t uid = sock_i_uid(sk).val;
   if (uid < MIN_USERAPP_UID)
     return;
 
   int version = *(int*)udata;
-  rekernel_report(NETWORK, 0, version, NULL, uid, NULL, true);
+  struct tcphdr* th = (struct tcphdr*)sk_buff_data(skb);
+  int data_len = sk_buff_len(skb) - skb_transport_offset(skb) - (th->doff << 2);
+  if (data_len <= 0 && !th->syn && !th->fin && !th->rst)
+    return;
+
+  rekernel_report(NETWORK, version, data_len, NULL, uid, NULL, true);
 }
 #endif /* CONFIG_NETWORK */
 
@@ -621,8 +623,8 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
 #ifdef CONFIG_NETWORK
   kfunc_lookup_name(sock_i_uid);
 
-  lookup_name(tcp_v4_rcv);
-  lookup_name(tcp_v6_rcv);
+  lookup_name(tcp_v4_do_rcv);
+  lookup_name(tcp_v6_do_rcv);
 #endif /* CONFIG_NETWORK */
 #ifdef CONFIG_DEBUG_CMDLINE
   kfunc_lookup_name(get_cmdline);
@@ -643,8 +645,8 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   hook_func(do_send_sig_info, 4, do_send_sig_info_before, NULL, NULL);
 
 #ifdef CONFIG_NETWORK
-  hook_func(tcp_v4_rcv, 1, tcp_rcv_before, NULL, &ipv4_version);
-  hook_func(tcp_v6_rcv, 1, tcp_rcv_before, NULL, &ipv6_version);
+  hook_func(tcp_v4_do_rcv, 2, tcp_rcv_before, NULL, &ipv4_version);
+  hook_func(tcp_v6_do_rcv, 2, tcp_rcv_before, NULL, &ipv6_version);
 #endif /* CONFIG_NETWORK */
 
   return 0;
@@ -672,8 +674,8 @@ static long inline_hook_exit(void* __user reserved) {
   unhook_func(do_send_sig_info);
 
 #ifdef CONFIG_NETWORK
-  unhook_func(tcp_v4_rcv);
-  unhook_func(tcp_v6_rcv);
+  unhook_func(tcp_v4_do_rcv);
+  unhook_func(tcp_v6_do_rcv);
 #endif /* CONFIG_NETWORK */
 
   return 0;

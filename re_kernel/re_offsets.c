@@ -98,6 +98,31 @@ static inline struct list_head* binder_node_async_todo(struct binder_node* node)
   struct list_head* async_todo = (struct list_head*)((uintptr_t)node + struct_offset.binder_node_async_todo);
   return async_todo;
 }
+// sk_buff_len
+static inline unsigned int sk_buff_len(const struct sk_buff* skb) {
+  unsigned int len = *(unsigned int*)((uintptr_t)skb + struct_offset.sk_buff_len);
+  return len;
+}
+// sk_buff_transport_header
+static inline __u16 sk_buff_transport_header(const struct sk_buff* skb) {
+  __u16 transport_header = *(__u16*)((uintptr_t)skb + struct_offset.sk_buff_transport_header);
+  return transport_header;
+}
+// sk_buff_network_header
+static inline __u16 sk_buff_network_header(const struct sk_buff* skb) {
+  __u16 network_header = *(__u16*)((uintptr_t)skb + struct_offset.sk_buff_network_header);
+  return network_header;
+}
+// sk_buff_head
+static inline unsigned char* sk_buff_head(const struct sk_buff* skb) {
+  unsigned char* head = *(unsigned char**)((uintptr_t)skb + struct_offset.sk_buff_head);
+  return head;
+}
+// sk_buff_data
+static inline unsigned char* sk_buff_data(const struct sk_buff* skb) {
+  unsigned char* data = *(unsigned char**)((uintptr_t)skb + struct_offset.sk_buff_data);
+  return data;
+}
 
 static long calculate_offsets() {
   // 获取 binder_transaction_buffer_release 版本, 以参数数量做判断
@@ -135,7 +160,6 @@ static long calculate_offsets() {
   logkm("binder_transaction_buffer_release_ver4=0x%llx\n", binder_transaction_buffer_release_ver4);
 #endif /* CONFIG_DEBUG */
 
-#ifndef CONFIG_VMLINUX
   // 获取 binder_proc->is_frozen, 没有就是不支持
   uint32_t* binder_proc_transaction_src = (uint32_t*)binder_proc_transaction;
   for (u32 i = 0; i < 0x70; i++) {
@@ -367,7 +391,55 @@ static long calculate_offsets() {
 #endif                                                    /* CONFIG_DEBUG */
   if (struct_offset.binder_stats_deleted_transaction <= 0)
     return -11;
-#endif /* CONFIG_VMLINUX */
+
+  // 获取 sk_buff->len
+  void (*skb_trim)(struct sk_buff* skb, unsigned int len);
+  lookup_name(skb_trim);
+
+  uint32_t* skb_trim_src = (uint32_t*)skb_trim;
+  for (u32 i = 0; i < 0x8; i++) {
+#ifdef CONFIG_DEBUG
+    logkm("skb_trim %x %llx\n", i, skb_trim_src[i]);
+#endif /* CONFIG_DEBUG */
+    if (inst_is_ret(skb_trim_src[i])) {
+      break;
+    } else if (inst_get_ldr_imm_uint_size(skb_trim_src[i]) == 0b10) {
+      struct_offset.sk_buff_len = inst_get_ldr_imm_uint_imm(skb_trim_src[i]);
+      break;
+    }
+  }
+#ifdef CONFIG_DEBUG
+  logkm("sk_buff_len=0x%x\n", struct_offset.sk_buff_len);  // 0x70
+#endif                                                     /* CONFIG_DEBUG */
+  if (struct_offset.sk_buff_len <= 0)
+    return -11;
+
+  // 获取 sk_buff->network_header, sk_buff->head
+  void (*ipv6_find_tlv)(const struct sk_buff* skb, int offset, int type);
+  lookup_name(ipv6_find_tlv);
+
+  uint32_t* ipv6_find_tlv_src = (uint32_t*)ipv6_find_tlv;
+  for (u32 i = 0; i < 0x8; i++) {
+#ifdef CONFIG_DEBUG
+    logkm("ipv6_find_tlv %x %llx\n", i, ipv6_find_tlv_src[i]);
+#endif /* CONFIG_DEBUG */
+    if (inst_is_ret(ipv6_find_tlv_src[i])) {
+      break;
+    } else if (inst_get_ldr_imm_uint_size(ipv6_find_tlv_src[i]) == 0b11) {
+      struct_offset.sk_buff_head = inst_get_ldr_imm_uint_imm(ipv6_find_tlv_src[i]);
+      struct_offset.sk_buff_data = struct_offset.sk_buff_head + 0x8;
+    } else if (inst_is_ldrh_imm_uint(ipv6_find_tlv_src[i])) {
+      struct_offset.sk_buff_network_header = inst_get_ldrh_imm_uint_imm(ipv6_find_tlv_src[i]);
+      struct_offset.sk_buff_transport_header = struct_offset.sk_buff_network_header - 0x2;
+    }
+  }
+#ifdef CONFIG_DEBUG
+  logkm("sk_buff_network_header=0x%x\n", struct_offset.sk_buff_network_header);  // 0xB4
+  logkm("sk_buff_head=0x%x\n", struct_offset.sk_buff_head);                      // 0xD0
+  logkm("sk_buff_data=0x%x\n", struct_offset.sk_buff_data);                      // 0xD8
+#endif                                                                           /* CONFIG_DEBUG */
+  if (struct_offset.sk_buff_network_header <= 0 || struct_offset.sk_buff_head <= 0)
+    return -11;
 
   return 0;
 }

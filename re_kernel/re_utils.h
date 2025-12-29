@@ -32,6 +32,11 @@ struct struct_offset {
   int16_t binder_transaction_flags;
   int16_t binder_transaction_from;
   int16_t binder_transaction_to_proc;
+  int16_t sk_buff_len;
+  int16_t sk_buff_transport_header;
+  int16_t sk_buff_network_header;
+  int16_t sk_buff_head;
+  int16_t sk_buff_data;
   int16_t task_struct_group_leader;
   int16_t task_struct_jobctl;
   int16_t task_struct_pid;
