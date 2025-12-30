@@ -561,7 +561,7 @@ static inline int skb_transport_offset(const struct sk_buff* skb) {
   return skb_transport_header(skb) - sk_buff_data(skb);
 }
 
-static void tcp_rcv_before(hook_fargs1_t* args, void* udata) {
+static void tcp_rcv_before(hook_fargs2_t* args, void* udata) {
   struct sock* sk = (struct sock*)args->arg0;
   struct sk_buff* skb = (struct sk_buff*)args->arg1;
 
