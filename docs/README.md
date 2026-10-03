@@ -55,7 +55,7 @@ Tester 真机预检 → 端到端测试 → 实机报告（异常则走 07 升�
 
 详细步骤、每一步的命令与退出条件见 [process/03-round-flow.md](process/03-round-flow.md)。
 
-## 门禁
+## 本地验收门禁
 
 ```bash
 python3 tools/check_repository.py            # 常规：结构/链接/身份/版本/卫生
@@ -63,6 +63,18 @@ python3 tools/check_repository.py --strict   # 验收/发布：另要求产物�
 ```
 
 门禁只检查「可机检的事实」。它不代替审计、不代替实机测试，也不产生交付结论。
+
+## 远程编译与产物门禁
+
+GitHub Actions 的 [Build CI](../.github/workflows/build-kpm.yml) 构建当前提交中有 Makefile 且未归档的模块，随后运行
+`python3 tools/artifact_gate.py target --modules target/modules.txt`。检查当次 KPM 的 ELF64/AArch64 可重定位格式、
+必需元信息、初始化与退出入口，以及 ReKernel-X 配套布局的产物哈希、ABI、表范围与偏移值。
+
+CI 产物附带 `BUILD_MANIFEST.json` 与 `SHA256SUMS`，记录当次源提交、KernelPatch 提交、文件大小、模块信息及文件哈希。
+下载到后续作业后再次核对哈希；发布目录生成与实际发布资产对应的清单。编译或产物检查失败时停止上传和发布。
+
+远程检查范围为当次编译产物。本地验收继续核对历史构建身份、审计与测试报告、问题关闭及签名交付条件。
+CI 的编译和字节一致性结果不能外推为设备兼容性或实机结论。
 
 ## 与既有项目技能的关系
 

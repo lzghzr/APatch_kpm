@@ -2382,10 +2382,39 @@
       "identity_note": "维护者（用户）确认：基准偏移对应本轮测试机，ABI5 测试使用已登记基准字节；其它目标内核需重新核对偏移并登记适配产物。"
     }
   ],
-  "issues": [],
+  "issues": [
+    {
+      "id": "MNT-012",
+      "owner": "维护者",
+      "status": "open",
+      "severity": "中",
+      "title": "远程产物检查与本地工程验收职责范围待分离",
+      "evidence": "https://github.com/lzghzr/APatch_kpm/actions/runs/37107390204：identity_hashes 与 version_consistency 因历史源提交对象缺席失败；同提交 Build CI 编译成功。完整源提交 fb40296b754512335b01474417dfca322bcdeae2。",
+      "impact": "远程编译产物成功生成后，流程检查仍依赖本地历史链，无法按远程产物职责完成检查。",
+      "suggestion": "远程 Actions 检查当次编译产物和文件哈希，本地严格门禁继续核对历史身份及三方交付条件。",
+      "closure": "由 Auditor 或 Tester 在冻结修复提交上独立复核产物门禁正反例，核对远程 Actions 的编译、清单及下载哈希检查通过后关闭。",
+      "frequency": "未知",
+      "confidence": "已确认",
+      "closed_by": null,
+      "resolution": null,
+      "history": [
+        {
+          "at": "2026-10-03T08:17:16.818927+00:00",
+          "by": "维护者",
+          "status": "open",
+          "note": "已按维护者确定的范围接入远程编译产物门禁；本地严格验收断言保留。等待冻结提交上的独立复核及远程运行。",
+          "evidence": "docs/records/2026-10-03-ci-artifact-gate.md",
+          "tool_worktree_sha256": {
+            "tools/artifact_gate.py": "92905c86469a41c8c8866645e1890a4d4523821695501b7940d7877e60d5f899",
+            "tools/selftest_artifact_gate.py": "576b2a85fef6e54e8aa8dc8ffb0aad94d3926f399e5441d9160f078326442368"
+          }
+        }
+      ]
+    }
+  ],
   "acceptances": [],
   "deliveries": [],
-  "updated_at": "2026-10-03T07:02:08.099830+00:00",
+  "updated_at": "2026-10-03T08:17:16.819165+00:00",
   "updated_by": "维护者",
   "maintainer_records": [
     {

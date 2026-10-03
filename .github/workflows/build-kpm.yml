@@ -4,7 +4,34 @@ on:
   push:
     paths:
       - ".github/workflows/build-kpm.yml"
-      - "**.c"
+      - "tools/artifact_gate.py"
+      - "tools/selftest_artifact_gate.py"
+      - "**/*.c"
+      - "**/*.h"
+      - "**/*.S"
+      - "**/*.s"
+      - "**/*.mk"
+      - "**/Makefile"
+      - "**/archive"
+      - "re_kernel_x/tools/**"
+      - "KernelPatch"
+      - ".gitmodules"
+
+  pull_request:
+    paths:
+      - ".github/workflows/build-kpm.yml"
+      - "tools/artifact_gate.py"
+      - "tools/selftest_artifact_gate.py"
+      - "**/*.c"
+      - "**/*.h"
+      - "**/*.S"
+      - "**/*.s"
+      - "**/*.mk"
+      - "**/Makefile"
+      - "**/archive"
+      - "re_kernel_x/tools/**"
+      - "KernelPatch"
+      - ".gitmodules"
 
   workflow_dispatch:
     inputs:
@@ -40,6 +67,9 @@ jobs:
           sudo apt update -y
           sudo apt install llvm -y
 
+      - name: Artifact gate regression tests
+        run: python3 tools/selftest_artifact_gate.py
+
       - name: Build kpm
         run: |
           mkdir target
@@ -56,6 +86,7 @@ jobs:
               continue
             fi
             echo "build ${dir}"
+            printf "%s\n" "${dir%/}" >> target/modules.txt
             if [ "${dir%/}" = "re_kernel_x" ]; then
               make -C "${dir}" baselines
               mv "${dir}"*.kpm "${dir}"*.kpm.json target
@@ -64,6 +95,9 @@ jobs:
               mv "${dir}"*.kpm target
             fi
           done
+
+      - name: Validate compiled artifacts
+        run: python3 tools/artifact_gate.py target --modules target/modules.txt
 
       - name: Generate kpm list
         id: list-kpms
@@ -77,17 +111,24 @@ jobs:
           name: all_kpms
           path: target
 
-      - name: Prepare release baselines
+      - name: Prepare release assets
         if: github.event.inputs.release == 'true'
         run: |
           mkdir release
           shopt -s nullglob
+          for kpm in target/*.kpm; do
+            case "${kpm##*/}" in
+              re_kernel_x_*) continue ;;
+            esac
+            cp "${kpm}" release/
+          done
           for abi in 3 4 5 6; do
             baselines=(target/re_kernel_x_*_abi${abi}.kpm)
             test "${#baselines[@]}" -eq 1
             test -f "${baselines[0]}.json"
             cp "${baselines[0]}" "${baselines[0]}.json" release/
           done
+          python3 tools/artifact_gate.py release --modules target/modules.txt
 
       - name: Upload release
         if: github.event.inputs.release == 'true'
@@ -117,6 +158,9 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: all_kpms
+
+      - name: Verify downloaded artifact hashes
+        run: sha256sum --check SHA256SUMS
 
       - name: Upload ${{ matrix.kpm }}
         uses: actions/upload-artifact@v7

@@ -35,7 +35,7 @@
       "tester_report_identity(warn)",
       "public_file_hygiene"
     ],
-    "ci_workflow": ".github/workflows/repository-gate.yml"
+    "ci_workflow": ".github/workflows/build-kpm.yml"
   },
   "ownership": {
     "Developer": [
@@ -172,7 +172,7 @@
     "candidate_build_isolation": "build_candidate.py 构建前把中间产物/产物（*.o *.kpm *.d *.i *.gcno…）移到 local/stale/，但**保护构建输入与 Git 已跟踪文件**（如模块内的 .s 源码）；默认 make -B；构建前后比对受保护文件指纹，被改动即拒绝登记",
     "recipe_capture_rule": "候选要求 captured 为布尔 true、returncode 为整数 0、编译器字节 SHA-256、构建前后配方一致和完整事务记录；候选档拒绝探索记录及无匹配对象",
     "delivery_binding": "交付绑定只追加在 deliveries[]；source_commit/build_id/instance_id/指纹/产物均与实例一致；核对祖先关系与交付模块树及共享构建输入，复验实际提交签名；所有绑定均需通过",
-    "tool_selftest": "tools/selftest_tools.py 把历轮发现过的判据漂移固化为回归夹具（签名判据一致性、验收绑定、探索记录不可交付、版本历史、身份冲突、清理保护、不完整身份拒绝）；门禁与 CI 都会运行，失败即门禁失败",
+    "tool_selftest": "tools/selftest_tools.py 把历轮发现过的判据漂移固化为回归夹具（签名判据一致性、验收绑定、探索记录不可交付、版本历史、身份冲突、清理保护、不完整身份拒绝）；本地仓库门禁运行，失败即本地门禁失败",
     "auditor_operating_constraints": "写范围 Auditor/** + local/auditor-scratch/** + local/kallsyms_audit/**；共享树内不构建、不做 git 写操作、不碰设备密钥；artifacts 与他人报告只读；调用实现方/维护方工具只用于定位；由独立于修复归属方的角色复核关闭问题",
     "freeze_rule": "流程文件与源码必须一起进入冻结提交；冻结前跑 tools/freeze_check.py；没有干净提交时 Auditor 无法绑定身份，Tester 无候选可测",
     "tester_authorization": "设备操作白名单 adb shell/push/pull/getprop/dmesg/reboot、adb reboot bootloader、fastboot devices/getvar/reboot；黑名单 fastboot flash/erase/-w、清 pstore、改 superkey、重装 APatch、刷机、recovery 清数据。自主 adb reboot 作为死机恢复需满足：已记基线、只许一次、已记录四项基线且基线 pstore 为空，仅无响应类异常允许；当前出现崩溃特征或 pstore 非空时保持现场交维护者、必须留回执、只能作恢复通道。superkey 仅经会话/环境变量传入，只读不落盘。物理动作（长按电源等）由维护者执行，走升级单的「需要维护者执行的物理动作」+「动作回执」两栏。",
