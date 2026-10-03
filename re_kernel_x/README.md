@@ -17,7 +17,7 @@ GitHub Releases 提供 ABI3、ABI4、ABI5、ABI6 四个基准 KPM。基准需要
 python3 re_kernel_x/tools/patch_offsets.py patch local/baselines/re_kernel_x_1.6_abi6.kpm --offsets local/target-offsets.json --output local/target.kpm
 ```
 
-替换工具只依赖 Python 标准库，用户侧无需 NDK 或 KP SDK。debug 版及其它模块保留在 Actions artifacts。运行环境建议使用 KP 0.13.9；卸载与热重载的生命周期处理仍待验证。
+替换工具只依赖 Python 标准库，用户侧无需 NDK 或 KP SDK。debug 版保留在 Actions artifacts。运行环境建议使用 KP 0.13.9；卸载与热重载的生命周期处理仍待验证。
 
 ## 更新记录
 ### 1.6

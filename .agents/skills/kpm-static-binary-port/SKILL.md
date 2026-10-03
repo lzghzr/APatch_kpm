@@ -16,7 +16,7 @@ description: 获取 GitHub Releases 上按实际函数 ABI 区分的 ARM64 KPM �
 
 ## 获取公开基准（用户侧）
 
-默认从项目 GitHub Releases 下载非 debug 基准，无需本地编译、NDK 或 KP SDK。先从目标镜像确认实际 ABI，再从同一发布 tag 下载基准 `.kpm` 及同名 `.kpm.json`；从该次构建提交取得 `patch_offsets.py`，放入新的本地目录。debug 基准及其它模块保留在 Actions artifacts。补丁工具仅依赖 Python 标准库；镜像分析工具的依赖另行准备。
+默认从项目 GitHub Releases 下载非 debug 基准，无需本地编译、NDK 或 KP SDK。先从目标镜像确认实际 ABI，再从同一发布 tag 下载基准 `.kpm` 及同名 `.kpm.json`；从该次构建提交取得 `patch_offsets.py`，放入新的本地目录。debug 基准及全部构建产物保留在 Actions artifacts。补丁工具仅依赖 Python 标准库；镜像分析工具的依赖另行准备。
 
 使用旧版本且配套 JSON 未提供时，可用 `python3 re_kernel_x/tools/patch_offsets.py baseline <基准.kpm> --output <基准.kpm.json>` 离线生成；该命令还需同一构建提交中的 `re_offsets.c` 提供字段顺序，不进行编译。
 
@@ -26,7 +26,7 @@ description: 获取 GitHub Releases 上按实际函数 ABI 区分的 ARM64 KPM �
 
 偏移集中于 `.data.re_offsets`，使用 `volatile` 防止编译器折叠成指令立即数。配置段必须可写、无重定位，不存运行时地址。复用已经核对的共同布局，只把变化字段放入表中。
 
-编译环境由开发者或 GitHub Actions 准备，用户侧只下载与替换。Actions 构建 ABI3/4/5/6 的 release/debug 基准；Releases 上传四个非 debug KPM 及各自的布局 JSON；全部 KPM 和基准布局 JSON 同时保留在 Actions artifacts。公开基准必须能取得配套 JSON 和同版本补丁工具，不能只发布默认 ABI。流程改动按仓库所有权交给维护者落地。
+编译环境由开发者或 GitHub Actions 准备，用户侧只下载与替换。Actions 构建 ABI3/4/5/6 的 release/debug 基准；`re_kernel_x` 在 Releases 上传四个非 debug KPM 及各自的布局 JSON，其他模块沿用原有 Release 发布方式；全部 KPM 和基准布局 JSON 同时保留在 Actions artifacts。公开基准必须能取得配套 JSON 和同版本补丁工具，不能只发布默认 ABI。流程改动按仓库所有权交给维护者落地。
 
 ```bash
 make -C re_kernel_x baselines OUT_DIR=../local/baselines-round1
