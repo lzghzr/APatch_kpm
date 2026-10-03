@@ -1,0 +1,572 @@
+{
+  "source": "KernelPatch (lkm/kpm/symbols.c + kernel/**/KP_EXPORT_SYMBOL)",
+  "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "kernelpatch_version": "#define MAJOR 0\n#define MINOR 13\n#define PATCH 9",
+  "extracted_at": "2026-10-02T12:13:24+0800",
+  "extracted_by": "Auditor/tools/kp_symbols_extract.py",
+  "count": 174,
+  "symbols": {
+    "_task_pt_reg": [
+      "KernelPatch/kernel/patch/common/utils.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "android_is_safe_mode": [
+      "KernelPatch/kernel/patch/android/userd.c"
+    ],
+    "branch_absolute": [
+      "KernelPatch/kernel/base/hook.c"
+    ],
+    "branch_relative": [
+      "KernelPatch/kernel/base/hook.c"
+    ],
+    "compat_copy_to_user": [
+      "KernelPatch/kernel/patch/common/utils.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "compat_strncpy_from_user": [
+      "KernelPatch/kernel/patch/common/utils.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "compat_sys_call_table": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "compat_syscall_name_table": [
+      "KernelPatch/kernel/patch/common/sysname.c"
+    ],
+    "copy_to_user_stack": [
+      "KernelPatch/kernel/patch/common/utils.c"
+    ],
+    "cred_offset": [
+      "KernelPatch/kernel/patch/ksyms/task_cred.c"
+    ],
+    "current_uid": [
+      "KernelPatch/kernel/patch/common/utils.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "endian": [
+      "KernelPatch/kernel/base/start.c"
+    ],
+    "extra_event_init": [
+      "KernelPatch/kernel/patch/patch.c"
+    ],
+    "extra_event_init_args": [
+      "KernelPatch/kernel/patch/patch.c"
+    ],
+    "fp_hook": [
+      "KernelPatch/kernel/base/fphook.c"
+    ],
+    "fp_hook_unwrap": [
+      "KernelPatch/kernel/base/fphook.c"
+    ],
+    "fp_hook_wrap": [
+      "KernelPatch/kernel/base/fphook.c"
+    ],
+    "fp_unhook": [
+      "KernelPatch/kernel/base/fphook.c"
+    ],
+    "fp_unwrap_syscalln": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "fp_wrap_syscalln": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "get_ap_mod_exclude": [
+      "KernelPatch/kernel/patch/common/sucompat.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "get_kstorage": [
+      "KernelPatch/kernel/patch/common/kstorage.c"
+    ],
+    "get_random_u64": [
+      "KernelPatch/kernel/patch/common/utils.c"
+    ],
+    "get_trusted_manager_uid": [
+      "KernelPatch/kernel/patch/android/userd.c"
+    ],
+    "has_config_compat": [
+      "KernelPatch/kernel/patch/common/syscall.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "has_syscall_wrapper": [
+      "KernelPatch/kernel/patch/common/syscall.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "hook": [
+      "KernelPatch/kernel/base/hook.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "hook_chain_add": [
+      "KernelPatch/kernel/base/hook.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "hook_chain_remove": [
+      "KernelPatch/kernel/base/hook.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "hook_compat_syscalln": [
+      "KernelPatch/kernel/patch/common/syscall.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "hook_install": [
+      "KernelPatch/kernel/base/hook.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "hook_prepare": [
+      "KernelPatch/kernel/base/hook.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "hook_syscalln": [
+      "KernelPatch/kernel/patch/common/syscall.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "hook_syscalln_legacy": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "hook_syscalln_override": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "hook_uninstall": [
+      "KernelPatch/kernel/base/hook.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "hook_unwrap_remove": [
+      "KernelPatch/kernel/base/hook.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "hook_wrap": [
+      "KernelPatch/kernel/base/hook.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "hotpatch": [
+      "KernelPatch/kernel/base/hotpatch.c"
+    ],
+    "hotpatch_nosync": [
+      "KernelPatch/kernel/base/hotpatch.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "inline_unwrap_syscalln": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "inline_wrap_syscalln": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "is_su_allow_uid": [
+      "KernelPatch/kernel/patch/common/sucompat.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "is_trusted_manager_uid_android": [
+      "KernelPatch/kernel/patch/android/userd.c"
+    ],
+    "kallsyms_lookup_name": [
+      "KernelPatch/kernel/base/start.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "kallsyms_lookup_name_by_suffix": [
+      "KernelPatch/kernel/base/start.c"
+    ],
+    "kallsyms_on_each_match_symbol": [
+      "KernelPatch/kernel/base/start.c"
+    ],
+    "kallsyms_on_each_symbol": [
+      "KernelPatch/kernel/base/start.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "kf___sysfs_match_string": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_argv_free": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_argv_split": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_bcmp": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_d_path": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_fget": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_fortify_panic": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_fput": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_kasprintf": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_kstrtoll": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_kstrtoull": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_kvasprintf": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_match_string": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_memchr": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_memchr_inv": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_memcmp": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_memcpy": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_memmove": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_memscan": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_memset": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_memset16": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_memset32": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_memset64": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_scnprintf": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_skip_spaces": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_snprintf": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_sprintf": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_sscanf": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_stpcpy": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strcasecmp": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strcat": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strchr": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strchrnul": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strcmp": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strcpy": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strcspn": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strim": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strlcat": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strlcpy": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strlen": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strncasecmp": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strncat": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strnchr": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strnchrnul": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strncmp": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strncpy": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strnlen": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strnstr": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strpbrk": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strrchr": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strreplace": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strscpy": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strscpy_pad": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strsep": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strspn": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_strstr": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_sysfs_streq": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_vscnprintf": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_vsnprintf": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_vsprintf": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kf_vsscanf": [
+      "KernelPatch/kernel/patch/ksyms/libs.c"
+    ],
+    "kp_control_feature_sc": [
+      "KernelPatch/kernel/patch/common/sucompat.c"
+    ],
+    "kp_feature_list": [
+      "KernelPatch/kernel/base/symbol.c"
+    ],
+    "kp_kconfig_available": [
+      "KernelPatch/kernel/base/predata.c"
+    ],
+    "kp_kconfig_data": [
+      "KernelPatch/kernel/base/predata.c"
+    ],
+    "kp_kconfig_enabled": [
+      "KernelPatch/kernel/base/predata.c"
+    ],
+    "kp_kconfig_size": [
+      "KernelPatch/kernel/base/predata.c"
+    ],
+    "kp_kconfig_value": [
+      "KernelPatch/kernel/base/predata.c"
+    ],
+    "kp_symbol_count": [
+      "KernelPatch/kernel/base/symbol.c"
+    ],
+    "kp_symbol_list": [
+      "KernelPatch/kernel/base/symbol.c"
+    ],
+    "kpver": [
+      "KernelPatch/kernel/base/start.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "kstorage_generation": [
+      "KernelPatch/kernel/patch/common/kstorage.c"
+    ],
+    "kver": [
+      "KernelPatch/kernel/base/start.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "list_ap_mod_exclude": [
+      "KernelPatch/kernel/patch/common/sucompat.c"
+    ],
+    "list_kstorage_ids": [
+      "KernelPatch/kernel/patch/common/kstorage.c"
+    ],
+    "load_ap_kpm_modules": [
+      "KernelPatch/kernel/patch/android/userd.c"
+    ],
+    "load_ap_package_config": [
+      "KernelPatch/kernel/patch/android/userd.c"
+    ],
+    "mm_struct_offset": [
+      "KernelPatch/kernel/patch/ksyms/task_cred.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "notify_modules_event": [
+      "KernelPatch/kernel/patch/module/module.c"
+    ],
+    "on_each_kstorage_elem": [
+      "KernelPatch/kernel/patch/common/kstorage.c"
+    ],
+    "patch_config": [
+      "KernelPatch/kernel/base/predata.c"
+    ],
+    "pgtable_entry": [
+      "KernelPatch/kernel/base/start.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "pgtable_phys": [
+      "KernelPatch/kernel/base/start.c"
+    ],
+    "printk": [
+      "KernelPatch/kernel/base/start.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "raw_syscall0": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "raw_syscall1": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "raw_syscall2": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "raw_syscall3": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "raw_syscall4": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "raw_syscall5": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "raw_syscall6": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "read_kstorage": [
+      "KernelPatch/kernel/patch/common/kstorage.c"
+    ],
+    "refresh_trusted_manager_uid": [
+      "KernelPatch/kernel/patch/android/userd.c"
+    ],
+    "remove_kstorage": [
+      "KernelPatch/kernel/patch/common/kstorage.c"
+    ],
+    "ret_absolute": [
+      "KernelPatch/kernel/base/hook.c"
+    ],
+    "set_ap_mod_exclude": [
+      "KernelPatch/kernel/patch/common/sucompat.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "setup_header": [
+      "KernelPatch/kernel/base/start.c"
+    ],
+    "sp_el0_is_current": [
+      "KernelPatch/kernel/patch/ksyms/task_cred.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "sp_el0_is_thread_info": [
+      "KernelPatch/kernel/patch/ksyms/task_cred.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "stack_end_offset": [
+      "KernelPatch/kernel/patch/ksyms/task_cred.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "stack_in_task_offset": [
+      "KernelPatch/kernel/patch/ksyms/task_cred.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "su_add_allow_uid": [
+      "KernelPatch/kernel/patch/common/sucompat.c"
+    ],
+    "su_allow_uid_nums": [
+      "KernelPatch/kernel/patch/common/sucompat.c"
+    ],
+    "su_allow_uid_profile": [
+      "KernelPatch/kernel/patch/common/sucompat.c"
+    ],
+    "su_allow_uids": [
+      "KernelPatch/kernel/patch/common/sucompat.c"
+    ],
+    "su_get_path": [
+      "KernelPatch/kernel/patch/common/sucompat.c"
+    ],
+    "su_remove_allow_uid": [
+      "KernelPatch/kernel/patch/common/sucompat.c"
+    ],
+    "su_reset_path": [
+      "KernelPatch/kernel/patch/common/sucompat.c"
+    ],
+    "sym": [
+      "KernelPatch/kernel/include/symbol.h"
+    ],
+    "symbol_lookup_name": [
+      "KernelPatch/kernel/base/symbol.c"
+    ],
+    "sys_call_table": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "syscall_dispatch_init": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "syscall_hook_global_enabled": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "syscall_hook_set_gate": [
+      "KernelPatch/kernel/patch/common/syscall.c"
+    ],
+    "syscall_name_table": [
+      "KernelPatch/kernel/patch/common/sysname.c"
+    ],
+    "syscalln_addr": [
+      "KernelPatch/kernel/patch/common/syscall.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "syscalln_name_addr": [
+      "KernelPatch/kernel/patch/common/syscall.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "task_ext_size": [
+      "KernelPatch/kernel/patch/common/taskob.c"
+    ],
+    "task_in_thread_info_offset": [
+      "KernelPatch/kernel/patch/ksyms/task_cred.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "task_struct_offset": [
+      "KernelPatch/kernel/patch/ksyms/task_cred.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "thread_info_in_task": [
+      "KernelPatch/kernel/patch/ksyms/task_cred.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "thread_size": [
+      "KernelPatch/kernel/patch/ksyms/task_cred.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "unhook": [
+      "KernelPatch/kernel/base/hook.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "unhook_compat_syscalln": [
+      "KernelPatch/kernel/patch/common/syscall.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "unhook_syscalln": [
+      "KernelPatch/kernel/patch/common/syscall.c",
+      "lkm/kpm/symbols.c"
+    ],
+    "write_kstorage": [
+      "KernelPatch/kernel/patch/common/kstorage.c"
+    ]
+  }
+}

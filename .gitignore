@@ -17,12 +17,29 @@
 *.bin
 *.elf
 *.kpm
+*.kpm.json
 
 # VSCode
 *.vscode
+
+# macOS
+.DS_Store
 
 # Other
 *.bak
 *_test
 vmlinux.h
 *.vmlinux.c
+
+# 交付产物归档（只记录哈希，不进版本库；见 docs/process/01-identity.md）
+artifacts/
+__pycache__/
+
+# 本地运行文件：提取出的裸 kernel、harness 输出、锁文件、缓存（见 kernel_img/README.md）
+/local/
+*.lock
+
+# kernel_img：用户放置的原始 img 与符号表不进版本库，只保留说明、archive 标记与工具
+/kernel_img/*
+!/kernel_img/README.md
+!/kernel_img/offset_harness/

@@ -44,10 +44,24 @@ jobs:
         run: |
           mkdir target
 
-          for dir in $(ls -d */ | grep -v '^KernelPatch/$\|^target/$'); do
-            if [ ! -f ${dir}archive ]; then
-              make -C ${dir}
-              mv ${dir}*.kpm target
+          # 只构建「有 Makefile 且未被 archive 标记」的顶层目录：
+          #   * 没有 Makefile 的目录（文档/工具/用户数据/子模块）天然跳过，无需任何标记；
+          #   * 有 Makefile 但不想让它进 CI 的模块目录，放一个空的 archive 文件。
+          for dir in */; do
+            if [ -f "${dir}archive" ]; then
+              echo "skip ${dir} (archive)"
+              continue
+            fi
+            if [ ! -f "${dir}Makefile" ]; then
+              continue
+            fi
+            echo "build ${dir}"
+            if [ "${dir%/}" = "re_kernel_x" ]; then
+              make -C "${dir}" baselines
+              mv "${dir}"*.kpm "${dir}"*.kpm.json target
+            else
+              make -C "${dir}"
+              mv "${dir}"*.kpm target
             fi
           done
 
@@ -63,6 +77,18 @@ jobs:
           name: all_kpms
           path: target
 
+      - name: Prepare release baselines
+        if: github.event.inputs.release == 'true'
+        run: |
+          mkdir release
+          shopt -s nullglob
+          for abi in 3 4 5 6; do
+            baselines=(target/re_kernel_x_*_abi${abi}.kpm)
+            test "${#baselines[@]}" -eq 1
+            test -f "${baselines[0]}.json"
+            cp "${baselines[0]}" "${baselines[0]}.json" release/
+          done
+
       - name: Upload release
         if: github.event.inputs.release == 'true'
         uses: ncipollo/release-action@v1
@@ -70,7 +96,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           name: ${{ github.event.inputs.version }}
           tag: ${{ github.event.inputs.version }}
-          artifacts: "target/*.kpm"
+          artifacts: "release/*"
           allowUpdates: true
           generateReleaseNotes: true
           makeLatest: true

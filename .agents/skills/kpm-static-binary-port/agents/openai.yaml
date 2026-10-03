@@ -1,0 +1,4 @@
+interface:
+  display_name: "KPM 静态二进制移植"
+  short_description: "按实际函数 ABI 预编译 KPM 基准，再离线替换目标内核偏移表并核验字节边界"
+  default_prompt: "使用 $kpm-static-binary-port 为指定内核分析布局，选择实际 ABI 基准并生成只替换偏移表的 KPM。"

@@ -1,0 +1,188 @@
+{
+  "process": "tri-role-delivery",
+  "process_version": "1.1.0",
+  "introduced_at": "2026-10-02",
+  "docs": {
+    "entry": "docs/README.md",
+    "roles": "docs/process/02-roles.md",
+    "identity": "docs/process/01-identity.md",
+    "round_flow": "docs/process/03-round-flow.md",
+    "issue_ticket": "docs/process/04-issue-ticket.md",
+    "acceptance": "docs/process/05-maintainer-acceptance.md",
+    "antipatterns": "docs/process/06-antipatterns.md",
+    "escalation_device": "docs/process/07-escalation-device.md",
+    "coverage": "docs/coverage.md"
+  },
+  "gate": {
+    "entry": "tools/check_repository.py",
+    "strict_flag": "--strict",
+    "checks": [
+      "structure",
+      "ci_build_selection",
+      "doc_links",
+      "metadata_schema",
+      "identity_hashes",
+      "version_consistency",
+      "report_conformance",
+      "acceptance_binding",
+      "acceptance_pending(warn)",
+      "delivery_binding",
+      "delivery_pending(warn)",
+      "tool_selftest",
+      "developer_artifacts(warn)",
+      "auditor_independence",
+      "auditor_report_sources(warn)",
+      "tester_report_identity(warn)",
+      "public_file_hygiene"
+    ],
+    "ci_workflow": ".github/workflows/repository-gate.yml"
+  },
+  "ownership": {
+    "Developer": [
+      "*/ (module dirs)",
+      "kpm_utils.h",
+      "kernel_img/offset_harness/",
+      "Developer/",
+      "Developer/reports/handoffs/、Developer/reports/responses/"
+    ],
+    "Auditor": [
+      "Auditor/",
+      "local/auditor-scratch/（隔离构建落点，gitignore 覆盖）",
+      "local/kallsyms_audit/（独立提取产物）"
+    ],
+    "Tester": [
+      "Tester/",
+      "local/tester-raw/（原始 dmesg/pstore 全文，gitignore 覆盖，入库只放脱敏摘要）"
+    ],
+    "Maintainer": [
+      "metadata/",
+      "docs/",
+      "tools/",
+      "AGENTS.md",
+      "README.md",
+      ".github/",
+      ".gitignore",
+      "artifacts/ (记录)",
+      "metadata/modules/*.json 的 status/audits/device_tests/issues（登记字段由受控工具追加）",
+      "metadata/modules/*.json 的 acceptances[]（验收绑定具体实例）"
+    ],
+    "LocalOnly": [
+      "kernel_img/ 中用户放置的镜像与符号表（不进 git）；offset_harness 源码归 Developer",
+      "local/** (提取出的裸 kernel、harness 输出、缓存：不进 git)"
+    ],
+    ".agents/": [
+      "维护者（技能与流程类文档；内容变更可由 Developer 提建议）"
+    ]
+  },
+  "paths": {
+    "artifacts_root": "artifacts",
+    "module_records": "metadata/modules",
+    "auditor_tools": "Auditor/tools",
+    "auditor_reports": "Auditor/reports",
+    "tester_tools": "Tester/tools",
+    "tester_reports": "Tester/reports",
+    "developer_reports": "Developer/reports",
+    "offline_harness": "kernel_img/offset_harness/run.py",
+    "image_drop_root": "kernel_img",
+    "kernel_extract_tool": "kernel_img/offset_harness/extract_kernel.py",
+    "local_root": "local",
+    "extracted_kernels": "local/extracted",
+    "harness_out": "local/kernel_offset",
+    "developer_handoffs": "Developer/reports/handoffs",
+    "developer_responses": "Developer/reports/responses",
+    "candidate_builder": "tools/build_candidate.py",
+    "delivery_binding_tool": "tools/identity.py bind-delivery",
+    "tool_selftest": "tools/selftest_tools.py",
+    "freeze_check": "tools/freeze_check.py",
+    "auditor_scratch": "local/auditor-scratch",
+    "tester_raw_evidence": "local/tester-raw"
+  },
+  "platform": {
+    "kernelpatch_path": "KernelPatch",
+    "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+    "kernelpatch_version": "0.13.9",
+    "kpm_runtime_symbols_source": "KernelPatch/lkm/kpm/symbols.c (kp_kpm_symbols[]) + kernel/**/KP_EXPORT_SYMBOL",
+    "device_tool": "truncate <superkey> module <load|unload|list|info|ctl0>"
+  },
+  "toolchain": {
+    "primary": "Android NDK clang (aarch64-linux-android31-clang) 26.3.11579264",
+    "alternate": "TARGET_COMPILE=<prefix> make (aarch64-none-elf-gcc)",
+    "flags": "-Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common"
+  },
+  "conventions": {
+    "build_id_format": "<module>-<version><variant>+g<source_tree[:12]>.r<fingerprint[:8]>.kp<kernelpatch[:7]>.<toolchain>",
+    "build_id_example": "re_kernel-8.0.0_network_debug+g267bfa1c2efc.r8f8f420a.kpb51197a.ndk26.3.11579264",
+    "artifact_immutability": "同一 Build ID 不得对应不同哈希；重建使用新的空输出目录",
+    "ci_skip_marker": "archive（空文件）：只对**有 Makefile 的模块目录**生效，表示不让 CI 构建它；没有 Makefile 的目录天然跳过，不需要任何标记",
+    "device_identifier": "只记录 sha256(serial)[:8]",
+    "issue_prefixes": [
+      "DEV",
+      "AUD",
+      "TST",
+      "MNT"
+    ],
+    "severities": [
+      "高",
+      "中",
+      "中低",
+      "低"
+    ],
+    "issue_statuses": [
+      "open",
+      "fixing",
+      "fixed",
+      "closed",
+      "wontfix"
+    ],
+    "issue_owners": [
+      "Developer",
+      "Auditor",
+      "Tester",
+      "环境事实",
+      "维护者"
+    ],
+    "kernel_label": "<major>/<sub>（如 4.9/miui、4.14/Liberty、5.15/5.15.189-android13）",
+    "local_files_policy": "运行产生的本地文件放 local/；原始 img 与提取出的裸 kernel 一律不进 git",
+    "local_layout": "建议（不强制）：local/extracted/<label>/Image（裸 kernel）、local/kernel_offset/<label>/*（分析输出）；local/ 内部怎么放都行，用 --local/--out 即可改成别的名字",
+    "image_drop_layout": "建议（不强制）：kernel_img/<大版本>/<小版本>/boot.img；平铺 kernel_img/xxx.img 也支持，标签按镜像内嵌内核版本自动推导",
+    "issue_frequencies": [
+      "高频",
+      "中频",
+      "低频",
+      "未知"
+    ],
+    "issue_confidences": [
+      "已确认",
+      "推断",
+      "未验证"
+    ],
+    "severity_rule": "严重度按**影响**定级（可否导致崩溃/权限提升/功能不可用）；出现频率与证据置信度分别记 frequency/confidence",
+    "identity_write_scope": "统一候选构建入口受控追加 builds[] 及 updated_at/updated_by；直接 record 用于 exploration；维护者维护当前版本声明、结论字段、acceptances[] 与 deliveries[]，旧构建条目不可改写",
+    "worktree_policy": "探索阶段允许工作树不干净；候选交接必须从冻结提交构建（推荐 git worktree add ../<repo>-dev <sha>）；构建实例归档到 artifacts/<build_id>[#n]/，封存后不可覆盖",
+    "build_kinds": [
+      "candidate",
+      "exploration"
+    ],
+    "verify_profiles": [
+      "exploration",
+      "candidate",
+      "delivery"
+    ],
+    "acceptance_binding": "acceptances[] 只追加，兼容已有 acceptance；逐条绑定 instance_id + source_commit + fingerprint_sha256 + 产物哈希 + accepted_by/accepted_at；exploration 不可验收",
+    "candidate_build_isolation": "build_candidate.py 构建前把中间产物/产物（*.o *.kpm *.d *.i *.gcno…）移到 local/stale/，但**保护构建输入与 Git 已跟踪文件**（如模块内的 .s 源码）；默认 make -B；构建前后比对受保护文件指纹，被改动即拒绝登记",
+    "recipe_capture_rule": "候选要求 captured 为布尔 true、returncode 为整数 0、编译器字节 SHA-256、构建前后配方一致和完整事务记录；候选档拒绝探索记录及无匹配对象",
+    "delivery_binding": "交付绑定只追加在 deliveries[]；source_commit/build_id/instance_id/指纹/产物均与实例一致；核对祖先关系与交付模块树及共享构建输入，复验实际提交签名；所有绑定均需通过",
+    "tool_selftest": "tools/selftest_tools.py 把历轮发现过的判据漂移固化为回归夹具（签名判据一致性、验收绑定、探索记录不可交付、版本历史、身份冲突、清理保护、不完整身份拒绝）；门禁与 CI 都会运行，失败即门禁失败",
+    "auditor_operating_constraints": "写范围 Auditor/** + local/auditor-scratch/** + local/kallsyms_audit/**；共享树内不构建、不做 git 写操作、不碰设备密钥；artifacts 与他人报告只读；调用实现方/维护方工具只用于定位；由独立于修复归属方的角色复核关闭问题",
+    "freeze_rule": "流程文件与源码必须一起进入冻结提交；冻结前跑 tools/freeze_check.py；没有干净提交时 Auditor 无法绑定身份，Tester 无候选可测",
+    "tester_authorization": "设备操作白名单 adb shell/push/pull/getprop/dmesg/reboot、adb reboot bootloader、fastboot devices/getvar/reboot；黑名单 fastboot flash/erase/-w、清 pstore、改 superkey、重装 APatch、刷机、recovery 清数据。自主 adb reboot 作为死机恢复需满足：已记基线、只许一次、已记录四项基线且基线 pstore 为空，仅无响应类异常允许；当前出现崩溃特征或 pstore 非空时保持现场交维护者、必须留回执、只能作恢复通道。superkey 仅经会话/环境变量传入，只读不落盘。物理动作（长按电源等）由维护者执行，走升级单的「需要维护者执行的物理动作」+「动作回执」两栏。",
+    "tester_criteria": "主判据是存活判据（boot_id 不变 + uptime 单调 + adb 持续响应）；dmesg 无崩溃特征只是弱证据，只能写「未观察到」；结论不得外推机型/内核；每次加载前必录基线（boot_id/uptime/pstore 残留/已加载模块）；判据脚本路径 + hash 必须写进报告",
+    "build_id_reporting": "报告与问题单对象栏使用完整 source_commit + instance_id（Build ID + #n）+ 每个产物 SHA-256；归档路径和历史别名只作映射，身份串按在册值精确匹配",
+    "issue_numbering": "仓库范围内同角色前缀单调递增且不得复用"
+  },
+  "verification_levels": [
+    "静态",
+    "离线",
+    "真机"
+  ]
+}
