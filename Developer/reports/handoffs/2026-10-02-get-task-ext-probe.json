@@ -1,0 +1,166 @@
+{
+  "module": "get_task_ext_probe",
+  "version": "0.1.0",
+  "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "handoff_by": "Developer",
+  "handoff_at": "2026-10-02T14:46:56Z",
+  "note": "归档产物需随清单一起转移：artifacts/<instance_id>/（导入时会逐个核验哈希）",
+  "builds": [
+    {
+      "module": "get_task_ext_probe",
+      "version": "0.1.0",
+      "kind": "candidate",
+      "build_id": "get_task_ext_probe-0.1.0+gd8fb87994db8.r14b91adc.kpb51197a.ndk26.3.11579264",
+      "variant": "base",
+      "recorded_at": "2026-10-02T14:46:55Z",
+      "source_commit": "06b1d95db7ba6a4dc51aa3eb9c1452b1a1f10f8a",
+      "source_dirty": false,
+      "source_tree_sha256": "d8fb87994db84f1a47c266e5b8fc4fe2e793503bcf7a5fb55fbdac2cbf1cadef",
+      "source_tree_blob_sha256": "d8fb87994db84f1a47c266e5b8fc4fe2e793503bcf7a5fb55fbdac2cbf1cadef",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "get_task_ext_probe/Makefile",
+          "sha256": "214ca858d0509b6c507c96cd75ac4256c26628072e10e8d10dd5fc6fb13c3bef",
+          "blob_sha256": "214ca858d0509b6c507c96cd75ac4256c26628072e10e8d10dd5fc6fb13c3bef"
+        },
+        {
+          "path": "get_task_ext_probe/get_task_ext_probe.c",
+          "sha256": "7e2796d1913cf089eb0bf25e4e9d832e40c559d1c99e8d1bb4c484fb043194e2",
+          "blob_sha256": "7e2796d1913cf089eb0bf25e4e9d832e40c559d1c99e8d1bb4c484fb043194e2"
+        },
+        {
+          "path": "kpm_utils.h",
+          "sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c",
+          "blob_sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "14b91adcd68d73c8881228fed3a370ff07adc0b93c84aa6abb2fb58ce1b4fa10",
+      "recipe": {
+        "captured": true,
+        "command": "make -C get_task_ext_probe all debug",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "58852093dbc0bb39c96cf3d844d1242e53e6daf9233cc5cd6e3c1d0ea16c99c6",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\\\"0.1.0\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include get_task_ext_probe.c -r -o get_task_ext_probe_0.1.0.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\\\"0.1.0_d\\\" -DCONFIG_DEBUG -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include get_task_ext_probe.c -r -o get_task_ext_probe_0.1.0_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "06b1d95db7ba6a4dc51aa3eb9c1452b1a1f10f8a",
+        "source_tree_sha256": "d8fb87994db84f1a47c266e5b8fc4fe2e793503bcf7a5fb55fbdac2cbf1cadef",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "58852093dbc0bb39c96cf3d844d1242e53e6daf9233cc5cd6e3c1d0ea16c99c6",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "get_task_ext_probe_0.1.0.kpm",
+          "sha256": "8652d17ed38a79d6f857808c807a8e65f1cf0070f54ebc8049222abb054b55f8",
+          "size": 4144,
+          "embedded": {
+            "name": "get_task_ext_probe",
+            "version": "0.1.0",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "Minimal get_task_ext link and call probe"
+          },
+          "path": "artifacts/get_task_ext_probe-0.1.0+gd8fb87994db8.r14b91adc.kpb51197a.ndk26.3.11579264/get_task_ext_probe_0.1.0.kpm"
+        }
+      ],
+      "instance_id": "get_task_ext_probe-0.1.0+gd8fb87994db8.r14b91adc.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "get_task_ext_probe",
+      "version": "0.1.0",
+      "kind": "candidate",
+      "build_id": "get_task_ext_probe-0.1.0_debug+gd8fb87994db8.rfc22ddd0.kpb51197a.ndk26.3.11579264",
+      "variant": "debug",
+      "recorded_at": "2026-10-02T14:46:56Z",
+      "source_commit": "06b1d95db7ba6a4dc51aa3eb9c1452b1a1f10f8a",
+      "source_dirty": false,
+      "source_tree_sha256": "d8fb87994db84f1a47c266e5b8fc4fe2e793503bcf7a5fb55fbdac2cbf1cadef",
+      "source_tree_blob_sha256": "d8fb87994db84f1a47c266e5b8fc4fe2e793503bcf7a5fb55fbdac2cbf1cadef",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "get_task_ext_probe/Makefile",
+          "sha256": "214ca858d0509b6c507c96cd75ac4256c26628072e10e8d10dd5fc6fb13c3bef",
+          "blob_sha256": "214ca858d0509b6c507c96cd75ac4256c26628072e10e8d10dd5fc6fb13c3bef"
+        },
+        {
+          "path": "get_task_ext_probe/get_task_ext_probe.c",
+          "sha256": "7e2796d1913cf089eb0bf25e4e9d832e40c559d1c99e8d1bb4c484fb043194e2",
+          "blob_sha256": "7e2796d1913cf089eb0bf25e4e9d832e40c559d1c99e8d1bb4c484fb043194e2"
+        },
+        {
+          "path": "kpm_utils.h",
+          "sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c",
+          "blob_sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "fc22ddd02375d16911e08f44e325c36684d0e94f82f0b7b37e5cb9bd5f007201",
+      "recipe": {
+        "captured": true,
+        "command": "make -C get_task_ext_probe all debug",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "58852093dbc0bb39c96cf3d844d1242e53e6daf9233cc5cd6e3c1d0ea16c99c6",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\\\"0.1.0\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include get_task_ext_probe.c -r -o get_task_ext_probe_0.1.0.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\\\"0.1.0_d\\\" -DCONFIG_DEBUG -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include get_task_ext_probe.c -r -o get_task_ext_probe_0.1.0_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "06b1d95db7ba6a4dc51aa3eb9c1452b1a1f10f8a",
+        "source_tree_sha256": "d8fb87994db84f1a47c266e5b8fc4fe2e793503bcf7a5fb55fbdac2cbf1cadef",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "58852093dbc0bb39c96cf3d844d1242e53e6daf9233cc5cd6e3c1d0ea16c99c6",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "get_task_ext_probe_0.1.0_debug.kpm",
+          "sha256": "a4e1b3f5bf8cbf8ae8d236973024bf9cbfdc9b6970c4a27a2370c27afae9e2ea",
+          "size": 4144,
+          "embedded": {
+            "name": "get_task_ext_probe",
+            "version": "0.1.0_d",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "Minimal get_task_ext link and call probe"
+          },
+          "path": "artifacts/get_task_ext_probe-0.1.0_debug+gd8fb87994db8.rfc22ddd0.kpb51197a.ndk26.3.11579264/get_task_ext_probe_0.1.0_debug.kpm"
+        }
+      ],
+      "instance_id": "get_task_ext_probe-0.1.0_debug+gd8fb87994db8.rfc22ddd0.kpb51197a.ndk26.3.11579264#1"
+    }
+  ]
+}

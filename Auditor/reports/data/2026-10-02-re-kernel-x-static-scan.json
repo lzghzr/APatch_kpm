@@ -1,0 +1,259 @@
+{
+  "tool": "Auditor/tools/static_scan.py",
+  "scanned_at": "2026-10-02T22:00:47-0700",
+  "module": "re_kernel_x",
+  "files": [
+    "re_kernel_x/re_kernel.c",
+    "re_kernel_x/re_kernel.h",
+    "re_kernel_x/re_offsets.c",
+    "re_kernel_x/re_runtime.c",
+    "re_kernel_x/re_structs.h",
+    "re_kernel_x/re_utils.h",
+    "re_kernel_x/re_vmlinux.c",
+    "re_kernel_x/tools/tests/cleanup.c",
+    "re_kernel_x/tools/tests/genl.c",
+    "re_kernel_x/tools/tests/protocol.c",
+    "re_kernel_x/vmlinux.h"
+  ],
+  "heuristic": true,
+  "counts": {
+    "free_without_null": 2,
+    "sentinel_use": 13,
+    "sleep_in_callback": 4,
+    "unchecked_shift": 1,
+    "user_input_no_auth": 13
+  },
+  "hits": [
+    {
+      "pattern": "sentinel_use",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 361,
+      "code": "if (__atomic_load_n(&rekernel_genl_registered, __ATOMIC_ACQUIRE) != IZERO || !skb || !nlh",
+      "note": "哨兵值使用点：确认「未设置/未知」与「全部/最强」语义没有被混用"
+    },
+    {
+      "pattern": "sentinel_use",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 369,
+      "code": "if (rekernel_genl_registered == IZERO)",
+      "note": "哨兵值使用点：确认「未设置/未知」与「全部/最强」语义没有被混用"
+    },
+    {
+      "pattern": "sentinel_use",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 402,
+      "code": "__atomic_store_n(&rekernel_genl_registered, IZERO, __ATOMIC_RELEASE);",
+      "note": "哨兵值使用点：确认「未设置/未知」与「全部/最强」语义没有被混用"
+    },
+    {
+      "pattern": "sentinel_use",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 407,
+      "code": "if (rekernel_genl_registered != IZERO)",
+      "note": "哨兵值使用点：确认「未设置/未知」与「全部/最强」语义没有被混用"
+    },
+    {
+      "pattern": "sentinel_use",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 412,
+      "code": "__atomic_store_n(&rekernel_genl_registered, UZERO, __ATOMIC_RELEASE);",
+      "note": "哨兵值使用点：确认「未设置/未知」与「全部/最强」语义没有被混用"
+    },
+    {
+      "pattern": "sentinel_use",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 418,
+      "code": "if (__atomic_load_n(&rekernel_genl_registered, __ATOMIC_ACQUIRE) != IZERO)",
+      "note": "哨兵值使用点：确认「未设置/未知」与「全部/最强」语义没有被混用"
+    },
+    {
+      "pattern": "sentinel_use",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 806,
+      "code": "if (trace == UZERO)",
+      "note": "哨兵值使用点：确认「未设置/未知」与「全部/最强」语义没有被混用"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 844,
+      "code": "struct rekernel_binder_context* context = kmalloc(sizeof(*context), GFP_ATOMIC);",
+      "note": "函数 binder_transaction_before 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "unchecked_shift",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 893,
+      "code": "int data_len = sk_buff_len(skb) - skb_transport_offset(skb) - (th->doff << 2);",
+      "note": "对字段 doff 做移位后直接使用；核对字段取值范围与溢出"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 936,
+      "code": "kfunc_lookup_name(memdup_user);",
+      "note": "函数 inline_hook_init 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "sentinel_use",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 953,
+      "code": "trace = IZERO;",
+      "note": "哨兵值使用点：确认「未设置/未知」与「全部/最强」语义没有被混用"
+    },
+    {
+      "pattern": "sentinel_use",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 965,
+      "code": "if (trace == IZERO) {",
+      "note": "哨兵值使用点：确认「未设置/未知」与「全部/最强」语义没有被混用"
+    },
+    {
+      "pattern": "sentinel_use",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 967,
+      "code": "trace = UZERO;",
+      "note": "哨兵值使用点：确认「未设置/未知」与「全部/最强」语义没有被混用"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 360,
+      "code": "函数 genl_rcv_msg_before",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 377,
+      "code": "函数 start_rekernel_genl_server",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 978,
+      "code": "函数 inline_hook_control0",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "re_kernel_x/re_kernel.c",
+      "line": 985,
+      "code": "函数 inline_hook_exit",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "re_kernel_x/re_offsets.c",
+      "line": 143,
+      "code": "函数 binder_alloc_buffer",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "re_kernel_x/re_utils.h",
+      "line": 52,
+      "code": "函数 nlmsg_put",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "re_kernel_x/re_utils.h",
+      "line": 82,
+      "code": "函数 nlmsg_end",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "re_kernel_x/re_utils.h",
+      "line": 109,
+      "code": "函数 nlmsg_multicast",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    },
+    {
+      "pattern": "free_without_null",
+      "file": "re_kernel_x/tools/tests/cleanup.c",
+      "line": 202,
+      "code": "static void kfree(struct binder_transaction* t) {",
+      "note": "kfree 释放 struct 后未置空；若该指针是全局/静态变量，卸载或二次释放会触发释放后使用"
+    },
+    {
+      "pattern": "sentinel_use",
+      "file": "re_kernel_x/tools/tests/cleanup.c",
+      "line": 301,
+      "code": "trace = IZERO;",
+      "note": "哨兵值使用点：确认「未设置/未知」与「全部/最强」语义没有被混用"
+    },
+    {
+      "pattern": "sentinel_use",
+      "file": "re_kernel_x/tools/tests/cleanup.c",
+      "line": 681,
+      "code": "trace = UZERO;",
+      "note": "哨兵值使用点：确认「未设置/未知」与「全部/最强」语义没有被混用"
+    },
+    {
+      "pattern": "sentinel_use",
+      "file": "re_kernel_x/tools/tests/cleanup.c",
+      "line": 738,
+      "code": "trace = UZERO;",
+      "note": "哨兵值使用点：确认「未设置/未知」与「全部/最强」语义没有被混用"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "re_kernel_x/tools/tests/genl.c",
+      "line": 280,
+      "code": "函数 receive",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "re_kernel_x/tools/tests/genl.c",
+      "line": 294,
+      "code": "函数 append_attr",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "re_kernel_x/tools/tests/genl.c",
+      "line": 302,
+      "code": "函数 rule_command",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "re_kernel_x/tools/tests/genl.c",
+      "line": 399,
+      "code": "函数 test_rules",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "re_kernel_x/tools/tests/protocol.c",
+      "line": 57,
+      "code": "static void* kmalloc(size_t size, int flags) {",
+      "note": "函数 kmalloc 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "free_without_null",
+      "file": "re_kernel_x/tools/tests/protocol.c",
+      "line": 65,
+      "code": "static void kfree(void* ptr) {",
+      "note": "kfree 释放 void 后未置空；若该指针是全局/静态变量，卸载或二次释放会触发释放后使用"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "re_kernel_x/tools/tests/protocol.c",
+      "line": 69,
+      "code": "static void* memdup_user(const void* data, size_t len) {",
+      "note": "函数 memdup_user 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "re_kernel_x/tools/tests/protocol.c",
+      "line": 78,
+      "code": "函数 send_netlink_message",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    }
+  ]
+}

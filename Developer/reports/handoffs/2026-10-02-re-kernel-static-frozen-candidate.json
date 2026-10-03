@@ -1,0 +1,1114 @@
+{
+  "module": "re_kernel_static",
+  "version": "8.0.0",
+  "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "handoff_by": "Developer",
+  "handoff_at": "2026-10-02T18:45:21Z",
+  "note": "归档产物需随清单一起转移：artifacts/<instance_id>/（导入时会逐个核验哈希）",
+  "builds": [
+    {
+      "module": "re_kernel_static",
+      "version": "8.0.0",
+      "kind": "candidate",
+      "build_id": "re_kernel_static-8.0.0_abi3+g85406787a3ba.r6f82ad1c.kpb51197a.ndk26.3.11579264",
+      "variant": "abi3",
+      "recorded_at": "2026-10-02T18:45:18Z",
+      "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+      "source_dirty": false,
+      "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_tree_blob_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c",
+          "blob_sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c"
+        },
+        {
+          "path": "re_kernel_static/Makefile",
+          "sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105",
+          "blob_sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.c",
+          "sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f",
+          "blob_sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.h",
+          "sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc",
+          "blob_sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc"
+        },
+        {
+          "path": "re_kernel_static/re_offsets.c",
+          "sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a",
+          "blob_sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a"
+        },
+        {
+          "path": "re_kernel_static/re_runtime.c",
+          "sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53",
+          "blob_sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53"
+        },
+        {
+          "path": "re_kernel_static/re_structs.h",
+          "sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d",
+          "blob_sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d"
+        },
+        {
+          "path": "re_kernel_static/re_utils.h",
+          "sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5",
+          "blob_sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5"
+        },
+        {
+          "path": "re_kernel_static/re_vmlinux.c",
+          "sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4",
+          "blob_sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4"
+        },
+        {
+          "path": "re_kernel_static/tools/patch_offsets.py",
+          "sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b",
+          "blob_sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b"
+        },
+        {
+          "path": "re_kernel_static/tools/test_static.py",
+          "sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1",
+          "blob_sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/cleanup.c",
+          "sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389",
+          "blob_sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/genl.c",
+          "sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75",
+          "blob_sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/protocol.c",
+          "sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea",
+          "blob_sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea"
+        },
+        {
+          "path": "re_kernel_static/vmlinux.h",
+          "sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e",
+          "blob_sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "6f82ad1c291d6fe6c2ed851f3a721ff23d73bbbf4c36f7a89509bd9836e53bea",
+      "recipe": {
+        "captured": true,
+        "command": "make -C re_kernel_static baselines",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3_debug.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+        "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "re_kernel_static_8.0.0_abi3.kpm",
+          "sha256": "b3cee82601fd89a8ccfc908830b522d52871cc3000e9b6c3280909a084a2e9e3",
+          "size": 42192,
+          "embedded": {
+            "name": "re_kernel",
+            "version": "8.0.0",
+            "license": "GPL v3",
+            "author": "Nep-Timeline, lzghzr",
+            "description": "Re:Kernel, supports you only"
+          },
+          "path": "artifacts/re_kernel_static-8.0.0_abi3+g85406787a3ba.r6f82ad1c.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3.kpm"
+        }
+      ],
+      "instance_id": "re_kernel_static-8.0.0_abi3+g85406787a3ba.r6f82ad1c.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "re_kernel_static",
+      "version": "8.0.0",
+      "kind": "candidate",
+      "build_id": "re_kernel_static-8.0.0_abi3_debug+g85406787a3ba.r2c5dfe3a.kpb51197a.ndk26.3.11579264",
+      "variant": "abi3_debug",
+      "recorded_at": "2026-10-02T18:45:18Z",
+      "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+      "source_dirty": false,
+      "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_tree_blob_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c",
+          "blob_sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c"
+        },
+        {
+          "path": "re_kernel_static/Makefile",
+          "sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105",
+          "blob_sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.c",
+          "sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f",
+          "blob_sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.h",
+          "sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc",
+          "blob_sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc"
+        },
+        {
+          "path": "re_kernel_static/re_offsets.c",
+          "sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a",
+          "blob_sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a"
+        },
+        {
+          "path": "re_kernel_static/re_runtime.c",
+          "sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53",
+          "blob_sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53"
+        },
+        {
+          "path": "re_kernel_static/re_structs.h",
+          "sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d",
+          "blob_sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d"
+        },
+        {
+          "path": "re_kernel_static/re_utils.h",
+          "sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5",
+          "blob_sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5"
+        },
+        {
+          "path": "re_kernel_static/re_vmlinux.c",
+          "sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4",
+          "blob_sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4"
+        },
+        {
+          "path": "re_kernel_static/tools/patch_offsets.py",
+          "sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b",
+          "blob_sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b"
+        },
+        {
+          "path": "re_kernel_static/tools/test_static.py",
+          "sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1",
+          "blob_sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/cleanup.c",
+          "sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389",
+          "blob_sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/genl.c",
+          "sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75",
+          "blob_sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/protocol.c",
+          "sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea",
+          "blob_sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea"
+        },
+        {
+          "path": "re_kernel_static/vmlinux.h",
+          "sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e",
+          "blob_sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "2c5dfe3a4efdaca8522458c25334aa88bc4f97d85fd321b4748f54ed3b0ac499",
+      "recipe": {
+        "captured": true,
+        "command": "make -C re_kernel_static baselines",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3_debug.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+        "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "re_kernel_static_8.0.0_abi3_debug.kpm",
+          "sha256": "ec42d6b3e94d17fe1805e366425a510a64a089e661727404f85a84314c05aaa7",
+          "size": 41544,
+          "embedded": {
+            "name": "re_kernel",
+            "version": "8.0.0_d",
+            "license": "GPL v3",
+            "author": "Nep-Timeline, lzghzr",
+            "description": "Re:Kernel, supports you only"
+          },
+          "path": "artifacts/re_kernel_static-8.0.0_abi3_debug+g85406787a3ba.r2c5dfe3a.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3_debug.kpm"
+        }
+      ],
+      "instance_id": "re_kernel_static-8.0.0_abi3_debug+g85406787a3ba.r2c5dfe3a.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "re_kernel_static",
+      "version": "8.0.0",
+      "kind": "candidate",
+      "build_id": "re_kernel_static-8.0.0_abi4+g85406787a3ba.r427685b8.kpb51197a.ndk26.3.11579264",
+      "variant": "abi4",
+      "recorded_at": "2026-10-02T18:45:19Z",
+      "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+      "source_dirty": false,
+      "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_tree_blob_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c",
+          "blob_sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c"
+        },
+        {
+          "path": "re_kernel_static/Makefile",
+          "sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105",
+          "blob_sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.c",
+          "sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f",
+          "blob_sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.h",
+          "sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc",
+          "blob_sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc"
+        },
+        {
+          "path": "re_kernel_static/re_offsets.c",
+          "sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a",
+          "blob_sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a"
+        },
+        {
+          "path": "re_kernel_static/re_runtime.c",
+          "sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53",
+          "blob_sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53"
+        },
+        {
+          "path": "re_kernel_static/re_structs.h",
+          "sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d",
+          "blob_sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d"
+        },
+        {
+          "path": "re_kernel_static/re_utils.h",
+          "sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5",
+          "blob_sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5"
+        },
+        {
+          "path": "re_kernel_static/re_vmlinux.c",
+          "sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4",
+          "blob_sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4"
+        },
+        {
+          "path": "re_kernel_static/tools/patch_offsets.py",
+          "sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b",
+          "blob_sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b"
+        },
+        {
+          "path": "re_kernel_static/tools/test_static.py",
+          "sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1",
+          "blob_sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/cleanup.c",
+          "sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389",
+          "blob_sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/genl.c",
+          "sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75",
+          "blob_sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/protocol.c",
+          "sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea",
+          "blob_sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea"
+        },
+        {
+          "path": "re_kernel_static/vmlinux.h",
+          "sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e",
+          "blob_sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "427685b832041331faf5d687e0c77e4763d98035de9774adcd6e9070f4e76f4d",
+      "recipe": {
+        "captured": true,
+        "command": "make -C re_kernel_static baselines",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3_debug.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+        "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "re_kernel_static_8.0.0_abi4.kpm",
+          "sha256": "b1e7e8a47d81ba0bb292dedf616ad226e2d72e27390fa2079392bb6b1a887fe6",
+          "size": 42200,
+          "embedded": {
+            "name": "re_kernel",
+            "version": "8.0.0",
+            "license": "GPL v3",
+            "author": "Nep-Timeline, lzghzr",
+            "description": "Re:Kernel, supports you only"
+          },
+          "path": "artifacts/re_kernel_static-8.0.0_abi4+g85406787a3ba.r427685b8.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4.kpm"
+        }
+      ],
+      "instance_id": "re_kernel_static-8.0.0_abi4+g85406787a3ba.r427685b8.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "re_kernel_static",
+      "version": "8.0.0",
+      "kind": "candidate",
+      "build_id": "re_kernel_static-8.0.0_abi4_debug+g85406787a3ba.r5f37025a.kpb51197a.ndk26.3.11579264",
+      "variant": "abi4_debug",
+      "recorded_at": "2026-10-02T18:45:19Z",
+      "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+      "source_dirty": false,
+      "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_tree_blob_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c",
+          "blob_sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c"
+        },
+        {
+          "path": "re_kernel_static/Makefile",
+          "sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105",
+          "blob_sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.c",
+          "sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f",
+          "blob_sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.h",
+          "sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc",
+          "blob_sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc"
+        },
+        {
+          "path": "re_kernel_static/re_offsets.c",
+          "sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a",
+          "blob_sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a"
+        },
+        {
+          "path": "re_kernel_static/re_runtime.c",
+          "sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53",
+          "blob_sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53"
+        },
+        {
+          "path": "re_kernel_static/re_structs.h",
+          "sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d",
+          "blob_sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d"
+        },
+        {
+          "path": "re_kernel_static/re_utils.h",
+          "sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5",
+          "blob_sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5"
+        },
+        {
+          "path": "re_kernel_static/re_vmlinux.c",
+          "sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4",
+          "blob_sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4"
+        },
+        {
+          "path": "re_kernel_static/tools/patch_offsets.py",
+          "sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b",
+          "blob_sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b"
+        },
+        {
+          "path": "re_kernel_static/tools/test_static.py",
+          "sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1",
+          "blob_sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/cleanup.c",
+          "sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389",
+          "blob_sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/genl.c",
+          "sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75",
+          "blob_sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/protocol.c",
+          "sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea",
+          "blob_sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea"
+        },
+        {
+          "path": "re_kernel_static/vmlinux.h",
+          "sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e",
+          "blob_sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "5f37025a337f3146196eb5ccd28b614920648b83fcf6cda02635be975dd725c9",
+      "recipe": {
+        "captured": true,
+        "command": "make -C re_kernel_static baselines",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3_debug.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+        "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "re_kernel_static_8.0.0_abi4_debug.kpm",
+          "sha256": "20b1bbe19f29c0ce4d59419b88d89e2c0fe374313e1d60a212ba6e2b454fb3fe",
+          "size": 41552,
+          "embedded": {
+            "name": "re_kernel",
+            "version": "8.0.0_d",
+            "license": "GPL v3",
+            "author": "Nep-Timeline, lzghzr",
+            "description": "Re:Kernel, supports you only"
+          },
+          "path": "artifacts/re_kernel_static-8.0.0_abi4_debug+g85406787a3ba.r5f37025a.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4_debug.kpm"
+        }
+      ],
+      "instance_id": "re_kernel_static-8.0.0_abi4_debug+g85406787a3ba.r5f37025a.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "re_kernel_static",
+      "version": "8.0.0",
+      "kind": "candidate",
+      "build_id": "re_kernel_static-8.0.0_abi5+g85406787a3ba.r899a936d.kpb51197a.ndk26.3.11579264",
+      "variant": "abi5",
+      "recorded_at": "2026-10-02T18:45:20Z",
+      "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+      "source_dirty": false,
+      "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_tree_blob_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c",
+          "blob_sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c"
+        },
+        {
+          "path": "re_kernel_static/Makefile",
+          "sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105",
+          "blob_sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.c",
+          "sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f",
+          "blob_sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.h",
+          "sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc",
+          "blob_sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc"
+        },
+        {
+          "path": "re_kernel_static/re_offsets.c",
+          "sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a",
+          "blob_sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a"
+        },
+        {
+          "path": "re_kernel_static/re_runtime.c",
+          "sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53",
+          "blob_sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53"
+        },
+        {
+          "path": "re_kernel_static/re_structs.h",
+          "sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d",
+          "blob_sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d"
+        },
+        {
+          "path": "re_kernel_static/re_utils.h",
+          "sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5",
+          "blob_sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5"
+        },
+        {
+          "path": "re_kernel_static/re_vmlinux.c",
+          "sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4",
+          "blob_sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4"
+        },
+        {
+          "path": "re_kernel_static/tools/patch_offsets.py",
+          "sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b",
+          "blob_sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b"
+        },
+        {
+          "path": "re_kernel_static/tools/test_static.py",
+          "sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1",
+          "blob_sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/cleanup.c",
+          "sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389",
+          "blob_sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/genl.c",
+          "sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75",
+          "blob_sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/protocol.c",
+          "sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea",
+          "blob_sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea"
+        },
+        {
+          "path": "re_kernel_static/vmlinux.h",
+          "sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e",
+          "blob_sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "899a936d9a8795fcdb3b87b6efab9c1e1d2bdfb9ee16145b68e9977d7c2e4512",
+      "recipe": {
+        "captured": true,
+        "command": "make -C re_kernel_static baselines",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3_debug.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+        "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "re_kernel_static_8.0.0_abi5.kpm",
+          "sha256": "b40f556e38305d8dec46a8322aa9df063c40e6f405a927f48dbc302acda345d6",
+          "size": 42216,
+          "embedded": {
+            "name": "re_kernel",
+            "version": "8.0.0",
+            "license": "GPL v3",
+            "author": "Nep-Timeline, lzghzr",
+            "description": "Re:Kernel, supports you only"
+          },
+          "path": "artifacts/re_kernel_static-8.0.0_abi5+g85406787a3ba.r899a936d.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5.kpm"
+        }
+      ],
+      "instance_id": "re_kernel_static-8.0.0_abi5+g85406787a3ba.r899a936d.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "re_kernel_static",
+      "version": "8.0.0",
+      "kind": "candidate",
+      "build_id": "re_kernel_static-8.0.0_abi5_debug+g85406787a3ba.re0df8c2a.kpb51197a.ndk26.3.11579264",
+      "variant": "abi5_debug",
+      "recorded_at": "2026-10-02T18:45:20Z",
+      "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+      "source_dirty": false,
+      "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_tree_blob_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c",
+          "blob_sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c"
+        },
+        {
+          "path": "re_kernel_static/Makefile",
+          "sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105",
+          "blob_sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.c",
+          "sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f",
+          "blob_sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.h",
+          "sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc",
+          "blob_sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc"
+        },
+        {
+          "path": "re_kernel_static/re_offsets.c",
+          "sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a",
+          "blob_sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a"
+        },
+        {
+          "path": "re_kernel_static/re_runtime.c",
+          "sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53",
+          "blob_sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53"
+        },
+        {
+          "path": "re_kernel_static/re_structs.h",
+          "sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d",
+          "blob_sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d"
+        },
+        {
+          "path": "re_kernel_static/re_utils.h",
+          "sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5",
+          "blob_sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5"
+        },
+        {
+          "path": "re_kernel_static/re_vmlinux.c",
+          "sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4",
+          "blob_sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4"
+        },
+        {
+          "path": "re_kernel_static/tools/patch_offsets.py",
+          "sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b",
+          "blob_sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b"
+        },
+        {
+          "path": "re_kernel_static/tools/test_static.py",
+          "sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1",
+          "blob_sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/cleanup.c",
+          "sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389",
+          "blob_sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/genl.c",
+          "sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75",
+          "blob_sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/protocol.c",
+          "sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea",
+          "blob_sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea"
+        },
+        {
+          "path": "re_kernel_static/vmlinux.h",
+          "sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e",
+          "blob_sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "e0df8c2ab7c2c066f151382777d12f5e476b9193ba395e89ae5d6d7a66c6db58",
+      "recipe": {
+        "captured": true,
+        "command": "make -C re_kernel_static baselines",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3_debug.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+        "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "re_kernel_static_8.0.0_abi5_debug.kpm",
+          "sha256": "9a42e3b6886542188f652927e419a627d14e65768b44bf10ce3228bf8f59dbc0",
+          "size": 41568,
+          "embedded": {
+            "name": "re_kernel",
+            "version": "8.0.0_d",
+            "license": "GPL v3",
+            "author": "Nep-Timeline, lzghzr",
+            "description": "Re:Kernel, supports you only"
+          },
+          "path": "artifacts/re_kernel_static-8.0.0_abi5_debug+g85406787a3ba.re0df8c2a.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5_debug.kpm"
+        }
+      ],
+      "instance_id": "re_kernel_static-8.0.0_abi5_debug+g85406787a3ba.re0df8c2a.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "re_kernel_static",
+      "version": "8.0.0",
+      "kind": "candidate",
+      "build_id": "re_kernel_static-8.0.0_abi6+g85406787a3ba.ra8963763.kpb51197a.ndk26.3.11579264",
+      "variant": "abi6",
+      "recorded_at": "2026-10-02T18:45:21Z",
+      "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+      "source_dirty": false,
+      "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_tree_blob_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c",
+          "blob_sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c"
+        },
+        {
+          "path": "re_kernel_static/Makefile",
+          "sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105",
+          "blob_sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.c",
+          "sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f",
+          "blob_sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.h",
+          "sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc",
+          "blob_sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc"
+        },
+        {
+          "path": "re_kernel_static/re_offsets.c",
+          "sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a",
+          "blob_sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a"
+        },
+        {
+          "path": "re_kernel_static/re_runtime.c",
+          "sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53",
+          "blob_sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53"
+        },
+        {
+          "path": "re_kernel_static/re_structs.h",
+          "sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d",
+          "blob_sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d"
+        },
+        {
+          "path": "re_kernel_static/re_utils.h",
+          "sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5",
+          "blob_sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5"
+        },
+        {
+          "path": "re_kernel_static/re_vmlinux.c",
+          "sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4",
+          "blob_sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4"
+        },
+        {
+          "path": "re_kernel_static/tools/patch_offsets.py",
+          "sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b",
+          "blob_sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b"
+        },
+        {
+          "path": "re_kernel_static/tools/test_static.py",
+          "sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1",
+          "blob_sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/cleanup.c",
+          "sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389",
+          "blob_sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/genl.c",
+          "sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75",
+          "blob_sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/protocol.c",
+          "sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea",
+          "blob_sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea"
+        },
+        {
+          "path": "re_kernel_static/vmlinux.h",
+          "sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e",
+          "blob_sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "a896376309809711d6582dcd65ab5e1e39b9143aa65ce192a0b52d443058ad6b",
+      "recipe": {
+        "captured": true,
+        "command": "make -C re_kernel_static baselines",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3_debug.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+        "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "re_kernel_static_8.0.0_abi6.kpm",
+          "sha256": "d8c33f1a407bd03c3353054800b4c783eb4d0f82cd7d5d32554d7494a0eef8da",
+          "size": 42200,
+          "embedded": {
+            "name": "re_kernel",
+            "version": "8.0.0",
+            "license": "GPL v3",
+            "author": "Nep-Timeline, lzghzr",
+            "description": "Re:Kernel, supports you only"
+          },
+          "path": "artifacts/re_kernel_static-8.0.0_abi6+g85406787a3ba.ra8963763.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6.kpm"
+        }
+      ],
+      "instance_id": "re_kernel_static-8.0.0_abi6+g85406787a3ba.ra8963763.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "re_kernel_static",
+      "version": "8.0.0",
+      "kind": "candidate",
+      "build_id": "re_kernel_static-8.0.0_abi6_debug+g85406787a3ba.rf4400d60.kpb51197a.ndk26.3.11579264",
+      "variant": "abi6_debug",
+      "recorded_at": "2026-10-02T18:45:21Z",
+      "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+      "source_dirty": false,
+      "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_tree_blob_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c",
+          "blob_sha256": "73d9b9e03ddd2046c1e1f5b02a4b0b03e8e3724e4e86cbe1e4ba7174d02cb53c"
+        },
+        {
+          "path": "re_kernel_static/Makefile",
+          "sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105",
+          "blob_sha256": "cb8a8db04f69368ec85faf2c9ed7e73b65c45334d3fd43e3534af7c5bf2d6105"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.c",
+          "sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f",
+          "blob_sha256": "2d575100602620a5da768b9535ce5cd97bdefdb98937d85353b817cd8d23a85f"
+        },
+        {
+          "path": "re_kernel_static/re_kernel.h",
+          "sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc",
+          "blob_sha256": "c81d310c49187197a790b5ab658547ac734ce8d581275787c4c6eaac035912dc"
+        },
+        {
+          "path": "re_kernel_static/re_offsets.c",
+          "sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a",
+          "blob_sha256": "a6de4dce60d757262f9743c05a350d69b78aa2a85a45142745de511258e2d14a"
+        },
+        {
+          "path": "re_kernel_static/re_runtime.c",
+          "sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53",
+          "blob_sha256": "bf58001c3560cea7b8aba7ab6001fbfd4b4033a26fb02a88b8da73b6851a2a53"
+        },
+        {
+          "path": "re_kernel_static/re_structs.h",
+          "sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d",
+          "blob_sha256": "4881e66eb7481213713ec06923f632a39dfc9ac0ac152a9056dbe28958e6904d"
+        },
+        {
+          "path": "re_kernel_static/re_utils.h",
+          "sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5",
+          "blob_sha256": "cecaa2f00a88f39da579d9af70ed765e356098aa4585a9af7ab4b0fefd58f1f5"
+        },
+        {
+          "path": "re_kernel_static/re_vmlinux.c",
+          "sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4",
+          "blob_sha256": "f002164557cb510f1af2979fc7bf3603b56b6b4b64f339bab8ad4847bdc572b4"
+        },
+        {
+          "path": "re_kernel_static/tools/patch_offsets.py",
+          "sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b",
+          "blob_sha256": "40d7d6bb28a555e3896f6c151be261c51111605e0680006d1cd61e7ce0bbe64b"
+        },
+        {
+          "path": "re_kernel_static/tools/test_static.py",
+          "sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1",
+          "blob_sha256": "c5c337d190d17a2dafc07c846795050370a015d76410d8231c68830603059be1"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/cleanup.c",
+          "sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389",
+          "blob_sha256": "15b8f6d5a0250d36b229c65e16b82b645117aaaf8b644a2181dcb2f3bb790389"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/genl.c",
+          "sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75",
+          "blob_sha256": "808494b266c680199dd3e4040ad8a8867390ec2af21fbc30593535dc2aeedc75"
+        },
+        {
+          "path": "re_kernel_static/tools/tests/protocol.c",
+          "sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea",
+          "blob_sha256": "a7663078e9ee41beee10b04e156d06bddc47193a86fa9fc86d88a006efa6dcea"
+        },
+        {
+          "path": "re_kernel_static/vmlinux.h",
+          "sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e",
+          "blob_sha256": "6c46c7476de176dd12882b7fccf06e82967b03f4f2f19e9db681db005c73c11e"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "f4400d6080d5b102a960d7b11f593b3b7a9a9a720b54d40c11251b0c3c91ceb0",
+      "recipe": {
+        "captured": true,
+        "command": "make -C re_kernel_static baselines",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=3 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi3_debug.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=4 -DMYKPM_VERSION=\\\"8.0.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include re_kernel.c re_runtime.c -r -o re_kernel_static_8.0.0_abi4_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "3eed8952fcbaa3107ed8cc0aa429631af53d5bed",
+        "source_tree_sha256": "85406787a3ba53b06b9b3996e67c04819d4dfe0a0067d2e73c8e4cdb6aa9c586",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "dfd983c292a9a7379c24a13f2cd2c392983788434f985ed7411e4edeacd83163",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "re_kernel_static_8.0.0_abi6_debug.kpm",
+          "sha256": "99ba2818a0dd495d74b61e6e74d3a9ae8ed3abff3ff2082bc51855d430a1b6e1",
+          "size": 41552,
+          "embedded": {
+            "name": "re_kernel",
+            "version": "8.0.0_d",
+            "license": "GPL v3",
+            "author": "Nep-Timeline, lzghzr",
+            "description": "Re:Kernel, supports you only"
+          },
+          "path": "artifacts/re_kernel_static-8.0.0_abi6_debug+g85406787a3ba.rf4400d60.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6_debug.kpm"
+        }
+      ],
+      "instance_id": "re_kernel_static-8.0.0_abi6_debug+g85406787a3ba.rf4400d60.kpb51197a.ndk26.3.11579264#1"
+    }
+  ]
+}
