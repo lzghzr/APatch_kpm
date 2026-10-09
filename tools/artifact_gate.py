@@ -77,25 +77,34 @@ def inspect_kpm(path):
 def inspect_layout(path, kpm, sections):
     layout = json.loads(path.read_text())
     offset_section, raw = sections[".data.re_offsets"]
-    abi_section, abi_raw = sections[".rodata.re_abi"]
     fields = layout["fields"]
-    filename = re.fullmatch(r"re_kernel_x_(.+)_abi([3-6])(_debug)?\.kpm", kpm["file"])
-    if (not filename or int(filename[2]) != layout.get("binder_abi")
-            or kpm["info"]["version"] != filename[1] + ("_d" if filename[3] else "")):
-        raise ValueError("产物文件名与布局 ABI 或调试版本不一致")
     if (any(type(layout.get(key)) is not int for key in ("schema", "binder_abi", "table_offset", "table_size"))
-            or layout.get("schema") != 1 or layout.get("kpm") != kpm["file"]
+            or layout.get("schema") not in (1, 2) or layout.get("kpm") != kpm["file"]
             or layout.get("sha256") != kpm["sha256"]
             or layout.get("table_offset") != offset_section[4]
             or layout.get("table_size") != len(raw) or not raw or len(raw) % 2
             or offset_section[1] != 1 or offset_section[2] & 3 != 3
-            or abi_section[1] != 1 or len(abi_raw) != 4
-            or layout.get("binder_abi") != struct.unpack("<I", abi_raw)[0]
             or layout.get("binder_abi") not in (3, 4, 5, 6)
             or not isinstance(fields, list) or not all(isinstance(f, str) and f for f in fields)
             or len(fields) != len(set(fields)) or len(fields) * 2 != len(raw)):
         raise ValueError("布局字段与 KPM 字节不一致")
     values = dict(zip(fields, struct.unpack(f"<{len(fields)}h", raw)))
+    if layout["schema"] == 1:
+        abi_section, abi_raw = sections[".rodata.re_abi"]
+        filename = re.fullmatch(r"re_kernel_x_(.+)_abi([3-6])(_debug)?\.kpm", kpm["file"])
+        if (not filename or int(filename[2]) != layout["binder_abi"]
+                or kpm["info"]["version"] != filename[1] + ("_d" if filename[3] else "")
+                or abi_section[1] != 1 or len(abi_raw) != 4
+                or layout["binder_abi"] != struct.unpack("<I", abi_raw)[0]
+                or "binder_release_abi" in fields):
+            raise ValueError("固定 ABI 产物文件名、标记或布局不一致")
+    else:
+        version = kpm["info"]["version"]
+        debug = version.endswith("_d")
+        name = "re_kernel_x_" + (version[:-2] if debug else version) + ("_debug" if debug else "") + ".kpm"
+        if (".rodata.re_abi" in sections or fields[-1] != "binder_release_abi"
+                or values["binder_release_abi"] != layout["binder_abi"] or kpm["file"] != name):
+            raise ValueError("统一基线文件名或配置中的 Binder 释放 ABI 不一致")
     recorded = layout["offsets"]
     if not isinstance(recorded, dict) or set(recorded) != set(values):
         raise ValueError("布局偏移字段集合不一致")

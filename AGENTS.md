@@ -53,6 +53,7 @@ python3 run.py --image B2N-416G_boot.img               # 只对它跑偏移推�
 - **真机不可靠，死机不自救**：测试中遇到死机/卡死/无响应，**立即停止一切重试**，按 [docs/process/07-escalation-device.md](docs/process/07-escalation-device.md) 采集证据并**通知维护者**。禁止自行改偏移、反复加载、反复重启。
 - **产不可覆盖**：同一 Build ID 的产物不得重建覆盖；重建使用新的空输出目录并产生新 Build ID。
 - **公开文件不写本机信息**：不写本机绝对路径、设备序列号、superkey、抓包内容（测试报告用设备指纹哈希代替序列号）。
+- **遵守测试 Oracle 与防反向过拟合**：基准测试套件视为只读 Oracle。严禁为了通过测试而私自修改、弱化或删除已有断言；严禁为了迁就宿主单测/Mock 而扭曲生产代码架构；确需变更断言时必须在报告中单独说明技术依据并由 Auditor 独立复核（详见 [.agents/skills/respect-the-oracle/SKILL.md](.agents/skills/respect-the-oracle/SKILL.md)）。
 - **不为了过门禁而放宽断言**：断言、用例、检查范围的任何缩小都要在报告中写明并给出理由。
 
 ## 常用入口

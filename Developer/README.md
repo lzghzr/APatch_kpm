@@ -5,6 +5,7 @@ Developer 拥有「让功能在目标内核上跑起来」的全部工作：内�
 - 手册：`docs/process/developer-handbook.md`
 - 偏移方法论（必读）：`.agents/skills/kernel-offset-derivation/SKILL.md`
 - KPM 编码规范：`.agents/skills/kpm-development/SKILL.md`
+- 测试基准守则（必读）：`.agents/skills/respect-the-oracle/SKILL.md`
 - 开发报告模板：`docs/templates/developer-report.md`
 
 ## 拥有的路径

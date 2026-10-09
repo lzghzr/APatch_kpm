@@ -59,6 +59,14 @@ python3 run.py --trace-insn                      # 排错用，输出巨大
 
 > harness 与设备代码同源，结论只算**自检**。它证明移植一致，不证明推导正确——后者要 Auditor 用独立实现复核。
 
+### 遵守测试基准守则（Oracle）
+
+所有测试用例与回归套件均须遵守 [respect-the-oracle](../../.agents/skills/respect-the-oracle/SKILL.md)：
+- **测试基准不可篡改**：已归档单测与断言视为权威 Oracle。严禁为了消除测试失败而私自修改、弱化或删除已有断言；
+- **严禁反向架构污染**：生产内核代码的设计依据必须是内核原生契约，严禁为了迁就宿主测试/Mock 框架而在生产代码中引入冗余暂存或非真实内核语义；
+- **断言变更受控**：若既有断言失真，严禁隐蔽修改，必须在开发报告中单独陈述技术依据并交由 Auditor 独立复核；
+- **严守三层置信度天梯**：自检通过（Tier-3）仅证明基础语法与逻辑路径，真实稳定性与安全性由 Auditor 独立审计（Tier-2）与 Tester 真机实测（Tier-1）裁定。
+
 ## 3. 编码
 
 - KPM API 与生命周期见 `.agents/skills/kpm-development/SKILL.md`；模块自带 `KPM_NAME/KPM_VERSION/KPM_LICENSE/KPM_AUTHOR/KPM_DESCRIPTION`。

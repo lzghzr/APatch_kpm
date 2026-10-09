@@ -68,7 +68,9 @@ jobs:
           sudo apt install llvm -y
 
       - name: Artifact gate regression tests
-        run: python3 tools/selftest_artifact_gate.py
+        run: |
+          python3 tools/selftest_artifact_gate.py
+          python3 tools/selftest_release_assets.py
 
       - name: Build kpm
         run: |
@@ -122,12 +124,16 @@ jobs:
             esac
             cp "${kpm}" release/
           done
-          for abi in 3 4 5 6; do
-            baselines=(target/re_kernel_x_*_abi${abi}.kpm)
-            test "${#baselines[@]}" -eq 1
-            test -f "${baselines[0]}.json"
-            cp "${baselines[0]}" "${baselines[0]}.json" release/
+          baselines=()
+          for kpm in target/re_kernel_x_*.kpm; do
+            case "${kpm##*/}" in
+              *_debug.kpm) continue ;;
+            esac
+            baselines+=("${kpm}")
           done
+          test "${#baselines[@]}" -eq 1
+          test -f "${baselines[0]}.json"
+          cp "${baselines[0]}" "${baselines[0]}.json" release/
           python3 tools/artifact_gate.py release --modules target/modules.txt
 
       - name: Upload release

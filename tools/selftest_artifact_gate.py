@@ -12,12 +12,17 @@ from pathlib import Path
 from artifact_gate import validate
 
 
-def fixture():
+def fixture(unified=False, debug=False):
     sections = [("", 0, b""), (".shstrtab", 3, b""),
                 (".kpm.info", 1, b"name=re_kernel_x\0version=1.6\0license=GPL v3\0author=Fixture\0description=Artifact fixture\0"),
                 (".kpm.init", 1, bytes(8)), (".kpm.exit", 1, bytes(8)),
-                (".data.re_offsets", 1, struct.pack("<hh", 16, -1)),
+                (".data.re_offsets", 1, struct.pack("<hhh", 16, -1, 6) if unified else struct.pack("<hh", 16, -1)),
                 (".rodata.re_abi", 1, struct.pack("<I", 5))]
+    if unified:
+        sections.pop()
+    if debug:
+        name, kind, raw = sections[2]
+        sections[2] = (name, kind, raw.replace(b"version=1.6\0", b"version=1.6_d\0"))
     strings = b"\0"
     indices = []
     for name, _, _ in sections:
@@ -41,15 +46,23 @@ def fixture():
     layout = {"schema": 1, "kpm": "re_kernel_x_1.6_abi5.kpm", "sha256": hashlib.sha256(data).hexdigest(),
               "binder_abi": 5, "table_offset": offsets[".data.re_offsets"], "table_size": 4,
               "fields": ["first", "second"], "offsets": {"first": "0x10", "second": -1}}
+    if unified:
+        layout.update(schema=2, kpm="re_kernel_x_1.6.kpm", binder_abi=6, table_size=6,
+                      fields=["first", "second", "binder_release_abi"],
+                      offsets={"first": "0x10", "second": -1, "binder_release_abi": 6})
+    if debug:
+        layout["kpm"] = layout["kpm"].replace(".kpm", "_debug.kpm")
     return data, layout
 
 
 class ArtifactGateTests(unittest.TestCase):
+    unified = False
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
-        self.data, self.layout = fixture()
+        self.data, self.layout = fixture(self.unified)
         self.kpm = self.root / self.layout["kpm"]
         self.sidecar = Path(str(self.kpm) + ".json")
         self.write()
@@ -136,6 +149,70 @@ class ArtifactGateTests(unittest.TestCase):
     def test_orphan_layout(self):
         (self.root / "missing.kpm.json").write_text("{}")
         self.reject()
+
+
+class UnifiedArtifactGateTests(ArtifactGateTests):
+    unified = True
+
+    def select_abi(self, abi):
+        data = bytearray(self.data)
+        struct.pack_into("<h", data, self.layout["table_offset"] + self.layout["table_size"] - 2, abi)
+        self.data = bytes(data)
+        self.layout.update(sha256=hashlib.sha256(self.data).hexdigest(), binder_abi=abi)
+        self.layout["offsets"]["binder_release_abi"] = abi
+        self.write()
+
+    def test_all_release_abis(self):
+        for abi in (3, 4, 5, 6):
+            with self.subTest(abi=abi):
+                self.select_abi(abi)
+                validate(self.root, ["re_kernel_x"])
+
+    def test_invalid_release_abis(self):
+        for abi in (-1, 0, 2, 7, 32767):
+            with self.subTest(abi=abi):
+                self.select_abi(abi)
+                self.reject()
+
+    def test_release_value_mismatch(self):
+        self.select_abi(3)
+        self.layout["binder_abi"] = 6
+        self.write()
+        self.reject()
+
+    def test_missing_release_field(self):
+        self.layout["fields"][-1] = "third"
+        self.layout["offsets"]["third"] = self.layout["offsets"].pop("binder_release_abi")
+        self.write()
+        self.reject()
+
+    def test_fixed_schema_on_unified_product(self):
+        self.layout["schema"] = 1
+        self.write()
+        self.reject()
+
+    def test_unified_schema_on_fixed_product(self):
+        self.kpm.unlink()
+        self.sidecar.unlink()
+        self.data, self.layout = fixture()
+        self.layout.update(schema=2, kpm="re_kernel_x_1.6.kpm", binder_abi=6,
+                           fields=["first", "binder_release_abi"], offsets={"first": "0x10", "binder_release_abi": 6})
+        data = bytearray(self.data)
+        struct.pack_into("<h", data, self.layout["table_offset"] + 2, 6)
+        self.data = bytes(data)
+        self.layout["sha256"] = hashlib.sha256(self.data).hexdigest()
+        self.kpm = self.root / self.layout["kpm"]
+        self.sidecar = Path(str(self.kpm) + ".json")
+        self.write()
+        self.reject()
+
+    def test_debug_product(self):
+        directory = self.root / "debug"
+        directory.mkdir()
+        data, layout = fixture(unified=True, debug=True)
+        (directory / layout["kpm"]).write_bytes(data)
+        (directory / (layout["kpm"] + ".json")).write_text(json.dumps(layout))
+        validate(directory, ["re_kernel_x"])
 
 
 if __name__ == "__main__":
