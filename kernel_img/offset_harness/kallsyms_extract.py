@@ -16,6 +16,9 @@ from (CONFIG_KALLSYMS), independent of kptr_restrict. Stock layout in
     [absolute mode, pre-4.6: kallsyms_addresses u64[num_syms] instead of
      offsets + base]
 
+Newer kernels also emit count/names/markers/tokens/index before offsets/base;
+the reordered fallback checks the index, markers and complete name stream.
+
 Real-world images are sometimes repacked/truncated with fields separated by
 zero padding and non-standard alignment, so nothing is assumed contiguous:
 after each field the parser skips runs of zero bytes, and the offsets array
@@ -182,6 +185,86 @@ def _parse_candidate_tokens(data, off):
     return [t.decode("ascii") for t in tokens]
 
 
+def _extract_reordered(data, verbose=False):
+    """New kallsyms order: count/names/markers/tokens/index/offsets/base.
+
+    The digit tokens only locate candidates. Accept them only after checking
+    the complete token index, name stream, markers and sorted address array.
+    """
+    pos = 0
+    while True:
+        pos = data.find(b"0\x001\x002\x003\x00", pos)
+        if pos < 0:
+            return None
+        start = pos
+        pos += 1
+        for _ in range(48):
+            start = data.rfind(b"\0", max(0, start - 40), start - 1) + 1
+            if start <= 0:
+                break
+        tokens = _parse_candidate_tokens(data, start)
+        if tokens is None:
+            continue
+        token_offsets, end = [], start
+        for token in tokens:
+            token_offsets.append(end - start)
+            end += len(token) + 1
+        index = (end + 7) & ~7
+        if index + 512 > len(data) or list(struct.unpack_from("<256H", data, index)) != token_offsets:
+            continue
+        array = index + 512
+        end = array
+        while end + 8 <= len(data) and end - array < 600_000 * 4:
+            if end % 8 == 0 and _nice_vaddr(_u64(data, end)):
+                break
+            end += 4
+        else:
+            continue
+        count = (end - array) // 4
+        # An odd number of u32 offsets is followed by one alignment word.
+        if count > 1 and _u32(data, end - 4) == 0:
+            count -= 1
+        if not 1000 <= count <= 600_000:
+            continue
+        offsets = list(struct.unpack_from(f"<{count}I", data, array))
+        if offsets[0] > 0x100000 or any(a > b for a, b in zip(offsets, offsets[1:])):
+            continue
+        needle = struct.pack("<I", count) + b"\0" * 4
+        lower = max(0, start - count * 48 - 0x1000)
+        npos = data.rfind(needle, lower, start)
+        while npos >= lower:
+            names, cursor, markers = [], npos + 8, []
+            for i in range(count):
+                if i % 256 == 0:
+                    markers.append(cursor - (npos + 8))
+                if cursor >= start:
+                    break
+                length = data[cursor]
+                cursor += 1
+                if length & 0x80:
+                    if cursor >= start or data[cursor] & 0x80:
+                        break
+                    length = (length & 0x7F) | data[cursor] << 7
+                    cursor += 1
+                if not length or cursor + length > start:
+                    break
+                full = "".join(tokens[b] for b in data[cursor:cursor + length])
+                cursor += length
+                names.append((full[:1], full[1:]))
+            marker_start = (cursor + 7) & ~7
+            marker_end = marker_start + len(markers) * 4
+            if (len(names) == count and (marker_end + 7) & ~7 == start
+                    and list(struct.unpack_from(f"<{len(markers)}I", data, marker_start)) == markers
+                    and _valid_entries(names)):
+                syms = [(offsets[i], *names[i]) for i in range(count)]
+                if next((a for a, _, name in syms if name == "_text"), None) == 0:
+                    if verbose:
+                        print(f"  reordered relative mode: num_syms={count} names=0x{npos + 8:x} "
+                              f"tokens=0x{start:x} offsets=0x{array:x} base=0x{_u64(data, end):x}")
+                    return syms
+            npos = data.rfind(needle, lower, npos)
+
+
 def extract(data, verbose=False):
     """Returns (symbols, mode) with symbols = [(reladdr, type, name)], or
     (None, reason). reladdr is _text-relative, i.e. the Image file offset."""
@@ -272,6 +355,9 @@ def extract(data, verbose=False):
                   f"names=0x{nstart:x}..0x{names_end:x}")
         return syms, "absolute"
 
+    syms = _extract_reordered(data, verbose)
+    if syms is not None:
+        return syms, "relative-reordered"
     return None, "no valid kallsyms structure found"
 
 

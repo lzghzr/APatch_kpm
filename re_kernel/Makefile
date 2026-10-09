@@ -1,4 +1,4 @@
-MYKPM_VERSION := 8.0.0
+MYKPM_VERSION := 11.7
 
 ifndef KP_DIR
 	KP_DIR = ../KernelPatch
@@ -25,44 +25,31 @@ else ifdef NDK_PATH
 	LD := $(NDK_PATH)/ld.lld
 endif
 
-CFLAGS = -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -DMYKPM_VERSION=\"$(MYKPM_VERSION)$(MYKPM_VER)\"
+CFLAGS = -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\"$(MYKPM_VERSION)$(MYKPM_VER)\"
 
 INCLUDE_DIRS := . include patch/include linux/include linux/arch/arm64/include linux/tools/arch/arm64/include
 
 INCLUDE_FLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(KP_DIR)/kernel/$(dir))
 
-objs := re_kernel.c
+objs := re_kernel.c re_runtime.c
+headers := re_kernel.h re_utils.h re_offsets.c ../kpm_utils.h
 
-all: base network
-debug: base_debug network_debug
+all: base
+debug: base_debug
 
 base: re_kernel_$(MYKPM_VERSION).kpm
-
-network: CFLAGS += -DCONFIG_NETWORK
-network: MYKPM_VER := _n
-network: re_kernel_$(MYKPM_VERSION)_network.kpm
 
 base_debug: CFLAGS += -DCONFIG_DEBUG
 base_debug: MYKPM_VER := _d
 base_debug: re_kernel_$(MYKPM_VERSION)_debug.kpm
 
-network_debug: CFLAGS += -DCONFIG_NETWORK -DCONFIG_DEBUG
-network_debug: MYKPM_VER := _nd
-network_debug: re_kernel_$(MYKPM_VERSION)_network_debug.kpm
+re_kernel_$(MYKPM_VERSION).kpm: ${objs} ${headers}
+	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $(objs) -r -o $@
 
-re_kernel_$(MYKPM_VERSION).kpm: ${objs}
-	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $^ -r -o $@
+re_kernel_$(MYKPM_VERSION)_debug.kpm: ${objs} ${headers}
+	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $(objs) -r -o $@
 
-re_kernel_$(MYKPM_VERSION)_network.kpm: ${objs}
-	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $^ -r -o $@
-
-re_kernel_$(MYKPM_VERSION)_debug.kpm: ${objs}
-	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $^ -r -o $@
-
-re_kernel_$(MYKPM_VERSION)_network_debug.kpm: ${objs}
-	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $^ -r -o $@
-
-.PHONY: clean
+.PHONY: all debug base base_debug clean
 clean:
 	rm -rf *.kpm
 	find . -name "*.o" | xargs rm -f

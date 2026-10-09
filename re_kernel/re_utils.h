@@ -10,6 +10,18 @@
 
 #define logkm(fmt, ...) printk("re_kernel: " fmt, ##__VA_ARGS__)
 
+// 模块自己的 0/1 锁，不传给内核；持锁区只操作上下文链表、UID 或清理规则数组。
+static inline unsigned long rekernel_context_lock(unsigned int* lock) {
+  unsigned long flags;
+  asm volatile("mrs %0, daif\n\tmsr daifset, #2" : "=r"(flags) : : "memory");
+  while (__atomic_exchange_n(lock, 1, __ATOMIC_ACQUIRE)) asm volatile("yield" : : : "memory");
+  return flags;
+}
+static inline void rekernel_context_unlock(unsigned int* lock, unsigned long flags) {
+  __atomic_store_n(lock, 0, __ATOMIC_RELEASE);
+  asm volatile("msr daif, %0" : : "r"(flags) : "memory");
+}
+
 struct struct_offset {
   int16_t binder_alloc_buffer_size;
   int16_t binder_alloc_buffer;
@@ -23,6 +35,7 @@ struct struct_offset {
   int16_t binder_proc_alloc;
   int16_t binder_proc_context;
   int16_t binder_proc_inner_lock;
+  int16_t binder_proc_is_dead;
   int16_t binder_proc_is_frozen;
   int16_t binder_proc_outer_lock;
   int16_t binder_proc_outstanding_txns;
@@ -32,6 +45,13 @@ struct struct_offset {
   int16_t binder_transaction_flags;
   int16_t binder_transaction_from;
   int16_t binder_transaction_to_proc;
+  int16_t genl_family_id;
+  int16_t genl_family_config;
+  int16_t genl_family_mcgrps;
+  int16_t genl_family_n_mcgrps;
+  int16_t genl_family_n_mcgrps_size;
+  int16_t genl_family_mcgrp_offset;
+  int16_t net_genl_sock;
   int16_t sk_buff_len;
   int16_t sk_buff_transport_header;
   int16_t sk_buff_network_header;
@@ -52,19 +72,10 @@ static inline struct sk_buff* alloc_skb(unsigned int size, gfp_t priority) {
 
 static inline int nlmsg_msg_size(int payload) { return NLMSG_HDRLEN + payload; }
 static inline int nlmsg_total_size(int payload) { return NLMSG_ALIGN(nlmsg_msg_size(payload)); }
-static inline int nlmsg_padlen(int payload) { return nlmsg_total_size(payload) - nlmsg_msg_size(payload); }
 static inline void* nlmsg_data(const struct nlmsghdr* nlh) { return (unsigned char*)nlh + NLMSG_HDRLEN; }
-static inline int nlmsg_len(const struct nlmsghdr* nlh) { return nlh->nlmsg_len - NLMSG_HDRLEN; }
 
 static inline struct sk_buff* nlmsg_new(size_t payload, gfp_t flags) {
   return alloc_skb(nlmsg_total_size(payload), flags);
-}
-
-extern struct nlmsghdr* kfunc_def(__nlmsg_put)(struct sk_buff* skb, u32 portid, u32 seq, int type, int len, int flags);
-static inline struct nlmsghdr* nlmsg_put(struct sk_buff* skb, u32 portid, u32 seq, int type, int payload, int flags) {
-  kfunc_call(__nlmsg_put, skb, portid, seq, type, payload, flags);
-  kfunc_not_found();
-  return NULL;
 }
 
 extern void kfunc_def(kfree_skb)(struct sk_buff* skb);
@@ -76,45 +87,6 @@ static inline int netlink_unicast(struct sock* ssk, struct sk_buff* skb, u32 por
   kfunc_not_found();
   return -EFAULT;
 }
-
-extern int kfunc_def(netlink_rcv_skb)(struct sk_buff* skb,
-                                      int (*cb)(struct sk_buff*, struct nlmsghdr*, struct netlink_ext_ack*));
-static inline int netlink_rcv_skb(struct sk_buff* skb,
-                                  int (*cb)(struct sk_buff*, struct nlmsghdr*, struct netlink_ext_ack*)) {
-  kfunc_call(netlink_rcv_skb, skb, cb);
-  kfunc_not_found();
-  return -EFAULT;
-}
-
-extern struct sock* kfunc_def(__netlink_kernel_create)(struct net* net, int unit, struct module* module,
-                                                       struct netlink_kernel_cfg* cfg);
-static inline struct sock* netlink_kernel_create(struct net* net, int unit, struct netlink_kernel_cfg* cfg) {
-  kfunc_call(__netlink_kernel_create, net, unit, THIS_MODULE, cfg);
-  kfunc_not_found();
-  return NULL;
-}
-
-extern void kfunc_def(netlink_kernel_release)(struct sock* sk);
-static inline void netlink_kernel_release(struct sock* sk) { kfunc_call_void(netlink_kernel_release, sk); }
-
-extern struct proc_dir_entry* kfunc_def(proc_mkdir)(const char* name, struct proc_dir_entry* parent);
-static inline struct proc_dir_entry* proc_mkdir(const char* name, struct proc_dir_entry* parent) {
-  kfunc_call(proc_mkdir, name, parent);
-  kfunc_not_found();
-  return NULL;
-}
-
-extern struct proc_dir_entry* kfunc_def(proc_create_data)(const char* name, umode_t mode, struct proc_dir_entry* parent,
-                                                          const struct file_operations* proc_fops, void* data);
-static inline struct proc_dir_entry* proc_create(const char* name, umode_t mode, struct proc_dir_entry* parent,
-                                                 const struct file_operations* proc_fops) {
-  kfunc_call(proc_create_data, name, mode, parent, proc_fops, NULL);
-  kfunc_not_found();
-  return NULL;
-}
-
-extern void kfunc_def(proc_remove)(struct proc_dir_entry* de);
-static inline void proc_remove(struct proc_dir_entry* de) { kfunc_call_void(proc_remove, de); }
 
 extern kuid_t kfunc_def(sock_i_uid)(struct sock* sk);
 static inline kuid_t sock_i_uid(struct sock* sk) {

@@ -2,7 +2,16 @@
 ## 模块作用
 配合墓碑模块，当应用收到 `binder` 同步信息时，临时解冻被冻结的应用
 
+## 开机加载
+将 KPM 嵌入内核时，加载事件选择 `post-kernel-init`。`pre-kernel-init` 是 KP 的默认事件，此时 Generic Netlink 尚未初始化，模块会返回 `-107`（`ENOTCONN`）。开机后手动加载也可以。
+
+使用 kptools 时，在该模块的 `-M <kpm>` 或 `-E <已嵌入名称>` 后指定 `-V post-kernel-init`；事件属于嵌入配置，需要更新该配置后才会生效。
+
 ## 更新记录
+### 11.7
+对齐 Sakion Re:Kernel 11.7 的 Generic Netlink 协议，支持网络 UID 增删和版本查询<br />
+保留异步消息 code 29～32 上报过滤及本地冻结判断<br />
+异步清理与本项目 rekx 的基础去重一致：保留一条匹配旧消息，跳过带对象或额外缓冲区的消息，锁内复核后同步释放
 ### 8.0.0
 同步LKM<br />
 适配新的 `rekernel_cmd`<br />
