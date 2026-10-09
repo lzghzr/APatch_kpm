@@ -41,6 +41,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--baselines", type=Path, required=True)
     parser.add_argument("--cc", default="clang")
+    parser.add_argument("--legacy-baselines", type=Path, help="只读回归旧四 ABI 基准及配套 JSON")
     args = parser.parse_args()
     module = Path(__file__).resolve().parents[1]
     tool = module / "tools/patch_offsets.py"
@@ -48,36 +49,39 @@ def main():
     patcher = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(patcher)
     kpms = sorted(args.baselines.glob("*.kpm"))
-    assert len(kpms) == 8, "expected four ABI baselines, release + debug"
+    assert len(kpms) == 2, "expected one unified baseline, release + debug"
     with tempfile.TemporaryDirectory() as directory:
         scratch = Path(directory)
         for index, kpm in enumerate(kpms):
             layout = json.loads(Path(str(kpm) + ".json").read_text())
             data = kpm.read_bytes()
-            offset, size, abi = patcher.sections(data)
+            offset, size, fixed_abi = patcher.sections(data)
             imports = undefined_imports(data)
             assert {"kallsyms_lookup_name", "kallsyms_lookup_name_by_suffix"} <= imports
             assert not imports & {"kf_get_task_ext", "get_task_ext"}, imports
             assert not imports & {"memcpy", "memset", "memcmp", "strlen", "strcmp", "strnlen"}, imports
-            assert size == len(layout["fields"]) * 2 and abi == layout["binder_abi"]
-            values = {field: hex(0x100 + i * 8) for i, field in enumerate(layout["fields"])}
-            values["genl_family_n_mcgrps_size"] = "0x1"
-            if "work_offq_pool_shift" in values:
-                values["work_offq_pool_shift"] = "0x5"
-                values["work_cpu_unbound"] = "0x40"
-            profile = scratch / f"values-{index}.json"
-            profile.write_text(json.dumps(values))
-            output = scratch / f"patched-{index}.kpm"
-            call("python3", str(tool), "patch", str(kpm), "--offsets", str(profile), "--output", str(output))
-            patched = output.read_bytes()
-            assert patched[:offset] == data[:offset] and patched[offset + size:] == data[offset + size:]
-            assert patched[offset:offset + size] == patcher.encode_offsets(profile, layout["fields"])
-            blob = scratch / f"values-{index}.bin"
-            call("python3", str(tool), "dump", str(output), "--output", str(blob))
-            raw_output = scratch / f"raw-{index}.kpm"
-            call("python3", str(tool), "patch", str(kpm), "--blob", str(blob), "--output", str(raw_output))
-            assert raw_output.read_bytes() == patched
-            call("python3", str(tool), "patch", str(kpm), "--blob", str(blob), "--output", str(output), ok=False)
+            assert fixed_abi is None and layout["schema"] == 2
+            assert size == len(layout["fields"]) * 2 and layout["binder_abi"] == 6
+            assert layout["fields"][-1] == "binder_release_abi"
+            for abi in (3, 4, 5, 6):
+                values = {field: hex(0x100 + i * 8) for i, field in enumerate(layout["fields"])}
+                values["genl_family_n_mcgrps_size"] = "0x1"
+                values["binder_release_abi"] = abi
+                profile = scratch / f"values-{index}-{abi}.json"
+                profile.write_text(json.dumps(values))
+                output = scratch / f"patched-{index}-{abi}.kpm"
+                call("python3", str(tool), "patch", str(kpm), "--offsets", str(profile), "--output", str(output))
+                patched = output.read_bytes()
+                assert patched[:offset] == data[:offset] and patched[offset + size:] == data[offset + size:]
+                assert patched[offset:offset + size] == patcher.encode_offsets(profile, layout["fields"])
+                receipt = json.loads(Path(str(output) + ".json").read_text())
+                assert receipt["binder_abi"] == abi and receipt["schema"] == 2
+                blob = scratch / f"values-{index}-{abi}.bin"
+                call("python3", str(tool), "dump", str(output), "--output", str(blob))
+                raw_output = scratch / f"raw-{index}-{abi}.kpm"
+                call("python3", str(tool), "patch", str(kpm), "--blob", str(blob), "--output", str(raw_output))
+                assert raw_output.read_bytes() == patched
+                call("python3", str(tool), "patch", str(kpm), "--blob", str(blob), "--output", str(output), ok=False)
 
         kpm = kpms[0]
         offset, size, abi = patcher.sections(kpm.read_bytes())
@@ -91,14 +95,18 @@ def main():
             call("python3", str(tool), "patch", str(kpm), "--offsets", str(invalid), "--output", str(destination), ok=False)
         invalid.write_text(json.dumps(dict(values, genl_family_n_mcgrps_size=3)))
         call("python3", str(tool), "patch", str(kpm), "--offsets", str(invalid), "--output", str(destination), ok=False)
-        for field, value in (("work_offq_pool_shift", -1), ("work_offq_pool_shift", 64),
+        for field, value in (("binder_release_abi", -1), ("binder_release_abi", 0),
+                             ("binder_release_abi", 2), ("binder_release_abi", 7),
+                             ("binder_release_abi", True), ("binder_release_abi", "invalid"),
+                             ("work_offq_pool_shift", -1), ("work_offq_pool_shift", 64),
                              ("work_cpu_unbound", 0), ("work_cpu_unbound", -1)):
             if field not in layout["fields"]:
                 continue
             invalid.write_text(json.dumps(dict(values, **{field: value})))
             call("python3", str(tool), "patch", str(kpm), "--offsets", str(invalid), "--output", str(destination), ok=False)
         original_blob = kpm.read_bytes()[offset:offset + size]
-        for field, value in (("work_offq_pool_shift", 64), ("work_cpu_unbound", 0)):
+        for field, value in (("binder_release_abi", 2), ("binder_release_abi", 7),
+                             ("work_offq_pool_shift", 64), ("work_cpu_unbound", 0)):
             if field not in layout["fields"]:
                 continue
             malformed = bytearray(original_blob)
@@ -115,7 +123,7 @@ def main():
         broken.write_bytes(kpm.read_bytes()[:64])
         call("python3", str(tool), "baseline", str(broken), "--output", str(wrong_layout), ok=False)
         assert not destination.exists()
-        print("eight real KPMs: JSON/blob roundtrip, only table bytes change, invalid inputs refused: PASS")
+        print("two unified KPMs, four configured ABIs: JSON/blob roundtrip, only table bytes change, invalid inputs refused: PASS")
         print("actual ELF imports: SDK plain/suffix lookup, no task_ext dependency: PASS")
 
         header = (module / "re_kernel.h").read_text().replace("#include <ktypes.h>", "")
@@ -195,15 +203,40 @@ def main():
                     depth += (text[end] == "{") - (text[end] == "}")
                     end += 1
                 cleanup_functions.append(text[start:end])
+        # ABI 校验已放进 init，直接提取生产 guard，保留原有非法值边界断言。
+        start = source.index("static long inline_hook_init(")
+        start = source.index("{", start) + 1
+        end = source.index("  lookup_name(cgroup_freezing);", start)
+        guard = source[start:end]
+        assert "struct_offset.binder_release_abi" in guard and "return -EINVAL;" in guard
+        cleanup_functions.insert(0, "static int binder_release_abi_init_check(void) {" + guard + "  return 0;\n}")
         fixture = (module / "tools/tests/cleanup.c").read_text().replace("/* PRODUCTION_FUNCTIONS */",
                                                                        "\n".join(cleanup_functions))
-        for abi in (3, 4, 5, 6):
-            cleanup_source = scratch / f"cleanup-test-{abi}.c"
-            cleanup_source.write_text(fixture.replace("#define REKERNEL_BINDER_ABI 6", f"#define REKERNEL_BINDER_ABI {abi}"))
-            cleanup_binary = scratch / f"cleanup-test-{abi}"
-            call(args.cc, "-g", "-O1", "-pthread", "-fsanitize=address,undefined", "-fno-omit-frame-pointer",
-                 str(cleanup_source), "-o", str(cleanup_binary))
-            print(call(str(cleanup_binary)).strip())
+        cleanup_source = scratch / "cleanup-test.c"
+        cleanup_source.write_text(fixture)
+        cleanup_binary = scratch / "cleanup-test"
+        call(args.cc, "-g", "-O1", "-pthread", "-fsanitize=address,undefined", "-fno-omit-frame-pointer",
+             str(cleanup_source), "-o", str(cleanup_binary))
+        print(call(str(cleanup_binary)).strip())
+
+        if args.legacy_baselines:
+            legacy_kpms = sorted(args.legacy_baselines.glob("*.kpm"))
+            assert len(legacy_kpms) == 8
+            for index, legacy in enumerate(legacy_kpms):
+                legacy_data = legacy.read_bytes()
+                offset, size, abi = patcher.sections(legacy_data)
+                legacy_layout = json.loads(Path(str(legacy) + ".json").read_text())
+                assert abi in (3, 4, 5, 6) and legacy_layout["schema"] == 1
+                blob = scratch / f"legacy-{index}.bin"
+                call("python3", str(tool), "dump", str(legacy), "--output", str(blob))
+                output = scratch / f"legacy-{index}.kpm"
+                call("python3", str(tool), "patch", str(legacy), "--blob", str(blob), "--output", str(output))
+                assert output.read_bytes() == legacy_data
+                profile = scratch / f"legacy-{index}.json"
+                profile.write_text(json.dumps(dict(legacy_layout["offsets"], binder_release_abi=3)))
+                call("python3", str(tool), "patch", str(legacy), "--offsets", str(profile),
+                     "--output", str(scratch / f"legacy-invalid-{index}.kpm"), ok=False)
+            print("eight fixed-ABI legacy KPMs: schema 1 dump/patch byte-preserving, adding a release selector refused: PASS")
 
 
 if __name__ == "__main__":

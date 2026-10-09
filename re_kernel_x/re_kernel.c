@@ -32,13 +32,10 @@ KPM_LICENSE("GPL v3");
 KPM_AUTHOR("Nep-Timeline, lzghzr, myflavor");
 KPM_DESCRIPTION("ReKernel-X, every bit belongs to you.");
 
-static const unsigned int rekernel_binder_abi __attribute__((section(".rodata.re_abi"), used)) = REKERNEL_BINDER_ABI;
-
 // cgroup_freezing, cgroupv1_freeze
 static bool (*cgroup_freezing)(struct task_struct* task);
 // send_netlink_message
 struct sk_buff* kfunc_def(__alloc_skb)(unsigned int size, gfp_t gfp_mask, int flags, int node);
-struct nlmsghdr* kfunc_def(__nlmsg_put)(struct sk_buff* skb, u32 portid, u32 seq, int type, int len, int flags);
 void* kfunc_def(genlmsg_put)(struct sk_buff* skb, u32 portid, u32 seq, const struct genl_family* family, int flags,
                              u8 cmd);
 int kfunc_def(nla_put)(struct sk_buff* skb, int attrtype, int attrlen, const void* data);
@@ -55,31 +52,7 @@ static int (*genl_rcv_msg)(struct sk_buff* skb, struct nlmsghdr* nlh);
 static int (*binder_proc_transaction)(struct binder_transaction* t, struct binder_proc* proc,
                                       struct binder_thread* thread);
 // free the outdated transaction and buffer
-static void (*binder_transaction_buffer_release)(struct binder_proc* proc
-#if REKERNEL_BINDER_ABI >= 5
-                                                 ,
-                                                 struct binder_thread* thread
-#endif
-                                                 ,
-                                                 struct binder_buffer* buffer
-
-#if REKERNEL_BINDER_ABI == 5
-                                                 ,
-                                                 binder_size_t off_end_offset
-#endif
-#if REKERNEL_BINDER_ABI == 4 || REKERNEL_BINDER_ABI == 6
-                                                 ,
-                                                 binder_size_t failed_at
-#endif
-#if REKERNEL_BINDER_ABI == 3
-                                                 ,
-                                                 binder_size_t* failed_at
-#endif
-#if REKERNEL_BINDER_ABI >= 4
-                                                 ,
-                                                 bool is_failure
-#endif
-);
+static void* binder_transaction_buffer_release;
 static void (*binder_alloc_free_buf)(struct binder_alloc* alloc, struct binder_buffer* buffer);
 void kfunc_def(kfree)(const void* objp);
 void* kfunc_def(kmalloc)(size_t size, gfp_t flags);
@@ -90,8 +63,8 @@ int kfunc_def(binder_alloc_copy_from_buffer)(struct binder_alloc* alloc, void* d
 // 调用方持有当前事务或队列锁；旧 Binder 的 data 是已映射的内核地址。
 static int binder_buffer_read(struct binder_alloc* alloc, void* dest, struct binder_buffer* buffer,
                               binder_size_t offset, size_t bytes) {
-  if (kf_binder_alloc_copy_from_buffer)
-    return kf_binder_alloc_copy_from_buffer(alloc, dest, buffer, offset, bytes);
+  if (kfunc(binder_alloc_copy_from_buffer))
+    return kfunc(binder_alloc_copy_from_buffer)(alloc, dest, buffer, offset, bytes);
   if (struct_offset.binder_buffer_data < 0)
     return -EOPNOTSUPP;
   if (buffer->free || offset % sizeof(u32) || offset > buffer->data_size || bytes > buffer->data_size - offset)
@@ -132,9 +105,7 @@ struct tracepoint kvar_def(__tracepoint_binder_transaction);
 int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
 #endif /* CONFIG_DEBUG_CMDLINE */
 
-// 最好初始化一个大于 0xFFFFFFFF 的值, 否则编译器优化后, 全局变量可能出错
-// 实际上会被编译器优化为 bool
-static unsigned long trace = UZERO;
+static bool trace;
 static struct rekernel_binder_context* binder_contexts;
 static unsigned int binder_context_guard, binder_context_unavailable;
 
@@ -218,12 +189,10 @@ static int net_uid_update(uid_t uid, bool add) {
 static struct rekernel_free_async_rule rekernel_free_async_rules[REKERNEL_FREE_ASYNC_MAX];
 static unsigned int rekernel_free_async_count, rekernel_free_async_guard;
 static int free_async_update(const char* rpc_name, int code, unsigned char strategy, bool add) {
-  if (!rpc_name)
+  size_t len = strlen(rpc_name);
+  if (code < -1)
     return -EINVAL;
-  size_t len = strnlen(rpc_name, REKERNEL_RPC_NAME_SIZE);
-  if (!len || len == REKERNEL_RPC_NAME_SIZE || code < -1)
-    return -EINVAL;
-  if (add && !kf_binder_alloc_copy_from_buffer && struct_offset.binder_buffer_data < 0)
+  if (add && !kfunc(binder_alloc_copy_from_buffer) && struct_offset.binder_buffer_data < 0)
     return -EOPNOTSUPP;
   if (add && strategy != REKERNEL_FREE_ASYNC_SKIP && strategy != REKERNEL_FREE_ASYNC_BY_CODE
       && strategy != REKERNEL_FREE_ASYNC_BY_DATA)
@@ -280,14 +249,14 @@ static bool free_async_has_rules(void) {
 
 static struct genl_family rekernel_genl_family;
 static struct genl_multicast_group rekernel_genl_mcgrp;
-static unsigned long rekernel_genl_registered = UZERO;
+static bool rekernel_genl_registered;
 // 接收只处理本 family；返回值交给内核 netlink_rcv_skb 生成 ACK。
 static int rekernel_genl_rcv_msg(struct sk_buff* skb, struct nlmsghdr* nlh) {
   if (!skb->sk || sock_net(skb->sk) != kvar(init_net))
     return -ENOENT;
   if (NETLINK_CB(skb).creds.uid.val != REKERNEL_GENL_UID)
     return -EPERM;
-  if (nlh->nlmsg_len < NLMSG_HDRLEN + GENL_HDRLEN || nlh->nlmsg_len > sk_buff_len(skb))
+  if (nlh->nlmsg_len < NLMSG_HDRLEN + GENL_HDRLEN)
     return -EINVAL;
   if ((nlh->nlmsg_flags & NLM_F_DUMP) == NLM_F_DUMP)
     return -EOPNOTSUPP;
@@ -358,7 +327,7 @@ static int rekernel_genl_rcv_msg(struct sk_buff* skb, struct nlmsghdr* nlh) {
 static void genl_rcv_msg_before(hook_fargs2_t* args, void* udata) {
   struct sk_buff* skb = (struct sk_buff*)args->arg0;
   struct nlmsghdr* nlh = (struct nlmsghdr*)args->arg1;
-  if (__atomic_load_n(&rekernel_genl_registered, __ATOMIC_ACQUIRE) != IZERO || !skb || !nlh
+  if (!__atomic_load_n(&rekernel_genl_registered, __ATOMIC_ACQUIRE)
       || nlh->nlmsg_type != genl_family_id(&rekernel_genl_family))
     return;
   args->skip_origin = 1;
@@ -366,16 +335,14 @@ static void genl_rcv_msg_before(hook_fargs2_t* args, void* udata) {
 }
 // 静态内存块清零、填写配置，再交给内核注册。
 static int start_rekernel_genl_server(void) {
-  if (rekernel_genl_registered == IZERO)
-    return 0;
   kfunc_lookup_name(genl_register_family);
-  if (!kf_genl_register_family)
+  if (!kfunc(genl_register_family))
     kfunc_lookup_name(__genl_register_family);
   kfunc_lookup_name(genl_unregister_family);
   lookup_name(genl_rcv_msg);
-  if ((!kf_genl_register_family && !kf___genl_register_family) || !kf_genl_unregister_family || !kf___alloc_skb
-      || !kf___nlmsg_put || !kf_genlmsg_put || !kf_nla_put || !kf_skb_trim || !kf_kfree_skb || !kf_netlink_broadcast
-      || !kvar(init_net))
+  if ((!kfunc(genl_register_family) && !kfunc(__genl_register_family)) || !kfunc(genl_unregister_family)
+      || !kfunc(__alloc_skb) || !kfunc(genlmsg_put) || !kfunc(nla_put) || !kfunc(skb_trim) || !kfunc(kfree_skb)
+      || !kfunc(netlink_broadcast) || !kvar(init_net))
     return -EOPNOTSUPP;
 
   struct genl_family* family = &rekernel_genl_family;
@@ -399,28 +366,28 @@ static int start_rekernel_genl_server(void) {
     hook_unwrap(genl_rcv_msg, genl_rcv_msg_before, NULL);
     return rc;
   }
-  __atomic_store_n(&rekernel_genl_registered, IZERO, __ATOMIC_RELEASE);
+  __atomic_store_n(&rekernel_genl_registered, true, __ATOMIC_RELEASE);
   logkm("Created Re:Kernel Generic Netlink family! ID: %d\n", genl_family_id(family));
   return 0;
 }
 static int stop_rekernel_genl_server(void) {
-  if (rekernel_genl_registered != IZERO)
+  if (!__atomic_load_n(&rekernel_genl_registered, __ATOMIC_ACQUIRE))
     return 0;
   int rc = genl_unregister_family(&rekernel_genl_family);
   if (rc)
     return rc;
-  __atomic_store_n(&rekernel_genl_registered, UZERO, __ATOMIC_RELEASE);
+  __atomic_store_n(&rekernel_genl_registered, false, __ATOMIC_RELEASE);
   hook_unwrap(genl_rcv_msg, genl_rcv_msg_before, NULL);
   return 0;
 }
 // 内部事件转换为上游嵌套 attributes，发送到 events 组播组。
 static int send_netlink_message(const struct rekernel_event* msg) {
-  if (__atomic_load_n(&rekernel_genl_registered, __ATOMIC_ACQUIRE) != IZERO)
+  if (!__atomic_load_n(&rekernel_genl_registered, __ATOMIC_ACQUIRE))
     return -ENOTCONN;
   struct sk_buff* skb = genlmsg_new(nla_total_size(PACKET_SIZE), GFP_ATOMIC);
   if (!skb)
     return -ENOMEM;
-  void* hdr = kf_genlmsg_put(skb, 0, 0, &rekernel_genl_family, 0, REKERNEL_C_EVENT);
+  void* hdr = kfunc(genlmsg_put)(skb, 0, 0, &rekernel_genl_family, 0, REKERNEL_C_EVENT);
   if (!hdr) {
     nlmsg_free(skb);
     return -EMSGSIZE;
@@ -445,8 +412,6 @@ static int send_netlink_message(const struct rekernel_event* msg) {
         default:
           goto nla_fail;
       }
-      if (strnlen(msg->binder.rpc_name, sizeof(msg->binder.rpc_name)) == sizeof(msg->binder.rpc_name))
-        goto nla_fail;
       payload = nla_nest_start(skb, REKERNEL_A_BINDER);
       if (!payload || nla_put_s32(skb, REKERNEL_A_BINDER_TYPE, type)
           || nla_put_s32(skb, REKERNEL_A_BINDER_ONEWAY, msg->binder.oneway)
@@ -508,7 +473,7 @@ static struct binder_transaction_data* binder_current_transaction(void) {
 
 static void rekernel_report(int reporttype, int type, pid_t src_pid, struct task_struct* src, pid_t dst_pid,
                             struct task_struct* dst, bool oneway) {
-  if (__atomic_load_n(&rekernel_genl_registered, __ATOMIC_ACQUIRE) != IZERO)
+  if (!__atomic_load_n(&rekernel_genl_registered, __ATOMIC_ACQUIRE))
     return;
 
   struct rekernel_event msg = {
@@ -648,7 +613,7 @@ static void rekernel_binder_transaction(void* data, bool reply, struct binder_tr
 // 队列由 Binder 锁保护；固定小缓冲分块比较，预算不足保留事务。
 static bool binder_buffer_data_equal(struct binder_proc* proc, struct binder_buffer* b1, struct binder_buffer* b2,
                                      size_t* budget) {
-  if ((!kf_binder_alloc_copy_from_buffer && struct_offset.binder_buffer_data < 0) || b1->data_size != b2->data_size)
+  if (b1->data_size != b2->data_size)
     return false;
   size_t size = b1->data_size;
   if (size > *budget / 2) {
@@ -694,7 +659,7 @@ static bool binder_can_update_transaction(struct binder_transaction* t1, struct 
 
   if ((t1_flags & t2_flags & TF_ONE_WAY) != TF_ONE_WAY || !t1_to_proc || !t2_to_proc)
     return false;
-  if (t1_to_proc == t2_to_proc && t1_to_proc->tsk == t2_to_proc->tsk && t1_code == t2_code && t1_flags == t2_flags
+  if (t1_to_proc == t2_to_proc && t1_code == t2_code && t1_flags == t2_flags
       && (struct_offset.binder_proc_is_frozen > 0 ? t1_buffer->pid == t2_buffer->pid : true)  // 4.19 以下无此数据
       && t1_ptr == t2_ptr && t1_cookie == t2_cookie) {
     if (strategy == REKERNEL_FREE_ASYNC_BY_CODE)
@@ -709,7 +674,7 @@ static struct binder_transaction* binder_find_outdated_transaction_ilocked(struc
                                                                            struct list_head* target_list,
                                                                            unsigned char strategy) {
   struct binder_work* w;
-  bool second = false;
+  struct binder_transaction* first = NULL;
   size_t budget = REKERNEL_FREE_ASYNC_DATA_BUDGET;
 
   list_for_each_entry(w, target_list, entry) {
@@ -717,11 +682,9 @@ static struct binder_transaction* binder_find_outdated_transaction_ilocked(struc
       continue;
     struct binder_transaction* t_queued = container_of(w, struct binder_transaction, work);
     if (binder_can_update_transaction(t_queued, t, strategy, &budget)) {
-      if (second)
-        return t_queued;
-      else {
-        second = true;
-      }
+      if (first)
+        return first;
+      first = t_queued;
     }
     if (strategy == REKERNEL_FREE_ASYNC_BY_DATA && !budget)
       break;
@@ -738,35 +701,25 @@ static inline void outstanding_txns_dec(struct binder_proc* proc) {
 
 static inline void binder_release_entire_buffer(struct binder_proc* proc, struct binder_thread* thread,
                                                 struct binder_buffer* buffer, bool is_failure) {
-#if REKERNEL_BINDER_ABI == 5
-  binder_size_t off_end_offset = ALIGN(buffer->data_size, sizeof(void*));
-  off_end_offset += buffer->offsets_size;
-#endif
-  binder_transaction_buffer_release(proc
-#if REKERNEL_BINDER_ABI >= 5
-                                    ,
-                                    thread
-#endif
-                                    ,
-                                    buffer
-
-#if REKERNEL_BINDER_ABI == 5
-                                    ,
-                                    off_end_offset
-#endif
-#if REKERNEL_BINDER_ABI == 4 || REKERNEL_BINDER_ABI == 6
-                                    ,
-                                    0
-#endif
-#if REKERNEL_BINDER_ABI == 3
-                                    ,
-                                    NULL
-#endif
-#if REKERNEL_BINDER_ABI >= 4
-                                    ,
-                                    is_failure
-#endif
-  );
+  switch (struct_offset.binder_release_abi) {
+    case 3:
+      ((void (*)(struct binder_proc*, struct binder_buffer*, binder_size_t*))binder_transaction_buffer_release)(
+          proc, buffer, NULL);
+      break;
+    case 4:
+      ((void (*)(struct binder_proc*, struct binder_buffer*, binder_size_t, bool))binder_transaction_buffer_release)(
+          proc, buffer, 0, is_failure);
+      break;
+    case 5:
+    case 6: {
+      binder_size_t end = 0;
+      if (struct_offset.binder_release_abi == 5)
+        end = ALIGN(buffer->data_size, sizeof(void*)) + buffer->offsets_size;
+      ((void (*)(struct binder_proc*, struct binder_thread*, struct binder_buffer*, binder_size_t,
+                 bool))binder_transaction_buffer_release)(proc, thread, buffer, end, is_failure);
+      break;
+    }
+  }
 }
 
 static inline void binder_stats_deleted(enum binder_stat_types type) {
@@ -780,7 +733,7 @@ static unsigned char binder_free_async_strategy(struct binder_proc* proc, struct
                                                 unsigned int code) {
   if (!free_async_has_rules())
     return REKERNEL_FREE_ASYNC_BY_CODE;
-  if ((!kf_binder_alloc_copy_from_buffer && struct_offset.binder_buffer_data < 0) || buffer->data_size <= PARCEL_OFFSET)
+  if (buffer->data_size <= PARCEL_OFFSET)
     return REKERNEL_FREE_ASYNC_SKIP;
   unsigned char data[PARCEL_OFFSET + REKERNEL_RPC_NAME_SIZE * 2];
   size_t size = sizeof(data);
@@ -803,7 +756,7 @@ static unsigned char binder_free_async_strategy(struct binder_proc* proc, struct
 static void binder_proc_transaction_before(hook_fargs3_t* args, void* udata) {
   struct binder_transaction* t = (struct binder_transaction*)args->arg0;
   struct binder_proc* proc = (struct binder_proc*)args->arg1;
-  if (trace == UZERO)
+  if (!trace)
     rekernel_binder_transaction(NULL, false, t, NULL);
   struct binder_buffer* buffer = binder_transaction_buffer(t);
   if (!buffer || !buffer->target_node || !(binder_transaction_flags(t) & TF_ONE_WAY) || !frozen_task_group(proc->tsk))
@@ -816,9 +769,11 @@ static void binder_proc_transaction_before(hook_fargs3_t* args, void* udata) {
 
   binder_node_lock(node);
   binder_inner_proc_lock(proc);
-  // 保留第二条去重规则；Binder 冻结和退出时不清理。
-  if (!binder_proc_is_dead(proc) && !binder_is_frozen(proc) && binder_node_has_async_transaction(node))
+  if (!binder_proc_is_dead(proc) && !binder_is_frozen(proc) && frozen_task_group(proc->tsk)
+      && binder_node_has_async_transaction(node)) {
+    // 至少有两条匹配旧消息才删除最早一条，为新消息发送失败保留余量。
     outdated = binder_find_outdated_transaction_ilocked(t, binder_node_async_todo(node), strategy);
+  }
   if (outdated) {
     list_del_init(&outdated->work.entry);
     outstanding_txns_dec(proc);
@@ -828,7 +783,7 @@ static void binder_proc_transaction_before(hook_fargs3_t* args, void* udata) {
 
   if (!outdated)
     return;
-  // 调用方持有 target_proc 引用直到原函数返回；摘除后在锁外同步释放。
+  // 外层 Binder 调用方持有 node/proc 引用；摘除后在锁外同步释放。
   buffer = binder_transaction_buffer(outdated);
   *(struct binder_buffer**)((uintptr_t)outdated + struct_offset.binder_transaction_buffer) = NULL;
   buffer->transaction = NULL;
@@ -898,10 +853,13 @@ static void tcp_rcv_before(hook_fargs2_t* args, void* udata) {
 }
 
 static long inline_hook_init(const char* args, const char* event, void* __user reserved) {
+  if (struct_offset.binder_release_abi < 3 || struct_offset.binder_release_abi > 6) {
+    logkm("Invalid Binder release ABI: %d\n", struct_offset.binder_release_abi);
+    return -EINVAL;
+  }
   lookup_name(cgroup_freezing);
 
   kfunc_lookup_name(__alloc_skb);
-  kfunc_lookup_name(__nlmsg_put);
   kfunc_lookup_name(genlmsg_put);
   kfunc_lookup_name(nla_put);
   kfunc_lookup_name(skb_trim);
@@ -920,7 +878,7 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   lookup_name(binder_alloc_free_buf);
   binder_free_txn_fixups = (void*)kallsyms_lookup_name("binder_free_txn_fixups");
   kfunc_lookup_name(binder_alloc_copy_from_buffer);
-  if (!kf_binder_alloc_copy_from_buffer) {
+  if (!kfunc(binder_alloc_copy_from_buffer)) {
     if (struct_offset.binder_buffer_data >= 0)
       logkm("Free-async buffer reader: kernel-mapped data\n");
     else
@@ -929,7 +887,7 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   kfunc_lookup_name(kfree);
   kfunc_lookup_name(kmalloc);
   kfunc_lookup_name(__kmalloc);
-  if (!kf_kfree || (!kf_kmalloc && !kf___kmalloc))
+  if (!kfunc(kfree) || (!kfunc(kmalloc) && !kfunc(__kmalloc)))
     return -EOPNOTSUPP;
   kvar_lookup_name(binder_stats);
   kfunc_lookup_name(kvfree);
@@ -948,9 +906,11 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
 #endif /* CONFIG_DEBUG_CMDLINE */
 
   int rc = 0;
-  rc = tracepoint_probe_register(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
-  if (rc == 0) {
-    trace = IZERO;
+  // 缺少 tracepoint 符号或调用入口时跳过注册，与动态版同样不阻断其余 hook。
+  if (kfunc(tracepoint_probe_register) && kfunc(tracepoint_probe_unregister) && kvar(__tracepoint_binder_transaction)) {
+    rc = tracepoint_probe_register(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
+    if (rc == 0)
+      trace = true;
   }
 
   hook_func(binder_proc_transaction, 3, binder_proc_transaction_before, NULL, NULL);
@@ -962,9 +922,9 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
 
   rc = start_rekernel_genl_server();
   if (rc) {
-    if (trace == IZERO) {
+    if (trace) {
       tracepoint_probe_unregister(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
-      trace = UZERO;
+      trace = false;
     }
     hook_unwrap(binder_proc_transaction, binder_proc_transaction_before, NULL);
     hook_unwrap(binder_transaction, binder_transaction_before, binder_transaction_after);
@@ -976,17 +936,18 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
 }
 
 static long inline_hook_control0(const char* ctl_args, char* __user out_msg, int outlen) {
-  char msg[64];
-  snprintf(msg, sizeof(msg), "_(._.)_");
-  compat_copy_to_user(out_msg, msg, sizeof(msg));
-  return 0;
+  static const char msg[] = "_(._.)_";
+  if (!out_msg || outlen < (int)sizeof(msg))
+    return -EINVAL;
+  return compat_copy_to_user(out_msg, msg, sizeof(msg)) == sizeof(msg) ? 0 : -EFAULT;
 }
 
 static long inline_hook_exit(void* __user reserved) {
   int rc = stop_rekernel_genl_server();
   if (rc)
     logkm("Failed to unregister Generic Netlink family: %d\n", rc);
-  tracepoint_probe_unregister(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
+  if (trace)
+    tracepoint_probe_unregister(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
 
   unhook_func(binder_proc_transaction);
   unhook_func(binder_transaction);

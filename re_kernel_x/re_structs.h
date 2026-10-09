@@ -179,26 +179,7 @@ struct binder_thread {
 };
 
 // linux/netlink.h
-#define NETLINK_MAX_COOKIE_LEN 20
-struct sk_buff;
 struct net;
-struct sock;
-struct netlink_kernel_cfg {
-  unsigned int groups;
-  unsigned int flags;
-  void (*input)(struct sk_buff* skb);
-  struct mutex* cb_mutex;
-  int (*bind)(struct net* net, int group);
-  void (*unbind)(struct net* net, int group);
-  bool (*compare)(struct net* net, struct sock* sk);
-};
-struct netlink_ext_ack {
-  const char* _msg;
-  const struct nlattr* bad_attr;
-  const struct nla_policy* policy;
-  u8 cookie[NETLINK_MAX_COOKIE_LEN];
-  u8 cookie_len;
-};
 
 // uapi/linux/netlink.h
 struct nlmsghdr {
@@ -212,8 +193,6 @@ struct nlmsghdr {
 #define NLMSG_ALIGNTO 4U
 #define NLMSG_ALIGN(len) (((len) + NLMSG_ALIGNTO - 1) & ~(NLMSG_ALIGNTO - 1))
 #define NLMSG_HDRLEN ((int)NLMSG_ALIGN(sizeof(struct nlmsghdr)))
-#define NLMSG_LENGTH(len) ((len) + NLMSG_HDRLEN)
-#define NLMSG_DATA(nlh) ((void*)(((char*)nlh) + NLMSG_HDRLEN))
 
 struct nlattr {
   __u16 nla_len;
@@ -262,24 +241,6 @@ struct genl_family {
 #define __GFP_KSWAPD_RECLAIM ((__force gfp_t)___GFP_KSWAPD_RECLAIM)
 #define GFP_ATOMIC (__GFP_HIGH | __GFP_ATOMIC | __GFP_KSWAPD_RECLAIM)
 
-// linux/fs.h
-struct kiocb;
-struct iov_iter;
-struct dir_context;
-struct poll_table_struct;
-struct vm_area_struct;
-struct file_lock;
-struct page;
-struct pipe_inode_info;
-struct seq_file;
-struct open_flags;
-struct file_operations {
-  char unknow[0x120];
-};
-
-// linux/schde.h
-#define PF_FROZEN 0x00010000
-
 // uapi/asm/signal.h
 #define SIGQUIT 3
 #define SIGABRT 6
@@ -288,66 +249,8 @@ struct file_operations {
 
 struct siginfo;
 
-// linux/socket.h
-#define MSG_OOB 1
-#define MSG_PEEK 2
-#define MSG_DONTROUTE 4
-#define MSG_TRYHARD 4
-#define MSG_CTRUNC 8
-#define MSG_PROBE 0x10
-#define MSG_TRUNC 0x20
-#define MSG_DONTWAIT 0x40
-#define MSG_EOR 0x80
-#define MSG_WAITALL 0x100
-#define MSG_FIN 0x200
-#define MSG_SYN 0x400
-#define MSG_CONFIRM 0x800
-#define MSG_RST 0x1000
-#define MSG_ERRQUEUE 0x2000
-#define MSG_NOSIGNAL 0x4000
-#define MSG_MORE 0x8000
-#define MSG_WAITFORONE 0x10000
-#define MSG_SENDPAGE_NOPOLICY 0x10000
-#define MSG_SENDPAGE_NOTLAST 0x20000
-#define MSG_BATCH 0x40000
-#define MSG_EOF MSG_FIN
-#define MSG_NO_SHARED_FRAGS 0x80000
-#define MSG_SENDPAGE_DECRYPTED 0x100000
-
 // linux/tracepoint-defs.h
 struct tracepoint;
-
-// net/tcp_states.h
-enum {
-  TCP_ESTABLISHED = 1,
-  TCP_SYN_SENT,
-  TCP_SYN_RECV,
-  TCP_FIN_WAIT1,
-  TCP_FIN_WAIT2,
-  TCP_TIME_WAIT,
-  TCP_CLOSE,
-  TCP_CLOSE_WAIT,
-  TCP_LAST_ACK,
-  TCP_LISTEN,
-  TCP_CLOSING,
-  TCP_NEW_SYN_RECV,
-  TCP_MAX_STATES
-};
-
-enum {
-  TCPF_ESTABLISHED = (1 << TCP_ESTABLISHED),
-  TCPF_SYN_SENT = (1 << TCP_SYN_SENT),
-  TCPF_SYN_RECV = (1 << TCP_SYN_RECV),
-  TCPF_FIN_WAIT1 = (1 << TCP_FIN_WAIT1),
-  TCPF_FIN_WAIT2 = (1 << TCP_FIN_WAIT2),
-  TCPF_TIME_WAIT = (1 << TCP_TIME_WAIT),
-  TCPF_CLOSE = (1 << TCP_CLOSE),
-  TCPF_CLOSE_WAIT = (1 << TCP_CLOSE_WAIT),
-  TCPF_LAST_ACK = (1 << TCP_LAST_ACK),
-  TCPF_LISTEN = (1 << TCP_LISTEN),
-  TCPF_CLOSING = (1 << TCP_CLOSING),
-  TCPF_NEW_SYN_RECV = (1 << TCP_NEW_SYN_RECV),
-};
 
 // net/sock.h
 typedef __u32 __bitwise __portpair;
@@ -389,38 +292,6 @@ struct sock_common {
 
 struct sock {
   struct sock_common __sk_common;
-#define sk_node __sk_common.skc_node
-#define sk_nulls_node __sk_common.skc_nulls_node
-#define sk_refcnt __sk_common.skc_refcnt
-#define sk_tx_queue_mapping __sk_common.skc_tx_queue_mapping
-#define sk_rx_queue_mapping __sk_common.skc_rx_queue_mapping
-
-#define sk_dontcopy_begin __sk_common.skc_dontcopy_begin
-#define sk_dontcopy_end __sk_common.skc_dontcopy_end
-#define sk_hash __sk_common.skc_hash
-#define sk_portpair __sk_common.skc_portpair
-#define sk_num __sk_common.skc_num
-#define sk_dport __sk_common.skc_dport
-#define sk_addrpair __sk_common.skc_addrpair
-#define sk_daddr __sk_common.skc_daddr
-#define sk_rcv_saddr __sk_common.skc_rcv_saddr
-#define sk_family __sk_common.skc_family
-#define sk_state __sk_common.skc_state
-#define sk_reuse __sk_common.skc_reuse
-#define sk_reuseport __sk_common.skc_reuseport
-#define sk_ipv6only __sk_common.skc_ipv6only
-#define sk_net_refcnt __sk_common.skc_net_refcnt
-#define sk_bound_dev_if __sk_common.skc_bound_dev_if
-#define sk_bind_node __sk_common.skc_bind_node
-#define sk_prot __sk_common.skc_prot
-#define sk_net __sk_common.skc_net
-#define sk_v6_daddr __sk_common.skc_v6_daddr
-#define sk_v6_rcv_saddr __sk_common.skc_v6_rcv_saddr
-#define sk_cookie __sk_common.skc_cookie
-#define sk_incoming_cpu __sk_common.skc_incoming_cpu
-#define sk_flags __sk_common.skc_flags
-#define sk_rxhash __sk_common.skc_rxhash
-  // unknow
 };
 
 // linux/skbuff.h
@@ -487,59 +358,5 @@ struct tcphdr {
   __sum16 check;
   __be16 urg_ptr;
 };
-
-// uapi/linux/ip.h
-struct iphdr {
-  __u8 ihl : 4, version : 4;
-  __u8 tos;
-  __be16 tot_len;
-  __be16 id;
-  __be16 frag_off;
-  __u8 ttl;
-  __u8 protocol;
-  __sum16 check;
-  __be32 saddr;
-  __be32 daddr;
-};
-
-// uapi/linux/ipv6.h
-struct ipv6hdr {
-  __u8 priority : 4, version : 4;
-  __u8 flow_lbl[3];
-
-  __be16 payload_len;
-  __u8 nexthdr;
-  __u8 hop_limit;
-
-  // unknow
-  // struct in6_addr saddr;
-  // struct in6_addr daddr;
-};
-
-// uapi/linux/swab.h
-#define ___constant_swab16(x) ((__u16)((((__u16)(x) & (__u16)0x00ffU) << 8) | (((__u16)(x) & (__u16)0xff00U) >> 8)))
-
-#define ___constant_swab32(x)                                                                     \
-  ((__u32)((((__u32)(x) & (__u32)0x000000ffUL) << 24) | (((__u32)(x) & (__u32)0x0000ff00UL) << 8) \
-           | (((__u32)(x) & (__u32)0x00ff0000UL) >> 8) | (((__u32)(x) & (__u32)0xff000000UL) >> 24)))
-
-#define ___constant_swab64(x)                                                                                         \
-  ((__u64)((((__u64)(x) & (__u64)0x00000000000000ffULL) << 56) | (((__u64)(x) & (__u64)0x000000000000ff00ULL) << 40)  \
-           | (((__u64)(x) & (__u64)0x0000000000ff0000ULL) << 24) | (((__u64)(x) & (__u64)0x00000000ff000000ULL) << 8) \
-           | (((__u64)(x) & (__u64)0x000000ff00000000ULL) >> 8) | (((__u64)(x) & (__u64)0x0000ff0000000000ULL) >> 24) \
-           | (((__u64)(x) & (__u64)0x00ff000000000000ULL) >> 40)                                                      \
-           | (((__u64)(x) & (__u64)0xff00000000000000ULL) >> 56)))
-
-#define ___constant_swahw32(x) \
-  ((__u32)((((__u32)(x) & (__u32)0x0000ffffUL) << 16) | (((__u32)(x) & (__u32)0xffff0000UL) >> 16)))
-
-#define ___constant_swahb32(x) \
-  ((__u32)((((__u32)(x) & (__u32)0x00ff00ffUL) << 8) | (((__u32)(x) & (__u32)0xff00ff00UL) >> 8)))
-
-#define swab16(x) ___constant_swab16(x)
-#define swab32(x) ___constant_swab32(x)
-#define swab64(x) ___constant_swab64(x)
-#define swahw32(x) ___constant_swahw32(x)
-#define swahb32(x) ___constant_swahb32(x)
 
 #endif /* __RE_STRUCTS_H */

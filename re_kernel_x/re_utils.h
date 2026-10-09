@@ -40,19 +40,10 @@ static inline int skb_transport_offset(const struct sk_buff* skb) {
 
 static inline int nlmsg_msg_size(int payload) { return NLMSG_HDRLEN + payload; }
 static inline int nlmsg_total_size(int payload) { return NLMSG_ALIGN(nlmsg_msg_size(payload)); }
-static inline int nlmsg_padlen(int payload) { return nlmsg_total_size(payload) - nlmsg_msg_size(payload); }
 static inline void* nlmsg_data(const struct nlmsghdr* nlh) { return (unsigned char*)nlh + NLMSG_HDRLEN; }
-static inline int nlmsg_len(const struct nlmsghdr* nlh) { return nlh->nlmsg_len - NLMSG_HDRLEN; }
 
 static inline struct sk_buff* nlmsg_new(size_t payload, gfp_t flags) {
   return alloc_skb(nlmsg_total_size(payload), flags);
-}
-
-extern struct nlmsghdr* kfunc_def(__nlmsg_put)(struct sk_buff* skb, u32 portid, u32 seq, int type, int len, int flags);
-static inline struct nlmsghdr* nlmsg_put(struct sk_buff* skb, u32 portid, u32 seq, int type, int payload, int flags) {
-  kfunc_call(__nlmsg_put, skb, portid, seq, type, payload, flags);
-  kfunc_not_found();
-  return NULL;
 }
 
 static inline void* nla_data(const struct nlattr* nla) { return (char*)nla + NLA_HDRLEN; }
@@ -71,7 +62,7 @@ static inline int nla_put_string(struct sk_buff* skb, int attrtype, const char* 
 }
 static inline struct nlattr* nla_nest_start(struct sk_buff* skb, int attrtype) {
   struct nlattr* start = (struct nlattr*)skb_tail_pointer(skb);
-  if (kf_nla_put && !kf_nla_put(skb, attrtype | NLA_F_NESTED, 0, NULL))
+  if (kfunc(nla_put) && !kfunc(nla_put)(skb, attrtype | NLA_F_NESTED, 0, NULL))
     return start;
   return NULL;
 }

@@ -43,6 +43,7 @@ struct struct_offset {
   int16_t sock_sk_net;
   int16_t binder_proc_is_dead;
   int16_t binder_buffer_data;
+  int16_t binder_release_abi;
 };
 
 // 独立数据段供离线替换；volatile 保证访问从表中读取，不折叠成指令立即数。
@@ -91,6 +92,7 @@ volatile struct struct_offset struct_offset __attribute__((section(".data.re_off
     .sock_sk_net = 0x30,
     .binder_proc_is_dead = 0x70,
     .binder_buffer_data = -1,
+    .binder_release_abi = 6,
 };
 // task_comm
 static inline const char* task_comm(struct task_struct* task) {
@@ -103,11 +105,6 @@ static inline kuid_t task_uid(struct task_struct* task) {
   struct cred* cred = *(struct cred**)((uintptr_t)task + struct_offset.task_struct_cred);
   kuid_t uid = *(kuid_t*)((uintptr_t)cred + struct_offset.cred_uid);
   return uid;
-}
-// task_pid
-static inline pid_t task_pid_nr(struct task_struct* task) {
-  pid_t pid = *(pid_t*)((uintptr_t)task + struct_offset.task_struct_pid);
-  return pid;
 }
 // task_tgid
 static inline pid_t task_tgid_nr(struct task_struct* task) {
@@ -138,11 +135,6 @@ static inline spinlock_t* binder_proc_inner_lock(struct binder_proc* proc) {
 static inline int* binder_proc_outstanding_txns(struct binder_proc* proc) {
   int* outstanding_txns = (int*)((uintptr_t)proc + struct_offset.binder_proc_outstanding_txns);
   return outstanding_txns;
-}
-// binder_alloc_buffer
-static inline void __user* binder_alloc_buffer(struct binder_alloc* alloc) {
-  void __user* buffer = *(void __user**)((uintptr_t)alloc + struct_offset.binder_alloc_buffer);
-  return buffer;
 }
 // binder_alloc_free_async_space
 static inline size_t binder_alloc_free_async_space(struct binder_alloc* alloc) {
@@ -213,11 +205,6 @@ static inline unsigned int sk_buff_len(const struct sk_buff* skb) {
 static inline __u16 sk_buff_transport_header(const struct sk_buff* skb) {
   __u16 transport_header = *(__u16*)((uintptr_t)skb + struct_offset.sk_buff_transport_header);
   return transport_header;
-}
-// sk_buff_network_header
-static inline __u16 sk_buff_network_header(const struct sk_buff* skb) {
-  __u16 network_header = *(__u16*)((uintptr_t)skb + struct_offset.sk_buff_network_header);
-  return network_header;
 }
 // sk_buff_tail
 static inline unsigned int sk_buff_tail(const struct sk_buff* skb) {

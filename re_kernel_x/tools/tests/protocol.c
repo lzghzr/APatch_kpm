@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define REKERNEL_BINDER_ABI 6
 #include "re_kernel_host.h"
 
 #define ENOMEM 12
@@ -40,7 +39,7 @@ static struct rekernel_binder_context* binder_contexts;
 static unsigned int binder_context_guard, binder_context_unavailable;
 static pthread_mutex_t context_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int context_alloc_error, context_allocated, context_freed;
-static unsigned long rekernel_genl_registered = IZERO;
+static bool rekernel_genl_registered = true;
 static struct rekernel_event captured;
 static int sent, copy_error, frozen = 1;
 

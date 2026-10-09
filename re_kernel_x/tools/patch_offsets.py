@@ -39,20 +39,21 @@ def sections(data):
             if name in result or entry[1] != 1 or entry[4] + entry[5] > len(data):
                 raise ValueError("invalid configuration section")
             result[name] = (entry[4], entry[5], index, entry[2])
-    for name in (".data.re_offsets", ".rodata.re_abi"):
-        if name not in result:
-            raise ValueError(f"missing {name}")
+    if ".data.re_offsets" not in result:
+        raise ValueError("missing .data.re_offsets")
     offset, size, index, flags = result[".data.re_offsets"]
     if flags & 3 != 3 or size == 0 or size % 2:
         raise ValueError("invalid writable offset table")
     if any(entry[1] in (4, 9) and entry[7] == index and entry[5] for entry in entries):
         raise ValueError("offset table must not contain relocations")
-    abi_offset, abi_size, _, _ = result[".rodata.re_abi"]
-    if abi_size != 4:
-        raise ValueError("invalid Binder ABI tag")
-    abi = struct.unpack_from("<I", data, abi_offset)[0]
-    if abi not in (3, 4, 5, 6):
-        raise ValueError("unknown Binder ABI")
+    abi = None
+    if ".rodata.re_abi" in result:
+        abi_offset, abi_size, _, _ = result[".rodata.re_abi"]
+        if abi_size != 4:
+            raise ValueError("invalid Binder ABI tag")
+        abi = struct.unpack_from("<I", data, abi_offset)[0]
+        if abi not in (3, 4, 5, 6):
+            raise ValueError("unknown Binder ABI")
     return offset, size, abi
 
 
@@ -66,15 +67,31 @@ def source_fields():
     return fields
 
 
-def read_layout(path, data, offset, size, abi):
+def table_abi(data, offset, size, fields, fixed_abi):
+    if fixed_abi is not None:
+        if "binder_release_abi" in fields:
+            raise ValueError("fixed ABI baseline cannot select another release ABI")
+        return fixed_abi
+    if not fields or fields[-1] != "binder_release_abi":
+        raise ValueError("unified baseline requires binder_release_abi as the last field")
+    abi = struct.unpack_from("<h", data, offset + size - 2)[0]
+    if abi not in (3, 4, 5, 6):
+        raise ValueError("binder_release_abi must be 3, 4, 5 or 6")
+    return abi
+
+
+def read_layout(path, data, offset, size, fixed_abi):
     layout = json.loads(path.read_text())
     fields = layout["fields"]
-    if (layout["schema"] != 1 or layout["sha256"] != sha256(data)
-            or layout["binder_abi"] != abi or layout["table_offset"] != offset
+    if (any(type(layout.get(key)) is not int for key in ("schema", "binder_abi", "table_offset", "table_size"))
+            or layout["schema"] != (1 if fixed_abi is not None else 2) or layout["sha256"] != sha256(data)
+            or layout["table_offset"] != offset
             or layout["table_size"] != size or len(fields) * 2 != size
-            or not all(isinstance(field, str) for field in fields)
+            or not isinstance(fields, list) or not all(isinstance(field, str) and field for field in fields)
             or len(set(fields)) != len(fields)):
         raise ValueError("layout does not match this KPM")
+    if layout["binder_abi"] != table_abi(data, offset, size, fields, fixed_abi):
+        raise ValueError("layout release ABI does not match this KPM")
     return layout
 
 
@@ -110,13 +127,14 @@ def write_json(path, value):
 
 def run(args):
     data = args.kpm.read_bytes()
-    offset, size, abi = sections(data)
+    offset, size, fixed_abi = sections(data)
     if args.command == "baseline":
         fields = source_fields()
         if len(fields) * 2 != size:
             raise ValueError("source fields do not match offset table size")
+        abi = table_abi(data, offset, size, fields, fixed_abi)
         layout = {
-            "schema": 1,
+            "schema": 1 if fixed_abi is not None else 2,
             "kpm": args.kpm.name,
             "sha256": sha256(data),
             "binder_abi": abi,
@@ -129,7 +147,8 @@ def run(args):
         return {"binder_abi": abi, "table_bytes": size, "sha256": layout["sha256"]}
 
     layout_path = args.layout or Path(str(args.kpm) + ".json")
-    layout = read_layout(layout_path, data, offset, size, abi)
+    layout = read_layout(layout_path, data, offset, size, fixed_abi)
+    abi = layout["binder_abi"]
     if args.command == "dump":
         with args.output.open("xb") as stream:
             stream.write(data[offset:offset + size])
@@ -138,6 +157,7 @@ def run(args):
     payload = args.blob.read_bytes() if args.blob else encode_offsets(args.offsets, layout["fields"])
     if len(payload) != size:
         raise ValueError(f"offset blob must be exactly {size} bytes")
+    abi = table_abi(payload, 0, size, layout["fields"], fixed_abi)
     # 工具端核对编码宽度；不在模块中加入运行时偏移推导或检查。
     count_index = layout["fields"].index("genl_family_n_mcgrps_size")
     if struct.unpack_from("<h", payload, count_index * 2)[0] not in (1, 2, 4):
@@ -155,7 +175,7 @@ def run(args):
     output_layout = Path(str(args.output) + ".json")
     if args.output.exists() or output_layout.exists():
         raise FileExistsError("output KPM or layout already exists; choose a new path")
-    receipt = dict(layout, kpm=args.output.name, parent_sha256=sha256(data), sha256=sha256(patched),
+    receipt = dict(layout, kpm=args.output.name, parent_sha256=sha256(data), sha256=sha256(patched), binder_abi=abi,
                    offsets=table_values(patched, offset, size, layout["fields"]))
     with args.output.open("xb") as stream:
         stream.write(patched)

@@ -42,7 +42,11 @@ _Static_assert(sizeof(((struct genl_family*)0)->n_mcgrps) == 1 || sizeof(((struc
 #define BINDER_BUFFER_DATA_OFFSET (-1L)
 #endif
 
-int main() {
+int main(int argc, char** argv) {
+  if (argc != 2 || argv[1][0] < '3' || argv[1][0] > '6' || argv[1][1]) {
+    printf("usage: re_vmlinux <3|4|5|6>\n");
+    return 1;
+  }
   printf(
       "struct struct_offset struct_offset = {\n\
     .binder_alloc_buffer_size = 0x%lx,\n\
@@ -89,6 +93,7 @@ int main() {
     .sock_sk_net = 0x%lx,\n\
     .binder_proc_is_dead = 0x%lx,\n\
     .binder_buffer_data = %ld,\n\
+    .binder_release_abi = %lu,\n\
 };\n",
       offsetof(struct binder_alloc, buffer_size), offsetof(struct binder_alloc, buffer),
       offsetof(struct binder_alloc, free_async_space), offsetof(struct binder_alloc, pid),
@@ -108,7 +113,8 @@ int main() {
       offsetof(struct genl_family, mcgrps), offsetof(struct genl_family, n_mcgrps),
       sizeof(((struct genl_family*)0)->n_mcgrps), offsetof(struct genl_family, mcgrp_offset),
       offsetof(struct task_struct, cred), offsetof(struct cred, uid), offsetof(struct task_struct, comm),
-      offsetof(struct sock, __sk_common.skc_net.net), offsetof(struct binder_proc, is_dead), BINDER_BUFFER_DATA_OFFSET);
+      offsetof(struct sock, __sk_common.skc_net.net), offsetof(struct binder_proc, is_dead), BINDER_BUFFER_DATA_OFFSET,
+      (unsigned long)(argv[1][0] - '0'));
 
   return 0;
 }

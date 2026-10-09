@@ -5,19 +5,10 @@
 
 #include "re_structs.h"
 
-#if REKERNEL_BINDER_ABI < 3 || REKERNEL_BINDER_ABI > 6
-#error "REKERNEL_BINDER_ABI must be 3, 4, 5 or 6"
-#endif
-
-#define THIS_MODULE ((struct module*)0)
-
 #define ALIGN_MASK(x, mask) (((x) + (mask)) & ~(mask))
 #define ALIGN(x, a) ALIGN_MASK(x, (typeof(x))(a) - 1)
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
-
-#define IZERO (1UL << 0x10)
-#define UZERO (1UL << 0x20)
 
 #define REKERNEL_GENL_FAMILY_NAME "rekernel_x2"
 #define REKERNEL_GENL_VERSION 1
@@ -29,7 +20,6 @@
 #define MIN_USERAPP_UID 10000
 #define MAX_SYSTEM_UID 2000
 #define PARCEL_OFFSET 16
-#define INTERFACETOKEN_BUFF_SIZE 140
 
 // 模块内部事件；发送时转换为 Generic Netlink attributes。
 #define REKERNEL_EVENT_VERSION 1

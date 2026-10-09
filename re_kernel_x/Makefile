@@ -1,4 +1,4 @@
-MYKPM_VERSION := 1.6
+MYKPM_VERSION := 1.6-20261008
 
 ifndef KP_DIR
 	KP_DIR = ../KernelPatch
@@ -25,12 +25,11 @@ else ifdef NDK_PATH
 	LD := $(NDK_PATH)/ld.lld
 endif
 
-REKERNEL_BINDER_ABI ?= 6
 OUT_DIR ?= .
 LAYOUT_DIR ?= $(OUT_DIR)
 PYTHON ?= python3
 
-CFLAGS = -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DREKERNEL_BINDER_ABI=$(REKERNEL_BINDER_ABI) -DMYKPM_VERSION=\"$(MYKPM_VERSION)$(MYKPM_VER)\"
+CFLAGS = -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\"$(MYKPM_VERSION)$(MYKPM_VER)\"
 
 INCLUDE_DIRS := . include patch/include linux/include linux/arch/arm64/include linux/tools/arch/arm64/include
 
@@ -42,27 +41,26 @@ headers := re_kernel.h re_structs.h re_utils.h re_offsets.c ../kpm_utils.h
 all: base
 debug: base_debug
 
-base: $(OUT_DIR)/re_kernel_x_$(MYKPM_VERSION)_abi$(REKERNEL_BINDER_ABI).kpm
+base: $(OUT_DIR)/re_kernel_x_$(MYKPM_VERSION).kpm
 
 base_debug: CFLAGS += -DCONFIG_DEBUG
 base_debug: MYKPM_VER := _d
-base_debug: $(OUT_DIR)/re_kernel_x_$(MYKPM_VERSION)_abi$(REKERNEL_BINDER_ABI)_debug.kpm
+base_debug: $(OUT_DIR)/re_kernel_x_$(MYKPM_VERSION)_debug.kpm
 
-$(OUT_DIR)/re_kernel_x_$(MYKPM_VERSION)_abi$(REKERNEL_BINDER_ABI).kpm: ${objs} ${headers}
+$(OUT_DIR)/re_kernel_x_$(MYKPM_VERSION).kpm: ${objs} ${headers}
 	@mkdir -p $(OUT_DIR) $(LAYOUT_DIR)
 	@test ! -e $@
 	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $(objs) -r -o $@
 	$(PYTHON) tools/patch_offsets.py baseline $@ --output $(LAYOUT_DIR)/$(notdir $@).json
 
-$(OUT_DIR)/re_kernel_x_$(MYKPM_VERSION)_abi$(REKERNEL_BINDER_ABI)_debug.kpm: ${objs} ${headers}
+$(OUT_DIR)/re_kernel_x_$(MYKPM_VERSION)_debug.kpm: ${objs} ${headers}
 	@mkdir -p $(OUT_DIR) $(LAYOUT_DIR)
 	@test ! -e $@
 	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $(objs) -r -o $@
 	$(PYTHON) tools/patch_offsets.py baseline $@ --output $(LAYOUT_DIR)/$(notdir $@).json
 
-# ABI 3/4/5/6 指现有 Binder 函数签名分支，不代表 Linux 主版本号。
-baselines:
-	@for abi in 3 4 5 6; do $(MAKE) REKERNEL_BINDER_ABI=$$abi OUT_DIR=$(OUT_DIR) LAYOUT_DIR=$(LAYOUT_DIR) base base_debug || exit $$?; done
+# 同一基线通过配置表选择 Binder 释放调用方式。
+baselines: base base_debug
 
 .PHONY: all debug base base_debug baselines clean
 clean:

@@ -8,12 +8,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define REKERNEL_BINDER_ABI 6
 #include "re_kernel_host.h"
 #define TF_ONE_WAY 1
+#define TF_UPDATE_TXN 0x40
 #define container_of(p, t, m) ((t*)((char*)(p) - offsetof(t, m)))
 #define list_for_each_entry(p, h, m) \
   for (p = container_of((h)->next, __typeof__(*p), m); &p->m != (h); p = container_of(p->m.next, __typeof__(*p), m))
+#define kfunc(name) kf_##name
+#define logkm(...) ((void)0)
 #define kvar(n) (&stats)
 typedef uint32_t u32;
 typedef size_t binder_size_t;
@@ -90,6 +92,7 @@ static struct {
   int16_t binder_proc_is_dead, binder_proc_outstanding_txns, binder_proc_is_frozen;
   int16_t binder_transaction_buffer, binder_transaction_to_proc, binder_transaction_code, binder_transaction_flags;
   int16_t binder_node_ptr, binder_node_cookie, binder_stats_deleted_transaction, binder_buffer_data;
+  int16_t binder_release_abi;
 } struct_offset = {offsetof(struct binder_proc, dead),
                    offsetof(struct binder_proc, outstanding),
                    offsetof(struct binder_proc, frozen),
@@ -100,11 +103,13 @@ static struct {
                    offsetof(struct binder_node, ptr),
                    offsetof(struct binder_node, cookie),
                    offsetof(__typeof__(stats), deleted),
-                   -1};
+                   -1,
+                   6};
 typedef struct {
   uintptr_t arg0, arg1, arg2;
+  int skip_origin;
 } hook_fargs3_t;
-static unsigned long trace = IZERO;
+static bool trace = true;
 static int notifications;
 static _Thread_local int node_locked, proc_locked;
 static void binder_node_lock(struct binder_node* n) {
@@ -148,33 +153,19 @@ static int transaction_frees, buffer_frees, releases, fixup_calls;
 static bool block_release, entered_release, resume_release;
 static pthread_mutex_t release_guard = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t release_cond = PTHREAD_COND_INITIALIZER;
-static void native_release(struct binder_proc* p,
-#if REKERNEL_BINDER_ABI >= 5
-                           struct binder_thread* t,
-#endif
-                           struct binder_buffer* b,
-#if REKERNEL_BINDER_ABI == 3
-                           binder_size_t* end
-#else
-                           binder_size_t end, bool failure
-#endif
-) {
+static int test_abi;
+static void native_release(struct binder_proc* p, struct binder_thread* t, struct binder_buffer* b, binder_size_t end,
+                           bool failure) {
   assert(!node_locked && !proc_locked && !release_phase);
   pthread_mutex_lock(&p->lock);
   assert(!p->released && p->tmp_ref > 0 && !b->transaction);
   pthread_mutex_unlock(&p->lock);
   assert(!b->offsets_size && !b->extra_buffers_size);
-#if REKERNEL_BINDER_ABI >= 5
-  assert(!t);
-#endif
-#if REKERNEL_BINDER_ABI != 3
-  assert(failure);
-#endif
-#if REKERNEL_BINDER_ABI == 5
-  assert(end == ALIGN(b->data_size, sizeof(void*)) + b->offsets_size);
-#else
-  assert(!end);
-#endif
+  assert(!t && failure);
+  if (test_abi == 5)
+    assert(end == ALIGN(b->data_size, sizeof(void*)) + b->offsets_size);
+  else
+    assert(!end);
   if (block_release) {
     pthread_mutex_lock(&release_guard);
     entered_release = true;
@@ -187,6 +178,14 @@ static void native_release(struct binder_proc* p,
   }
   release_phase = 1;
   __atomic_add_fetch(&releases, 1, __ATOMIC_RELAXED);
+}
+static void native_release3(struct binder_proc* p, struct binder_buffer* b, binder_size_t* end) {
+  assert(test_abi == 3 && !end);
+  native_release(p, NULL, b, 0, true);
+}
+static void native_release4(struct binder_proc* p, struct binder_buffer* b, binder_size_t end, bool failure) {
+  assert(test_abi == 4);
+  native_release(p, NULL, b, end, failure);
 }
 static void native_free_buf(struct binder_alloc* a, struct binder_buffer* b) {
   assert(!node_locked && !proc_locked && release_phase == 1 && !b->transaction);
@@ -206,7 +205,7 @@ static void kfree(struct binder_transaction* t) {
   __atomic_add_fetch(&transaction_frees, 1, __ATOMIC_RELAXED);
   free(t);
 }
-static __typeof__(&native_release) binder_transaction_buffer_release = native_release;
+static void* binder_transaction_buffer_release;
 static void (*binder_alloc_free_buf)(struct binder_alloc*, struct binder_buffer*) = native_free_buf;
 static void (*binder_free_txn_fixups)(struct binder_transaction*) = native_fixups;
 static void rekernel_binder_transaction(void* a, bool b, void* c, void* d) {
@@ -298,7 +297,12 @@ static void setup(struct fixture* f, int count) {
   f->incoming = new_tx(&f->proc, &f->node, 7);
   transaction_frees = buffer_frees = releases = fixup_calls = notifications = stats.deleted.value = 0;
   binder_free_txn_fixups = native_fixups;
-  trace = IZERO;
+  struct_offset.binder_release_abi = test_abi;
+  binder_transaction_buffer_release = test_abi == 3   ? (void*)native_release3
+                                      : test_abi == 4 ? (void*)native_release4
+                                                      : (void*)native_release;
+  assert(binder_release_abi_init_check() == 0);
+  trace = true;
   memset(rekernel_free_async_rules, 0, sizeof(rekernel_free_async_rules));
   rekernel_free_async_count = 0;
   buffer_copy_error = false;
@@ -324,8 +328,55 @@ static int ids(struct fixture* f, int* dest) {
 static void invoke(struct fixture* f) {
   data_copy_calls = 0;
   data_copy_bytes = 0;
-  hook_fargs3_t a = {.arg0 = (uintptr_t)f->incoming, .arg1 = (uintptr_t)&f->proc};
+  // 每次原生调用有独立事务；before 清理后模拟入队与消费者取走。
+  struct binder_transaction* t = malloc(sizeof(*t));
+  assert(t);
+  *t = *f->incoming;
+  static int next_debug_id = 1000;
+  t->debug_id = __atomic_add_fetch(&next_debug_id, 1, __ATOMIC_RELAXED);
+  INIT_LIST_HEAD(&t->work.entry);
+  if (t->buffer) {
+    t->buffer = malloc(sizeof(*t->buffer));
+    assert(t->buffer);
+    *t->buffer = *f->incoming->buffer;
+    t->buffer->transaction = t;
+    if (t->buffer->kernel_data == f->incoming->buffer->data)
+      t->buffer->kernel_data = t->buffer->data;
+  }
+  uintptr_t address = (uintptr_t)t;
+  int debug_id = t->debug_id;
+  hook_fargs3_t a = {.arg0 = address, .arg1 = (uintptr_t)&f->proc};
   binder_proc_transaction_before(&a, NULL);
+  binder_node_lock(&f->node);
+  binder_inner_proc_lock(&f->proc);
+  bool queued =
+      t->buffer && t->buffer->target_node == &f->node && (t->flags & TF_ONE_WAY) && !f->proc.dead && f->node.has_async;
+  if (queued) {
+    __list_add(&t->work.entry, f->node.todo.prev, &f->node.todo);
+    f->proc.outstanding++;
+  }
+  binder_inner_proc_unlock(&f->proc);
+  binder_node_unlock(&f->node);
+  if (queued) {
+    // 入队后另一个生产者可能已清理本事务；消费者只访问加锁队列里的成员。
+    t = NULL;
+    binder_node_lock(&f->node);
+    binder_inner_proc_lock(&f->proc);
+    struct binder_work* w;
+    list_for_each_entry(w, &f->node.todo, entry) {
+      struct binder_transaction* member = container_of(w, struct binder_transaction, work);
+      if ((uintptr_t)member == address && member->debug_id == debug_id) {
+        t = member;
+        list_del_init(&member->work.entry);
+        f->proc.outstanding--;
+        break;
+      }
+    }
+    binder_inner_proc_unlock(&f->proc);
+    binder_node_unlock(&f->node);
+  }
+  if (t)
+    drop_tx(t);
   assert(!release_phase);
 }
 static void unchanged(struct fixture* f, int count) {
@@ -349,7 +400,8 @@ static void teardown(struct fixture* f) {
     list_del_init(&t->work.entry);
     drop_tx(t);
   }
-  drop_tx(f->incoming);
+  if (f->incoming)
+    drop_tx(f->incoming);
   pthread_mutex_destroy(&f->node.lock);
   pthread_mutex_destroy(&f->proc.lock);
 }
@@ -383,7 +435,7 @@ static void test_rule_cleanup(void) {
   unchanged(&f, 3);  // 通配 SKIP 保护全部 code。
   assert(free_async_update(name, 7, 2, true) == 0);
   invoke(&f);
-  assert(ids(&f, actual) == 2 && actual[0] == 0 && actual[1] == 2 && f.proc.outstanding == 2);
+  assert(ids(&f, actual) == 2 && actual[0] == 1 && actual[1] == 2 && f.proc.outstanding == 2);
   teardown(&f);
   setup(&f, 3);
   set_token(&f, name);
@@ -393,7 +445,7 @@ static void test_rule_cleanup(void) {
   unchanged(&f, 3);  // 精确 SKIP 覆盖通配 BY_CODE。
   assert(free_async_update(name, 7, 0, false) == 0);
   invoke(&f);
-  assert(ids(&f, actual) == 2 && actual[0] == 0 && actual[1] == 2);
+  assert(ids(&f, actual) == 2 && actual[0] == 1 && actual[1] == 2);
   teardown(&f);
   setup(&f, 3);
   set_token(&f, name);
@@ -441,7 +493,8 @@ static void test_rule_cleanup(void) {
   teardown(&f);
   puts(
       "production rule cleanup: copied Binder token, SKIP protects queue/counts, exact/wildcard priority, "
-      "BY_CODE oldest retained, read failures/truncated/non-ASCII tokens preserve messages: PASS");
+      "BY_CODE oldest removed with one queued match retained, read failures/truncated/non-ASCII tokens preserve "
+      "messages: PASS");
 }
 
 static void setup_data(struct fixture* f, int count, size_t size) {
@@ -464,7 +517,7 @@ static void test_data_cleanup(void) {
   for (unsigned int i = 0; i < ARRAY_SIZE(sizes); i++) {
     setup_data(&f, 3, sizes[i]);
     invoke(&f);
-    assert(ids(&f, actual) == 2 && actual[0] == 0 && actual[1] == 2);
+    assert(ids(&f, actual) == 2 && actual[0] == 1 && actual[1] == 2);
     assert(f.proc.outstanding == 2 && releases == 1 && stats.deleted.value == 1);
     assert(data_copy_bytes == sizes[i] * 4);
     assert(data_copy_calls == ((sizes[i] + 63) / 64) * 4);
@@ -488,7 +541,7 @@ static void test_data_cleanup(void) {
   struct binder_transaction* first = container_of(f.node.todo.next, struct binder_transaction, work.entry);
   first->buffer->data[128] ^= 1;
   invoke(&f);
-  assert(ids(&f, actual) == 2 && actual[0] == 0 && actual[1] == 1);  // 保留最早数据相同者。
+  assert(ids(&f, actual) == 2 && actual[0] == 0 && actual[1] == 2);  // 不同数据保留，删除最早匹配者。
   teardown(&f);
   // 任意一次锁内读取失败都停止本轮清理，不能降级成 BY_CODE。
   for (unsigned int fail = 1; fail <= 12; fail++) {
@@ -564,7 +617,7 @@ static void test_data_cleanup(void) {
   pthread_t threads[8];
   for (int i = 0; i < 8; i++) assert(pthread_create(&threads[i], NULL, producer, &f) == 0);
   for (int i = 0; i < 8; i++) assert(pthread_join(threads[i], NULL) == 0);
-  assert(ids(&f, actual) == 2 && actual[0] == 0 && actual[1] == 9 && f.proc.outstanding == 2);
+  assert(ids(&f, actual) == 2 && actual[0] == 8 && actual[1] == 9 && f.proc.outstanding == 2);
   assert(f.proc.tmp_ref == 1 && releases == 8 && buffer_frees == 8 && transaction_frees == 8);
   assert(stats.deleted.value == 8 && f.node.has_async);
   teardown(&f);
@@ -592,7 +645,8 @@ static void test_data_cleanup(void) {
   teardown(&f);
   puts(
       "production BY_DATA: full bytes/length, 64-byte and page boundaries, zero/short/overflow, all copy failures, "
-      "oldest identical retained, object/FD protection, shared 64KiB budget, eight producers: PASS");
+      "oldest identical removed, one queued match retained, object/FD protection, shared 64KiB budget, eight "
+      "producers: PASS");
 }
 
 static void test_kernel_data_reader(void) {
@@ -638,7 +692,7 @@ static void test_kernel_data_reader(void) {
   second->buffer->kernel_data = second->buffer->data;
   invoke(&f);
   int actual[32];
-  assert(ids(&f, actual) == 2 && actual[0] == 0 && actual[1] == 2);
+  assert(ids(&f, actual) == 2 && actual[0] == 1 && actual[1] == 2);
   assert(f.proc.outstanding == 2 && releases == 1 && stats.deleted.value == 1);
   teardown(&f);
   setup_data(&f, 3, 129);
@@ -666,10 +720,130 @@ static void test_kernel_data_reader(void) {
   teardown(&f);
   puts(
       "production legacy reader: RPC/BY_DATA, native priority, byte/page boundaries, invalid ranges/free/null, "
-      "oldest retained and shared budget: PASS");
+      "one queued match retained and shared budget: PASS");
 }
 
-int main(void) {
+static void test_before_cleanup(void) {
+  struct fixture f;
+  int actual[32];
+  for (int success = 0; success <= 1; success++) {
+    for (int count = 0; count <= 4; count++) {
+      setup(&f, count);
+      f.incoming->debug_id = 900;
+      hook_fargs3_t a = {.arg0 = (uintptr_t)f.incoming, .arg1 = (uintptr_t)&f.proc};
+      binder_proc_transaction_before(&a, NULL);
+      assert(!a.skip_origin);  // 清理不跳过原调用，正常入口的标志保持为零。
+      int deleted = count >= 2;
+      assert(ids(&f, actual) == count - deleted && f.proc.outstanding == count - deleted);
+      for (int i = 0; i < count - deleted; i++) assert(actual[i] == i + deleted);
+      assert(releases == deleted && buffer_frees == deleted && transaction_frees == deleted
+             && stats.deleted.value == deleted);
+      assert(f.incoming->buffer && f.incoming->buffer->transaction == f.incoming);
+      if (success) {
+        __list_add(&f.incoming->work.entry, f.node.todo.prev, &f.node.todo);
+        f.proc.outstanding++;
+        int remaining = ids(&f, actual);
+        assert(remaining == count - deleted + 1 && actual[remaining - 1] == 900);
+        list_del_init(&f.incoming->work.entry);
+        f.proc.outstanding--;
+      } else {
+        // 新消息发送失败，实际释放它；至少一条已匹配旧消息仍留在队列。
+        drop_tx(f.incoming);
+        f.incoming = NULL;
+        assert(ids(&f, actual) == count - deleted && (count == 0 || count - deleted >= 1));
+      }
+      teardown(&f);
+    }
+  }
+  // 其他 code 的旧消息不能作为兜底：只有一条真正匹配者时不能删除。
+  setup(&f, 3);
+  struct binder_transaction* first = container_of(f.node.todo.next, struct binder_transaction, work.entry);
+  struct binder_transaction* last = container_of(f.node.todo.prev, struct binder_transaction, work.entry);
+  first->code = last->code = 9;
+  binder_proc_transaction_before(&(hook_fargs3_t){.arg0 = (uintptr_t)f.incoming, .arg1 = (uintptr_t)&f.proc}, NULL);
+  unchanged(&f, 3);
+  teardown(&f);
+  puts(
+      "production before cleanup: zero/one match retained, oldest removed once, backlog retained, "
+      "successful enqueue and failed send, incoming intact, original call retained, unrelated code excluded: PASS");
+}
+
+// 模拟 Android 6.6 原生 UPDATE 分支：入队前摘除第一条匹配消息，解锁后释放。
+// 比较条件取自 android15-6.6 binder.c；proc 为主机 fixture 的 to_proc 字段。
+static bool kernel_update_matches(struct binder_transaction* old, struct binder_transaction* incoming) {
+  return (old->flags & incoming->flags & (TF_ONE_WAY | TF_UPDATE_TXN)) == (TF_ONE_WAY | TF_UPDATE_TXN) && old->proc
+         && incoming->proc && old->proc->tsk == incoming->proc->tsk && old->code == incoming->code
+         && old->flags == incoming->flags && old->buffer->pid == incoming->buffer->pid
+         && old->buffer->target_node->ptr == incoming->buffer->target_node->ptr
+         && old->buffer->target_node->cookie == incoming->buffer->target_node->cookie;
+}
+
+static void test_native_update(void) {
+  struct fixture f;
+  int actual[32];
+  // 模块与原生各自加锁核对 Binder 冻结；覆盖两次加锁之间的冻结/解冻。
+  for (int state = 0; state < 4; state++) {
+    for (int count = 1; count <= 4; count++) {
+      setup(&f, count);
+      f.proc.frozen = state == 1 || state == 2;
+      f.incoming->flags |= TF_UPDATE_TXN;
+      f.incoming->debug_id = 900;
+      struct binder_work* w;
+      list_for_each_entry(w, &f.node.todo, entry) {
+        container_of(w, struct binder_transaction, work)->flags |= TF_UPDATE_TXN;
+      }
+      hook_fargs3_t a = {.arg0 = (uintptr_t)f.incoming, .arg1 = (uintptr_t)&f.proc};
+      binder_proc_transaction_before(&a, NULL);
+      int module_deleted = (state == 0 || state == 3) && count >= 2;
+      assert(ids(&f, actual) == count - module_deleted);
+      assert(releases == module_deleted && transaction_frees == module_deleted);
+      f.proc.frozen = state == 1 || state == 3;
+      struct binder_transaction* removed = NULL;
+      binder_node_lock(&f.node);
+      binder_inner_proc_lock(&f.proc);
+      if ((f.incoming->flags & TF_UPDATE_TXN) && f.proc.frozen) {
+        list_for_each_entry(w, &f.node.todo, entry) {
+          struct binder_transaction* old = container_of(w, struct binder_transaction, work);
+          if (kernel_update_matches(old, f.incoming)) {
+            removed = old;
+            list_del_init(&old->work.entry);
+            f.proc.outstanding--;
+            break;
+          }
+        }
+      }
+      __list_add(&f.incoming->work.entry, f.node.todo.prev, &f.node.todo);
+      f.proc.outstanding++;
+      binder_inner_proc_unlock(&f.proc);
+      binder_node_unlock(&f.node);
+      int native_deleted = removed != NULL;
+      assert(native_deleted == (state == 1 || state == 3));
+      if (removed) {
+        assert(removed->debug_id == module_deleted);
+        drop_tx(removed);
+      }
+      int remaining = ids(&f, actual);
+      int total_deleted = module_deleted + native_deleted;
+      assert(remaining == count - total_deleted + 1 && f.proc.outstanding == remaining);
+      int index = 0;
+      for (int i = total_deleted; i < count; i++) assert(actual[index++] == i);
+      assert(actual[index] == 900);
+      assert(releases == module_deleted && buffer_frees == module_deleted && transaction_frees == module_deleted
+             && fixup_calls == module_deleted && stats.deleted.value == module_deleted);
+      printf(
+          "native UPDATE before: old=%d, state=%d, module deletes=%d, native deletes=%d, remaining old=%d: PASS (ABI "
+          "%d)\n",
+          count, state, module_deleted, native_deleted, remaining - 1, test_abi);
+      list_del_init(&f.incoming->work.entry);
+      f.proc.outstanding--;
+      teardown(&f);
+    }
+  }
+}
+
+static void test_cleanup(void) {
+  test_native_update();
+  test_before_cleanup();
   test_kernel_data_reader();
   test_rule_cleanup();
   test_data_cleanup();
@@ -678,9 +852,9 @@ int main(void) {
   int actual[32];
   // TF_ONE_WAY 就足够，不需要低内核没有的 TF_UPDATE_TXN。
   setup(&f, 3);
-  trace = UZERO;
+  trace = false;
   invoke(&f);
-  assert(ids(&f, actual) == 2 && actual[0] == 0 && actual[1] == 2);
+  assert(ids(&f, actual) == 2 && actual[0] == 1 && actual[1] == 2);
   assert(f.proc.tmp_ref == 1 && f.proc.outstanding == 2 && f.node.has_async);
   assert(releases == 1 && buffer_frees == 1 && fixup_calls == 1 && transaction_frees == 1 && stats.deleted.value == 1);
   assert(notifications == 1);
@@ -689,7 +863,7 @@ int main(void) {
   setup(&f, 3);
   binder_free_txn_fixups = NULL;
   invoke(&f);
-  assert(ids(&f, actual) == 2 && actual[0] == 0 && actual[1] == 2);
+  assert(ids(&f, actual) == 2 && actual[0] == 1 && actual[1] == 2);
   assert(f.proc.tmp_ref == 1 && releases == 1 && !fixup_calls && transaction_frees == 1 && stats.deleted.value == 1);
   teardown(&f);
   setup(&f, 1);
@@ -735,7 +909,7 @@ int main(void) {
           t->buffer->extra_buffers_size = 16;
       }
     }
-    trace = UZERO;
+    trace = false;
     invoke(&f);
     unchanged(&f, 3);
     assert(notifications == 1);
@@ -763,15 +937,15 @@ int main(void) {
   assert(!binder_can_update_transaction(first, f.incoming, REKERNEL_FREE_ASYNC_BY_CODE, &budget));
   saved->target_node = &f.node;
   teardown(&f);
-  // 队列夹杂非事务 work 时不动它，仍然只清除第二条事务。
+  // 队列夹杂非事务 work 时不动它，清除最早匹配事务。
   setup(&f, 3);
   first = container_of(f.node.todo.next, struct binder_transaction, work.entry);
   struct binder_work other_work = {.type = 99};
   __list_add(&other_work.entry, &first->work.entry, first->work.entry.next);
   invoke(&f);
-  assert(other_work.entry.prev == &first->work.entry && first->buffer->transaction == first);
+  assert(other_work.entry.prev == &f.node.todo && other_work.entry.next->prev == &other_work.entry);
   list_del_init(&other_work.entry);
-  assert(ids(&f, actual) == 2 && actual[0] == 0 && actual[1] == 2);
+  assert(ids(&f, actual) == 2 && actual[0] == 1 && actual[1] == 2);
   teardown(&f);
   // 低内核没有 is_frozen/outstanding 字段时按既有负偏移约定跳过这些字段。
   setup(&f, 3);
@@ -783,23 +957,23 @@ int main(void) {
   invoke(&f);
   assert(ids(&f, actual) == 2 && f.proc.outstanding == 3 && releases == 1);
   teardown(&f);
-  // 解冻后仍能消费保留下来的最早事务，has_async 不被误清除。
+  // 解冻后仍能消费保留下来的旧事务，has_async 不被误清除。
   setup(&f, 3);
   invoke(&f);
   f.task.frozen = false;
   first = container_of(f.node.todo.next, struct binder_transaction, work.entry);
-  assert(first->debug_id == 0 && first->buffer->transaction == first && f.node.has_async);
+  assert(first->debug_id == 1 && first->buffer->transaction == first && f.node.has_async);
   list_del_init(&first->work.entry);
   f.proc.outstanding--;
   drop_tx(first);
   assert(ids(&f, actual) == 1 && actual[0] == 2 && f.proc.outstanding == 1);
   teardown(&f);
-  // 并发发送方各清理第二条，不能重复释放或重复减计数。
+  // 并发发送方各清理最早匹配者，不能重复释放或重复减计数。
   setup(&f, 10);
   pthread_t threads[8];
   for (int i = 0; i < 8; i++) assert(pthread_create(&threads[i], NULL, producer, &f) == 0);
   for (int i = 0; i < 8; i++) assert(pthread_join(threads[i], NULL) == 0);
-  assert(ids(&f, actual) == 2 && actual[0] == 0 && actual[1] == 9 && f.proc.outstanding == 2);
+  assert(ids(&f, actual) == 2 && actual[0] == 8 && actual[1] == 9 && f.proc.outstanding == 2);
   assert(f.proc.tmp_ref == 1 && releases == 8 && fixup_calls == 8 && stats.deleted.value == 8);
   assert(buffer_frees == 8 && transaction_frees == 8 && f.node.has_async);
   teardown(&f);
@@ -823,17 +997,18 @@ int main(void) {
   caller_put(&f.proc);
   assert(f.proc.released && !f.proc.tmp_ref);
   teardown(&f);
-  puts(
-      "production cleanup ASan/UBSan: no UPDATE flag, optional fixups, release order, objects, oldest retained, proc "
-      "death, eight producers: PASS (ABI "
-#if REKERNEL_BINDER_ABI == 3
-      "3"
-#elif REKERNEL_BINDER_ABI == 4
-      "4"
-#elif REKERNEL_BINDER_ABI == 5
-      "5"
-#else
-      "6"
-#endif
-      ")");
+  printf(
+      "production cleanup ASan/UBSan: no UPDATE flag, optional fixups, release order, objects, one queued match "
+      "retained, "
+      "proc death, eight producers: PASS (configured ABI %d)\n",
+      test_abi);
+}
+
+int main(void) {
+  for (int abi = -1; abi <= 7; abi++) {
+    struct_offset.binder_release_abi = abi;
+    assert(binder_release_abi_init_check() == ((abi >= 3 && abi <= 6) ? 0 : -EINVAL));
+  }
+  for (test_abi = 3; test_abi <= 6; test_abi++) test_cleanup();
+  puts("single production dispatcher: all four configured release ABIs and invalid ABI rejection: PASS");
 }

@@ -8,12 +8,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define REKERNEL_BINDER_ABI 6
 #include "re_kernel_host.h"
 #define __user
 #define __aligned(n) __attribute__((aligned(n)))
 #define GFP_ATOMIC 0
 #define logkm(...) ((void)0)
+#define kfunc(name) kf_##name
 #define kfunc_def(n) (*kf_##n)
 #define kfunc_call(n, ...) \
   if (kf_##n)              \
@@ -100,7 +100,7 @@ typedef struct {
 } hook_fargs2_t;
 static struct genl_family rekernel_genl_family;
 static struct genl_multicast_group rekernel_genl_mcgrp;
-static unsigned long rekernel_genl_registered = UZERO;
+static bool rekernel_genl_registered;
 static uid_t rekernel_net_uids[32];
 static unsigned int rekernel_net_uid_count, rekernel_net_uid_guard;
 // 本测试只覆盖规则收发；缓冲读取在 cleanup 测试核对。
@@ -217,7 +217,7 @@ static void* (*kf_genlmsg_put)(struct sk_buff*, u32, u32, const struct genl_fami
 static int (*kf_nla_put)(struct sk_buff*, int, int, const void*) = native_nla_put;
 static void (*kf_skb_trim)(struct sk_buff*, unsigned int) = native_trim;
 static int (*kf_netlink_broadcast)(struct sock*, struct sk_buff*, u32, u32, gfp_t) = native_broadcast;
-static int kf___alloc_skb = 1, kf___nlmsg_put = 1, kf_kfree_skb = 1;
+static int kf___alloc_skb = 1, kf_kfree_skb = 1;
 
 /* PRODUCTION_FUNCTIONS */
 
@@ -277,7 +277,12 @@ static struct nlmsghdr* command(unsigned int cmd, uid_t uid) {
   memcpy(storage + 24, &uid, 4);
   return nlh;
 }
+static unsigned int ingress_calls;
+// 包长先由 netlink_rcv_skb 检查，只有合法信封才进入生产 hook。
 static int receive(struct nlmsghdr* nlh) {
+  if (buffer.len < NLMSG_HDRLEN || nlh->nlmsg_len < NLMSG_HDRLEN || nlh->nlmsg_len > buffer.len)
+    return 0;
+  ingress_calls++;
   hook_fargs2_t args = {.arg0 = (uintptr_t)&buffer, .arg1 = (uintptr_t)nlh, .ret = -777};
   genl_rcv_msg_before(&args, NULL);
   assert(args.skip_origin);
@@ -481,7 +486,6 @@ int main(void) {
   register_error = 0;
   kf_genl_register_family = NULL;  // 旧内核入口 fallback。
   assert(start_rekernel_genl_server() == 0 && hooked == 1 && registered == 2);
-  assert(start_rekernel_genl_server() == 0 && registered == 2);
   struct rekernel_event msg = {.type = BINDER,
                                .binder = {.type = TRANSACTION,
                                           .oneway = 1,
@@ -526,9 +530,6 @@ int main(void) {
   header_error = 0;
   msg.type = 999;
   assert(send_netlink_message(&msg) == -EMSGSIZE && allocated == freed);
-  msg = (struct rekernel_event){.type = BINDER, .binder = {.type = TRANSACTION}};
-  memset(msg.binder.rpc_name, 'x', 140);
-  assert(send_netlink_message(&msg) == -EMSGSIZE && allocated == freed);
 
   struct nlmsghdr* nlh = command(2, 10042);
   assert(receive(nlh) == 0 && net_uid_monitored(10042) && rekernel_net_uid_count == 1);
@@ -560,7 +561,10 @@ int main(void) {
   assert(receive(nlh) == -EINVAL);
   nlh = command(2, 10042);
   nlh->nlmsg_len = 29;
-  assert(receive(nlh) == -EINVAL);
+  unsigned int calls = ingress_calls;
+  assert(receive(nlh) == 0 && ingress_calls == calls && !rekernel_net_uid_count);
+  nlh->nlmsg_len = NLMSG_HDRLEN - 1;
+  assert(receive(nlh) == 0 && ingress_calls == calls && !rekernel_net_uid_count);
   for (int length = 0; length <= 12; length++) {
     if (length == 8)
       continue;
@@ -630,5 +634,5 @@ int main(void) {
   puts(
       "production Genl receive: UID add/delete/full, malformed input, namespace/version/family, 20000 random packets, "
       "8 threads: PASS");
-  puts("production Genl lifecycle: hook failure, registration rollback, old entry fallback, idempotence: PASS");
+  puts("production Genl lifecycle: hook failure, registration rollback, old entry fallback, repeated exit: PASS");
 }

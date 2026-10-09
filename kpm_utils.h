@@ -59,8 +59,15 @@
 // https://github.com/llvm/llvm-project/blob/f280d3b705de7f94ef9756e3ef2842b415a7c038/llvm/lib/Target/AArch64/MCTargetDesc/AArch64AddressingModes.h#L293
 #define ror(elt, size) (((elt) & 1) << ((size) - 1)) | ((elt) >> 1)
 
+#define __INST_GET_IMM3(abbr) \
+  static inline int inst_get_##abbr##_imm3(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 12, 10) : -1; }
 #define __INST_GET_IMM6(abbr) \
   static inline int inst_get_##abbr##_imm6(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 15, 10) : -1; }
+
+#define __INST_GET_IMM9(abbr)                                                       \
+  static inline int inst_get_##abbr##_imm9(uint32_t code) {                         \
+    return inst_is_##abbr(code) ? (int32_t)(bits32(code, 20, 12) << 23) >> 23 : -1; \
+  }
 
 #define __INST_GET_IMM12(abbr) \
   static inline int inst_get_##abbr##_imm12(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 21, 10) : -1; }
@@ -70,27 +77,30 @@
       return -1;                                            \
     int size = inst_get_##abbr##_size(code);                \
     int imm12 = inst_get_##abbr##_imm12(code);              \
-    if (size == -1 || imm12 == -1)                          \
-      return -1;                                            \
-    return sign64_extend(((uint64_t)imm12 << size), 14u);   \
+    return (uint64_t)imm12 << size;                         \
   }
-#define __INST_GET_SH_IMM12_IMM(abbr)                                                                 \
-  static inline long inst_get_##abbr##_imm(uint32_t code) {                                           \
-    if (!inst_is_##abbr(code))                                                                        \
-      return -1;                                                                                      \
-    int sh = inst_get_##abbr##_sh(code);                                                              \
-    int imm12 = inst_get_##abbr##_imm12(code);                                                        \
-    if (sh == -1 || imm12 == -1)                                                                      \
-      return -1;                                                                                      \
-    return sh ? sign64_extend(((uint64_t)imm12 << 12u), 14u) : sign64_extend(((uint64_t)imm12), 14u); \
+#define __INST_GET_SH_IMM12_IMM(abbr)                       \
+  static inline long inst_get_##abbr##_imm(uint32_t code) { \
+    if (!inst_is_##abbr(code))                              \
+      return -1;                                            \
+    int sh = inst_get_##abbr##_sh(code);                    \
+    int imm12 = inst_get_##abbr##_imm12(code);              \
+    return (uint64_t)imm12 << (sh ? 12u : 0u);              \
   }
 
 #define __INST_GET_IMM14(abbr) \
   static inline int inst_get_##abbr##_imm14(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 18, 5) : -1; }
+#define __INST_GET_IMM16(abbr) \
+  static inline int inst_get_##abbr##_imm16(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 20, 5) : -1; }
 #define __INST_GET_IMM19(abbr) \
   static inline int inst_get_##abbr##_imm19(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 23, 5) : -1; }
 #define __INST_GET_IMM26(abbr) \
   static inline int inst_get_##abbr##_imm26(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 25, 0) : -1; }
+
+#define __INST_GET_IMM26_LABEL(abbr)                                                                          \
+  static inline long inst_get_##abbr##_label(uint32_t code) {                                                 \
+    return inst_is_##abbr(code) ? (int64_t)(int32_t)((uint32_t)inst_get_##abbr##_imm26(code) << 6) >> 4 : -1; \
+  }
 
 #define __INST_GET_N(abbr) \
   static inline int inst_get_##abbr##_n(uint32_t code) { return inst_is_##abbr(code) ? bit(code, 22) : -1; }
@@ -136,8 +146,6 @@
       return -1;                                                \
     int immlo = inst_get_##abbr##_immlo(code);                  \
     int immhi = inst_get_##abbr##_immhi(code);                  \
-    if (immlo == -1 || immhi == -1)                             \
-      return -1;                                                \
     return sign64_extend((immhi << 14u) | (immlo << 12u), 33u); \
   }
 
@@ -145,8 +153,18 @@
   static inline int inst_get_##abbr##_sf(uint32_t code) { return inst_is_##abbr(code) ? bit(code, 31) : -1; }
 #define __INST_GET_SIZE(abbr) \
   static inline int inst_get_##abbr##_size(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 31, 30) : -1; }
+#define __INST_GET_OPC(abbr) \
+  static inline int inst_get_##abbr##_opc(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 23, 22) : -1; }
 #define __INST_GET_SH(abbr) \
   static inline int inst_get_##abbr##_sh(uint32_t code) { return inst_is_##abbr(code) ? bit(code, 22) : -1; }
+#define __INST_GET_OPTION(abbr) \
+  static inline int inst_get_##abbr##_option(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 15, 13) : -1; }
+#define __INST_GET_SHIFT(abbr) \
+  static inline int inst_get_##abbr##_shift(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 23, 22) : -1; }
+#define __INST_GET_MODE(abbr) \
+  static inline int inst_get_##abbr##_mode(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 11, 10) : -1; }
+#define __INST_GET_HW(abbr) \
+  static inline int inst_get_##abbr##_hw(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 22, 21) : -1; }
 #define __INST_GET_RM(abbr) \
   static inline int inst_get_##abbr##_rm(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 20, 16) : -1; }
 #define __INST_GET_RN(abbr) \
@@ -158,6 +176,28 @@
 
 #define __INST_FUNCS(abbr, mask, val)                                                   \
   static inline bool inst_is_##abbr(uint32_t code) { return (code & (mask)) == (val); } \
+  static inline uint32_t inst_get_##abbr##_value(void) { return (val); }
+
+// 立即数读取含 LDR、LDRSB/LDRSH/LDRSW 及 LDUR/LDTR 编码；预取与保留编码单独排除。
+#define __INST_LDR_FUNCS(abbr, mask, val)                                                           \
+  static inline bool inst_is_##abbr(uint32_t code) {                                                \
+    if ((code & (mask)) != ((val) & (mask)))                                                        \
+      return false;                                                                                 \
+    int size = bits32(code, 31, 30), opc = bits32(code, 23, 22);                                    \
+    if (bit(code, 26))                                                                              \
+      return (bit(code, 24) || bits32(code, 11, 10) != 2) && (opc == 1 || (opc == 3 && size == 0)); \
+    return opc == 1 || (opc == 2 && size < 3) || (opc == 3 && size < 2);                            \
+  }                                                                                                 \
+  static inline uint32_t inst_get_##abbr##_value(void) { return (val); }
+#define __INST_STR_FUNCS(abbr, mask, val)                                                           \
+  static inline bool inst_is_##abbr(uint32_t code) {                                                \
+    if ((code & (mask)) != ((val) & (mask)))                                                        \
+      return false;                                                                                 \
+    int size = bits32(code, 31, 30), opc = bits32(code, 23, 22);                                    \
+    if (bit(code, 26))                                                                              \
+      return (bit(code, 24) || bits32(code, 11, 10) != 2) && (opc == 0 || (opc == 2 && size == 0)); \
+    return opc == 0;                                                                                \
+  }                                                                                                 \
   static inline uint32_t inst_get_##abbr##_value(void) { return (val); }
 
 #define __INST_SF_FUNCS(abbr, mask, val) \
@@ -208,6 +248,18 @@
 #define __INST_SIZE_RN_RT_FUNCS(abbr, mask, val) \
   __INST_SIZE_RN_FUNCS(abbr, mask, val)          \
   __INST_GET_RT(abbr)
+#define __INST_SIZE_RN_RT_LDR_FUNCS(abbr, mask, val) \
+  __INST_LDR_FUNCS(abbr, mask, val)                  \
+  __INST_GET_SIZE(abbr)                              \
+  __INST_GET_RN(abbr)                                \
+  __INST_GET_RT(abbr)                                \
+  __INST_GET_OPC(abbr)
+#define __INST_SIZE_RN_RT_STR_FUNCS(abbr, mask, val) \
+  __INST_STR_FUNCS(abbr, mask, val)                  \
+  __INST_GET_SIZE(abbr)                              \
+  __INST_GET_RN(abbr)                                \
+  __INST_GET_RT(abbr)                                \
+  __INST_GET_OPC(abbr)
 #define __INST_SIZE_RN_RT_IMM12_FUNCS(abbr, mask, val) \
   __INST_SIZE_RN_RT_FUNCS(abbr, mask, val)             \
   __INST_GET_IMM12(abbr)                               \
@@ -226,16 +278,25 @@
   __INST_GET_LABEL(abbr)
 
 __INST_SF_RN_RD_SH_IMM12_FUNCS(add_imm, 0x7F800000u, 0x11000000u)
+__INST_SF_RM_RN_RD_FUNCS(add_ext, 0x7FE00000u, 0x0B200000u)
+__INST_GET_OPTION(add_ext)
+__INST_GET_IMM3(add_ext)
+__INST_SF_RM_RN_RD_FUNCS(add_reg, 0x7F200000u, 0x0B000000u)
+__INST_GET_SHIFT(add_reg)
+__INST_GET_IMM6(add_reg)
 
 __INST_SF_RN_RD_FUNCS(uxtb, 0xFFFFFC00u, 0x53001C00u)
 
 __INST_RD_IMMLO_IMMHI_FUNCS(adrp, 0x9F000000u, 0x90000000u)
 
 __INST_SF_RN_RD_N_FUNCS(and_imm, 0x7F800000u, 0x12000000u)
+__INST_SF_RN_RD_N_FUNCS(orr_imm, 0x7F800000u, 0x32000000u)
 __INST_SF_RN_RD_N_FUNCS(tst_imm, 0x7F80001Fu, 0x7200001Fu)
 
 __INST_FUNCS(bl, 0xFC000000u, 0x94000000u)
 __INST_GET_IMM26(bl)
+__INST_GET_IMM26_LABEL(bl)
+__INST_RN_FUNCS(blr, 0xFFFFFC1Fu, 0xD63F0000u)
 
 __INST_SF_RT_FUNCS(cbz, 0x7F000000u, 0x34000000u)
 __INST_GET_IMM19(cbz)
@@ -243,12 +304,28 @@ __INST_GET_IMM19(cbz)
 __INST_SF_RT_FUNCS(tbnz, 0x7F000000u, 0x37000000u)
 __INST_GET_IMM14(tbnz)
 
+__INST_SIZE_RN_RT_LDR_FUNCS(ldr_imm, 0x3B000000u, 0x39400000u)
+__INST_GET_IMM12(ldr_imm)
+__INST_SIZE_RN_RT_LDR_FUNCS(ldr_imm9, 0x3B200000u, 0x38400000u)
+__INST_GET_IMM9(ldr_imm9)
+__INST_GET_MODE(ldr_imm9)
 __INST_SIZE_RN_RT_IMM12_FUNCS(ldr_imm_uint, 0xBFC00000u, 0xB9400000u)
+__INST_SIZE_RN_RT_IMM12_FUNCS(ldrb_imm_uint, 0xFFC00000u, 0x39400000u)
 __INST_SIZE_RN_RT_IMM12_FUNCS(ldrh_imm_uint, 0xFFC00000u, 0x79400000u)
+
+__INST_SIZE_RN_RT_STR_FUNCS(str_imm, 0x3B000000u, 0x39000000u)
+__INST_GET_IMM12(str_imm)
+__INST_SIZE_RN_RT_STR_FUNCS(str_imm9, 0x3B200000u, 0x38000000u)
+__INST_GET_IMM9(str_imm9)
+__INST_GET_MODE(str_imm9)
 __INST_SIZE_RN_RT_IMM12_FUNCS(str_imm_uint, 0xBFC00000u, 0xB9000000u)
 __INST_SIZE_RN_RT_IMM12_FUNCS(strb_imm_uint, 0xFFC00000u, 0x39000000u)
 
 __INST_SF_RM_RD_FUNCS(mov_reg, 0x7FE0FFE0u, 0x2A0003E0u)
+__INST_SF_FUNCS(movz_imm, 0x7F800000u, 0x52800000u)
+__INST_GET_RD(movz_imm)
+__INST_GET_IMM16(movz_imm)
+__INST_GET_HW(movz_imm)
 
 __INST_SF_RM_RN_RD_FUNCS(orr_reg, 0x7F200000u, 0x2A000000u)
 __INST_GET_IMM6(orr_reg)
