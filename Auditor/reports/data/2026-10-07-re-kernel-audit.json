@@ -1,0 +1,1843 @@
+{
+  "auditor_tool": "Auditor/tools/artifact_audit.py",
+  "audited_at": "2026-10-07T18:10:29-0700",
+  "module": "re_kernel",
+  "kp_symbols_snapshot": "Auditor/snapshots/kp_runtime_symbols-b51197aaba8f.json",
+  "kp_symbols_source_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "corpus_labels": [
+    "4.4/4.4.192-perf+",
+    "5.15/5.15.189-android13-8-00016",
+    "rekernel-x-feasibility-20261002-01",
+    "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+    "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+    "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+    "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+    "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+  ],
+  "corpus_sources": [
+    "kernel_img (0 个符号表)",
+    "local (9 个符号表)"
+  ],
+  "lkm_kallsyms_fallback": true,
+  "artifact_scan": {
+    "dirs": [
+      "artifacts"
+    ],
+    "kpm_on_disk": [
+      "artifacts/get_task_ext_probe-0.1.0+gd8fb87994db8.r14b91adc.kpb51197a.ndk26.3.11579264/get_task_ext_probe_0.1.0.kpm",
+      "artifacts/get_task_ext_probe-0.1.0_debug+gd8fb87994db8.rfc22ddd0.kpb51197a.ndk26.3.11579264/get_task_ext_probe_0.1.0_debug.kpm",
+      "artifacts/re_kernel-8.0.0+g193f81b841f8.rfe7363a9.kpb51197a.ndk26.3.11579264#2/re_kernel_8.0.0.kpm",
+      "artifacts/re_kernel-8.0.0+g267bfa1c2efc.ndk26.3.11579264/re_kernel_8.0.0.kpm",
+      "artifacts/re_kernel-8.0.0_debug+g193f81b841f8.r1bd2bca0.kpb51197a.ndk26.3.11579264#2/re_kernel_8.0.0_debug.kpm",
+      "artifacts/re_kernel-8.0.0_debug+g267bfa1c2efc.ndk26.3.11579264/re_kernel_8.0.0_debug.kpm",
+      "artifacts/re_kernel-8.0.0_network+g267bfa1c2efc.ndk26.3.11579264/re_kernel_8.0.0_network.kpm",
+      "artifacts/re_kernel-8.0.0_network_debug+g267bfa1c2efc.ndk26.3.11579264/re_kernel_8.0.0_network_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi3+g40f56f1e1476.rc6e986ec.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi3+g4f40e2046f89.r6dd4873d.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi3+g85406787a3ba.r6f82ad1c.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi3+gc06c0292c2f2.ra47a9865.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi3_debug+g40f56f1e1476.r6b018c83.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi3_debug+g4f40e2046f89.r7f9593ad.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi3_debug+g85406787a3ba.r2c5dfe3a.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi3_debug+gc06c0292c2f2.re9dfce39.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi4+g40f56f1e1476.red25fa6f.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi4+g4f40e2046f89.r0a6da2d7.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi4+g85406787a3ba.r427685b8.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi4+gc06c0292c2f2.r9eb820d0.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi4_debug+g40f56f1e1476.r21a27d69.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi4_debug+g4f40e2046f89.r52fa58f2.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi4_debug+g85406787a3ba.r5f37025a.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi4_debug+gc06c0292c2f2.rdd9ccc10.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi5+g40f56f1e1476.r2298d412.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi5+g4f40e2046f89.r62961f04.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi5+g85406787a3ba.r899a936d.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi5+gc06c0292c2f2.r0390dfd2.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi5_debug+g40f56f1e1476.r20f6465d.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi5_debug+g4f40e2046f89.r451d4456.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi5_debug+g85406787a3ba.re0df8c2a.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi5_debug+gc06c0292c2f2.r0a3dcfb3.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi6+g40f56f1e1476.r359585c3.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi6+g4f40e2046f89.rf18bcea6.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi6+g85406787a3ba.ra8963763.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi6+gc06c0292c2f2.r0021bf17.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi6_debug+g40f56f1e1476.rd4d7118b.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi6_debug+g4f40e2046f89.rba6293f2.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi6_debug+g85406787a3ba.rf4400d60.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6_debug.kpm",
+      "artifacts/re_kernel_static-8.0.0_abi6_debug+gc06c0292c2f2.r120e436b.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6_debug.kpm",
+      "artifacts/re_kernel_x-1.6+ge112656f7639.r72953914.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6.kpm",
+      "artifacts/re_kernel_x-1.6_abi3+g3ea7f04a4665.r5730df8f.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi3.kpm",
+      "artifacts/re_kernel_x-1.6_abi3_debug+g3ea7f04a4665.rbb9ef2a0.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi3_debug.kpm",
+      "artifacts/re_kernel_x-1.6_abi4+g3ea7f04a4665.r3c69ad06.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi4.kpm",
+      "artifacts/re_kernel_x-1.6_abi4_debug+g3ea7f04a4665.r11816726.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi4_debug.kpm",
+      "artifacts/re_kernel_x-1.6_abi5+g3ea7f04a4665.r4a149e5c.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi5.kpm",
+      "artifacts/re_kernel_x-1.6_abi5_debug+g3ea7f04a4665.rfcfd2185.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi5_debug.kpm",
+      "artifacts/re_kernel_x-1.6_abi6+g3ea7f04a4665.r13a2a6f8.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi6.kpm",
+      "artifacts/re_kernel_x-1.6_abi6_debug+g3ea7f04a4665.rbdaea1e9.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi6_debug.kpm",
+      "artifacts/re_kernel_x-1.6_debug+ge112656f7639.r371d6864.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_debug.kpm",
+      "artifacts/re_kernel_x-8.0.0_abi3+gaf4f04ec552e.rd959be27.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi3.kpm",
+      "artifacts/re_kernel_x-8.0.0_abi3_debug+gaf4f04ec552e.r0e564d3d.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi3_debug.kpm",
+      "artifacts/re_kernel_x-8.0.0_abi4+gaf4f04ec552e.r800d9ce1.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi4.kpm",
+      "artifacts/re_kernel_x-8.0.0_abi4_debug+gaf4f04ec552e.ra0f3ab3b.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi4_debug.kpm",
+      "artifacts/re_kernel_x-8.0.0_abi5+gaf4f04ec552e.rece373b8.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi5.kpm",
+      "artifacts/re_kernel_x-8.0.0_abi5_debug+gaf4f04ec552e.ra82fc408.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi5_debug.kpm",
+      "artifacts/re_kernel_x-8.0.0_abi6+gaf4f04ec552e.rb966a0a1.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi6.kpm",
+      "artifacts/re_kernel_x-8.0.0_abi6_debug+gaf4f04ec552e.r58ffc19b.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi6_debug.kpm"
+    ],
+    "registered": [
+      "artifacts/re_kernel-8.0.0+g193f81b841f8.rfe7363a9.kpb51197a.ndk26.3.11579264#2/re_kernel_8.0.0.kpm",
+      "artifacts/re_kernel-8.0.0_debug+g193f81b841f8.r1bd2bca0.kpb51197a.ndk26.3.11579264#2/re_kernel_8.0.0_debug.kpm"
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "artifacts/re_kernel-8.0.0+g193f81b841f8.rfe7363a9.kpb51197a.ndk26.3.11579264#2/re_kernel_8.0.0.kpm",
+      "name": "re_kernel_8.0.0.kpm",
+      "sha256": "77ad53f2004c4b488dece65300501af253ab43266fb9a041bc2bc6ef8b965942",
+      "size": 44784,
+      "structure_errors": [],
+      "embedded": {
+        "name": "re_kernel",
+        "version": "8.0.0",
+        "license": "GPL v3",
+        "author": "Nep-Timeline, lzghzr",
+        "description": "Re:Kernel, support 4.4 ~ 6.6"
+      },
+      "build_id": "re_kernel-8.0.0+g193f81b841f8.rfe7363a9.kpb51197a.ndk26.3.11579264",
+      "undefined_symbols": [
+        "compat_copy_to_user",
+        "cred_offset",
+        "hook_unwrap_remove",
+        "hook_wrap",
+        "kallsyms_lookup_name",
+        "kallsyms_lookup_name_by_suffix",
+        "kf_memcpy",
+        "kf_memset",
+        "kf_snprintf",
+        "kf_strnlen",
+        "printk",
+        "sp_el0_is_current",
+        "sp_el0_is_thread_info",
+        "task_in_thread_info_offset",
+        "task_struct_offset",
+        "thread_info_in_task",
+        "thread_size"
+      ],
+      "kp_symbols_source": "Auditor/snapshots/kp_runtime_symbols-b51197aaba8f.json",
+      "unresolved_symbols": [],
+      "relocations": {
+        "count": 932,
+        "bad": 0,
+        "types": {
+          "R_AARCH64_ABS64": 6,
+          "R_AARCH64_ADR_PREL_PG_HI21": 396,
+          "R_AARCH64_ADD_ABS_LO12_NC": 156,
+          "R_AARCH64_LDST8_ABS_LO12_NC": 19,
+          "R_AARCH64_CALL26": 36,
+          "R_AARCH64_LDST16_ABS_LO12_NC": 58,
+          "R_AARCH64_LDST32_ABS_LO12_NC": 59,
+          "R_AARCH64_LDST64_ABS_LO12_NC": 202
+        }
+      },
+      "lookup_names": [
+        "cgroup_freezing",
+        "__alloc_skb",
+        "kfree_skb",
+        "netlink_unicast",
+        "init_net",
+        "tracepoint_probe_register",
+        "tracepoint_probe_unregister",
+        "_raw_spin_lock",
+        "_raw_spin_unlock",
+        "__tracepoint_binder_transaction",
+        "binder_transaction_buffer_release",
+        "binder_alloc_free_buf",
+        "kfree",
+        "kmalloc",
+        "__kmalloc",
+        "binder_stats",
+        "kvfree",
+        "memdup_user",
+        "binder_proc_transaction",
+        "binder_transaction",
+        "do_send_sig_info",
+        "sock_i_uid",
+        "tcp_v4_do_rcv",
+        "tcp_v6_do_rcv",
+        "task_clear_jobctl_trapping",
+        "binder_free_proc",
+        "binder_proc_dec_tmpref",
+        "binder_alloc_init",
+        "binder_free_transaction",
+        "binder_send_failed_reply",
+        "skb_trim",
+        "ipv6_find_tlv",
+        "genlmsg_put",
+        "genlmsg_multicast_allns",
+        "genl_unregister_family",
+        "genl_pernet_exit",
+        "nla_put",
+        "netlink_broadcast",
+        "genl_register_family",
+        "__genl_register_family"
+      ],
+      "lookup_kinds": {
+        "cgroup_freezing": "exact",
+        "__alloc_skb": "suffix",
+        "kfree_skb": "suffix",
+        "netlink_unicast": "suffix",
+        "init_net": "suffix",
+        "tracepoint_probe_register": "suffix",
+        "tracepoint_probe_unregister": "suffix",
+        "_raw_spin_lock": "suffix",
+        "_raw_spin_unlock": "suffix",
+        "__tracepoint_binder_transaction": "suffix",
+        "binder_transaction_buffer_release": "exact",
+        "binder_alloc_free_buf": "exact",
+        "kfree": "suffix",
+        "kmalloc": "suffix",
+        "__kmalloc": "suffix",
+        "binder_stats": "suffix",
+        "kvfree": "suffix",
+        "memdup_user": "suffix",
+        "binder_proc_transaction": "exact",
+        "binder_transaction": "exact",
+        "do_send_sig_info": "exact",
+        "sock_i_uid": "suffix",
+        "tcp_v4_do_rcv": "exact",
+        "tcp_v6_do_rcv": "exact",
+        "task_clear_jobctl_trapping": "exact",
+        "binder_free_proc": "exact",
+        "binder_proc_dec_tmpref": "exact",
+        "binder_alloc_init": "exact",
+        "binder_free_transaction": "exact",
+        "binder_send_failed_reply": "exact",
+        "skb_trim": "exact",
+        "ipv6_find_tlv": "exact",
+        "genlmsg_put": "exact",
+        "genlmsg_multicast_allns": "exact",
+        "genl_unregister_family": "exact",
+        "genl_pernet_exit": "exact",
+        "nla_put": "suffix",
+        "netlink_broadcast": "suffix",
+        "genl_register_family": "suffix",
+        "__genl_register_family": "suffix"
+      },
+      "kernel_symbol_dependencies": {
+        "__alloc_skb": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "__genl_register_family": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": [
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19"
+          ]
+        },
+        "__kmalloc": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "__tracepoint_binder_transaction": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": [
+            "rekernel-x-feasibility-20261002-01"
+          ]
+        },
+        "_raw_spin_lock": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "_raw_spin_unlock": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "binder_alloc_free_buf": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "binder_alloc_init": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "binder_free_proc": {
+          "present": [
+            "5.15/5.15.189-android13-8-00016"
+          ],
+          "missing": [
+            "4.4/4.4.192-perf+",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ]
+        },
+        "binder_free_transaction": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": [
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14"
+          ]
+        },
+        "binder_proc_dec_tmpref": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "binder_proc_transaction": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "binder_send_failed_reply": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "binder_stats": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": [
+            "rekernel-x-feasibility-20261002-01"
+          ]
+        },
+        "binder_transaction": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "binder_transaction_buffer_release": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "cgroup_freezing": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "do_send_sig_info": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "genl_pernet_exit": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": [
+            "rekernel-x-feasibility-20261002-01"
+          ]
+        },
+        "genl_register_family": {
+          "present": [
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19"
+          ],
+          "missing": [
+            "4.4/4.4.192-perf+",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ]
+        },
+        "genl_unregister_family": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "genlmsg_multicast_allns": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "genlmsg_put": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "init_net": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": [
+            "rekernel-x-feasibility-20261002-01"
+          ]
+        },
+        "ipv6_find_tlv": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "kfree": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "kfree_skb": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "kvfree": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "memdup_user": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "netlink_broadcast": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "netlink_unicast": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "nla_put": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "skb_trim": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "sock_i_uid": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "task_clear_jobctl_trapping": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "tcp_v4_do_rcv": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "tcp_v6_do_rcv": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": [
+            "rekernel-x-feasibility-20261002-01"
+          ]
+        },
+        "tracepoint_probe_register": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "tracepoint_probe_unregister": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        }
+      }
+    },
+    {
+      "path": "artifacts/re_kernel-8.0.0_debug+g193f81b841f8.r1bd2bca0.kpb51197a.ndk26.3.11579264#2/re_kernel_8.0.0_debug.kpm",
+      "name": "re_kernel_8.0.0_debug.kpm",
+      "sha256": "fcb3ba0c30b00118965f4ec21ea22689c47340dda18b60a8f1b83856a73b4657",
+      "size": 53016,
+      "structure_errors": [],
+      "embedded": {
+        "name": "re_kernel",
+        "version": "8.0.0_d",
+        "license": "GPL v3",
+        "author": "Nep-Timeline, lzghzr",
+        "description": "Re:Kernel, support 4.4 ~ 6.6"
+      },
+      "build_id": "re_kernel-8.0.0_debug+g193f81b841f8.r1bd2bca0.kpb51197a.ndk26.3.11579264",
+      "undefined_symbols": [
+        "compat_copy_to_user",
+        "cred_offset",
+        "hook_unwrap_remove",
+        "hook_wrap",
+        "kallsyms_lookup_name",
+        "kallsyms_lookup_name_by_suffix",
+        "kf_memcpy",
+        "kf_memset",
+        "kf_snprintf",
+        "kf_strnlen",
+        "printk",
+        "sp_el0_is_current",
+        "sp_el0_is_thread_info",
+        "task_in_thread_info_offset",
+        "task_struct_offset",
+        "thread_info_in_task",
+        "thread_size"
+      ],
+      "kp_symbols_source": "Auditor/snapshots/kp_runtime_symbols-b51197aaba8f.json",
+      "unresolved_symbols": [],
+      "relocations": {
+        "count": 1129,
+        "bad": 0,
+        "types": {
+          "R_AARCH64_ABS64": 6,
+          "R_AARCH64_ADR_PREL_PG_HI21": 462,
+          "R_AARCH64_ADD_ABS_LO12_NC": 222,
+          "R_AARCH64_LDST8_ABS_LO12_NC": 22,
+          "R_AARCH64_CALL26": 36,
+          "R_AARCH64_LDST16_ABS_LO12_NC": 52,
+          "R_AARCH64_LDST32_ABS_LO12_NC": 59,
+          "R_AARCH64_LDST64_ABS_LO12_NC": 270
+        }
+      },
+      "lookup_names": [
+        "cgroup_freezing",
+        "__alloc_skb",
+        "kfree_skb",
+        "netlink_unicast",
+        "init_net",
+        "tracepoint_probe_register",
+        "tracepoint_probe_unregister",
+        "_raw_spin_lock",
+        "_raw_spin_unlock",
+        "__tracepoint_binder_transaction",
+        "binder_transaction_buffer_release",
+        "binder_alloc_free_buf",
+        "kfree",
+        "kmalloc",
+        "__kmalloc",
+        "binder_stats",
+        "kvfree",
+        "memdup_user",
+        "binder_proc_transaction",
+        "binder_transaction",
+        "do_send_sig_info",
+        "sock_i_uid",
+        "tcp_v4_do_rcv",
+        "tcp_v6_do_rcv",
+        "task_clear_jobctl_trapping",
+        "binder_free_proc",
+        "binder_proc_dec_tmpref",
+        "binder_alloc_init",
+        "binder_free_transaction",
+        "binder_send_failed_reply",
+        "skb_trim",
+        "ipv6_find_tlv",
+        "genlmsg_put",
+        "genlmsg_multicast_allns",
+        "genl_pernet_exit",
+        "genl_unregister_family",
+        "nla_put",
+        "netlink_broadcast",
+        "genl_register_family",
+        "__genl_register_family"
+      ],
+      "lookup_kinds": {
+        "cgroup_freezing": "exact",
+        "__alloc_skb": "suffix",
+        "kfree_skb": "suffix",
+        "netlink_unicast": "suffix",
+        "init_net": "suffix",
+        "tracepoint_probe_register": "suffix",
+        "tracepoint_probe_unregister": "suffix",
+        "_raw_spin_lock": "suffix",
+        "_raw_spin_unlock": "suffix",
+        "__tracepoint_binder_transaction": "suffix",
+        "binder_transaction_buffer_release": "exact",
+        "binder_alloc_free_buf": "exact",
+        "kfree": "suffix",
+        "kmalloc": "suffix",
+        "__kmalloc": "suffix",
+        "binder_stats": "suffix",
+        "kvfree": "suffix",
+        "memdup_user": "suffix",
+        "binder_proc_transaction": "exact",
+        "binder_transaction": "exact",
+        "do_send_sig_info": "exact",
+        "sock_i_uid": "suffix",
+        "tcp_v4_do_rcv": "exact",
+        "tcp_v6_do_rcv": "exact",
+        "task_clear_jobctl_trapping": "exact",
+        "binder_free_proc": "exact",
+        "binder_proc_dec_tmpref": "exact",
+        "binder_alloc_init": "exact",
+        "binder_free_transaction": "exact",
+        "binder_send_failed_reply": "exact",
+        "skb_trim": "exact",
+        "ipv6_find_tlv": "exact",
+        "genlmsg_put": "exact",
+        "genlmsg_multicast_allns": "exact",
+        "genl_pernet_exit": "exact",
+        "genl_unregister_family": "exact",
+        "nla_put": "suffix",
+        "netlink_broadcast": "suffix",
+        "genl_register_family": "suffix",
+        "__genl_register_family": "suffix"
+      },
+      "kernel_symbol_dependencies": {
+        "__alloc_skb": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "__genl_register_family": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": [
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19"
+          ]
+        },
+        "__kmalloc": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "__tracepoint_binder_transaction": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": [
+            "rekernel-x-feasibility-20261002-01"
+          ]
+        },
+        "_raw_spin_lock": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "_raw_spin_unlock": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "binder_alloc_free_buf": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "binder_alloc_init": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "binder_free_proc": {
+          "present": [
+            "5.15/5.15.189-android13-8-00016"
+          ],
+          "missing": [
+            "4.4/4.4.192-perf+",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ]
+        },
+        "binder_free_transaction": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": [
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14"
+          ]
+        },
+        "binder_proc_dec_tmpref": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "binder_proc_transaction": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "binder_send_failed_reply": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "binder_stats": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": [
+            "rekernel-x-feasibility-20261002-01"
+          ]
+        },
+        "binder_transaction": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "binder_transaction_buffer_release": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "cgroup_freezing": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "do_send_sig_info": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "genl_pernet_exit": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": [
+            "rekernel-x-feasibility-20261002-01"
+          ]
+        },
+        "genl_register_family": {
+          "present": [
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19"
+          ],
+          "missing": [
+            "4.4/4.4.192-perf+",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ]
+        },
+        "genl_unregister_family": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "genlmsg_multicast_allns": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "genlmsg_put": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "init_net": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": [
+            "rekernel-x-feasibility-20261002-01"
+          ]
+        },
+        "ipv6_find_tlv": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "kfree": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "kfree_skb": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "kvfree": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "memdup_user": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "netlink_broadcast": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "netlink_unicast": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "nla_put": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "skb_trim": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "sock_i_uid": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "task_clear_jobctl_trapping": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "tcp_v4_do_rcv": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "tcp_v6_do_rcv": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": [
+            "rekernel-x-feasibility-20261002-01"
+          ]
+        },
+        "tracepoint_probe_register": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        },
+        "tracepoint_probe_unregister": {
+          "present": [
+            "4.4/4.4.192-perf+",
+            "5.15/5.15.189-android13-8-00016",
+            "rekernel-x-feasibility-20261002-01",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.14",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.19",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.4",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9",
+            "rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui"
+          ],
+          "missing": []
+        }
+      }
+    }
+  ],
+  "findings": [
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/get_task_ext_probe-0.1.0+gd8fb87994db8.r14b91adc.kpb51197a.ndk26.3.11579264/get_task_ext_probe_0.1.0.kpm（sha256=8652d17ed38a79d6…，4144 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/get_task_ext_probe-0.1.0_debug+gd8fb87994db8.rfc22ddd0.kpb51197a.ndk26.3.11579264/get_task_ext_probe_0.1.0_debug.kpm（sha256=a4e1b3f5bf8cbf8a…，4144 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel-8.0.0+g267bfa1c2efc.ndk26.3.11579264/re_kernel_8.0.0.kpm（sha256=ae48088b0ac837fd…，33440 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel-8.0.0_debug+g267bfa1c2efc.ndk26.3.11579264/re_kernel_8.0.0_debug.kpm（sha256=47ab0d733da9a5d9…，40928 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel-8.0.0_network+g267bfa1c2efc.ndk26.3.11579264/re_kernel_8.0.0_network.kpm（sha256=f6cbf1cc1115da20…，36776 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel-8.0.0_network_debug+g267bfa1c2efc.ndk26.3.11579264/re_kernel_8.0.0_network_debug.kpm（sha256=bcb4d29953cb32d8…，45000 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi3+g40f56f1e1476.rc6e986ec.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3.kpm（sha256=b3cee82601fd89a8…，42192 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi3+g4f40e2046f89.r6dd4873d.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3.kpm（sha256=3dbf6add8a78ac01…，33600 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi3+g85406787a3ba.r6f82ad1c.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3.kpm（sha256=b3cee82601fd89a8…，42192 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi3+gc06c0292c2f2.ra47a9865.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3.kpm（sha256=1721ca030954ce6f…，33600 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi3_debug+g40f56f1e1476.r6b018c83.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3_debug.kpm（sha256=ec42d6b3e94d17fe…，41544 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi3_debug+g4f40e2046f89.r7f9593ad.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3_debug.kpm（sha256=fbf3d8cb1e02fa15…，35096 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi3_debug+g85406787a3ba.r2c5dfe3a.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3_debug.kpm（sha256=ec42d6b3e94d17fe…，41544 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi3_debug+gc06c0292c2f2.re9dfce39.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi3_debug.kpm（sha256=3405ec468decbfc9…，35096 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi4+g40f56f1e1476.red25fa6f.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4.kpm（sha256=b1e7e8a47d81ba0b…，42200 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi4+g4f40e2046f89.r0a6da2d7.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4.kpm（sha256=f548a6fadf48f2be…，33600 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi4+g85406787a3ba.r427685b8.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4.kpm（sha256=b1e7e8a47d81ba0b…，42200 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi4+gc06c0292c2f2.r9eb820d0.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4.kpm（sha256=4b1f52ef56e5e69b…，33600 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi4_debug+g40f56f1e1476.r21a27d69.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4_debug.kpm（sha256=20b1bbe19f29c0ce…，41552 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi4_debug+g4f40e2046f89.r52fa58f2.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4_debug.kpm（sha256=dfc51aed2f004eae…，35104 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi4_debug+g85406787a3ba.r5f37025a.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4_debug.kpm（sha256=20b1bbe19f29c0ce…，41552 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi4_debug+gc06c0292c2f2.rdd9ccc10.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi4_debug.kpm（sha256=6c7935da19b01b2d…，35104 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi5+g40f56f1e1476.r2298d412.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5.kpm（sha256=b40f556e38305d8d…，42216 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi5+g4f40e2046f89.r62961f04.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5.kpm（sha256=077c15bf8c5017c4…，33616 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi5+g85406787a3ba.r899a936d.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5.kpm（sha256=b40f556e38305d8d…，42216 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi5+gc06c0292c2f2.r0390dfd2.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5.kpm（sha256=c2d2e72f8993e850…，33616 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi5_debug+g40f56f1e1476.r20f6465d.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5_debug.kpm（sha256=9a42e3b688654218…，41568 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi5_debug+g4f40e2046f89.r451d4456.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5_debug.kpm（sha256=95308b8c7527129f…，35120 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi5_debug+g85406787a3ba.re0df8c2a.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5_debug.kpm（sha256=9a42e3b688654218…，41568 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi5_debug+gc06c0292c2f2.r0a3dcfb3.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi5_debug.kpm（sha256=4aff36ae42c2b5a0…，35120 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi6+g40f56f1e1476.r359585c3.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6.kpm（sha256=d8c33f1a407bd03c…，42200 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi6+g4f40e2046f89.rf18bcea6.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6.kpm（sha256=71335b2c6be63470…，33608 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi6+g85406787a3ba.ra8963763.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6.kpm（sha256=d8c33f1a407bd03c…，42200 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi6+gc06c0292c2f2.r0021bf17.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6.kpm（sha256=b3cd41deab8c3e37…，33608 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi6_debug+g40f56f1e1476.rd4d7118b.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6_debug.kpm（sha256=99ba2818a0dd495d…，41552 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi6_debug+g4f40e2046f89.rba6293f2.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6_debug.kpm（sha256=af72e9ed715bbd0b…，35104 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi6_debug+g85406787a3ba.rf4400d60.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6_debug.kpm（sha256=99ba2818a0dd495d…，41552 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_static-8.0.0_abi6_debug+gc06c0292c2f2.r120e436b.kpb51197a.ndk26.3.11579264/re_kernel_static_8.0.0_abi6_debug.kpm（sha256=4408bf05e3845abf…，35104 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-1.6+ge112656f7639.r72953914.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6.kpm（sha256=79e81dccca796c83…，42128 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-1.6_abi3+g3ea7f04a4665.r5730df8f.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi3.kpm（sha256=deb58ffc0ebed5a4…，42336 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-1.6_abi3_debug+g3ea7f04a4665.rbb9ef2a0.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi3_debug.kpm（sha256=52e22ee6e41e7c95…，41696 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-1.6_abi4+g3ea7f04a4665.r3c69ad06.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi4.kpm（sha256=4f2b9fbd09d61650…，42336 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-1.6_abi4_debug+g3ea7f04a4665.r11816726.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi4_debug.kpm（sha256=dc63b6008c917dc1…，41704 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-1.6_abi5+g3ea7f04a4665.r4a149e5c.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi5.kpm（sha256=01efb65d0d4b26e6…，42352 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-1.6_abi5_debug+g3ea7f04a4665.rfcfd2185.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi5_debug.kpm（sha256=b044efa32ce965f0…，41720 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-1.6_abi6+g3ea7f04a4665.r13a2a6f8.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi6.kpm（sha256=163b83310bca7444…，42344 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-1.6_abi6_debug+g3ea7f04a4665.rbdaea1e9.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_abi6_debug.kpm（sha256=f2d6961b88359565…，41704 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-1.6_debug+ge112656f7639.r371d6864.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6_debug.kpm（sha256=c960449d4a8f7754…，41496 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-8.0.0_abi3+gaf4f04ec552e.rd959be27.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi3.kpm（sha256=9d65248780e10088…，42336 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-8.0.0_abi3_debug+gaf4f04ec552e.r0e564d3d.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi3_debug.kpm（sha256=ef3fd99f365c6dd4…，41696 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-8.0.0_abi4+gaf4f04ec552e.r800d9ce1.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi4.kpm（sha256=6b7924034bd2f792…，42344 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-8.0.0_abi4_debug+gaf4f04ec552e.ra0f3ab3b.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi4_debug.kpm（sha256=0b2a6dbf6c929516…，41704 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-8.0.0_abi5+gaf4f04ec552e.rece373b8.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi5.kpm（sha256=7205420364e6896c…，42360 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-8.0.0_abi5_debug+gaf4f04ec552e.ra82fc408.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi5_debug.kpm（sha256=6d2c33099a8bdc4e…，41720 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-8.0.0_abi6+gaf4f04ec552e.rb966a0a1.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi6.kpm（sha256=dc785a905c80e106…，42344 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "unregistered_artifact",
+      "artifact": "<artifacts-scan>",
+      "message": "artifacts/re_kernel_x-8.0.0_abi6_debug+gaf4f04ec552e.r58ffc19b.kpb51197a.ndk26.3.11579264/re_kernel_x_8.0.0_abi6_debug.kpm（sha256=5d883c2ea0ac9e00…，41704 字节）不在登记表内：无法绑定 commit/Build ID，此前对审计不可见"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0.kpm",
+      "message": "__genl_register_family 在语料 5.15/5.15.189-android13-8-00016, rekernel-x-feasibility-20261002-01, rekernel-x-feasibility-20261002-01/legacy/kernel_4.14, rekernel-x-feasibility-20261002-01/legacy/kernel_4.19 的符号表中不存在；经 kallsyms_lookup_name_by_suffix 后缀查找：缺失时指针为 NULL，是否安全取决于调用点有无空指针保护"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0.kpm",
+      "message": "__tracepoint_binder_transaction 在语料 rekernel-x-feasibility-20261002-01 的符号表中不存在；经 kallsyms_lookup_name_by_suffix 后缀查找：缺失时指针为 NULL，是否安全取决于调用点有无空指针保护"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0.kpm",
+      "message": "binder_free_proc 在语料 4.4/4.4.192-perf+, rekernel-x-feasibility-20261002-01, rekernel-x-feasibility-20261002-01/legacy/kernel_4.14, rekernel-x-feasibility-20261002-01/legacy/kernel_4.19, rekernel-x-feasibility-20261002-01/legacy/kernel_4.4, rekernel-x-feasibility-20261002-01/legacy/kernel_4.9, rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui 的符号表中不存在；取 kallsyms_lookup_name 函数指针后间接调用：无法从产物区分 lookup_name（缺失即 init 返回 -21）与 lookup_name_continue（容忍缺失、可能带回退），需核对源码确认"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0.kpm",
+      "message": "binder_free_transaction 在语料 rekernel-x-feasibility-20261002-01, rekernel-x-feasibility-20261002-01/legacy/kernel_4.14 的符号表中不存在；取 kallsyms_lookup_name 函数指针后间接调用：无法从产物区分 lookup_name（缺失即 init 返回 -21）与 lookup_name_continue（容忍缺失、可能带回退），需核对源码确认"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0.kpm",
+      "message": "binder_stats 在语料 rekernel-x-feasibility-20261002-01 的符号表中不存在；经 kallsyms_lookup_name_by_suffix 后缀查找：缺失时指针为 NULL，是否安全取决于调用点有无空指针保护"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0.kpm",
+      "message": "genl_pernet_exit 在语料 rekernel-x-feasibility-20261002-01 的符号表中不存在；取 kallsyms_lookup_name 函数指针后间接调用：无法从产物区分 lookup_name（缺失即 init 返回 -21）与 lookup_name_continue（容忍缺失、可能带回退），需核对源码确认"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0.kpm",
+      "message": "genl_register_family 在语料 4.4/4.4.192-perf+, rekernel-x-feasibility-20261002-01/legacy/kernel_4.4, rekernel-x-feasibility-20261002-01/legacy/kernel_4.9, rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui 的符号表中不存在；经 kallsyms_lookup_name_by_suffix 后缀查找：缺失时指针为 NULL，是否安全取决于调用点有无空指针保护"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0.kpm",
+      "message": "init_net 在语料 rekernel-x-feasibility-20261002-01 的符号表中不存在；经 kallsyms_lookup_name_by_suffix 后缀查找：缺失时指针为 NULL，是否安全取决于调用点有无空指针保护"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0.kpm",
+      "message": "tcp_v6_do_rcv 在语料 rekernel-x-feasibility-20261002-01 的符号表中不存在；取 kallsyms_lookup_name 函数指针后间接调用：无法从产物区分 lookup_name（缺失即 init 返回 -21）与 lookup_name_continue（容忍缺失、可能带回退），需核对源码确认"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0_debug.kpm",
+      "message": "__genl_register_family 在语料 5.15/5.15.189-android13-8-00016, rekernel-x-feasibility-20261002-01, rekernel-x-feasibility-20261002-01/legacy/kernel_4.14, rekernel-x-feasibility-20261002-01/legacy/kernel_4.19 的符号表中不存在；经 kallsyms_lookup_name_by_suffix 后缀查找：缺失时指针为 NULL，是否安全取决于调用点有无空指针保护"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0_debug.kpm",
+      "message": "__tracepoint_binder_transaction 在语料 rekernel-x-feasibility-20261002-01 的符号表中不存在；经 kallsyms_lookup_name_by_suffix 后缀查找：缺失时指针为 NULL，是否安全取决于调用点有无空指针保护"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0_debug.kpm",
+      "message": "binder_free_proc 在语料 4.4/4.4.192-perf+, rekernel-x-feasibility-20261002-01, rekernel-x-feasibility-20261002-01/legacy/kernel_4.14, rekernel-x-feasibility-20261002-01/legacy/kernel_4.19, rekernel-x-feasibility-20261002-01/legacy/kernel_4.4, rekernel-x-feasibility-20261002-01/legacy/kernel_4.9, rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui 的符号表中不存在；取 kallsyms_lookup_name 函数指针后间接调用：无法从产物区分 lookup_name（缺失即 init 返回 -21）与 lookup_name_continue（容忍缺失、可能带回退），需核对源码确认"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0_debug.kpm",
+      "message": "binder_free_transaction 在语料 rekernel-x-feasibility-20261002-01, rekernel-x-feasibility-20261002-01/legacy/kernel_4.14 的符号表中不存在；取 kallsyms_lookup_name 函数指针后间接调用：无法从产物区分 lookup_name（缺失即 init 返回 -21）与 lookup_name_continue（容忍缺失、可能带回退），需核对源码确认"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0_debug.kpm",
+      "message": "binder_stats 在语料 rekernel-x-feasibility-20261002-01 的符号表中不存在；经 kallsyms_lookup_name_by_suffix 后缀查找：缺失时指针为 NULL，是否安全取决于调用点有无空指针保护"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0_debug.kpm",
+      "message": "genl_pernet_exit 在语料 rekernel-x-feasibility-20261002-01 的符号表中不存在；取 kallsyms_lookup_name 函数指针后间接调用：无法从产物区分 lookup_name（缺失即 init 返回 -21）与 lookup_name_continue（容忍缺失、可能带回退），需核对源码确认"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0_debug.kpm",
+      "message": "genl_register_family 在语料 4.4/4.4.192-perf+, rekernel-x-feasibility-20261002-01/legacy/kernel_4.4, rekernel-x-feasibility-20261002-01/legacy/kernel_4.9, rekernel-x-feasibility-20261002-01/legacy/kernel_4.9_miui 的符号表中不存在；经 kallsyms_lookup_name_by_suffix 后缀查找：缺失时指针为 NULL，是否安全取决于调用点有无空指针保护"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0_debug.kpm",
+      "message": "init_net 在语料 rekernel-x-feasibility-20261002-01 的符号表中不存在；经 kallsyms_lookup_name_by_suffix 后缀查找：缺失时指针为 NULL，是否安全取决于调用点有无空指针保护"
+    },
+    {
+      "severity": "review",
+      "kind": "kernel_symbol_gap",
+      "artifact": "re_kernel_8.0.0_debug.kpm",
+      "message": "tcp_v6_do_rcv 在语料 rekernel-x-feasibility-20261002-01 的符号表中不存在；取 kallsyms_lookup_name 函数指针后间接调用：无法从产物区分 lookup_name（缺失即 init 返回 -21）与 lookup_name_continue（容忍缺失、可能带回退），需核对源码确认"
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "scope": "Developer freeze candidate selfcheck; not audit or device evidence",
+  "candidate_checks": [
+    {
+      "build_id": "re_kernel-11.7+gb51704088a2f.rc7733a0a.kpb51197a.ndk26.3.11579264",
+      "instance_id": "re_kernel-11.7+gb51704088a2f.rc7733a0a.kpb51197a.ndk26.3.11579264#1",
+      "kind": "candidate",
+      "profile": "candidate",
+      "problems": [],
+      "notes": [
+        "源码核验通过（提交 blob 19 个）"
+      ],
+      "source_verified": true,
+      "artifacts_verified": 1
+    },
+    {
+      "build_id": "re_kernel-11.7_debug+gb51704088a2f.r30402fd1.kpb51197a.ndk26.3.11579264",
+      "instance_id": "re_kernel-11.7_debug+gb51704088a2f.r30402fd1.kpb51197a.ndk26.3.11579264#1",
+      "kind": "candidate",
+      "profile": "candidate",
+      "problems": [],
+      "notes": [
+        "源码核验通过（提交 blob 19 个）"
+      ],
+      "source_verified": true,
+      "artifacts_verified": 1
+    },
+    {
+      "build_id": "re_kernel_x-1.6-20261008+g1fe307661935.r04f95ebd.kpb51197a.ndk26.3.11579264",
+      "instance_id": "re_kernel_x-1.6-20261008+g1fe307661935.r04f95ebd.kpb51197a.ndk26.3.11579264#1",
+      "kind": "candidate",
+      "profile": "candidate",
+      "problems": [],
+      "notes": [
+        "源码核验通过（提交 blob 17 个）"
+      ],
+      "source_verified": true,
+      "artifacts_verified": 1
+    },
+    {
+      "build_id": "re_kernel_x-1.6-20261008_debug+g1fe307661935.rf96e63f5.kpb51197a.ndk26.3.11579264",
+      "instance_id": "re_kernel_x-1.6-20261008_debug+g1fe307661935.rf96e63f5.kpb51197a.ndk26.3.11579264#1",
+      "kind": "candidate",
+      "profile": "candidate",
+      "problems": [],
+      "notes": [
+        "源码核验通过（提交 blob 17 个）"
+      ],
+      "source_verified": true,
+      "artifacts_verified": 1
+    }
+  ],
+  "static_layouts": [
+    {
+      "source_commit": "60eef5e4e79255e03c3a6090aad345f92851c4cd",
+      "instance_id": "re_kernel_x-1.6-20261008+g1fe307661935.r04f95ebd.kpb51197a.ndk26.3.11579264#1",
+      "kpm_sha256": "931e941bf9db2626209147e48d23e8d75a6595476fdfda072f656f9ec9d13937",
+      "path": "artifacts/re_kernel_x-1.6-20261008+g1fe307661935.r04f95ebd.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6-20261008.kpm.json",
+      "sha256": "31e7d899bfe0d2d2b37dacee67ad568c23d8d973c0390b4ebd1c010632ef60a3",
+      "size": 3077
+    },
+    {
+      "source_commit": "60eef5e4e79255e03c3a6090aad345f92851c4cd",
+      "instance_id": "re_kernel_x-1.6-20261008_debug+g1fe307661935.rf96e63f5.kpb51197a.ndk26.3.11579264#1",
+      "kpm_sha256": "2eea221f9c6649932afb74c6ebc0e9510dae886037e8a98daaafd11a67a73ee0",
+      "path": "artifacts/re_kernel_x-1.6-20261008_debug+g1fe307661935.rf96e63f5.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6-20261008_debug.kpm.json",
+      "sha256": "f829816cf5860375e3639909e5088f0ebb7c40a7274b3d5bc649c55734076dd2",
+      "size": 3083
+    }
+  ],
+  "host_receipt_source_commit": "2074106d835b7a20f7e11ab29febc86ec54b7bb2",
+  "host_receipt_sources_match_commit": true,
+  "protected_files_unchanged": 161,
+  "repository_gate": {
+    "profile": "regular",
+    "passed": 15,
+    "failed": 1,
+    "warnings": 0,
+    "failure": "version_consistency: re_kernel 11.7 vs declared 8.0.0; re_kernel_x 1.6-20261008 vs declared 1.6; metadata patches pending Maintainer"
+  }
+}

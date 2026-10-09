@@ -1,0 +1,21 @@
+{
+  "scope": "Developer layout companion receipt; KPM candidate identities remain in official handoff manifest",
+  "layouts": [
+    {
+      "source_commit": "60eef5e4e79255e03c3a6090aad345f92851c4cd",
+      "instance_id": "re_kernel_x-1.6-20261008+g1fe307661935.r04f95ebd.kpb51197a.ndk26.3.11579264#1",
+      "kpm_sha256": "931e941bf9db2626209147e48d23e8d75a6595476fdfda072f656f9ec9d13937",
+      "path": "artifacts/re_kernel_x-1.6-20261008+g1fe307661935.r04f95ebd.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6-20261008.kpm.json",
+      "sha256": "31e7d899bfe0d2d2b37dacee67ad568c23d8d973c0390b4ebd1c010632ef60a3",
+      "size": 3077
+    },
+    {
+      "source_commit": "60eef5e4e79255e03c3a6090aad345f92851c4cd",
+      "instance_id": "re_kernel_x-1.6-20261008_debug+g1fe307661935.rf96e63f5.kpb51197a.ndk26.3.11579264#1",
+      "kpm_sha256": "2eea221f9c6649932afb74c6ebc0e9510dae886037e8a98daaafd11a67a73ee0",
+      "path": "artifacts/re_kernel_x-1.6-20261008_debug+g1fe307661935.rf96e63f5.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6-20261008_debug.kpm.json",
+      "sha256": "f829816cf5860375e3639909e5088f0ebb7c40a7274b3d5bc649c55734076dd2",
+      "size": 3083
+    }
+  ]
+}

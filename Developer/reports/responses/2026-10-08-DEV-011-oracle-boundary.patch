@@ -1,0 +1,49 @@
+diff --git a/re_kernel/tools/test_genl_offsets.py b/re_kernel/tools/test_genl_offsets.py
+index 1afd117..cdb14e3 100644
+--- a/re_kernel/tools/test_genl_offsets.py
++++ b/re_kernel/tools/test_genl_offsets.py
+@@ -123,7 +123,7 @@ int probe(struct probe_code* codes, struct probe_layout* out) {
+             image_bytes = image_path.read_bytes()
+             symbols = [(int(addr, 16), symbol) for addr, symbol in re.findall(
+                 r"^([0-9a-f]+) [a-zA-Z] (\S+)$", symbol_path.read_text(), re.M)]
+-            for fn, window in (("genlmsg_multicast_allns", 32), ("genlmsg_put", 0x14),
++            for fn, window in (("genlmsg_multicast_allns", 32), ("genlmsg_put", 0x19),
+                                ("genl_unregister_family", 0x55), ("genl_pernet_exit", 8)):
+                 addr = next(addr for addr, symbol in symbols if symbol == fn)
+                 end = addr + window * 4
+@@ -414,7 +414,7 @@ int probe(struct probe_code* codes, struct probe_layout* out) {
+                 partial = [0xb9400000 | ((off // 4) << 10) | (3 << 5)
+                            for i, off in enumerate(required) if i != missing]
+                 partial.append(extra)
+-                partial.extend([0xd503201f] * (0x14 - len(partial)))
++                partial.extend([0xd503201f] * (0x19 - len(partial)))
+                 partial_buffer = (ctypes.c_uint32 * len(partial))(*partial)
+                 codes[1] = Code(partial_buffer, len(partial), original_put.addr)
+                 sentinel = Layout(*([-123] * 7))
+@@ -424,7 +424,7 @@ int probe(struct probe_code* codes, struct probe_layout* out) {
+             # 只提供 id/hdrsize 即可取得配置段，version 不再是独立查找条件。
+             header_words = [0xb9400000 | ((off // 4) << 10) | (3 << 5) | (8 + index)
+                             for index, off in enumerate(required)]
+-            header_words.extend([0xd503201f] * (0x14 - len(header_words)))
++            header_words.extend([0xd503201f] * (0x19 - len(header_words)))
+             header_buffer = (ctypes.c_uint32 * len(header_words))(*header_words)
+             codes[1] = Code(header_buffer, len(header_words), original_put.addr)
+             header_layout = Layout()
+@@ -436,7 +436,7 @@ int probe(struct probe_code* codes, struct probe_layout* out) {
+             saved_words = [0xaa0303f3,  # mov x19, x3
+                            (header_words[0] & ~(31 << 5)) | (19 << 5),
+                            (header_words[1] & ~(31 << 5)) | (19 << 5)]
+-            saved_words.extend([0xd503201f] * (0x14 - len(saved_words)))
++            saved_words.extend([0xd503201f] * (0x19 - len(saved_words)))
+             saved_buffer = (ctypes.c_uint32 * len(saved_words))(*saved_words)
+             codes[1] = Code(saved_buffer, len(saved_words), original_put.addr)
+             saved_layout = Layout()
+@@ -447,7 +447,7 @@ int probe(struct probe_code* codes, struct probe_layout* out) {
+             header_mutations = []
+             for branch, label in ((0x94000000, "bl"), (0xd63f0100, "blr"), (0xd65f03c0, "ret")):
+                 header_mutations.append(([branch, *header_words], "header_pair_after_" + label))
+-            header_mutations.append(([header_words[0], *([0xd503201f] * 19), header_words[1]],
++            header_mutations.append(([header_words[0], *([0xd503201f] * 24), header_words[1]],
+                                      "hdrsize_outside_prefix"))
+             words = list(header_words)
+             words[1] += 1 << 10
