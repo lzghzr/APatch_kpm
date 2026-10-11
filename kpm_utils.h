@@ -8,7 +8,10 @@
 
 #include <hook.h>
 #include <linux/cred.h>
+#include <linux/err.h>
 #include <linux/sched.h>
+#include <linux/string.h>
+#include <uapi/asm-generic/errno.h>
 
 // hook
 #define lookup_name(func)                                  \
@@ -51,11 +54,114 @@
 #define task_suid(task) __GET_CREDID(suid, task)
 #define task_sgid(task) __GET_CREDID(sgid, task)
 
+// BTF
+// BTF UAPI 的共同记录；查询与类型尺寸解析交给内核。
+struct btf;
+#ifndef _KPM_BTF_TYPES
+#define _KPM_BTF_TYPES
+struct btf_type {
+  u32 name_off, info, size;
+};
+struct btf_member {
+  u32 name_off, type, offset;
+};
+#endif
+struct btf_param {
+  u32 name_off, type;
+};
+struct btf_enum {
+  u32 name_off;
+  int value;
+};
+
+struct kpm_btf {
+  const struct btf* data;
+  int (*find_by_name_kind)(const struct btf* btf, const char* name, u8 kind);
+  const struct btf_type* (*type_by_id)(const struct btf* btf, u32 id);
+  const char* (*name_by_offset)(const struct btf* btf, u32 offset);
+  const struct btf_type* (*resolve_size)(const struct btf* btf, const struct btf_type* type, u32* size);
+};
+
+struct kpm_btf_field {
+  const struct btf_type* type;
+  u32 offset, bits, size;
+};
+
+static inline const struct btf_type* kpm_btf_type(const struct kpm_btf* btf, const char* name, u8 kind) {
+  int id = btf->find_by_name_kind(btf->data, name, kind);
+  return id > 0 ? btf->type_by_id(btf->data, id) : NULL;
+}
+
+// 按名字遍历嵌套成员与匿名 struct/union；offset 和 bits 的单位为 bit。
+static inline int kpm_btf_member(const struct kpm_btf* btf, const struct btf_type* type, const char* path,
+                                 struct kpm_btf_field* field, unsigned int depth) {
+  if (!type || depth == 32 || (((type->info >> 24) & 31) != 4 && ((type->info >> 24) & 31) != 5))
+    return -EINVAL;
+  unsigned int len = 0;
+  while (path[len] && path[len] != '.') len++;
+  const struct btf_member* members = (const struct btf_member*)(type + 1);
+  for (u32 i = 0; i < (type->info & 0xffff); i++) {
+    const char* name = btf->name_by_offset(btf->data, members[i].name_off);
+    if (!name || (*name && (strncmp(name, path, len) || name[len])))
+      continue;
+    const struct btf_type* member = btf->type_by_id(btf->data, members[i].type);
+    if (!member)
+      return -EINVAL;
+    u32 size = 0;
+    member = btf->resolve_size(btf->data, member, &size);
+    if (IS_ERR(member) || !member)
+      return -EINVAL;
+    u32 offset = members[i].offset;
+    u32 bits = type->info >> 31 ? offset >> 24 : 0;
+    if (type->info >> 31)
+      offset &= 0xffffff;
+    if ((u64)offset + (bits ? bits : (u64)size * 8) > (u64)type->size * 8)
+      return -EINVAL;
+    if (!*name || path[len] == '.') {
+      if (bits)
+        return -EINVAL;
+      int rc = kpm_btf_member(btf, member, *name ? path + len + 1 : path, field, depth + 1);
+      if (rc == -ENOENT && !*name)
+        continue;
+      if (rc)
+        return rc;
+      field->offset += offset;
+    } else {
+      *field = (struct kpm_btf_field){member, offset, bits, size};
+    }
+    return 0;
+  }
+  return -ENOENT;
+}
+
+static inline int kpm_btf_offset(const struct kpm_btf* btf, const struct btf_type* type, const char* name,
+                                 unsigned int width) {
+  struct kpm_btf_field field;
+  int rc = kpm_btf_member(btf, type, name, &field, 0);
+  if (rc)
+    return rc;
+  if (field.bits || field.offset % 8 || (width && field.size != width))
+    return -EINVAL;
+  return field.offset / 8;
+}
+
+static inline int kpm_btf_enum(const struct kpm_btf* btf, const struct btf_type* type, const char* name) {
+  if (!type || ((type->info >> 24) & 31) != 6)
+    return -EINVAL;
+  const struct btf_enum* values = (const struct btf_enum*)(type + 1);
+  for (u32 i = 0; i < (type->info & 0xffff); i++) {
+    const char* member = btf->name_by_offset(btf->data, values[i].name_off);
+    if (member && !strcmp(member, name))
+      return values[i].value;
+  }
+  return -ENOENT;
+}
+
 // instruction
-#define bits32(n, high, low) ((uint32_t)((n) << (31u - (high))) >> (31u - (high) + (low)))
+#define bits32(n, high, low) (((uint32_t)(n) << (31u - (high))) >> (31u - (high) + (low)))
 #define bit(n, st) (((n) >> (st)) & 1)
 #define sign64_extend(n, len) \
-  (((uint64_t)((n) << (63u - (len - 1))) >> 63u) ? ((n) | (0xFFFFFFFFFFFFFFFF << (len))) : n)
+  ((((uint64_t)(n) << (63u - (len - 1))) >> 63u) ? ((n) | (0xFFFFFFFFFFFFFFFF << (len))) : n)
 // https://github.com/llvm/llvm-project/blob/f280d3b705de7f94ef9756e3ef2842b415a7c038/llvm/lib/Target/AArch64/MCTargetDesc/AArch64AddressingModes.h#L293
 #define ror(elt, size) (((elt) & 1) << ((size) - 1)) | ((elt) >> 1)
 
@@ -118,15 +224,16 @@
       return -10;                                             \
     int immr = inst_get_##abbr##_immr(code);                  \
     int imms = inst_get_##abbr##_imms(code);                  \
-    int len = 31 - __builtin_clz((N << 6) | (~imms & 0x3f));  \
-    if (len < 0)                                              \
+    int encoded = (N << 6) | (~imms & 0x3f);                  \
+    if (!encoded)                                             \
       return -11;                                             \
+    int len = 31 - __builtin_clz(encoded);                    \
     int size = (1 << len);                                    \
     int R = immr & (size - 1);                                \
     int S = imms & (size - 1);                                \
     if (S == size - 1)                                        \
       return -12;                                             \
-    long pattern = (1ULL << (S + 1)) - 1;                     \
+    uint64_t pattern = (1ULL << (S + 1)) - 1;                 \
     for (int i = 0; i < R; ++i) pattern = ror(pattern, size); \
     int regSize = (sf == 0) ? 32 : 64;                        \
     while (size != regSize) {                                 \
@@ -144,8 +251,8 @@
   static inline long inst_get_##abbr##_label(uint32_t code) {   \
     if (!inst_is_##abbr(code))                                  \
       return -1;                                                \
-    int immlo = inst_get_##abbr##_immlo(code);                  \
-    int immhi = inst_get_##abbr##_immhi(code);                  \
+    uint64_t immlo = inst_get_##abbr##_immlo(code);             \
+    uint64_t immhi = inst_get_##abbr##_immhi(code);             \
     return sign64_extend((immhi << 14u) | (immlo << 12u), 33u); \
   }
 
@@ -293,6 +400,10 @@ __INST_SF_RN_RD_N_FUNCS(and_imm, 0x7F800000u, 0x12000000u)
 __INST_SF_RN_RD_N_FUNCS(orr_imm, 0x7F800000u, 0x32000000u)
 __INST_SF_RN_RD_N_FUNCS(tst_imm, 0x7F80001Fu, 0x7200001Fu)
 
+__INST_FUNCS(b, 0xFC000000u, 0x14000000u)
+__INST_GET_IMM26(b)
+__INST_GET_IMM26_LABEL(b)
+
 __INST_FUNCS(bl, 0xFC000000u, 0x94000000u)
 __INST_GET_IMM26(bl)
 __INST_GET_IMM26_LABEL(bl)
@@ -300,6 +411,8 @@ __INST_RN_FUNCS(blr, 0xFFFFFC1Fu, 0xD63F0000u)
 
 __INST_SF_RT_FUNCS(cbz, 0x7F000000u, 0x34000000u)
 __INST_GET_IMM19(cbz)
+__INST_SF_RT_FUNCS(cbnz, 0x7F000000u, 0x35000000u)
+__INST_GET_IMM19(cbnz)
 
 __INST_SF_RT_FUNCS(tbnz, 0x7F000000u, 0x37000000u)
 __INST_GET_IMM14(tbnz)
@@ -320,6 +433,8 @@ __INST_GET_IMM9(str_imm9)
 __INST_GET_MODE(str_imm9)
 __INST_SIZE_RN_RT_IMM12_FUNCS(str_imm_uint, 0xBFC00000u, 0xB9000000u)
 __INST_SIZE_RN_RT_IMM12_FUNCS(strb_imm_uint, 0xFFC00000u, 0x39000000u)
+
+__INST_RN_FUNCS(stp_imm, 0x7FC00000u, 0x29000000u)
 
 __INST_SF_RM_RD_FUNCS(mov_reg, 0x7FE0FFE0u, 0x2A0003E0u)
 __INST_SF_FUNCS(movz_imm, 0x7F800000u, 0x52800000u)

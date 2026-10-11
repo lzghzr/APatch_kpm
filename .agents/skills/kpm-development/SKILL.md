@@ -1,6 +1,6 @@
 ---
 name: kpm-development
-description: 开发、构建和排查 Android ARM64 KernelPatch 模块（KPM），支持运行时动态推导与离线静态偏移，涵盖生命周期、内核符号调用、函数与 syscall hook、调用上下文和加载错误。动态偏移推导使用 kernel-offset-derivation；静态基准及二进制替换使用 kpm-static-binary-port。
+description: 开发、构建和排查 Android ARM64 KernelPatch 模块（KPM），涵盖静态/动态双版本、BTF 与函数推导、生命周期、内核调用和 hook。偏移获取使用 kernel-offset-derivation；静态基准与二进制替换使用 kpm-static-binary-port。
 ---
 
 # KPM 开发与排错
@@ -13,26 +13,47 @@ KPM 是由 KernelPatch 加载到内核空间的 ARM64 可重定位 ELF，不使�
 
 本文提供静态、动态模块共用的开发基础。偏移策略按用户需求与模块既有实现选择；提供 img 也可以用于动态算法的离线验证，不自动视为静态移植。
 
-- 动态适配：希望同一产物在加载时取得目标布局，使用 [动态偏移推导](../kernel-offset-derivation/SKILL.md)，复用 KP 已初始化的布局信息或从内核函数数据流推导私有字段。
+- 动态适配：希望同一产物在加载时取得目标布局，使用 [偏移获取指引](../kernel-offset-derivation/SKILL.md)，优先查询目标 BTF；缺少数据或查询接口时，复用 KP 已初始化的布局信息并尝试固定窗口函数推导。
 - 静态适配：先离线分析目标 img，固定布局后构建或替换数据表，使用 [静态二进制移植](../kpm-static-binary-port/SKILL.md)。已有匹配基准时可直接下载并替换，用户侧无需 NDK 或 KP SDK。
-- 开发新功能：两种方式均可修改源码并构建候选。动态推导可参考 [re_kernel](../../../re_kernel/re_kernel.c) 的初始化流程；静态实现参考 [re_kernel_x 开发说明](../../../re_kernel_x/AGENTS.md) 与 [Makefile](../../../re_kernel_x/Makefile)。示例模块中的旧接口仍需按当前 SDK 核对。
+- 开发新功能：两种方式均可修改源码并构建候选。rek（`re_kernel`）和 rekx（`re_kernel_x`）均已提供两种编译模式；参考各模块的 Makefile 与初始化流程。示例模块中的旧接口仍需按当前 SDK 核对。
+
+## 双版本默认规范
+
+有布局偏移依赖的模块默认提供两种产物，共用本模块业务代码；当前已接入 rek、rekx、run_cmd，其余模块逐个迁移。没有偏移依赖的模块继续生成通用 KPM。
+
+| 模式 | 编译选择 | 普通产物 | 布局 JSON |
+| --- | --- | --- | --- |
+| 动态 | 未定义 `CONFIG_KPM_BASELINES` | `<模块>_<版本>.kpm` | 由加载时查询或推导取得偏移 |
+| 静态基线 | 定义 `CONFIG_KPM_BASELINES` | `<模块>_<版本>_baselines.kpm` | 配套同名 `.kpm.json` |
+
+debug 在文件名末尾增加 `_debug`，模式在 `.kpm.info` 中记为 `offset_mode=dynamic/static`。两种产物使用同一模块管理名称，每次选择一种加载；这是编译产物的选择，不是运行时模式切换。
+
+各项目保留独立 Makefile、协议与偏移实现。run_cmd 的四字段配置与静态 SID 语义见 [模块开发约定](../../../run_cmd_demo/AGENTS.md)。rek、rekx 不互相包含源码；公共指令宏和 BTF 成员查询放根目录 `kpm_utils.h`，静态补丁工具为根目录 `patch_offsets.py`。通用部分以 rekx 为准核对后分别维护。
+
+在新的空输出目录运行 `all` 生成两份普通版，`debug` 生成两份 debug；`static`、`dynamic` 可单独选择，`baselines` 生成静态普通/debug 两份。静态 JSON 默认与 KPM 同目录，也可用 `LAYOUT_DIR` 单独指定。正式候选使用仓库统一构建入口，捕获 `--extra-input patch_offsets.py` 及实际工具链、输出参数。
+
+发布规范为 Releases 提供两种普通版及静态 JSON，debug 保留在 Actions artifacts。实施前检查当前工作流；双模式 CI/发布改动见 [维护者补丁建议](../../../Developer/proposals/2026-10-10-kpm-modes/README.md)，不能把补丁副本的自检视为线上发布已生效。
 
 ## 结构体偏移策略
 
 | 方式 | 偏移取得时机 | 验证重点 |
 | --- | --- | --- |
-| 动态 | 加载时复用 SDK 布局或从运行内核推导 | 算法、扫描边界、初始化结果及失败降级 |
+| 动态 | 加载时查询目标 BTF，或复用 SDK 布局并从运行内核推导 | 字段契约、算法、扫描边界、初始化结果及失败降级 |
 | 静态 | 移植阶段从目标头文件/BTF或镜像分析 | 字段依据、目标配置、实际 ABI 与补丁字节范围 |
 
 这里的静态、动态指布局偏移的取得方式，运行时内核符号查找适用于两者。同一模块也可按字段组合：复用已确认的共同定义，对变化字段采用固定配置或动态推导。
 
-动态模块先解析锚点、推导并核对所需字段，再启用依赖这些字段的 hook。扫描设定范围，处理 CFI 跳板、寄存器数据流和厂商布局变化；推导结果缓存供业务访问，避免每次事件重新扫描。偏移 0 可能合法，未初始化、字段不存在和推导失败要有明确状态，不能统一按 `offset > 0` 判断。
+Android **4.4～5.10** 是函数推导的默认适配范围，有可用 BTF 时仍优先查询；**5.15 及以上** 默认使用 BTF。版本范围决定新增适配的工作重点，运行时按实际数据和查询结果选择，不按版本填写偏移。缺少 BTF 或查询接口时继续尝试现有固定窗口；窗口找不到所需字段即可失败，不强求高版本函数适配。有效 BTF 已证实必要类型缺失或布局不符时停止初始化，保留具体诊断。公共查询及原生接口契约见 [BTF 使用指引](../kernel-offset-derivation/references/btf-layout.md)。
+
+加载时可计算的字段集中在 `calculate_offsets()`；先查询 BTF，再按函数分组查找，每组立即输出 debug 并检查结果。确实依赖 hook 参数的运行时计算单独存放。成功后再启用依赖字段的 hook；不为宿主测试额外增加整表回滚。推导结果缓存供业务访问，避免每次事件重新扫描。偏移 0 可能合法，未初始化、字段不存在和推导失败要有明确状态，不能统一按 `offset > 0` 判断。
 
 动态提取逻辑与离线 harness 保持一致，在用户选定的镜像上逐字段交叉验证，并核对运行时输出。静态模块核对完整配置表；复用已确认的共同布局，只为变化字段配置偏移。两种方式都不能按版本号猜偏移；函数 ABI 据实际签名选择调用方式；能通过静态配置分派时复用同一份代码，如 re_kernel_x 的 binder_release_abi，只有实现确实无法共用时才增加编译分支。困难旧内核允许现场分析，无法确认的字段停止相关功能或初始化失败。
 
 ## 源码组织与公共宏
 
-典型模块包含 Makefile、入口 `.c`、自身定义 `.h`，必要时另放偏移推导或配置以及内核调用封装。公共宏在 [kpm_utils.h](../../../kpm_utils.h)，其中的指令解码可用于动态推导。本仓库静态模块 `re_kernel_x` 的约定为：模块定义放 `re_kernel.h`，核对过的内核定义放 `re_structs.h`，KP 风格封装放 `re_utils.h`；其它模块沿用自身组织方式。
+典型模块包含 Makefile、入口 `.c`、自身定义 `.h`，必要时解耦偏移获取；业务过长时按 Binder、Genl 等功能拆分。公共宏在 [kpm_utils.h](../../../kpm_utils.h)，指令宏新增或修改严格沿用既有模板、分组位置及 ARM64 编码，LDR 与 STR 分别命名。
+
+rek、rekx 均约定：模块定义放 `re_kernel.h`，核对过的内核定义放 `re_structs.h`，KP 风格封装放 `re_utils.h`，`struct struct_offset`、实例、访问器与推导放 `re_offsets.c`。同一模块共用一份结构定义，模式差异留在实例初始化与计算路径；静态实例使用独立 `volatile` 配置段，动态实例按本模块约定初始化。公共结构的存在不表示每个成员都要增加动态 BTF 查询。包含顺序按依赖组织：工具头在顶部，必要访问器前置声明；内核符号集中声明后再包含偏移实现。其它模块沿用自身组织方式。
 
 使用公共宏前读它的实现：`lookup_name` 查原名，失败直接返回；`hook_func` 失败直接返回，不负责撤销此前安装的 hook。`unhook_func` 调用的是 `unhook`，不能直接当成只删除本模块 wrap 回调的接口。新增实现优先用配对的 wrap/unwrap 并记录安装状态。
 

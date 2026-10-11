@@ -56,6 +56,14 @@ python3 run.py --image B2N-416G_boot.img               # 只对它跑偏移推�
 - **遵守测试 Oracle 与防反向过拟合**：基准测试套件视为只读 Oracle。严禁为了通过测试而私自修改、弱化或删除已有断言；严禁为了迁就宿主单测/Mock 而扭曲生产代码架构；确需变更断言时必须在报告中单独说明技术依据并由 Auditor 独立复核（详见 [.agents/skills/respect-the-oracle/SKILL.md](.agents/skills/respect-the-oracle/SKILL.md)）。
 - **不为了过门禁而放宽断言**：断言、用例、检查范围的任何缩小都要在报告中写明并给出理由。
 
+## KPM 偏移模式默认规范
+
+有结构体偏移依赖的模块默认提供 static / dynamic 两种编译产物，共用业务实现，定义 `CONFIG_KPM_BASELINES` 选择静态基线，未定义时使用动态推导。静态版附带可替换偏移表及同名 `.kpm.json`；动态版加载时优先使用 BTF，再使用目标支持的固定小窗口推导。必要字段或共同布局无法确认时停止加载，不按版本号猜偏移。
+
+普通产物命名为 `<模块>_<版本>_baselines.kpm`、`<模块>_<版本>.kpm`，debug 增加 `_debug`，元信息记录 `offset_mode`。Releases 发布两种普通版与静态 JSON；debug 保留在 artifacts。同一模块的两种模式保留同一管理名称，每次选择一种加载。无偏移依赖的模块继续生成通用 KPM。
+
+当前接入 rek / rekx / run_cmd，其他模块逐个接入，各模块在自己的 Makefile 中维护构建规则，额外输入规则见 `Developer/README.md`。Android 4.4～5.10 是函数推导新增适配范围，5.15 及以上默认使用 BTF；该范围用于安排工作，偏移仍由目标证据取得。
+
 ## 常用入口
 
 ```bash

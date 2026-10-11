@@ -71,6 +71,14 @@ def inspect_kpm(path):
     prefix = info["name"] + "_" + version
     if not path.name.startswith(prefix) or path.name[len(prefix):len(prefix) + 1] not in ("_", "."):
         raise ValueError("产物文件名与内嵌版本不一致")
+    mode = info.get("offset_mode")
+    if mode is not None:
+        if mode not in ("static", "dynamic"):
+            raise ValueError("偏移模式无效")
+        debug = info["version"].endswith("_d")
+        expected = prefix + ("_baselines" if mode == "static" else "") + ("_debug" if debug else "") + ".kpm"
+        if path.name != expected:
+            raise ValueError("产物文件名与偏移模式不一致")
     return {"file": path.name, "sha256": hashlib.sha256(data).hexdigest(), "size": len(data), "info": info}, sections
 
 
@@ -78,16 +86,21 @@ def inspect_layout(path, kpm, sections):
     layout = json.loads(path.read_text())
     offset_section, raw = sections[".data.re_offsets"]
     fields = layout["fields"]
-    if (any(type(layout.get(key)) is not int for key in ("schema", "binder_abi", "table_offset", "table_size"))
-            or layout.get("schema") not in (1, 2) or layout.get("kpm") != kpm["file"]
+    if (any(type(layout.get(key)) is not int for key in ("schema", "table_offset", "table_size"))
+            or layout.get("schema") not in (1, 2, 3) or layout.get("kpm") != kpm["file"]
             or layout.get("sha256") != kpm["sha256"]
             or layout.get("table_offset") != offset_section[4]
             or layout.get("table_size") != len(raw) or not raw or len(raw) % 2
             or offset_section[1] != 1 or offset_section[2] & 3 != 3
-            or layout.get("binder_abi") not in (3, 4, 5, 6)
             or not isinstance(fields, list) or not all(isinstance(f, str) and f for f in fields)
             or len(fields) != len(set(fields)) or len(fields) * 2 != len(raw)):
         raise ValueError("布局字段与 KPM 字节不一致")
+    if layout["schema"] in (1, 2):
+        if type(layout.get("binder_abi")) is not int or layout["binder_abi"] not in (3, 4, 5, 6):
+            raise ValueError("Binder 布局必须记录有效释放 ABI")
+    elif (kpm["info"]["name"] in ("re_kernel", "re_kernel_x") or "binder_abi" in layout
+          or "binder_release_abi" in fields or ".rodata.re_abi" in sections):
+        raise ValueError("普通偏移布局不能代替 Binder ABI 布局")
     values = dict(zip(fields, struct.unpack(f"<{len(fields)}h", raw)))
     if layout["schema"] == 1:
         abi_section, abi_raw = sections[".rodata.re_abi"]
@@ -98,10 +111,12 @@ def inspect_layout(path, kpm, sections):
                 or layout["binder_abi"] != struct.unpack("<I", abi_raw)[0]
                 or "binder_release_abi" in fields):
             raise ValueError("固定 ABI 产物文件名、标记或布局不一致")
-    else:
+    elif layout["schema"] == 2:
         version = kpm["info"]["version"]
         debug = version.endswith("_d")
-        name = "re_kernel_x_" + (version[:-2] if debug else version) + ("_debug" if debug else "") + ".kpm"
+        mode = kpm["info"].get("offset_mode")
+        name = kpm["info"]["name"] + "_" + (version[:-2] if debug else version)
+        name += ("_baselines" if mode == "static" else "") + ("_debug" if debug else "") + ".kpm"
         if (".rodata.re_abi" in sections or fields[-1] != "binder_release_abi"
                 or values["binder_release_abi"] != layout["binder_abi"] or kpm["file"] != name):
             raise ValueError("统一基线文件名或配置中的 Binder 释放 ABI 不一致")
@@ -125,7 +140,10 @@ def validate(directory, expected=()):
         module = artifact["info"]["name"]
         modules.add(module)
         layout_path = Path(str(path) + ".json")
-        if module == "re_kernel_x" or layout_path.exists():
+        mode = artifact["info"].get("offset_mode")
+        if mode == "dynamic" and layout_path.exists():
+            raise ValueError("动态产物不应附带静态布局")
+        if mode == "static" or (module == "re_kernel_x" and mode is None) or layout_path.exists():
             artifact["layout"] = inspect_layout(layout_path, artifact, sections)
             layouts.add(layout_path.name)
         artifacts.append(artifact)

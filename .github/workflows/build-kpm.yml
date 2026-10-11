@@ -6,6 +6,8 @@ on:
       - ".github/workflows/build-kpm.yml"
       - "tools/artifact_gate.py"
       - "tools/selftest_artifact_gate.py"
+      - "tools/selftest_offset_modes.py"
+      - "patch_offsets.py"
       - "**/*.c"
       - "**/*.h"
       - "**/*.S"
@@ -22,6 +24,8 @@ on:
       - ".github/workflows/build-kpm.yml"
       - "tools/artifact_gate.py"
       - "tools/selftest_artifact_gate.py"
+      - "tools/selftest_offset_modes.py"
+      - "patch_offsets.py"
       - "**/*.c"
       - "**/*.h"
       - "**/*.S"
@@ -71,6 +75,7 @@ jobs:
         run: |
           python3 tools/selftest_artifact_gate.py
           python3 tools/selftest_release_assets.py
+          python3 tools/selftest_offset_modes.py
 
       - name: Build kpm
         run: |
@@ -89,8 +94,8 @@ jobs:
             fi
             echo "build ${dir}"
             printf "%s\n" "${dir%/}" >> target/modules.txt
-            if [ "${dir%/}" = "re_kernel_x" ]; then
-              make -C "${dir}" baselines
+            if [ "${dir%/}" = "re_kernel_x" ] || [ "${dir%/}" = "re_kernel" ] || [ "${dir%/}" = "run_cmd_demo" ]; then
+              make -C "${dir}" all debug
               mv "${dir}"*.kpm "${dir}"*.kpm.json target
             else
               make -C "${dir}"
@@ -120,20 +125,53 @@ jobs:
           shopt -s nullglob
           for kpm in target/*.kpm; do
             case "${kpm##*/}" in
-              re_kernel_x_*) continue ;;
+              re_kernel_x_*|*_debug.kpm) continue ;;
             esac
             cp "${kpm}" release/
+            if [ -f "${kpm}.json" ]; then
+              cp "${kpm}.json" release/
+            fi
           done
-          baselines=()
-          for kpm in target/re_kernel_x_*.kpm; do
+          statics=(target/re_kernel_x_*_baselines.kpm)
+          dynamics=()
+          for kpm in target/re_kernel_x_[0-9]*.kpm; do
             case "${kpm##*/}" in
-              *_debug.kpm) continue ;;
+              *_baselines.kpm|*_debug.kpm) continue ;;
             esac
-            baselines+=("${kpm}")
+            dynamics+=("${kpm}")
           done
-          test "${#baselines[@]}" -eq 1
-          test -f "${baselines[0]}.json"
-          cp "${baselines[0]}" "${baselines[0]}.json" release/
+          if [ "${#statics[@]}" -gt 0 ]; then
+            test "${#statics[@]}" -eq 1
+            test "${#dynamics[@]}" -eq 1
+            test -f "${statics[0]}.json"
+            test ! -e "${dynamics[0]}.json"
+            cp "${statics[0]}" "${statics[0]}.json" "${dynamics[0]}" release/
+          else
+            baselines=()
+            for kpm in target/re_kernel_x_*.kpm; do
+              case "${kpm##*/}" in
+                *_debug.kpm) continue ;;
+              esac
+              baselines+=("${kpm}")
+            done
+            test "${#baselines[@]}" -eq 1
+            test -f "${baselines[0]}.json"
+            cp "${baselines[0]}" "${baselines[0]}.json" release/
+          fi
+          for module in re_kernel run_cmd_demo; do
+            statics=(target/${module}_[0-9]*_baselines.kpm)
+            dynamics=()
+            for kpm in target/${module}_[0-9]*.kpm; do
+              case "${kpm##*/}" in
+                *_baselines.kpm|*_debug.kpm) continue ;;
+              esac
+              dynamics+=("${kpm}")
+            done
+            if [ "${#statics[@]}" -gt 0 ] || [ "${#dynamics[@]}" -gt 0 ]; then
+              test "${#statics[@]}" -eq 1
+              test "${#dynamics[@]}" -eq 1
+            fi
+          done
           python3 tools/artifact_gate.py release --modules target/modules.txt
 
       - name: Upload release

@@ -42,6 +42,11 @@ python3 tools/identity.py verify --module <module> --instance-id '<build_id>#<n>
 交接归档产物、清单与开发报告；报告包含完整 commit、instance_id、产物 SHA-256、输入/参数/工具链和未解决项。
 采用 [开发报告模板](../templates/developer-report.md)，标明实现方自检边界。
 
+`baselines` 变体的布局 `.kpm.json` 属于实例证据：构建期 `LAYOUT_DIR` 指向模块目录之外的独立目录，交接时连同产物
+一起放进 `artifacts/<instance_id>/`（与 `.kpm` 同目录，不改封存的 `MANIFEST.json`），维护者按
+`maintainer_records[].baseline_layouts` 登记路径、哈希与内嵌 `kpm_sha256`。布局缺失即该实例的静态移植能力未覆盖。
+完整规则见 [身份与可追溯性](01-identity.md) 的产物目录一节。
+
 **退出条件**：构建事务通过，实例已在册，candidate 核验通过，开发报告完整。
 
 ## 2. Auditor 独立审计
