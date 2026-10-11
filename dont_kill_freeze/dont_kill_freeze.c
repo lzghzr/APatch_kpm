@@ -119,9 +119,6 @@ static long calculate_offsets() {
 
   uint32_t* task_clear_jobctl_trapping_src = (uint32_t*)task_clear_jobctl_trapping;
   for (u32 i = 0; i < 0x10; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("task_clear_jobctl_trapping %x %llx\n", i, task_clear_jobctl_trapping_src[i]);
-#endif /* CONFIG_DEBUG */
     if (task_clear_jobctl_trapping_src[i] == ARM64_RET) {
       break;
     } else if ((task_clear_jobctl_trapping_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0) {
@@ -142,9 +139,6 @@ static long calculate_offsets() {
 
   uint32_t* out_of_memory_src = (uint32_t*)out_of_memory;
   for (u32 i = 0; i < 0xa0; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("out_of_memory %x %llx\n", i, out_of_memory_src[i]);
-#endif /* CONFIG_DEBUG */
     if ((out_of_memory_src[i] & MASK_LDR_64_) == INST_LDR_64_ && (out_of_memory_src[i + 1] & MASK_LDRSH) == INST_LDRSH) {
       uint64_t imm12 = 0;
       imm12 = bits32(out_of_memory_src[i], 21, 10);

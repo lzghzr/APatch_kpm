@@ -64,9 +64,6 @@ static long calculate_offsets() {
   // 获取 css_task_iter_start 版本, 以参数数量做判断
   uint32_t *css_task_iter_start_src = (uint32_t *)css_task_iter_start;
   for (u32 i = 0; i < 0x10; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("css_task_iter_start %x %llx\n", i, css_task_iter_start_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(css_task_iter_start_src[i])) {
       break;
     } else if (inst_get_mov_reg_rm(css_task_iter_start_src[i]) == 2) {
@@ -81,9 +78,6 @@ static long calculate_offsets() {
   // 获取 cgroup_kn_lock_live 版本, 以参数数量做判断
   uint32_t *cgroup_kn_lock_live_src = (uint32_t *)cgroup_kn_lock_live;
   for (u32 i = 0; i < 0x10; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("cgroup_kn_lock_live %x %llx\n", i, cgroup_kn_lock_live_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(cgroup_kn_lock_live_src[i])) {
       break;
     } else if (inst_get_mov_reg_rm(cgroup_kn_lock_live_src[i]) == 1
@@ -130,9 +124,6 @@ static long calculate_offsets() {
 
   uint32_t *task_clear_jobctl_trapping_src = (uint32_t *)task_clear_jobctl_trapping;
   for (u32 i = 0; i < 0x10; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("task_clear_jobctl_trapping %x %llx\n", i, task_clear_jobctl_trapping_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(task_clear_jobctl_trapping_src[i])) {
       break;
     } else if (inst_get_ldr_imm_uint_size(task_clear_jobctl_trapping_src[i]) == 0b11
@@ -153,9 +144,6 @@ static long calculate_offsets() {
 
   uint32_t *tty_audit_fork_src = (uint32_t *)tty_audit_fork;
   for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("tty_audit_fork %x %llx\n", i, tty_audit_fork_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(tty_audit_fork_src[i])) {
       break;
     } else if (inst_get_ldr_imm_uint_size(tty_audit_fork_src[i]) == 0b11
@@ -176,9 +164,6 @@ static long calculate_offsets() {
 
   uint32_t *zap_other_threads_src = (uint32_t *)zap_other_threads;
   for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("zap_other_threads %x %llx\n", i, zap_other_threads_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(zap_other_threads_src[i])) {
       break;
     } else if (inst_get_str_imm_uint_rt(zap_other_threads_src[i]) == 31) {
@@ -201,9 +186,6 @@ static long calculate_offsets() {
 
   uint32_t *freezing_slow_path_src = (uint32_t *)freezing_slow_path;
   for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("freezing_slow_path %x %llx\n", i, freezing_slow_path_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(freezing_slow_path_src[i])) {
       break;
     } else if (inst_get_ldr_imm_uint_rn(freezing_slow_path_src[i]) == 0) {
@@ -223,9 +205,6 @@ static long calculate_offsets() {
 
   uint32_t *schedule_timeout_interruptible_src = (uint32_t *)schedule_timeout_interruptible;
   for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("schedule_timeout_interruptible %x %llx\n", i, schedule_timeout_interruptible_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(schedule_timeout_interruptible_src[i])) {
       break;
     } else if (inst_get_str_imm_uint_size(schedule_timeout_interruptible_src[i]) == 0b11) {
@@ -245,9 +224,6 @@ static long calculate_offsets() {
 
   uint32_t *cgroup_subtree_control_show_src = (uint32_t *)cgroup_subtree_control_show;
   for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("cgroup_subtree_control_show %x %llx\n", i, cgroup_subtree_control_show_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(cgroup_subtree_control_show_src[i])) {
       break;
     } else if (inst_get_ldr_imm_uint_size(cgroup_subtree_control_show_src[i]) == 0b11) {
@@ -267,9 +243,6 @@ static long calculate_offsets() {
 
   uint32_t *cgroup_freezing_src = (uint32_t *)cgroup_freezing;
   for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("cgroup_freezing %x %llx\n", i, cgroup_freezing_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(cgroup_freezing_src[i])) {
       break;
     } else if (inst_get_ldr_imm_uint_size(cgroup_freezing_src[i]) == 0b10
@@ -292,9 +265,6 @@ static long calculate_offsets() {
 
   uint32_t *cgroup_fork_src = (uint32_t *)cgroup_fork;
   for (u32 i = 0; i < 0x10; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("cgroup_fork %x %llx\n", i, cgroup_fork_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(cgroup_fork_src[i])) {
       break;
     } else if (inst_get_str_imm_uint_size(cgroup_fork_src[i]) == 0b11) {
@@ -316,9 +286,6 @@ static long calculate_offsets() {
   struct_offset.css_set_dfl_cgrp = 0x48;
   uint64_t *init_css_set_src = (uint64_t *)kvar(init_css_set);
   for (u32 i = 0; i < 0x10; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("init_css_set %x %llx\n", i, init_css_set_src[i]);
-#endif /* CONFIG_DEBUG */
     if (init_css_set_src[i] == (uint64_t)kvar(init_css_set)) {
       struct_offset.css_set_dfl_cgrp = (i + 1) * 8;
       break;
@@ -334,9 +301,6 @@ static long calculate_offsets() {
   // 获取 subprocess_info->path, subprocess_info->argv
   uint32_t *call_usermodehelper_exec_src = (uint32_t *)kfunc(call_usermodehelper_exec);
   for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("call_usermodehelper_exec %x %llx\n", i, call_usermodehelper_exec_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(call_usermodehelper_exec_src[i])) {
       break;
     } else if (inst_get_ldr_imm_uint_size(call_usermodehelper_exec_src[i]) == 0b11

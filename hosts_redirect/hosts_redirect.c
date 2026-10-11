@@ -180,9 +180,6 @@ static long calculate_offsets() {
 
   uint32_t* proc_cwd_link_src = (uint32_t*)proc_cwd_link;
   for (u32 i = 0; i < 0x30; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("proc_cwd_link %x %llx\n", i, proc_cwd_link_src[i]);
-#endif /* CONFIG_DEBUG */
     if (proc_cwd_link_src[i] == ARM64_RET) {
       break;
     } else if ((proc_cwd_link_src[i] & MASK_LDP_64_) == INST_LDP_64_) {
