@@ -59,6 +59,15 @@
 [一轮完整流程](../docs/process/03-round-flow.md)。人工更正结论字段需同步 updated_at/updated_by，并追加维护者记录。
 公开文件使用仓库相对路径与脱敏摘要。
 
+## 维护者记录
+
+`maintainer_records[]` 只追加，记录不属于 `builds[]`/`acceptances[]`/`deliveries[]` 的维护者事实与索引，
+例如本轮登记范围、报告索引、归档位置与未决项。每条含 `at`、`by`、`scope`；涉及的实例身份照原值引用，
+不改写构建条目。
+
+- `baseline_layouts[]`：`baselines` 变体的布局 `.kpm.json` 归档索引，逐条记 `instance_id`、`path`、`sha256`/`size`
+  与布局内嵌的 `kpm_sha256`。布局随 `.kpm` 放进 `artifacts/<instance_id>/`，不覆盖封存的 `MANIFEST.json`。
+
 ## 已迁移模块的历史登记
 
 源码目录迁移后，旧记录设置 `status: archived` 与 `superseded_by`，指向已登记且有源码的现行模块。历史 `builds[]`、实例、提交与产物哈希保留原值。历史名称门禁从每条构建绑定的冻结源码读取唯一 `KPM_NAME`；提交不可读取、注册名不符、旧目录仍在场或替代模块无效时均拒绝。当前模块继续要求产物注册名与模块名一致。全部历史产物仍参与身份与哈希核验。

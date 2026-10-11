@@ -1,0 +1,64 @@
+{
+  "scope": "Developer temporarily authorized B2N read-only evidence collection; no load/unload/reboot",
+  "collected_at": "2026-10-10T16:00:10.566612+00:00",
+  "device_hash": "b754dad7",
+  "kernel_release": "4.4.192-perf+",
+  "boot_id_sha256": "f7e42b8697c0bd7a5092dce9b3f0b28261111a41c3462ccdbba915a92eece54c",
+  "kp_version_hex": "d04",
+  "kp_version_decoded": "0.13.4",
+  "files": [
+    {
+      "name": "kernel-state",
+      "rc": 0,
+      "sha256": "2b4c73d2352e6bf06ae2ac8d9c899674156b9b991cb515942f7418fc69858c46"
+    },
+    {
+      "name": "pstore-list",
+      "rc": 1,
+      "sha256": "ba4eee70c7a328cfcbfc002fb62dbca4108289ba1392705c47cfda7857590486"
+    },
+    {
+      "name": "dmesg",
+      "rc": 0,
+      "sha256": "4bec1a99224ee208a747aefe94577096aff24cb2b4894df66b502bd0722adb2b"
+    },
+    {
+      "name": "apatch-log",
+      "rc": 0,
+      "sha256": "e0e4145185a49bb4a6033f88bc0f296be89db7f22873a7b6ffa87cd05dd83f16"
+    },
+    {
+      "name": "modules",
+      "rc": 0,
+      "sha256": "f2d6df20b36fa354a33df81c41a7a83a0cd02d6a263dd9f0c250cefbbb5159f3"
+    },
+    {
+      "name": "kp-version",
+      "rc": 0,
+      "sha256": "591d87661bd2d0742ce58ad9494db7752c58d75dbe2c5e9d87868b310ddce416"
+    },
+    {
+      "name": "apatch-old-log",
+      "rc": 0,
+      "sha256": "dbcbd91ab30756337eb8bfad1ec62537f2cdb7635f11097f969cb4ff7fae421a"
+    },
+    {
+      "name": "pstore-pmsg",
+      "rc": 0,
+      "sha256": "8702b955a0cfd623584fca78941598238ff1d5a0856ae2ee6609d3acda367028"
+    }
+  ],
+  "private_evidence": "local/rek-panic-device-kstewzxz",
+  "observations": {
+    "old_module_auto_loaded_at_post_kernel_init": true,
+    "pstore_console_dmesg": "absent",
+    "pstore_pmsg_size": 48,
+    "last_kmsg": "absent",
+    "old_log_contains_new_candidate_load": "not observed",
+    "current_boot_warnings": [
+      "sigsuspend / thread_info.h",
+      "dev_disable_lro / net/core/dev.c"
+    ]
+  },
+  "root_cause": "unresolved"
+}

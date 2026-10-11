@@ -1,0 +1,226 @@
+{
+  "module": "run_cmd_demo",
+  "version": "1.2.0",
+  "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "handoff_by": "Developer",
+  "handoff_at": "2026-10-10T13:55:11Z",
+  "note": "归档产物需随清单一起转移：artifacts/<instance_id>/（导入时会逐个核验哈希）",
+  "builds": [
+    {
+      "module": "run_cmd_demo",
+      "version": "1.2.0",
+      "kind": "candidate",
+      "build_id": "run_cmd_demo-1.2.0+g9669c80f9942.r2e72bd0b.kpb51197a.ndk26.3.11579264",
+      "variant": "base",
+      "recorded_at": "2026-10-10T13:55:10Z",
+      "source_commit": "2257f2291e2be77c8809c266393da9d9d093d7b4",
+      "source_dirty": false,
+      "source_tree_sha256": "9669c80f99427604e75d16ca8b9b4b5f86db196b29944e07c9b477b094dc6a05",
+      "source_tree_blob_sha256": "9669c80f99427604e75d16ca8b9b4b5f86db196b29944e07c9b477b094dc6a05",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc",
+          "blob_sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc"
+        },
+        {
+          "path": "run_cmd_demo/Makefile",
+          "sha256": "527ee6f14dd22d2a47a1a04e4c5a42f64b00c59d8398ef562b1439e5d4a02e2e",
+          "blob_sha256": "527ee6f14dd22d2a47a1a04e4c5a42f64b00c59d8398ef562b1439e5d4a02e2e"
+        },
+        {
+          "path": "run_cmd_demo/rc_offsets.c",
+          "sha256": "c0218f03438921e500d7c661aaa41b26bcc1a6df716e32c9f04c38d406e499b6",
+          "blob_sha256": "c0218f03438921e500d7c661aaa41b26bcc1a6df716e32c9f04c38d406e499b6"
+        },
+        {
+          "path": "run_cmd_demo/rc_utils.h",
+          "sha256": "68f1099dee805d63ff0b8f375a6b4e3123a95bae4242b390055d6a180439d5c0",
+          "blob_sha256": "68f1099dee805d63ff0b8f375a6b4e3123a95bae4242b390055d6a180439d5c0"
+        },
+        {
+          "path": "run_cmd_demo/run_cmd.c",
+          "sha256": "2570e38a49533c14294d4ef265e6704e5054db27bdc7f030a9f56822d91aa403",
+          "blob_sha256": "2570e38a49533c14294d4ef265e6704e5054db27bdc7f030a9f56822d91aa403"
+        },
+        {
+          "path": "run_cmd_demo/run_cmd.h",
+          "sha256": "afe04dc202b529783f07982ba54f43a2547ee399a096b715f9e1cb7e323d0646",
+          "blob_sha256": "afe04dc202b529783f07982ba54f43a2547ee399a096b715f9e1cb7e323d0646"
+        },
+        {
+          "path": "run_cmd_demo/tools/test_compat_offsets.py",
+          "sha256": "fc97fbdf32f30fd20eb6d7a87ae05048a0d69c8a58ab12e44be88570a4c06f48",
+          "blob_sha256": "fc97fbdf32f30fd20eb6d7a87ae05048a0d69c8a58ab12e44be88570a4c06f48"
+        },
+        {
+          "path": "run_cmd_demo/tools/test_run_cmd.c",
+          "sha256": "d1cc43a7d57abd9af21b90d3268aef5ded0fb7512f390cd9c33b6c564b73032a",
+          "blob_sha256": "d1cc43a7d57abd9af21b90d3268aef5ded0fb7512f390cd9c33b6c564b73032a"
+        },
+        {
+          "path": "run_cmd_demo/tools/test_run_cmd.py",
+          "sha256": "0a369badf2027882c895946f348020de055be5329d9fd1d2045b2eb252d6ebcc",
+          "blob_sha256": "0a369badf2027882c895946f348020de055be5329d9fd1d2045b2eb252d6ebcc"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "2e72bd0b1d3ac6a7db3109c051ff0dbdd39eba56f54eaf530159c4aa2fb569a0",
+      "recipe": {
+        "captured": true,
+        "command": "make -C run_cmd_demo all debug",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "c162f306634d194225aaaa14ae0c42bf0c678082c6373a7a950ab9e409efa62f",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\\\"1.2.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include run_cmd.c -r -o run_cmd_demo_1.2.0.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\\\"1.2.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include run_cmd.c -r -o run_cmd_demo_1.2.0_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "2257f2291e2be77c8809c266393da9d9d093d7b4",
+        "source_tree_sha256": "9669c80f99427604e75d16ca8b9b4b5f86db196b29944e07c9b477b094dc6a05",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "c162f306634d194225aaaa14ae0c42bf0c678082c6373a7a950ab9e409efa62f",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "run_cmd_demo_1.2.0.kpm",
+          "sha256": "d1ebd33b0675d4a6c655348615ffdd209a2910fc12d76c57574e7658a44eb1b7",
+          "size": 27016,
+          "embedded": {
+            "name": "run_cmd_demo",
+            "version": "1.2.0",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "Run shell commands with a usermode helper; DO NOT UNLOAD"
+          },
+          "path": "artifacts/run_cmd_demo-1.2.0+g9669c80f9942.r2e72bd0b.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0.kpm"
+        }
+      ],
+      "instance_id": "run_cmd_demo-1.2.0+g9669c80f9942.r2e72bd0b.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "run_cmd_demo",
+      "version": "1.2.0",
+      "kind": "candidate",
+      "build_id": "run_cmd_demo-1.2.0_debug+g9669c80f9942.r534a6113.kpb51197a.ndk26.3.11579264",
+      "variant": "debug",
+      "recorded_at": "2026-10-10T13:55:10Z",
+      "source_commit": "2257f2291e2be77c8809c266393da9d9d093d7b4",
+      "source_dirty": false,
+      "source_tree_sha256": "9669c80f99427604e75d16ca8b9b4b5f86db196b29944e07c9b477b094dc6a05",
+      "source_tree_blob_sha256": "9669c80f99427604e75d16ca8b9b4b5f86db196b29944e07c9b477b094dc6a05",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc",
+          "blob_sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc"
+        },
+        {
+          "path": "run_cmd_demo/Makefile",
+          "sha256": "527ee6f14dd22d2a47a1a04e4c5a42f64b00c59d8398ef562b1439e5d4a02e2e",
+          "blob_sha256": "527ee6f14dd22d2a47a1a04e4c5a42f64b00c59d8398ef562b1439e5d4a02e2e"
+        },
+        {
+          "path": "run_cmd_demo/rc_offsets.c",
+          "sha256": "c0218f03438921e500d7c661aaa41b26bcc1a6df716e32c9f04c38d406e499b6",
+          "blob_sha256": "c0218f03438921e500d7c661aaa41b26bcc1a6df716e32c9f04c38d406e499b6"
+        },
+        {
+          "path": "run_cmd_demo/rc_utils.h",
+          "sha256": "68f1099dee805d63ff0b8f375a6b4e3123a95bae4242b390055d6a180439d5c0",
+          "blob_sha256": "68f1099dee805d63ff0b8f375a6b4e3123a95bae4242b390055d6a180439d5c0"
+        },
+        {
+          "path": "run_cmd_demo/run_cmd.c",
+          "sha256": "2570e38a49533c14294d4ef265e6704e5054db27bdc7f030a9f56822d91aa403",
+          "blob_sha256": "2570e38a49533c14294d4ef265e6704e5054db27bdc7f030a9f56822d91aa403"
+        },
+        {
+          "path": "run_cmd_demo/run_cmd.h",
+          "sha256": "afe04dc202b529783f07982ba54f43a2547ee399a096b715f9e1cb7e323d0646",
+          "blob_sha256": "afe04dc202b529783f07982ba54f43a2547ee399a096b715f9e1cb7e323d0646"
+        },
+        {
+          "path": "run_cmd_demo/tools/test_compat_offsets.py",
+          "sha256": "fc97fbdf32f30fd20eb6d7a87ae05048a0d69c8a58ab12e44be88570a4c06f48",
+          "blob_sha256": "fc97fbdf32f30fd20eb6d7a87ae05048a0d69c8a58ab12e44be88570a4c06f48"
+        },
+        {
+          "path": "run_cmd_demo/tools/test_run_cmd.c",
+          "sha256": "d1cc43a7d57abd9af21b90d3268aef5ded0fb7512f390cd9c33b6c564b73032a",
+          "blob_sha256": "d1cc43a7d57abd9af21b90d3268aef5ded0fb7512f390cd9c33b6c564b73032a"
+        },
+        {
+          "path": "run_cmd_demo/tools/test_run_cmd.py",
+          "sha256": "0a369badf2027882c895946f348020de055be5329d9fd1d2045b2eb252d6ebcc",
+          "blob_sha256": "0a369badf2027882c895946f348020de055be5329d9fd1d2045b2eb252d6ebcc"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "534a6113262a678c015c1d45565b670db53d5c84cb763e5d78b675794ff887c8",
+      "recipe": {
+        "captured": true,
+        "command": "make -C run_cmd_demo all debug",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "c162f306634d194225aaaa14ae0c42bf0c678082c6373a7a950ab9e409efa62f",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\\\"1.2.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include run_cmd.c -r -o run_cmd_demo_1.2.0.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\\\"1.2.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include run_cmd.c -r -o run_cmd_demo_1.2.0_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "2257f2291e2be77c8809c266393da9d9d093d7b4",
+        "source_tree_sha256": "9669c80f99427604e75d16ca8b9b4b5f86db196b29944e07c9b477b094dc6a05",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "c162f306634d194225aaaa14ae0c42bf0c678082c6373a7a950ab9e409efa62f",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "run_cmd_demo_1.2.0_debug.kpm",
+          "sha256": "a1a78b752d4638e3decce97088aa9df49f2384f7315127289258037c4a938cfc",
+          "size": 27016,
+          "embedded": {
+            "name": "run_cmd_demo",
+            "version": "1.2.0_d",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "Run shell commands with a usermode helper; DO NOT UNLOAD"
+          },
+          "path": "artifacts/run_cmd_demo-1.2.0_debug+g9669c80f9942.r534a6113.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0_debug.kpm"
+        }
+      ],
+      "instance_id": "run_cmd_demo-1.2.0_debug+g9669c80f9942.r534a6113.kpb51197a.ndk26.3.11579264#1"
+    }
+  ]
+}

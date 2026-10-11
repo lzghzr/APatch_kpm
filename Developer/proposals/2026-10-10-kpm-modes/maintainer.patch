@@ -1,0 +1,169 @@
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -56,6 +56,14 @@
+ - **遵守测试 Oracle 与防反向过拟合**：基准测试套件视为只读 Oracle。严禁为了通过测试而私自修改、弱化或删除已有断言；严禁为了迁就宿主单测/Mock 而扭曲生产代码架构；确需变更断言时必须在报告中单独说明技术依据并由 Auditor 独立复核（详见 [.agents/skills/respect-the-oracle/SKILL.md](.agents/skills/respect-the-oracle/SKILL.md)）。
+ - **不为了过门禁而放宽断言**：断言、用例、检查范围的任何缩小都要在报告中写明并给出理由。
+ 
++## KPM 偏移模式默认规范
++
++有结构体偏移依赖的模块默认提供 static / dynamic 两种编译产物，共用业务实现，定义 `CONFIG_KPM_BASELINES` 选择静态基线，未定义时使用动态推导。静态版附带可替换偏移表及同名 `.kpm.json`；动态版加载时优先使用 BTF，再使用目标支持的固定小窗口推导。必要字段或共同布局无法确认时停止加载，不按版本号猜偏移。
++
++普通产物命名为 `<模块>_<版本>_baselines.kpm`、`<模块>_<版本>.kpm`，debug 增加 `_debug`，元信息记录 `offset_mode`。Releases 发布两种普通版与静态 JSON；debug 保留在 artifacts。同一模块的两种模式保留同一管理名称，每次选择一种加载。无偏移依赖的模块继续生成通用 KPM。
++
++当前接入 rek / rekx，其他模块逐个接入，各模块在自己的 Makefile 中维护构建规则，额外输入规则见 `Developer/README.md`。Android 4.4～5.10 是函数推导新增适配范围，5.15 及以上默认使用 BTF；该范围用于安排工作，偏移仍由目标证据取得。
++
+ ## 常用入口
+ 
+ ```bash
+--- a/tools/artifact_gate.py
++++ b/tools/artifact_gate.py
+@@ -71,6 +71,14 @@
+     prefix = info["name"] + "_" + version
+     if not path.name.startswith(prefix) or path.name[len(prefix):len(prefix) + 1] not in ("_", "."):
+         raise ValueError("产物文件名与内嵌版本不一致")
++    mode = info.get("offset_mode")
++    if mode is not None:
++        if mode not in ("static", "dynamic"):
++            raise ValueError("偏移模式无效")
++        debug = info["version"].endswith("_d")
++        expected = prefix + ("_baselines" if mode == "static" else "") + ("_debug" if debug else "") + ".kpm"
++        if path.name != expected:
++            raise ValueError("产物文件名与偏移模式不一致")
+     return {"file": path.name, "sha256": hashlib.sha256(data).hexdigest(), "size": len(data), "info": info}, sections
+ 
+ 
+@@ -101,7 +109,9 @@
+     else:
+         version = kpm["info"]["version"]
+         debug = version.endswith("_d")
+-        name = "re_kernel_x_" + (version[:-2] if debug else version) + ("_debug" if debug else "") + ".kpm"
++        mode = kpm["info"].get("offset_mode")
++        name = kpm["info"]["name"] + "_" + (version[:-2] if debug else version)
++        name += ("_baselines" if mode == "static" else "") + ("_debug" if debug else "") + ".kpm"
+         if (".rodata.re_abi" in sections or fields[-1] != "binder_release_abi"
+                 or values["binder_release_abi"] != layout["binder_abi"] or kpm["file"] != name):
+             raise ValueError("统一基线文件名或配置中的 Binder 释放 ABI 不一致")
+@@ -125,7 +135,10 @@
+         module = artifact["info"]["name"]
+         modules.add(module)
+         layout_path = Path(str(path) + ".json")
+-        if module == "re_kernel_x" or layout_path.exists():
++        mode = artifact["info"].get("offset_mode")
++        if mode == "dynamic" and layout_path.exists():
++            raise ValueError("动态产物不应附带静态布局")
++        if mode == "static" or (module == "re_kernel_x" and mode is None) or layout_path.exists():
+             artifact["layout"] = inspect_layout(layout_path, artifact, sections)
+             layouts.add(layout_path.name)
+         artifacts.append(artifact)
+--- a/tools/identity.py
++++ b/tools/identity.py
+@@ -49,7 +49,9 @@
+ BUILD_INPUT_NAMES = ("Makefile", "makefile", "Kbuild", "CMakeLists.txt")
+ IGNORED_DIRS = {".git", "__pycache__", ".vscode", "node_modules", "target", "artifacts", "local", "out"}
+ IGNORED_SUFFIX = (".kpm", ".o", ".i64", ".bak", ".pyc")
+-VARIANT_SUFFIX = {"base": "", "network": "_n", "debug": "_d", "network_debug": "_nd"}
++VARIANT_SUFFIX = {"base": "", "network": "_n", "debug": "_d", "network_debug": "_nd",
++                  "static": "", "dynamic": "", "static_debug": "_d", "dynamic_debug": "_d",
++                  "baselines": "", "baselines_debug": "_d"}
+ 
+ 
+ def die(msg, code=1):
+--- a/.github/workflows/build-kpm.yml
++++ b/.github/workflows/build-kpm.yml
+@@ -89,8 +89,8 @@
+             fi
+             echo "build ${dir}"
+             printf "%s\n" "${dir%/}" >> target/modules.txt
+-            if [ "${dir%/}" = "re_kernel_x" ]; then
+-              make -C "${dir}" baselines
++            if [ "${dir%/}" = "re_kernel_x" ] || [ "${dir%/}" = "re_kernel" ]; then
++              make -C "${dir}" all debug
+               mv "${dir}"*.kpm "${dir}"*.kpm.json target
+             else
+               make -C "${dir}"
+@@ -120,20 +120,51 @@
+           shopt -s nullglob
+           for kpm in target/*.kpm; do
+             case "${kpm##*/}" in
+-              re_kernel_x_*) continue ;;
++              re_kernel_x_*|*_debug.kpm) continue ;;
+             esac
+             cp "${kpm}" release/
+-          done
+-          baselines=()
+-          for kpm in target/re_kernel_x_*.kpm; do
++            if [ -f "${kpm}.json" ]; then
++              cp "${kpm}.json" release/
++            fi
++          done
++          statics=(target/re_kernel_x_*_baselines.kpm)
++          dynamics=()
++          for kpm in target/re_kernel_x_[0-9]*.kpm; do
+             case "${kpm##*/}" in
+-              *_debug.kpm) continue ;;
++              *_baselines.kpm|*_debug.kpm) continue ;;
+             esac
+-            baselines+=("${kpm}")
+-          done
+-          test "${#baselines[@]}" -eq 1
+-          test -f "${baselines[0]}.json"
+-          cp "${baselines[0]}" "${baselines[0]}.json" release/
++            dynamics+=("${kpm}")
++          done
++          if [ "${#statics[@]}" -gt 0 ]; then
++            test "${#statics[@]}" -eq 1
++            test "${#dynamics[@]}" -eq 1
++            test -f "${statics[0]}.json"
++            test ! -e "${dynamics[0]}.json"
++            cp "${statics[0]}" "${statics[0]}.json" "${dynamics[0]}" release/
++          else
++            baselines=()
++            for kpm in target/re_kernel_x_*.kpm; do
++              case "${kpm##*/}" in
++                *_debug.kpm) continue ;;
++              esac
++              baselines+=("${kpm}")
++            done
++            test "${#baselines[@]}" -eq 1
++            test -f "${baselines[0]}.json"
++            cp "${baselines[0]}" "${baselines[0]}.json" release/
++          fi
++          rek_statics=(target/re_kernel_[0-9]*_baselines.kpm)
++          rek_dynamics=()
++          for kpm in target/re_kernel_[0-9]*.kpm; do
++            case "${kpm##*/}" in
++              *_baselines.kpm|*_debug.kpm) continue ;;
++            esac
++            rek_dynamics+=("${kpm}")
++          done
++          if [ "${#rek_statics[@]}" -gt 0 ] || [ "${#rek_dynamics[@]}" -gt 0 ]; then
++            test "${#rek_statics[@]}" -eq 1
++            test "${#rek_dynamics[@]}" -eq 1
++          fi
+           python3 tools/artifact_gate.py release --modules target/modules.txt
+ 
+       - name: Upload release
+--- a/.agents/skills/kpm-static-binary-port/SKILL.md
++++ b/.agents/skills/kpm-static-binary-port/SKILL.md
+@@ -18,7 +18,7 @@
+ 
+ 默认从项目 GitHub Releases 下载非 debug 基准，无需本地编译、NDK 或 KP SDK。先从目标镜像确认实际释放签名，从同一发布 tag 下载统一基线 `.kpm` 及同名 `.kpm.json`；从该次构建提交取得 `patch_offsets.py`，放入新的本地目录。debug 基准及全部构建产物保留在 Actions artifacts。补丁工具仅依赖 Python 标准库；镜像分析工具的依赖另行准备。
+ 
+-使用旧版本且配套 JSON 未提供时，可用 `python3 re_kernel_x/tools/patch_offsets.py baseline <基准.kpm> --output <基准.kpm.json>` 离线生成；该命令还需同一构建提交中的 `re_offsets.c` 提供字段顺序，不进行编译。
++使用旧版本且配套 JSON 未提供时，可用 `python3 patch_offsets.py baseline <基准.kpm> --source <模块>/re_offsets.c --output <基准.kpm.json>` 离线生成；该命令还需同一构建提交中该模块的 `re_offsets.c` 提供字段顺序，不进行编译。
+ 
+ 配套 JSON 提供基线 SHA-256、当前释放配置、表位置、长度与字段顺序。统一基线使用 schema 2；选择值随目标 offsets 一起替换，生成后的 binder_abi 同步为实际配置。旧固定基线的 schema 1 与 `.rodata.re_abi` 只读标记仍受支持，不能把旧代码改成另一种释放签名。替换前核对这些信息，不能混用不同版本的布局文件或将公开基准的模板偏移直接用于目标内核。记录实际 tag、来源和基准哈希；已有核对过的本地基准可复用，没有兼容基准时再转开发构建。
+ 
+@@ -44,10 +44,10 @@
+ 4. 生成新文件，不覆盖基准或之前的补丁产物：
+ 
+ ```bash
+-python3 re_kernel_x/tools/patch_offsets.py patch local/baselines-round1/re_kernel_x_1.6.kpm --offsets local/target-offsets.json --output local/target.kpm
++python3 patch_offsets.py patch local/baselines-round1/re_kernel_x_1.6_baselines.kpm --offsets local/target-offsets.json --output local/target.kpm
+ ```
+ 
+-原始表也可用 `dump <kpm> --output local/offsets.bin` 导出，按 JSON 的 `fields` 顺序修改小端 int16，再用 `patch <kpm> --blob local/offsets.bin --output local/target.kpm` 替换。使用配套布局文件校验调用选择、完整字段、长度和基线哈希。若使用目标头文件生成器，显式传入已确认的签名编号，如 `./re_vmlinux 5`，不要把头文件结构布局当作函数签名依据。
++原始表也可用 `dump <kpm> --output local/offsets.bin` 导出，按 JSON 的 `fields` 顺序修改小端 int16，再用 `patch <kpm> --blob local/offsets.bin --output local/target.kpm` 替换。使用配套布局文件校验调用选择、完整字段、长度和基线哈希。释放调用编号依据目标函数签名或调用点填写；结构体布局本身不能代替函数调用点分析。
+ 
+ ## 碎片化旧内核的现场适配
+ 

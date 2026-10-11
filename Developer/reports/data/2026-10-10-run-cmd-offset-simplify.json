@@ -1,0 +1,92 @@
+{
+  "role": "Developer",
+  "source_base_commit": "5b3dc4656b9d1653e6a38d497a1dfa78ca905cfa",
+  "source_dirty": true,
+  "decision": "Simplify",
+  "scope": [
+    "run_cmd_demo/rc_offsets.c"
+  ],
+  "changes": [
+    "remove redundant NULL check after btf_resolve_size and unused returned type variable",
+    "reuse known BTF type for kthread_work members",
+    "normalize CBZ/CBNZ op bit and share sf/Rt checks"
+  ],
+  "retained": [
+    "fixed windows and RET stops",
+    "credential slot anchors, load widths and register chains",
+    "SID output store and known KP security crosscheck",
+    "BTF width, bounds and bitfield checks",
+    "kthread_work layout checks",
+    "path register whitelist"
+  ],
+  "test_files_unchanged": {
+    "run_cmd_demo/tools/test_run_cmd.c": "919408ecd5f331e15674980342f163776757a3a5063d0fb084fbe7be7e6ca928",
+    "run_cmd_demo/tools/test_run_cmd.py": "0a369badf2027882c895946f348020de055be5329d9fd1d2045b2eb252d6ebcc",
+    "run_cmd_demo/tools/test_compat_offsets.py": "464fdf8fa67570468326c320eaa69dc5f3a9ef3c50fb6151709034263214e281"
+  },
+  "protected_registered_artifacts_unchanged": {
+    "artifacts/run_cmd_demo-1.2.0+g9669c80f9942.r2e72bd0b.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0.kpm": "d1ebd33b0675d4a6c655348615ffdd209a2910fc12d76c57574e7658a44eb1b7",
+    "artifacts/run_cmd_demo-1.2.0_debug+g9669c80f9942.r534a6113.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0_debug.kpm": "a1a78b752d4638e3decce97088aa9df49f2384f7315127289258037c4a938cfc",
+    "artifacts/run_cmd_demo-1.2.0+g9ac7dd190312.rf1057082.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0.kpm": "679495209ec33eb306117e1881f5d31bb18980679ce872025e47601919d99f55",
+    "artifacts/run_cmd_demo-1.2.0_debug+g9ac7dd190312.r0616c03b.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0_debug.kpm": "7838ab1f43c244c8bb37139db4971a23340ebe984e3726e14195204e2bf5af01"
+  },
+  "source_hashes": {
+    "run_cmd_demo/rc_offsets.c": "52af590f9041a73e06e10efd7c4b92a252381c0942e6aa9ef5cb074f125b9993",
+    "kpm_utils.h": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc",
+    "patch_offsets.py": "19281fd658eb32bca2c739244f2126adb8830923e1041c131284639af9e24551",
+    ".clang-format": "31ddcf66d75257bc817dd103f159b35e4a5594cbb592245230e58743d713e6ee"
+  },
+  "selfchecks": {
+    "host": {
+      "path": "local/run-cmd-offset-simplify-ci5ppke2/host/receipt.json",
+      "sha256": "43b5f45083acd5bbf281c7ba15d78ae85752d295ccece2fd6ca836cae9eff05c",
+      "stdout": "run_cmd production async/credential/offset tests passed\n"
+    },
+    "B2N": {
+      "path": "local/run-cmd-offset-simplify-ci5ppke2/B2N/receipt.json",
+      "sha256": "4f51ecfdba4ab0d4687e23d648706c97196313e322bfa2fafbb817be419ede2c",
+      "stdout": "instruction fields: path=0x28 security=0x78 sid=0x4 worker_size=40\n"
+    },
+    "Sony-functions": {
+      "path": "local/run-cmd-offset-simplify-ci5ppke2/Sony-functions/receipt.json",
+      "sha256": "0d58b7bd7f3aa60a2209bc39e7ce7213ecd38faa182dfdaeb3b532f0a37be370",
+      "stdout": "instruction fields: path=0x38 security=0x78 sid=0x4 worker_size=-1\n"
+    },
+    "Sony-BTF": {
+      "path": "local/run-cmd-offset-simplify-ci5ppke2/Sony-BTF/receipt.json",
+      "sha256": "46d93441ad6fac7641231e9b030ab9a6c3d5c166b5f5136252dca6debefb1469",
+      "stdout": "BTF fields matched reference\ninstruction fields: path=0x38 security=0x78 sid=0x4 worker_size=-1\n"
+    }
+  },
+  "branch_equivalence": {
+    "combinations": 262144,
+    "result": "CBZ/CBNZ equivalence: 262144 combinations passed",
+    "source_sha256": "506df0ab9772a9926603822fe59af56705264ed91d34132d9c281c7f56e38749"
+  },
+  "btf_contract_source": "kernel/bpf/btf.c, btf_resolve_size and __btf_resolve_size; locally available Android13-5.15 source",
+  "build_manifest": "Developer/reports/data/2026-10-10-run-cmd-offset-simplify-build.json",
+  "new_artifacts": [
+    {
+      "source_commit": "5b3dc4656b9d1653e6a38d497a1dfa78ca905cfa",
+      "source_dirty": true,
+      "parent_instance_id": "run_cmd_demo-1.2.0+g747a5765e230.r92a93141.kpb51197a.ndk26.3.11579264#1",
+      "parent_path": "artifacts/run_cmd_demo-1.2.0+g747a5765e230.r92a93141.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0.kpm",
+      "parent_sha256": "341ae1eafe08d5fcbf4bf252140fb4537922f67c30a59b3b54974adef1b32d87",
+      "derived_path": "local/run-cmd-offset-simplify-ci5ppke2/run_cmd_demo_1.2.0_legacy.kpm",
+      "derived_sha256": "4daa73e6a9ca3ef01a682a95424f0c50c0ab49f4273abd2852efc1567cae7080",
+      "elf_pointer_call_check": "passed"
+    },
+    {
+      "source_commit": "5b3dc4656b9d1653e6a38d497a1dfa78ca905cfa",
+      "source_dirty": true,
+      "parent_instance_id": "run_cmd_demo-1.2.0_debug+g747a5765e230.ra57081c8.kpb51197a.ndk26.3.11579264#1",
+      "parent_path": "artifacts/run_cmd_demo-1.2.0_debug+g747a5765e230.ra57081c8.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0_debug.kpm",
+      "parent_sha256": "7d1a8d556920613d4708c80e69ff4bcb0dca60da9f80aae2263620a15622e8d5",
+      "derived_path": "local/run-cmd-offset-simplify-ci5ppke2/run_cmd_demo_1.2.0_debug_legacy.kpm",
+      "derived_sha256": "5339f3e09c4f4a0ab1780af8faeadb88cd5a28c67c78e179895048bb0a6c35e2",
+      "elf_pointer_call_check": "passed"
+    }
+  ],
+  "local_evidence_root": "local/run-cmd-offset-simplify-ci5ppke2",
+  "validation_limit": "Developer Tier-3 offline/host checks; not an independent audit or Android runtime proof"
+}

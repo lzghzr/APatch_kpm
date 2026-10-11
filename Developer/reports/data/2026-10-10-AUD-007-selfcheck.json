@@ -1,0 +1,117 @@
+{
+  "scope": "Developer selfcheck; candidate generation and local immutable-asset copy; not audit or device proof",
+  "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+  "protected_files": 641,
+  "protected_unchanged": true,
+  "candidates": [
+    {
+      "module": "re_kernel",
+      "variant": "base",
+      "instance_id": "re_kernel-11.7+g74820b6486a2.r08a88aa8.kpb51197a.ndk26.3.11579264#1",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "path": "artifacts/re_kernel-11.7+g74820b6486a2.r08a88aa8.kpb51197a.ndk26.3.11579264/re_kernel_11.7.kpm",
+      "sha256": "fc8992f63e890bc2145fd2500c537d6cc49026389853e5852241f2acacf108a3"
+    },
+    {
+      "module": "re_kernel",
+      "variant": "baselines",
+      "instance_id": "re_kernel-11.7_baselines+g74820b6486a2.r08ce5a98.kpb51197a.ndk26.3.11579264#1",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "path": "artifacts/re_kernel-11.7_baselines+g74820b6486a2.r08ce5a98.kpb51197a.ndk26.3.11579264/re_kernel_11.7_baselines.kpm",
+      "sha256": "3da1a47763da15853a9016c81e03215383c13d88d75bac04cd8519f85479eb13"
+    },
+    {
+      "module": "re_kernel",
+      "variant": "baselines_debug",
+      "instance_id": "re_kernel-11.7_baselines_debug+g74820b6486a2.r127cc051.kpb51197a.ndk26.3.11579264#1",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "path": "artifacts/re_kernel-11.7_baselines_debug+g74820b6486a2.r127cc051.kpb51197a.ndk26.3.11579264/re_kernel_11.7_baselines_debug.kpm",
+      "sha256": "0bc6e3476f2892964b79f334e41f84fee67f141d9b3df1286a1e88421bc3acda"
+    },
+    {
+      "module": "re_kernel",
+      "variant": "debug",
+      "instance_id": "re_kernel-11.7_debug+g74820b6486a2.r58923f37.kpb51197a.ndk26.3.11579264#1",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "path": "artifacts/re_kernel-11.7_debug+g74820b6486a2.r58923f37.kpb51197a.ndk26.3.11579264/re_kernel_11.7_debug.kpm",
+      "sha256": "c04a293446c8f9920fa1746d6fa215b956b22b87523b9734479cc76740e159da"
+    },
+    {
+      "module": "re_kernel_x",
+      "variant": "base",
+      "instance_id": "re_kernel_x-1.6-20261008+gd80a957dbb14.r3923dc8d.kpb51197a.ndk26.3.11579264#1",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "path": "artifacts/re_kernel_x-1.6-20261008+gd80a957dbb14.r3923dc8d.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6-20261008.kpm",
+      "sha256": "151ef48c73afe7703c13778cbaffccf0c5b900bd1e6b98aea2d483933b33030f"
+    },
+    {
+      "module": "re_kernel_x",
+      "variant": "baselines",
+      "instance_id": "re_kernel_x-1.6-20261008_baselines+gd80a957dbb14.r7abf0995.kpb51197a.ndk26.3.11579264#1",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "path": "artifacts/re_kernel_x-1.6-20261008_baselines+gd80a957dbb14.r7abf0995.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6-20261008_baselines.kpm",
+      "sha256": "2933c90f15c4ec66872fce0e6f2222e10fd314dfe31a69d7ca998df60201144a"
+    },
+    {
+      "module": "re_kernel_x",
+      "variant": "baselines_debug",
+      "instance_id": "re_kernel_x-1.6-20261008_baselines_debug+gd80a957dbb14.r00cb6cab.kpb51197a.ndk26.3.11579264#1",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "path": "artifacts/re_kernel_x-1.6-20261008_baselines_debug+gd80a957dbb14.r00cb6cab.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6-20261008_baselines_debug.kpm",
+      "sha256": "ed6f97dcf8cdaf8498d22ecc5de410a4887e3492e38aa585f2ffded091ad8b0a"
+    },
+    {
+      "module": "re_kernel_x",
+      "variant": "debug",
+      "instance_id": "re_kernel_x-1.6-20261008_debug+gd80a957dbb14.r404552af.kpb51197a.ndk26.3.11579264#1",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "path": "artifacts/re_kernel_x-1.6-20261008_debug+gd80a957dbb14.r404552af.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6-20261008_debug.kpm",
+      "sha256": "e6ce734b2ad7c60290b495c86244a988e8180462711a63fb57e88cbecdd73304"
+    }
+  ],
+  "static_tables": [
+    {
+      "module": "re_kernel",
+      "variant": "baselines",
+      "fields": 45,
+      "table_bytes": 90,
+      "same_as_audited": true,
+      "layout": "local/aud007-ummqc8bk/frozen/local/layouts/re_kernel/re_kernel_11.7_baselines.kpm.json",
+      "layout_sha256": "638b611f0c4102471092d0a1931efa89816094a12ee7d2be2d7954677425f3fd"
+    },
+    {
+      "module": "re_kernel",
+      "variant": "baselines_debug",
+      "fields": 45,
+      "table_bytes": 90,
+      "same_as_audited": true,
+      "layout": "local/aud007-ummqc8bk/frozen/local/layouts/re_kernel/re_kernel_11.7_baselines_debug.kpm.json",
+      "layout_sha256": "f08a6e07f8df0b3f77d227e4a7b4e50b887ad415396f52f7fe65f8738f5b7caa"
+    },
+    {
+      "module": "re_kernel_x",
+      "variant": "baselines",
+      "fields": 45,
+      "table_bytes": 90,
+      "same_as_audited": true,
+      "layout": "local/aud007-ummqc8bk/frozen/local/layouts/re_kernel_x/re_kernel_x_1.6-20261008_baselines.kpm.json",
+      "layout_sha256": "241dc70d8c222c230962c2d6eb6efe3a17f9aa91315bec574f9a97b1e85d8496"
+    },
+    {
+      "module": "re_kernel_x",
+      "variant": "baselines_debug",
+      "fields": 45,
+      "table_bytes": 90,
+      "same_as_audited": true,
+      "layout": "local/aud007-ummqc8bk/frozen/local/layouts/re_kernel_x/re_kernel_x_1.6-20261008_baselines_debug.kpm.json",
+      "layout_sha256": "a7a4884773a0e69b005d6248d15e6b00b74896ef8a35281c59749405b3a4b2a2"
+    }
+  ],
+  "checks": {
+    "genl_groups": 9,
+    "btf_modules": 2,
+    "mode_kpms": 8,
+    "oracle_assertions_preserved": true
+  },
+  "evidence": "local/aud007-ummqc8bk"
+}

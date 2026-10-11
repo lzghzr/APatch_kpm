@@ -1,0 +1,45 @@
+--- a/.agents/skills/kpm-development/SKILL.md
++++ b/.agents/skills/kpm-development/SKILL.md
+@@ -19,7 +19,7 @@
+ 
+ ## 双版本默认规范
+ 
+-有布局偏移依赖的模块默认提供两种产物，共用本模块业务代码；当前已接入 rek、rekx，其余模块逐个迁移。没有偏移依赖的模块继续生成通用 KPM。
++有布局偏移依赖的模块默认提供两种产物，共用本模块业务代码；当前已接入 rek、rekx、run_cmd，其余模块逐个迁移。没有偏移依赖的模块继续生成通用 KPM。
+ 
+ | 模式 | 编译选择 | 普通产物 | 布局 JSON |
+ | --- | --- | --- | --- |
+@@ -28,7 +28,7 @@
+ 
+ debug 在文件名末尾增加 `_debug`，模式在 `.kpm.info` 中记为 `offset_mode=dynamic/static`。两种产物使用同一模块管理名称，每次选择一种加载；这是编译产物的选择，不是运行时模式切换。
+ 
+-各项目保留独立 Makefile、协议与偏移实现。rek、rekx 不互相包含源码；公共指令宏和 BTF 成员查询放根目录 `kpm_utils.h`，静态补丁工具为根目录 `patch_offsets.py`。通用部分以 rekx 为准核对后分别维护。
++各项目保留独立 Makefile、协议与偏移实现。run_cmd 的四字段配置与静态 SID 语义见 [模块开发约定](../../../run_cmd_demo/AGENTS.md)。rek、rekx 不互相包含源码；公共指令宏和 BTF 成员查询放根目录 `kpm_utils.h`，静态补丁工具为根目录 `patch_offsets.py`。通用部分以 rekx 为准核对后分别维护。
+ 
+ 在新的空输出目录运行 `all` 生成两份普通版，`debug` 生成两份 debug；`static`、`dynamic` 可单独选择，`baselines` 生成静态普通/debug 两份。静态 JSON 默认与 KPM 同目录，也可用 `LAYOUT_DIR` 单独指定。正式候选使用仓库统一构建入口，捕获 `--extra-input patch_offsets.py` 及实际工具链、输出参数。
+ 
+--- a/.agents/skills/kpm-static-binary-port/SKILL.md
++++ b/.agents/skills/kpm-static-binary-port/SKILL.md
+@@ -11,7 +11,7 @@
+ 
+ rek（`re_kernel`）与 rekx（`re_kernel_x`）分别提供动态普通版 `<模块>_<版本>.kpm` 与静态 `<模块>_<版本>_baselines.kpm`，debug 在末尾增加 `_debug`。`CONFIG_KPM_BASELINES` 选择静态实现，未定义时为动态。两版管理名称相同，每次选择一种加载；仅静态版生成同名布局 JSON，动态版使用加载时 BTF/函数推导。
+ 
+-两模块保留独立 Makefile、结构定义和业务实现，共用根目录 `patch_offsets.py`。静态表的字段定义、实例、访问器及条件编译的动态推导集中于本模块 `re_offsets.c`。全项目逐步接入这一规范，无偏移依赖的模块继续生成通用 KPM。
++两模块保留独立 Makefile、结构定义和业务实现，共用根目录 `patch_offsets.py`。静态表的字段定义、实例、访问器及条件编译的动态推导集中于本模块 `re_offsets.c`。run_cmd（`run_cmd_demo`）也提供这两种模式，偏移实现为 `rc_offsets.c`，字段含义见 [模块开发约定](../../../run_cmd_demo/AGENTS.md)。普通偏移表使用 schema 3，既有 Binder 表继续使用 schema 1/2。全项目逐步接入这一规范，无偏移依赖的模块继续生成通用 KPM。
+ 
+ ## 分清 ABI 与布局
+ 
+--- a/metadata/modules/run_cmd_demo.json
++++ b/metadata/modules/run_cmd_demo.json
+@@ -1,9 +1,9 @@
+ {
+   "module": "run_cmd_demo",
+   "status": "candidate",
+-  "version_declared": "1.2.0",
++  "version_declared": "1.3.0",
+   "version_sources": {
+-    "makefile": "1.2.0"
++    "makefile": "1.3.0"
+   },
+   "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+   "builds": [

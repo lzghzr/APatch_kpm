@@ -1,0 +1,245 @@
+{
+  "module": "hosts_redirect",
+  "status": "candidate",
+  "version_declared": "2.0.0",
+  "version_sources": {
+    "makefile": "2.0.0"
+  },
+  "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "builds": [
+    {
+      "module": "hosts_redirect",
+      "version": "2.0.0",
+      "kind": "candidate",
+      "build_id": "hosts_redirect-2.0.0_debug+gc645a901ca7a.rb04db02f.kpb51197a.ndk26.3.11579264",
+      "variant": "debug",
+      "recorded_at": "2026-10-10T13:55:11Z",
+      "source_commit": "2257f2291e2be77c8809c266393da9d9d093d7b4",
+      "source_dirty": false,
+      "source_tree_sha256": "c645a901ca7a39ca630fadf5dc526ffedb588029df0122649f38c9dd1dae1779",
+      "source_tree_blob_sha256": "c645a901ca7a39ca630fadf5dc526ffedb588029df0122649f38c9dd1dae1779",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "hosts_redirect/Makefile",
+          "sha256": "7bdd18f6073b07c14d4b86733ae4649d0844bf9f76fa1fb7ed89eaa122065224",
+          "blob_sha256": "7bdd18f6073b07c14d4b86733ae4649d0844bf9f76fa1fb7ed89eaa122065224"
+        },
+        {
+          "path": "hosts_redirect/hosts_redirect.c",
+          "sha256": "667973f513f3cbc9f6863a4e17f5e0299cf4268bbe1abe1e58b4b6e03e60fc02",
+          "blob_sha256": "667973f513f3cbc9f6863a4e17f5e0299cf4268bbe1abe1e58b4b6e03e60fc02"
+        },
+        {
+          "path": "hosts_redirect/hosts_redirect.h",
+          "sha256": "9abda5db25a746e1d85cf7a1f7e7c917a1a403dd8a4764ae1046e911a1029956",
+          "blob_sha256": "9abda5db25a746e1d85cf7a1f7e7c917a1a403dd8a4764ae1046e911a1029956"
+        },
+        {
+          "path": "hosts_redirect/hr_utils.h",
+          "sha256": "a1722dcb5d3faa2a76cd3b71a0fcffe0b4810eeff907a06ff9025d6d8dc40f3a",
+          "blob_sha256": "a1722dcb5d3faa2a76cd3b71a0fcffe0b4810eeff907a06ff9025d6d8dc40f3a"
+        },
+        {
+          "path": "kpm_utils.h",
+          "sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc",
+          "blob_sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "b04db02fb0949a2e27575d366e75303410c4a53fe1726299b0ecdba8d1d9e834",
+      "recipe": {
+        "captured": true,
+        "command": "make -C hosts_redirect debug",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "765c7550f6cc41b52a3dbde3f718e3b856834edda795392b652c5bbfa417a78c",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -DMYKPM_VERSION=\\\"2.0.0_d\\\" -DCONFIG_DEBUG -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include -c -o hosts_redirect.o hosts_redirect.c\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -r -o hosts_redirect_2.0.0_debug.kpm hosts_redirect.o"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "2257f2291e2be77c8809c266393da9d9d093d7b4",
+        "source_tree_sha256": "c645a901ca7a39ca630fadf5dc526ffedb588029df0122649f38c9dd1dae1779",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "765c7550f6cc41b52a3dbde3f718e3b856834edda795392b652c5bbfa417a78c",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "hosts_redirect_2.0.0_debug.kpm",
+          "sha256": "b5c8cb51e95e92168c639fe353da49311f9e3684a5be9bbce54a2f6ed1a23767",
+          "size": 12328,
+          "embedded": {
+            "name": "hosts_redirect",
+            "version": "2.0.0_d",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "redirect /system/etc/hosts to /data/adb/hosts/{name}"
+          },
+          "path": "artifacts/hosts_redirect-2.0.0_debug+gc645a901ca7a.rb04db02f.kpb51197a.ndk26.3.11579264/hosts_redirect_2.0.0_debug.kpm"
+        }
+      ],
+      "instance_id": "hosts_redirect-2.0.0_debug+gc645a901ca7a.rb04db02f.kpb51197a.ndk26.3.11579264#1",
+      "imported_by": "维护者",
+      "imported_at": "2026-10-10T14:05:31Z",
+      "handoff_manifest": "Developer/reports/handoffs/hosts_redirect-20261010-frozen-candidate.json"
+    },
+    {
+      "module": "hosts_redirect",
+      "version": "2.0.0",
+      "kind": "candidate",
+      "build_id": "hosts_redirect-2.0.0+gc4e04f88e75b.r8bc3bfad.kpb51197a.ndk26.3.11579264",
+      "variant": "base",
+      "recorded_at": "2026-10-11T00:48:02Z",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "source_dirty": false,
+      "source_tree_sha256": "c4e04f88e75b81cff9258b4e4afc7c57225cbd812d7ed9406d143d6658c26b0e",
+      "source_tree_blob_sha256": "c4e04f88e75b81cff9258b4e4afc7c57225cbd812d7ed9406d143d6658c26b0e",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "hosts_redirect/Makefile",
+          "sha256": "7bdd18f6073b07c14d4b86733ae4649d0844bf9f76fa1fb7ed89eaa122065224",
+          "blob_sha256": "7bdd18f6073b07c14d4b86733ae4649d0844bf9f76fa1fb7ed89eaa122065224"
+        },
+        {
+          "path": "hosts_redirect/hosts_redirect.c",
+          "sha256": "667973f513f3cbc9f6863a4e17f5e0299cf4268bbe1abe1e58b4b6e03e60fc02",
+          "blob_sha256": "667973f513f3cbc9f6863a4e17f5e0299cf4268bbe1abe1e58b4b6e03e60fc02"
+        },
+        {
+          "path": "hosts_redirect/hosts_redirect.h",
+          "sha256": "9abda5db25a746e1d85cf7a1f7e7c917a1a403dd8a4764ae1046e911a1029956",
+          "blob_sha256": "9abda5db25a746e1d85cf7a1f7e7c917a1a403dd8a4764ae1046e911a1029956"
+        },
+        {
+          "path": "hosts_redirect/hr_utils.h",
+          "sha256": "a1722dcb5d3faa2a76cd3b71a0fcffe0b4810eeff907a06ff9025d6d8dc40f3a",
+          "blob_sha256": "a1722dcb5d3faa2a76cd3b71a0fcffe0b4810eeff907a06ff9025d6d8dc40f3a"
+        },
+        {
+          "path": "kpm_utils.h",
+          "sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc",
+          "blob_sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "258c55e8d06775433b608b128162e583ca2531ca83020d283988ca46a95d6898",
+          "blob_sha256": "258c55e8d06775433b608b128162e583ca2531ca83020d283988ca46a95d6898"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "8bc3bfadd52b019b81d9447a455592de5b575f0b857033e8897ebd3a50251f12",
+      "recipe": {
+        "captured": true,
+        "command": "make -C hosts_redirect all",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "92cc52bb77a2ac0ec9ed5995a6a5b27bc61e36f25b205ad5139e59fcef10731d",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -DMYKPM_VERSION=\\\"2.0.0\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include -c -o hosts_redirect.o hosts_redirect.c\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -r -o hosts_redirect_2.0.0.kpm hosts_redirect.o"
+      },
+      "recorded_by": "维护者",
+      "build_transaction": {
+        "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+        "source_tree_sha256": "c4e04f88e75b81cff9258b4e4afc7c57225cbd812d7ed9406d143d6658c26b0e",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "92cc52bb77a2ac0ec9ed5995a6a5b27bc61e36f25b205ad5139e59fcef10731d",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "hosts_redirect_2.0.0.kpm",
+          "sha256": "ff8dc0a955c0d7166a1087225c6a9b04971c821fda727903737f5cb8da198cbd",
+          "size": 10856,
+          "embedded": {
+            "name": "hosts_redirect",
+            "version": "2.0.0",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "redirect /system/etc/hosts to /data/adb/hosts/{name}"
+          },
+          "path": "artifacts/hosts_redirect-2.0.0+gc4e04f88e75b.r8bc3bfad.kpb51197a.ndk26.3.11579264#2/hosts_redirect_2.0.0.kpm"
+        }
+      ],
+      "instance_id": "hosts_redirect-2.0.0+gc4e04f88e75b.r8bc3bfad.kpb51197a.ndk26.3.11579264#2",
+      "imported_by": "维护者",
+      "imported_at": "2026-10-11T00:48:06Z",
+      "handoff_manifest": "metadata/handoffs/2026-10-10-final-hosts_redirect.json"
+    }
+  ],
+  "audits": [],
+  "device_tests": [],
+  "issues": [],
+  "acceptances": [],
+  "deliveries": [],
+  "maintainer_records": [
+    {
+      "at": "2026-10-10T14:06:22Z",
+      "by": "维护者",
+      "scope": "2026-10-10 冻结候选登记（hosts_redirect：1 个实例）",
+      "source_commit": "2257f2291e2be77c8809c266393da9d9d093d7b4",
+      "report": "docs/records/2026-10-10-candidate-registration.md",
+      "instances": [
+        {
+          "instance_id": "hosts_redirect-2.0.0_debug+gc645a901ca7a.rb04db02f.kpb51197a.ndk26.3.11579264#1",
+          "variant": "debug",
+          "artifact": "hosts_redirect_2.0.0_debug.kpm",
+          "sha256": "b5c8cb51e95e92168c639fe353da49311f9e3684a5be9bbce54a2f6ed1a23767"
+        }
+      ],
+      "verification": "维护者按绑定提交复算源码 blob、配方指纹与产物哈希，candidate 档 0 处问题",
+      "imported_from": {
+        "handoff_manifest": "Developer/reports/handoffs/hosts_redirect-20261010-frozen-candidate.json",
+        "handoff_sha256": "b4a50074b14b2bfb9ece1c2da0ff77c86c6ffad66ded385299ef5a808ca0b3fd",
+        "import_tool": "tools/identity.py import-manifest",
+        "imported_by": "维护者"
+      },
+      "pending": "独立审计与真机测试尚未执行；本轮不追加 acceptances[]/deliveries[]，模块状态保持 candidate"
+    },
+    {
+      "at": "2026-10-11T00:48:02.785091+00:00",
+      "by": "维护者",
+      "scope": "冻结源码的维护者工程候选复现",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "report": "docs/records/2026-10-10-round-finalization.md",
+      "registered_from": "metadata/handoffs/2026-10-10-final-hosts_redirect.json",
+      "instances": [
+        {
+          "instance_id": "hosts_redirect-2.0.0+gc4e04f88e75b.r8bc3bfad.kpb51197a.ndk26.3.11579264#2",
+          "variant": "base",
+          "artifacts": {
+            "hosts_redirect_2.0.0.kpm": "ff8dc0a955c0d7166a1087225c6a9b04971c821fda727903737f5cb8da198cbd"
+          }
+        }
+      ],
+      "baseline_layouts": [],
+      "verification": "按冻结提交复算输入、参数、构建事务与 KPM 哈希；candidate 档核验",
+      "pending": "本轮新实例保留 candidate 状态；历史审计/实机结论按原实例引用，新实例待对应独立复核"
+    }
+  ],
+  "updated_at": "2026-10-11T00:48:02.785091+00:00",
+  "updated_by": "维护者"
+}

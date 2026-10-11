@@ -1,0 +1,140 @@
+{
+  "role": "维护者",
+  "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+  "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "verification_level": "frozen engineering candidate / host fixtures",
+  "compiled_kpms": 15,
+  "release_kpms": 9,
+  "release_layouts": 3,
+  "preview_final_product_bytes_equal": true,
+  "checks": {
+    "artifact_gate_original": 37,
+    "release_assets_original": 4,
+    "offset_modes_added": 9,
+    "maintainer_tools": 21,
+    "developer_demo_host_c_assertions": 191,
+    "real_candidate_identity": 15
+  },
+  "instances": [
+    {
+      "module": "re_kernel",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "re_kernel-11.7-20261010+g7d2f20803343.r97cc0c8f.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "re_kernel_11.7-20261010.kpm": "7655fc21cf74738cb4f1be3728a49422165d4820e9b45ccadbd7252421de2aaf"
+      }
+    },
+    {
+      "module": "re_kernel",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "re_kernel-11.7-20261010_baselines+g7d2f20803343.rad278312.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "re_kernel_11.7-20261010_baselines.kpm": "7b2a8901de00253ce4255c114ad884abb146e706dbd73e426036d4c213ee3c5c"
+      }
+    },
+    {
+      "module": "re_kernel",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "re_kernel-11.7-20261010_baselines_debug+g7d2f20803343.recf72b51.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "re_kernel_11.7-20261010_baselines_debug.kpm": "e389b34a14a5dcbf16f80f6099934c94dcf3fd784b2a976c69ade43d271a5295"
+      }
+    },
+    {
+      "module": "re_kernel",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "re_kernel-11.7-20261010_debug+g7d2f20803343.rf2e1e075.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "re_kernel_11.7-20261010_debug.kpm": "4620a1c6dacbfee878752da71c0d47295fab14f1e053ec9afb1e118dd5476ef9"
+      }
+    },
+    {
+      "module": "re_kernel_x",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "re_kernel_x-1.6-20261010+gdd0ffe1cf84d.r2c1f44af.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "re_kernel_x_1.6-20261010.kpm": "3f43d676ec139fbcc14d277e9b2dbf854e48f53d987b9d5f7a17c9fd56c0addc"
+      }
+    },
+    {
+      "module": "re_kernel_x",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "re_kernel_x-1.6-20261010_baselines+gdd0ffe1cf84d.rcc5cc739.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "re_kernel_x_1.6-20261010_baselines.kpm": "353eaa9c1c005a3c521d3bb7cc32cf694ae724f83e29f82c15fa146a7b7f4982"
+      }
+    },
+    {
+      "module": "re_kernel_x",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "re_kernel_x-1.6-20261010_baselines_debug+gdd0ffe1cf84d.r8de04dd2.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "re_kernel_x_1.6-20261010_baselines_debug.kpm": "5813faf8200a42f0e648e5d8cb370045655435b38233fda5c04167cdea34b50b"
+      }
+    },
+    {
+      "module": "re_kernel_x",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "re_kernel_x-1.6-20261010_debug+gdd0ffe1cf84d.r93fe8a7f.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "re_kernel_x_1.6-20261010_debug.kpm": "7f15fbd068cf72241f69fe0428954a3e857b3ac421c06c426b3a80785bf3dafb"
+      }
+    },
+    {
+      "module": "run_cmd_demo",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "run_cmd_demo-1.3.0+g7fa2d12ce086.r0b32ffc4.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "run_cmd_demo_1.3.0.kpm": "caf3ada14a6e2fbaabb9c8b439f7e7c9613c12ffabc54b6f5fdb3a144ca1d178"
+      }
+    },
+    {
+      "module": "run_cmd_demo",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "run_cmd_demo-1.3.0_baselines+g7fa2d12ce086.r292e0303.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "run_cmd_demo_1.3.0_baselines.kpm": "e2daa67ebb34a423c3e8f62c4aa947ae2cc1a602c34249ff741b014941ec18e1"
+      }
+    },
+    {
+      "module": "run_cmd_demo",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "run_cmd_demo-1.3.0_baselines_debug+g7fa2d12ce086.ra5b30f96.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "run_cmd_demo_1.3.0_baselines_debug.kpm": "6b8c4e3e3c89ef785f9e4e42a0717bfeb91936287dadf233167488dc5e1be436"
+      }
+    },
+    {
+      "module": "run_cmd_demo",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "run_cmd_demo-1.3.0_debug+g7fa2d12ce086.rb23ed7aa.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "run_cmd_demo_1.3.0_debug.kpm": "46a513ca49356a80f1f8638aac894e95359ed087cc7ba6335938609e87a76d48"
+      }
+    },
+    {
+      "module": "cgroupv2_freeze",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "cgroupv2_freeze-1.0.12+gabf6a91b14ae.rdbed0d47.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "cgroupv2_freeze_1.0.12.kpm": "1c93c4df5a2a2f5c02233a6ba2781bf6c7d341031c87e7340437f5ede58c3c2a"
+      }
+    },
+    {
+      "module": "dont_kill_freeze",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "dont_kill_freeze-1.0.2+g32c960e57ef2.rd1abcbe5.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "dont_kill_freeze_1.0.2.kpm": "4d85a833d3baa708d772552267c211ea6bfc8239a624887ac13a886cad572255"
+      }
+    },
+    {
+      "module": "hosts_redirect",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "instance_id": "hosts_redirect-2.0.0+gc4e04f88e75b.r8bc3bfad.kpb51197a.ndk26.3.11579264#2",
+      "artifacts": {
+        "hosts_redirect_2.0.0.kpm": "ff8dc0a955c0d7166a1087225c6a9b04971c821fda727903737f5cb8da198cbd"
+      }
+    }
+  ]
+}

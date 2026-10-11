@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "state": "Developer offline selfcheck; dirty-exploration",
+  "file_sha256": {
+    "patch_offsets.py": "2a6fcd0e5a887886555ebc09fe0b07ff302de6219b335c28a0a86f4b82400de1",
+    "Developer/tools/test_legacy_kp_adapter.py": "b0dc1d6e62789855d143645e018d350ff57834eddaf1a83d257f7b8e50fbc529",
+    "Developer/tools/test_legacy_kp.py": "cbe4e29e60fe010bfbe2dcbd988cdeffe7b6377dfa94c85caa2991aba2ea022a",
+    "Developer/reports/2026-10-10-legacy-kp-call-abi.md": "9fec483988494b5bd7d239ff80c62ce4608889407a7d631833d35b5aebf74be3",
+    "Developer/reports/responses/2026-10-10-legacy-kp-skill.patch": "9592d4a92dd1cf0301b4fc8022d957fb0ac3ff96f19707ce909a1c948f135acd"
+  },
+  "layout_checks": [
+    {
+      "module": "re_kernel",
+      "variant": "baselines",
+      "layout_and_dump": "PASS"
+    },
+    {
+      "module": "re_kernel",
+      "variant": "baselines_debug",
+      "layout_and_dump": "PASS"
+    },
+    {
+      "module": "re_kernel_x",
+      "variant": "baselines",
+      "layout_and_dump": "PASS"
+    },
+    {
+      "module": "re_kernel_x",
+      "variant": "baselines_debug",
+      "layout_and_dump": "PASS"
+    }
+  ],
+  "static_regression": {
+    "command": "python3 re_kernel_x/tools/test_static.py --baselines local/legacy-adapter-ukyhihlr/static-input-v2",
+    "exit_code": 0,
+    "result": "PASS: JSON/blob, configured ABI3/4/5/6, production host tests and ASan/UBSan"
+  },
+  "initial_invocations": {
+    "static_test": "wrong input shape (file instead of paired directory), then absent archived sibling layout; corrected with hash-matched prior input/layout copies",
+    "adapter_all10": "first eight passed; run_cmd_demo rejected because required pointer import is absent"
+  },
+  "legacy_oracle_sha256": "cbe4e29e60fe010bfbe2dcbd988cdeffe7b6377dfa94c85caa2991aba2ea022a",
+  "legacy_oracle_result": "FAIL, original line 82 kept; independent assertion review required",
+  "repaired_device_test": "NOT RUN; device operations stopped after crash"
+}

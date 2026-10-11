@@ -1,0 +1,30 @@
+--- a/metadata/modules/re_kernel.json
++++ b/metadata/modules/re_kernel.json
+@@ -1,10 +1,10 @@
+ {
+   "module": "re_kernel",
+   "status": "candidate",
+-  "version_declared": "11.7",
++  "version_declared": "11.7-20261010",
+   "version_sources": {
+-    "makefile": "11.7",
+-    "readme_heading": "11.7"
++    "makefile": "11.7-20261010",
++    "readme_heading": "11.7-20261010"
+   },
+   "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+   "builds": [
+--- a/metadata/modules/re_kernel_x.json
++++ b/metadata/modules/re_kernel_x.json
+@@ -1,9 +1,9 @@
+ {
+   "module": "re_kernel_x",
+   "status": "candidate",
+-  "version_declared": "1.6-20261008",
++  "version_declared": "1.6-20261010",
+   "version_sources": {
+-    "makefile": "1.6-20261008"
++    "makefile": "1.6-20261010"
+   },
+   "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+   "builds": [

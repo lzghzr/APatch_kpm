@@ -1,0 +1,997 @@
+{
+  "role": "Developer",
+  "decision": "Simplify",
+  "source_base_commit": "5b3dc4656b9d1653e6a38d497a1dfa78ca905cfa",
+  "source_dirty": true,
+  "source_sha256": "60b3996649ea7e764bd34358c489b1c8c24e7ae19bad880a74017ada7769d0e3",
+  "review_scope": "calculate_offsets: BTF, subprocess path, legacy task getter, modern cred getter, legacy worker",
+  "changes": [
+    "reuse known BTF type and remove resolver NULL check",
+    "normalize CBZ/CBNZ op bit",
+    "remove 12 repeated LDR/STR opcode predicates already checked by size getter",
+    "remove 3 repeated MOV/ADD opcode predicates with sf == 1 or sf != 1"
+  ],
+  "test_files_unchanged": {
+    "run_cmd_demo/tools/test_run_cmd.c": "919408ecd5f331e15674980342f163776757a3a5063d0fb084fbe7be7e6ca928",
+    "run_cmd_demo/tools/test_run_cmd.py": "0a369badf2027882c895946f348020de055be5329d9fd1d2045b2eb252d6ebcc",
+    "run_cmd_demo/tools/test_compat_offsets.py": "464fdf8fa67570468326c320eaa69dc5f3a9ef3c50fb6151709034263214e281"
+  },
+  "protected_artifacts_unchanged": {
+    "artifacts/run_cmd_demo-1.2.0+g9669c80f9942.r2e72bd0b.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0.kpm": "d1ebd33b0675d4a6c655348615ffdd209a2910fc12d76c57574e7658a44eb1b7",
+    "artifacts/run_cmd_demo-1.2.0_debug+g9669c80f9942.r534a6113.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0_debug.kpm": "a1a78b752d4638e3decce97088aa9df49f2384f7315127289258037c4a938cfc",
+    "artifacts/run_cmd_demo-1.2.0+g9ac7dd190312.rf1057082.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0.kpm": "679495209ec33eb306117e1881f5d31bb18980679ce872025e47601919d99f55",
+    "artifacts/run_cmd_demo-1.2.0_debug+g9ac7dd190312.r0616c03b.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0_debug.kpm": "7838ab1f43c244c8bb37139db4971a23340ebe984e3726e14195204e2bf5af01"
+  },
+  "raw_corpus": [
+    {
+      "image": "kernel_android12-5.10",
+      "image_sha256": "ae2976e111bf11c8b56955df242757db9c9b2c06d0d12f57679b034ebfe71b0f",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {}
+    },
+    {
+      "image": "kernel_android13-5.10",
+      "image_sha256": "8eb4ef9fa91eb25ce9da8b8ff434e4c9e7ad3526a8da1b27c3833a378adf5e15",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ],
+        "btf": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {
+        "cred": {
+          "size": 168,
+          "member_bits": {
+            "usage": 0,
+            "uid": 32,
+            "gid": 64,
+            "suid": 96,
+            "sgid": 128,
+            "euid": 160,
+            "egid": 192,
+            "fsuid": 224,
+            "fsgid": 256,
+            "securebits": 288,
+            "cap_inheritable": 320,
+            "cap_permitted": 384,
+            "cap_effective": 448,
+            "cap_bset": 512,
+            "cap_ambient": 576,
+            "jit_keyring": 640,
+            "session_keyring": 704,
+            "process_keyring": 768,
+            "thread_keyring": 832,
+            "request_key_auth": 896,
+            "security": 960,
+            "user": 1024,
+            "user_ns": 1088,
+            "group_info": 1152,
+            "": 1216
+          }
+        },
+        "subprocess_info": {
+          "size": 112,
+          "member_bits": {
+            "work": 0,
+            "complete": 384,
+            "path": 448,
+            "argv": 512,
+            "envp": 576,
+            "wait": 640,
+            "retval": 672,
+            "init": 704,
+            "cleanup": 768,
+            "data": 832
+          }
+        },
+        "kthread_work": {
+          "size": 40,
+          "member_bits": {
+            "node": 0,
+            "func": 128,
+            "worker": 192,
+            "canceling": 256
+          }
+        },
+        "kthread_worker": {
+          "size": 56,
+          "member_bits": {
+            "flags": 0,
+            "lock": 32,
+            "work_list": 64,
+            "delayed_work_list": 192,
+            "task": 320,
+            "current_work": 384
+          }
+        },
+        "task_security_struct": {
+          "size": 24,
+          "member_bits": {
+            "osid": 0,
+            "sid": 32,
+            "exec_sid": 64,
+            "create_sid": 96,
+            "keycreate_sid": 128,
+            "sockcreate_sid": 160
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android13-5.15",
+      "image_sha256": "080869136d6fec2592533e2e4e578c32dc981e9af6936c8a2b41de0a41d4811e",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ],
+        "btf": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {
+        "cred": {
+          "size": 176,
+          "member_bits": {
+            "usage": 0,
+            "uid": 32,
+            "gid": 64,
+            "suid": 96,
+            "sgid": 128,
+            "euid": 160,
+            "egid": 192,
+            "fsuid": 224,
+            "fsgid": 256,
+            "securebits": 288,
+            "cap_inheritable": 320,
+            "cap_permitted": 384,
+            "cap_effective": 448,
+            "cap_bset": 512,
+            "cap_ambient": 576,
+            "jit_keyring": 640,
+            "session_keyring": 704,
+            "process_keyring": 768,
+            "thread_keyring": 832,
+            "request_key_auth": 896,
+            "security": 960,
+            "user": 1024,
+            "user_ns": 1088,
+            "ucounts": 1152,
+            "group_info": 1216,
+            "": 1280
+          }
+        },
+        "subprocess_info": {
+          "size": 112,
+          "member_bits": {
+            "work": 0,
+            "complete": 384,
+            "path": 448,
+            "argv": 512,
+            "envp": 576,
+            "wait": 640,
+            "retval": 672,
+            "init": 704,
+            "cleanup": 768,
+            "data": 832
+          }
+        },
+        "kthread_work": {
+          "size": 40,
+          "member_bits": {
+            "node": 0,
+            "func": 128,
+            "worker": 192,
+            "canceling": 256
+          }
+        },
+        "kthread_worker": {
+          "size": 56,
+          "member_bits": {
+            "flags": 0,
+            "lock": 32,
+            "work_list": 64,
+            "delayed_work_list": 192,
+            "task": 320,
+            "current_work": 384
+          }
+        },
+        "task_security_struct": {
+          "size": 24,
+          "member_bits": {
+            "osid": 0,
+            "sid": 32,
+            "exec_sid": 64,
+            "create_sid": 96,
+            "keycreate_sid": 128,
+            "sockcreate_sid": 160
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android14-5.15",
+      "image_sha256": "d6d02cf8941be4efe6d042a47cdab27699ebc36e3b85c6e553355cc7a1fc752d",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ],
+        "btf": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {
+        "cred": {
+          "size": 176,
+          "member_bits": {
+            "usage": 0,
+            "uid": 32,
+            "gid": 64,
+            "suid": 96,
+            "sgid": 128,
+            "euid": 160,
+            "egid": 192,
+            "fsuid": 224,
+            "fsgid": 256,
+            "securebits": 288,
+            "cap_inheritable": 320,
+            "cap_permitted": 384,
+            "cap_effective": 448,
+            "cap_bset": 512,
+            "cap_ambient": 576,
+            "jit_keyring": 640,
+            "session_keyring": 704,
+            "process_keyring": 768,
+            "thread_keyring": 832,
+            "request_key_auth": 896,
+            "security": 960,
+            "user": 1024,
+            "user_ns": 1088,
+            "ucounts": 1152,
+            "group_info": 1216,
+            "": 1280
+          }
+        },
+        "subprocess_info": {
+          "size": 112,
+          "member_bits": {
+            "work": 0,
+            "complete": 384,
+            "path": 448,
+            "argv": 512,
+            "envp": 576,
+            "wait": 640,
+            "retval": 672,
+            "init": 704,
+            "cleanup": 768,
+            "data": 832
+          }
+        },
+        "kthread_work": {
+          "size": 40,
+          "member_bits": {
+            "node": 0,
+            "func": 128,
+            "worker": 192,
+            "canceling": 256
+          }
+        },
+        "kthread_worker": {
+          "size": 56,
+          "member_bits": {
+            "flags": 0,
+            "lock": 32,
+            "work_list": 64,
+            "delayed_work_list": 192,
+            "task": 320,
+            "current_work": 384
+          }
+        },
+        "task_security_struct": {
+          "size": 24,
+          "member_bits": {
+            "osid": 0,
+            "sid": 32,
+            "exec_sid": 64,
+            "create_sid": 96,
+            "keycreate_sid": 128,
+            "sockcreate_sid": 160
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android14-6.1",
+      "image_sha256": "bbb9762942d0142acd1ec8fc316faaced629cee6fd7a9d0303338d19685f7b8c",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ],
+        "btf": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {
+        "cred": {
+          "size": 176,
+          "member_bits": {
+            "usage": 0,
+            "uid": 32,
+            "gid": 64,
+            "suid": 96,
+            "sgid": 128,
+            "euid": 160,
+            "egid": 192,
+            "fsuid": 224,
+            "fsgid": 256,
+            "securebits": 288,
+            "cap_inheritable": 320,
+            "cap_permitted": 384,
+            "cap_effective": 448,
+            "cap_bset": 512,
+            "cap_ambient": 576,
+            "jit_keyring": 640,
+            "session_keyring": 704,
+            "process_keyring": 768,
+            "thread_keyring": 832,
+            "request_key_auth": 896,
+            "security": 960,
+            "user": 1024,
+            "user_ns": 1088,
+            "ucounts": 1152,
+            "group_info": 1216,
+            "": 1280
+          }
+        },
+        "subprocess_info": {
+          "size": 112,
+          "member_bits": {
+            "work": 0,
+            "complete": 384,
+            "path": 448,
+            "argv": 512,
+            "envp": 576,
+            "wait": 640,
+            "retval": 672,
+            "init": 704,
+            "cleanup": 768,
+            "data": 832
+          }
+        },
+        "kthread_work": {
+          "size": 40,
+          "member_bits": {
+            "node": 0,
+            "func": 128,
+            "worker": 192,
+            "canceling": 256
+          }
+        },
+        "kthread_worker": {
+          "size": 56,
+          "member_bits": {
+            "flags": 0,
+            "lock": 32,
+            "work_list": 64,
+            "delayed_work_list": 192,
+            "task": 320,
+            "current_work": 384
+          }
+        },
+        "task_security_struct": {
+          "size": 24,
+          "member_bits": {
+            "osid": 0,
+            "sid": 32,
+            "exec_sid": 64,
+            "create_sid": 96,
+            "keycreate_sid": 128,
+            "sockcreate_sid": 160
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android15-6.6",
+      "image_sha256": "1c613d579069091b153ed786b57c2a51ee5bfa09b2ec350b1cc9092a556c5ef1",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 128,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          128,
+          28,
+          -1
+        ],
+        "btf": [
+          0,
+          56,
+          128,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {
+        "cred": {
+          "size": 184,
+          "member_bits": {
+            "usage": 0,
+            "uid": 64,
+            "gid": 96,
+            "suid": 128,
+            "sgid": 160,
+            "euid": 192,
+            "egid": 224,
+            "fsuid": 256,
+            "fsgid": 288,
+            "securebits": 320,
+            "cap_inheritable": 384,
+            "cap_permitted": 448,
+            "cap_effective": 512,
+            "cap_bset": 576,
+            "cap_ambient": 640,
+            "jit_keyring": 704,
+            "session_keyring": 768,
+            "process_keyring": 832,
+            "thread_keyring": 896,
+            "request_key_auth": 960,
+            "security": 1024,
+            "user": 1088,
+            "user_ns": 1152,
+            "ucounts": 1216,
+            "group_info": 1280,
+            "": 1344
+          }
+        },
+        "subprocess_info": {
+          "size": 112,
+          "member_bits": {
+            "work": 0,
+            "complete": 384,
+            "path": 448,
+            "argv": 512,
+            "envp": 576,
+            "wait": 640,
+            "retval": 672,
+            "init": 704,
+            "cleanup": 768,
+            "data": 832
+          }
+        },
+        "kthread_work": {
+          "size": 40,
+          "member_bits": {
+            "node": 0,
+            "func": 128,
+            "worker": 192,
+            "canceling": 256
+          }
+        },
+        "kthread_worker": {
+          "size": 56,
+          "member_bits": {
+            "flags": 0,
+            "lock": 32,
+            "work_list": 64,
+            "delayed_work_list": 192,
+            "task": 320,
+            "current_work": 384
+          }
+        },
+        "task_security_struct": {
+          "size": 24,
+          "member_bits": {
+            "osid": 0,
+            "sid": 32,
+            "exec_sid": 64,
+            "create_sid": 96,
+            "keycreate_sid": 128,
+            "sockcreate_sid": 160
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android16-6.12",
+      "image_sha256": "8ad7edca7e73173b784aefcb17dfce94d2645d5048fe5451379b4aa1b796c848",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 40,
+        "security": 128,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          40,
+          128,
+          28,
+          -1
+        ],
+        "btf": [
+          0,
+          40,
+          128,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {
+        "cred": {
+          "size": 184,
+          "member_bits": {
+            "usage": 0,
+            "uid": 64,
+            "gid": 96,
+            "suid": 128,
+            "sgid": 160,
+            "euid": 192,
+            "egid": 224,
+            "fsuid": 256,
+            "fsgid": 288,
+            "securebits": 320,
+            "cap_inheritable": 384,
+            "cap_permitted": 448,
+            "cap_effective": 512,
+            "cap_bset": 576,
+            "cap_ambient": 640,
+            "jit_keyring": 704,
+            "session_keyring": 768,
+            "process_keyring": 832,
+            "thread_keyring": 896,
+            "request_key_auth": 960,
+            "security": 1024,
+            "user": 1088,
+            "user_ns": 1152,
+            "ucounts": 1216,
+            "group_info": 1280,
+            "": 1344
+          }
+        },
+        "subprocess_info": {
+          "size": 96,
+          "member_bits": {
+            "work": 0,
+            "complete": 256,
+            "path": 320,
+            "argv": 384,
+            "envp": 448,
+            "wait": 512,
+            "retval": 544,
+            "init": 576,
+            "cleanup": 640,
+            "data": 704
+          }
+        },
+        "kthread_work": {
+          "size": 40,
+          "member_bits": {
+            "node": 0,
+            "func": 128,
+            "worker": 192,
+            "canceling": 256
+          }
+        },
+        "kthread_worker": {
+          "size": 56,
+          "member_bits": {
+            "flags": 0,
+            "lock": 32,
+            "work_list": 64,
+            "delayed_work_list": 192,
+            "task": 320,
+            "current_work": 384
+          }
+        },
+        "task_security_struct": {
+          "size": 24,
+          "member_bits": {
+            "osid": 0,
+            "sid": 32,
+            "exec_sid": 64,
+            "create_sid": 96,
+            "keycreate_sid": 128,
+            "sockcreate_sid": 160
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_mi10-4.19",
+      "image_sha256": "cedd94d2e9a740075d0cc9853705ebe695a43c63502a62660c30aba018ed6823",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 0,
+        "sid_with_raw_blob": 4,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          120,
+          4,
+          -1
+        ]
+      },
+      "btf_fields": {}
+    },
+    {
+      "image": "kernel_mi11-5.4",
+      "image_sha256": "4211656a1250a81bdbc9d3710c18bcbca7e90834bab57b639f9dbcacc4ea50c8",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {}
+    },
+    {
+      "image": "kernel_mi6-4.4",
+      "image_sha256": "cd92912fc52a9f422625eaf2db98937a407644b70b2cf5149f6df7eb1f17b930",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 40,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 0,
+        "sid_with_raw_blob": 4,
+        "legacy_worker_size": 40
+      },
+      "task_cred_inputs": {
+        "real_cred": 1976,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          40,
+          120,
+          4,
+          40
+        ]
+      },
+      "btf_fields": {}
+    },
+    {
+      "image": "kernel_mi8-4.9",
+      "image_sha256": "93d2c9ffd6b893bf86728f82db3174f3edff0d18f92977cb49dfedd7f2fd8b64",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 40,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 0,
+        "sid_with_raw_blob": 4,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": 2104,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          40,
+          120,
+          4,
+          -1
+        ]
+      },
+      "btf_fields": {}
+    },
+    {
+      "image": "kernel_mi9-4.14",
+      "image_sha256": "229bdf7bfbc2c74a4e2fcb553bb10635624bc4d5b42a9b476d00319f2aa879fb",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 40,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 0,
+        "sid_with_raw_blob": 4,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": 2048,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          40,
+          120,
+          4,
+          -1
+        ]
+      },
+      "btf_fields": {}
+    }
+  ],
+  "excluded_image": "kernel_android17-6.18: user deferred compatibility until KernelPatch support",
+  "scope_limitations": [
+    "raw selinux_blob_sizes contains initial size, not initialized runtime LSM offset",
+    "old task slots use actual get_task_cred disassembly; unknown device KP labels are not verified",
+    "6.12 is offline offset evidence; no KernelPatch runtime claim",
+    "Developer selfcheck, no independent audit or device execution"
+  ],
+  "checks": {
+    "final-host": {
+      "path": "local/run-cmd-offset-simplify-ci5ppke2/final-host/receipt.json",
+      "sha256": "d272cb751d2ae9472e78e42b64e94d7d02678fd623d2df2ff866f9a88bdc3b89",
+      "stdout": "run_cmd production async/credential/offset tests passed\n"
+    },
+    "final-B2N": {
+      "path": "local/run-cmd-offset-simplify-ci5ppke2/final-B2N/receipt.json",
+      "sha256": "8767cd48add255dcd0a2c945b5749fc685196024469d31716bc232359b21bc20",
+      "stdout": "instruction fields: path=0x28 security=0x78 sid=0x4 worker_size=40\n"
+    },
+    "final-Sony": {
+      "path": "local/run-cmd-offset-simplify-ci5ppke2/final-Sony/receipt.json",
+      "sha256": "a0f3fdfdb29098d1630b921848ac0f0783e29e26883d6a4a5ffb15740204e26f",
+      "stdout": "BTF fields matched reference\ninstruction fields: path=0x38 security=0x78 sid=0x4 worker_size=-1\n"
+    }
+  },
+  "build_manifest": "Developer/reports/data/2026-10-10-run-cmd-offset-patterns-build.json",
+  "builds": [
+    {
+      "source_commit": "5b3dc4656b9d1653e6a38d497a1dfa78ca905cfa",
+      "source_dirty": true,
+      "source_tree_sha256": "f797f17d95bb70dee432f6ed75c9e4c6a4b826ec80ec689ded552060f355040b",
+      "instance_id": "run_cmd_demo-1.2.0+gf797f17d95bb.r07357428.kpb51197a.ndk26.3.11579264#1",
+      "artifacts": [
+        {
+          "name": "run_cmd_demo_1.2.0.kpm",
+          "sha256": "79ae3235e5d187ccb8072884efbd61fe084e6b38440fb05ca934cef94e0afd9a",
+          "size": 26856,
+          "embedded": {
+            "name": "run_cmd_demo",
+            "version": "1.2.0",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "Run shell commands with a usermode helper; DO NOT UNLOAD"
+          },
+          "path": "artifacts/run_cmd_demo-1.2.0+gf797f17d95bb.r07357428.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0.kpm"
+        }
+      ]
+    },
+    {
+      "source_commit": "5b3dc4656b9d1653e6a38d497a1dfa78ca905cfa",
+      "source_dirty": true,
+      "source_tree_sha256": "f797f17d95bb70dee432f6ed75c9e4c6a4b826ec80ec689ded552060f355040b",
+      "instance_id": "run_cmd_demo-1.2.0_debug+gf797f17d95bb.rd97d3e55.kpb51197a.ndk26.3.11579264#1",
+      "artifacts": [
+        {
+          "name": "run_cmd_demo_1.2.0_debug.kpm",
+          "sha256": "1755e9195523a3f4df72b6aeda6fd992d9c0f400b841e804ace3aab60c6ec4f1",
+          "size": 26856,
+          "embedded": {
+            "name": "run_cmd_demo",
+            "version": "1.2.0_d",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "Run shell commands with a usermode helper; DO NOT UNLOAD"
+          },
+          "path": "artifacts/run_cmd_demo-1.2.0_debug+gf797f17d95bb.rd97d3e55.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0_debug.kpm"
+        }
+      ]
+    }
+  ],
+  "compat": [
+    {
+      "instance_id": "run_cmd_demo-1.2.0+gf797f17d95bb.r07357428.kpb51197a.ndk26.3.11579264#1",
+      "parent": "artifacts/run_cmd_demo-1.2.0+gf797f17d95bb.r07357428.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0.kpm",
+      "output": "local/run-cmd-offset-simplify-ci5ppke2/final-compat/run_cmd_demo_1.2.0_legacy.kpm",
+      "receipt": {
+        "schema": 1,
+        "kind": "binary-port",
+        "kpm": "run_cmd_demo_1.2.0_legacy.kpm",
+        "parent_kpm": "run_cmd_demo_1.2.0.kpm",
+        "parent_sha256": "79ae3235e5d187ccb8072884efbd61fe084e6b38440fb05ca934cef94e0afd9a",
+        "sha256": "78dea5a7bdc9d73731e9f1ce35022d1f41b68487ca6b2c81514888508ffd735f",
+        "lookup_mode": "exact",
+        "import_from": "kallsyms_lookup_name_by_suffix",
+        "pointer_import": "kallsyms_lookup_name",
+        "pointer_import_added": true,
+        "adapter": "adrp-ldr-br-x16",
+        "imports_resolved": 1,
+        "modified_ranges": [
+          {
+            "offset": 40,
+            "size": 8
+          },
+          {
+            "offset": 60,
+            "size": 2
+          },
+          {
+            "offset": 26856,
+            "size": 5408
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "run_cmd_demo-1.2.0_debug+gf797f17d95bb.rd97d3e55.kpb51197a.ndk26.3.11579264#1",
+      "parent": "artifacts/run_cmd_demo-1.2.0_debug+gf797f17d95bb.rd97d3e55.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0_debug.kpm",
+      "output": "local/run-cmd-offset-simplify-ci5ppke2/final-compat/run_cmd_demo_1.2.0_debug_legacy.kpm",
+      "receipt": {
+        "schema": 1,
+        "kind": "binary-port",
+        "kpm": "run_cmd_demo_1.2.0_debug_legacy.kpm",
+        "parent_kpm": "run_cmd_demo_1.2.0_debug.kpm",
+        "parent_sha256": "1755e9195523a3f4df72b6aeda6fd992d9c0f400b841e804ace3aab60c6ec4f1",
+        "sha256": "fc0060b503b7b0b80c8dd80d6963f919511213994bed4f80beebdaf6692bb7a1",
+        "lookup_mode": "exact",
+        "import_from": "kallsyms_lookup_name_by_suffix",
+        "pointer_import": "kallsyms_lookup_name",
+        "pointer_import_added": true,
+        "adapter": "adrp-ldr-br-x16",
+        "imports_resolved": 1,
+        "modified_ranges": [
+          {
+            "offset": 40,
+            "size": 8
+          },
+          {
+            "offset": 60,
+            "size": 2
+          },
+          {
+            "offset": 26856,
+            "size": 5408
+          }
+        ]
+      }
+    }
+  ]
+}

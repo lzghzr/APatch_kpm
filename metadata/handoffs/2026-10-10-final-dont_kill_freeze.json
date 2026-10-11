@@ -1,0 +1,93 @@
+{
+  "module": "dont_kill_freeze",
+  "version": "1.0.2",
+  "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "handoff_by": "维护者",
+  "handoff_at": "2026-10-11T00:48:01Z",
+  "note": "归档产物需随清单一起转移：artifacts/<instance_id>/（导入时会逐个核验哈希）",
+  "builds": [
+    {
+      "module": "dont_kill_freeze",
+      "version": "1.0.2",
+      "kind": "candidate",
+      "build_id": "dont_kill_freeze-1.0.2+g32c960e57ef2.rd1abcbe5.kpb51197a.ndk26.3.11579264",
+      "variant": "base",
+      "recorded_at": "2026-10-11T00:48:01Z",
+      "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+      "source_dirty": false,
+      "source_tree_sha256": "32c960e57ef2f586feb359ec2d908b74465ccae25ab989c4b45ba6d209a79270",
+      "source_tree_blob_sha256": "32c960e57ef2f586feb359ec2d908b74465ccae25ab989c4b45ba6d209a79270",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "dont_kill_freeze/Makefile",
+          "sha256": "bc11db6e333e5a99d430c48226a9369c626fd9a330903d25e4e672b692bff3d6",
+          "blob_sha256": "bc11db6e333e5a99d430c48226a9369c626fd9a330903d25e4e672b692bff3d6"
+        },
+        {
+          "path": "dont_kill_freeze/dont_kill_freeze.c",
+          "sha256": "087e216200e512e8f3ed3c2773d55ac680158b06b5bffa61456cafebb6a4f11b",
+          "blob_sha256": "087e216200e512e8f3ed3c2773d55ac680158b06b5bffa61456cafebb6a4f11b"
+        },
+        {
+          "path": "dont_kill_freeze/dont_kill_freeze.h",
+          "sha256": "3f1cf5a5206aa114de025909d69f6760eb329d5206d362f2881ce4ed290645b6",
+          "blob_sha256": "3f1cf5a5206aa114de025909d69f6760eb329d5206d362f2881ce4ed290645b6"
+        },
+        {
+          "path": "kpm_utils.h",
+          "sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc",
+          "blob_sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "258c55e8d06775433b608b128162e583ca2531ca83020d283988ca46a95d6898",
+          "blob_sha256": "258c55e8d06775433b608b128162e583ca2531ca83020d283988ca46a95d6898"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "d1abcbe5bf1e31be2f20b35a65588ae51faa24d52080717362a03b65161c7a53",
+      "recipe": {
+        "captured": true,
+        "command": "make -C dont_kill_freeze all",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "26de381f7a2b49372dc5f8ba507c0f64218d5fca2407f760b893312bef7fd2dd",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -DMYKPM_VERSION=\\\"1.0.2\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include dont_kill_freeze.c -r -o dont_kill_freeze_1.0.2.kpm"
+      },
+      "recorded_by": "维护者",
+      "build_transaction": {
+        "source_commit": "8fd66d1b2bbcc8ea4d8146b0c4cc15cd8bab3c03",
+        "source_tree_sha256": "32c960e57ef2f586feb359ec2d908b74465ccae25ab989c4b45ba6d209a79270",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "26de381f7a2b49372dc5f8ba507c0f64218d5fca2407f760b893312bef7fd2dd",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "dont_kill_freeze_1.0.2.kpm",
+          "sha256": "4d85a833d3baa708d772552267c211ea6bfc8239a624887ac13a886cad572255",
+          "size": 9792,
+          "embedded": {
+            "name": "dont_kill_freeze",
+            "version": "1.0.2",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "dont_kill_freeze"
+          },
+          "path": "artifacts/dont_kill_freeze-1.0.2+g32c960e57ef2.rd1abcbe5.kpb51197a.ndk26.3.11579264#2/dont_kill_freeze_1.0.2.kpm"
+        }
+      ],
+      "instance_id": "dont_kill_freeze-1.0.2+g32c960e57ef2.rd1abcbe5.kpb51197a.ndk26.3.11579264#2"
+    }
+  ]
+}

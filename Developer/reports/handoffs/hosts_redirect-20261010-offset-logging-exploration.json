@@ -1,0 +1,98 @@
+{
+  "module": "hosts_redirect",
+  "version": "2.0.0",
+  "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "handoff_by": "Developer",
+  "handoff_at": "2026-10-10T12:58:28Z",
+  "note": "归档产物需随清单一起转移：artifacts/<instance_id>/（导入时会逐个核验哈希）",
+  "builds": [
+    {
+      "module": "hosts_redirect",
+      "version": "2.0.0",
+      "kind": "exploration",
+      "build_id": "hosts_redirect-2.0.0_debug+g127ff5013d61.rc065ce4f.kpb51197a.ndk26.3.11579264",
+      "variant": "debug",
+      "recorded_at": "2026-10-10T12:58:28Z",
+      "source_commit": "7cb89e0c8c065443ac019f147c9bf4995f01db61",
+      "source_dirty": true,
+      "source_tree_sha256": "127ff5013d61cc49cb76d6bc539c6c29306c6f5a62b438506597db2aa8d51171",
+      "source_tree_blob_sha256": "2a4f5929323ac7a151a3904a8a7a8122c80ec3dfb67f43ab8253be762f1e664b",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "hosts_redirect/Makefile",
+          "sha256": "7bdd18f6073b07c14d4b86733ae4649d0844bf9f76fa1fb7ed89eaa122065224",
+          "blob_sha256": "7bdd18f6073b07c14d4b86733ae4649d0844bf9f76fa1fb7ed89eaa122065224"
+        },
+        {
+          "path": "hosts_redirect/hosts_redirect.c",
+          "sha256": "667973f513f3cbc9f6863a4e17f5e0299cf4268bbe1abe1e58b4b6e03e60fc02",
+          "blob_sha256": "b87f3eaa9e43e930e7c1068c8ab3ee5c318119072019fa70b552b5fe58562a1a"
+        },
+        {
+          "path": "hosts_redirect/hosts_redirect.h",
+          "sha256": "9abda5db25a746e1d85cf7a1f7e7c917a1a403dd8a4764ae1046e911a1029956",
+          "blob_sha256": "9abda5db25a746e1d85cf7a1f7e7c917a1a403dd8a4764ae1046e911a1029956"
+        },
+        {
+          "path": "hosts_redirect/hr_utils.h",
+          "sha256": "a1722dcb5d3faa2a76cd3b71a0fcffe0b4810eeff907a06ff9025d6d8dc40f3a",
+          "blob_sha256": "a1722dcb5d3faa2a76cd3b71a0fcffe0b4810eeff907a06ff9025d6d8dc40f3a"
+        },
+        {
+          "path": "kpm_utils.h",
+          "sha256": "65dc6b7162a5dee10643e9acfed23c81ef5633ea5b5f7518e9e76643b4d1a097",
+          "blob_sha256": "cc75e091ff8a7cd3c98524e7d5dfb078d713f759fdc11160be7dd2d03d5ba162"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "c065ce4fc50d361f882672ceeff031587161c3d0e1e79ef2c99f040a11f5cdfb",
+      "recipe": {
+        "captured": true,
+        "command": "make -C hosts_redirect debug",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "765c7550f6cc41b52a3dbde3f718e3b856834edda795392b652c5bbfa417a78c",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -DMYKPM_VERSION=\\\"2.0.0_d\\\" -DCONFIG_DEBUG -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include -c -o hosts_redirect.o hosts_redirect.c\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -r -o hosts_redirect_2.0.0_debug.kpm hosts_redirect.o"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "7cb89e0c8c065443ac019f147c9bf4995f01db61",
+        "source_tree_sha256": "127ff5013d61cc49cb76d6bc539c6c29306c6f5a62b438506597db2aa8d51171",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "765c7550f6cc41b52a3dbde3f718e3b856834edda795392b652c5bbfa417a78c",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "hosts_redirect_2.0.0_debug.kpm",
+          "sha256": "b5c8cb51e95e92168c639fe353da49311f9e3684a5be9bbce54a2f6ed1a23767",
+          "size": 12328,
+          "embedded": {
+            "name": "hosts_redirect",
+            "version": "2.0.0_d",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "redirect /system/etc/hosts to /data/adb/hosts/{name}"
+          },
+          "path": "artifacts/hosts_redirect-2.0.0_debug+g127ff5013d61.rc065ce4f.kpb51197a.ndk26.3.11579264/hosts_redirect_2.0.0_debug.kpm"
+        }
+      ],
+      "instance_id": "hosts_redirect-2.0.0_debug+g127ff5013d61.rc065ce4f.kpb51197a.ndk26.3.11579264#1"
+    }
+  ]
+}

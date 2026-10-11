@@ -1,0 +1,214 @@
+{
+  "scope": "Developer offline investigation; device report cited, no device operation; root cause unresolved",
+  "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+  "parent_instance_id": "re_kernel-11.7_debug+g74820b6486a2.r58923f37.kpb51197a.ndk26.3.11579264#1",
+  "parent_sha256": "c04a293446c8f9920fa1746d6fa215b956b22b87523b9734479cc76740e159da",
+  "tested_sha256": "25dbdf61103247f83f14209400e3d1d7f52dae4eb84e641974e27e7502f01342",
+  "tool_base_commit": "3dfd6ce12f25bf23f2255aae7fe7e2900266540e",
+  "tool_dirty": true,
+  "source_fingerprints": {
+    "re_kernel/re_kernel.c": "1208ea6f0aefa9b94735c5cf29071f720b3e02e0f9413afaa8f47ffbe4af887e",
+    "re_kernel/re_offsets.c": "81c2b0101a6164d4437a24adbe24413681a62b65dadc0efbffa844e3753fde6a",
+    "re_kernel/re_btf.c": "63e26d7c38a27972772b57f18ffd00879c51bdc2885830a1ce0758a539caab29",
+    "re_kernel/re_structs.h": "01d3562fe1cbd5357346d73deb84685b1572687948f4945c4c3fc2615f870a98",
+    "kpm_utils.h": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc",
+    "patch_offsets.py": "c90237e947f957c5f1f321abec69c49cf6ee75e0c889afbd8789c9d916199220"
+  },
+  "binary_diff": {
+    "size_equal": true,
+    "changed_bytes": 10,
+    "first": 83557,
+    "last": 83566,
+    "target_string_offset": 83537,
+    "target_string_size": 31
+  },
+  "image": {
+    "image": "B2N-416G_boot.img",
+    "source_sha256": "ea919143cb1f057f3d35d726294166d5186f376e9751941b83940e75d48a288c",
+    "image_sha256": "7633fbac5ce30b726a1acdbf57f730aa847a9510984a25bc23f9ddcdb0956e1c",
+    "symbols_sha256": "26dfcea65420dd4b5cc4699fab34c428df7a3c22906e7b3a7ecb163899d7662c",
+    "source_sha256_offsets": "81c2b0101a6164d4437a24adbe24413681a62b65dadc0efbffa844e3753fde6a",
+    "run_exit": 0,
+    "selected": {
+      "task_clear_jobctl_trapping": 199448,
+      "binder_free_transaction": 11918124,
+      "binder_proc_dec_tmpref": 11935484,
+      "binder_get_txn_from_and_acq_inner": 11937296,
+      "binder_send_failed_reply": 11937636,
+      "binder_transaction_buffer_release": 11944628,
+      "binder_transaction": 11945592,
+      "binder_alloc_init": 11973120,
+      "binder_proc_transaction": 12048872,
+      "skb_trim": 13309676,
+      "genlmsg_put": 13624748,
+      "genl_pernet_exit": 13626092,
+      "genlmsg_multicast_allns": 13628064,
+      "genl_unregister_family": 13629388,
+      "ipv6_find_tlv": 14602896,
+      "binder_stats": 38632056
+    }
+  },
+  "prior_comparison": {
+    "binder_alloc_buffer_size": {
+      "old": 120,
+      "current": 120
+    },
+    "binder_alloc_buffer": {
+      "old": 64,
+      "current": 64
+    },
+    "binder_alloc_free_async_space": {
+      "old": 104,
+      "current": 104
+    },
+    "binder_alloc_pid": {
+      "old": 132,
+      "current": 132
+    },
+    "binder_node_async_todo": {
+      "old": 112,
+      "current": 112
+    },
+    "binder_node_cookie": {
+      "old": 96,
+      "current": 96
+    },
+    "binder_node_has_async_transaction": {
+      "old": 107,
+      "current": 107
+    },
+    "binder_node_lock": {
+      "old": 4,
+      "current": 4
+    },
+    "binder_node_ptr": {
+      "old": 88,
+      "current": 88
+    },
+    "binder_proc_alloc": {
+      "old": 424,
+      "current": 424
+    },
+    "binder_proc_context": {
+      "old": 568,
+      "current": 568
+    },
+    "binder_proc_inner_lock": {
+      "old": 576,
+      "current": 576
+    },
+    "binder_proc_is_dead": {
+      "old": 148,
+      "current": 148
+    },
+    "binder_proc_is_frozen": {
+      "old": 0,
+      "current": 0
+    },
+    "binder_proc_outer_lock": {
+      "old": 580,
+      "current": 580
+    },
+    "binder_proc_outstanding_txns": {
+      "old": 0,
+      "current": 0
+    },
+    "binder_stats_deleted_transaction": {
+      "old": 196,
+      "current": 196
+    },
+    "binder_transaction_buffer": {
+      "old": 80,
+      "current": 80
+    },
+    "binder_transaction_code": {
+      "old": 88,
+      "current": 88
+    },
+    "binder_transaction_flags": {
+      "old": 92,
+      "current": 92
+    },
+    "binder_transaction_from": {
+      "old": 32,
+      "current": 32
+    },
+    "binder_transaction_to_proc": {
+      "old": 48,
+      "current": 48
+    },
+    "genl_family_id": {
+      "old": 0,
+      "current": 0
+    },
+    "genl_family_config": {
+      "old": 4,
+      "current": 4
+    },
+    "genl_family_mcgrps": {
+      "old": 88,
+      "current": 88
+    },
+    "genl_family_n_mcgrps": {
+      "old": 100,
+      "current": 100
+    },
+    "genl_family_mcgrp_offset": {
+      "old": 104,
+      "current": 104
+    },
+    "net_genl_sock": {
+      "old": 264,
+      "current": 264
+    },
+    "sk_buff_len": {
+      "old": 128,
+      "current": 128
+    },
+    "sk_buff_network_header": {
+      "old": 196,
+      "current": 196
+    },
+    "sk_buff_head": {
+      "old": 208,
+      "current": 208
+    },
+    "sk_buff_data": {
+      "old": 216,
+      "current": 216
+    },
+    "task_struct_group_leader": {
+      "old": 1584,
+      "current": 1584
+    },
+    "task_struct_jobctl": {
+      "old": 1440,
+      "current": 1440
+    },
+    "task_struct_pid": {
+      "old": 1520,
+      "current": 1520
+    },
+    "task_struct_tgid": {
+      "old": 1524,
+      "current": 1524
+    }
+  },
+  "checks": {
+    "production_offsets_exit": 0,
+    "sanitizers": "no diagnostics",
+    "btf_interfaces": "all five absent from saved image symbol inventory",
+    "binder_release_abi": 3,
+    "device": "not-run"
+  },
+  "private_evidence": "local/rek-panic-4.4-h0r4anf8",
+  "report_discrepancies": [
+    "reported source commit differs from bound candidate source",
+    "reported post-reboot module list differs from attached kpm-list.txt"
+  ],
+  "remaining_evidence": [
+    "pre-reboot loading stage log",
+    "PC/LR and Call trace",
+    "collection time and origin of module list"
+  ]
+}

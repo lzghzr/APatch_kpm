@@ -1,0 +1,1229 @@
+{
+  "role": "Developer",
+  "decision": "Simplify",
+  "source_base_commit": "5b3dc4656b9d1653e6a38d497a1dfa78ca905cfa",
+  "source_dirty": true,
+  "changed_files": [
+    "run_cmd_demo/rc_offsets.c",
+    "run_cmd_demo/run_cmd.h",
+    "run_cmd_demo/tools/test_run_cmd.py",
+    "run_cmd_demo/tools/test_compat_offsets.py"
+  ],
+  "scope": "use kpm_btf_type and kpm_btf_offset; retain module field policy and function fallback",
+  "source_hashes": {
+    "kpm_utils.h": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc",
+    "patch_offsets.py": "19281fd658eb32bca2c739244f2126adb8830923e1041c131284639af9e24551",
+    "run_cmd_demo/Makefile": "527ee6f14dd22d2a47a1a04e4c5a42f64b00c59d8398ef562b1439e5d4a02e2e",
+    "run_cmd_demo/rc_offsets.c": "288ce7e29c19532f6d13034e54dfb78982243efbc2626b0aa1620b6d7bb359ac",
+    "run_cmd_demo/rc_utils.h": "68f1099dee805d63ff0b8f375a6b4e3123a95bae4242b390055d6a180439d5c0",
+    "run_cmd_demo/run_cmd.c": "2570e38a49533c14294d4ef265e6704e5054db27bdc7f030a9f56822d91aa403",
+    "run_cmd_demo/run_cmd.h": "a16e54a3d2b3707f79d33e65c792cae679c3f6b6a043961578f19a7360fffdf4",
+    "run_cmd_demo/tools/test_compat_offsets.py": "a60b60d4118e5d9aaa5aa038c473fd7617fc15d04913bcaee2d41bbbd787c2fa",
+    "run_cmd_demo/tools/test_run_cmd.c": "919408ecd5f331e15674980342f163776757a3a5063d0fb084fbe7be7e6ca928",
+    "run_cmd_demo/tools/test_run_cmd.py": "9323fab75b4717c71fcb1d6b8df13e33fa7d1926fe3597cada059253a721609b",
+    "tools/build_candidate.py": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+    "tools/identity.py": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+  },
+  "oracle": {
+    "test_run_cmd.py": {
+      "assertions_unchanged": true,
+      "change_scope": "generated host source includes shared BTF utilities and u8/u64 aliases"
+    },
+    "test_compat_offsets.py": {
+      "assertions_unchanged": true,
+      "change_scope": "generated host source includes shared BTF utilities and u8/u64 aliases"
+    },
+    "run_cmd_demo/tools/test_run_cmd.c": {
+      "bytes_unchanged": true,
+      "sha256": "919408ecd5f331e15674980342f163776757a3a5063d0fb084fbe7be7e6ca928"
+    },
+    "kpm_utils.h": {
+      "bytes_unchanged": true,
+      "sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc"
+    }
+  },
+  "protected_artifacts": {
+    "artifacts/run_cmd_demo-1.2.0+gf797f17d95bb.r07357428.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0.kpm": "79ae3235e5d187ccb8072884efbd61fe084e6b38440fb05ca934cef94e0afd9a",
+    "artifacts/run_cmd_demo-1.2.0_debug+gf797f17d95bb.rd97d3e55.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0_debug.kpm": "1755e9195523a3f4df72b6aeda6fd992d9c0f400b841e804ace3aab60c6ec4f1"
+  },
+  "raw_corpus": [
+    {
+      "image": "kernel_android12-5.10",
+      "image_sha256": "ae2976e111bf11c8b56955df242757db9c9b2c06d0d12f57679b034ebfe71b0f",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {}
+    },
+    {
+      "image": "kernel_android13-5.10",
+      "image_sha256": "8eb4ef9fa91eb25ce9da8b8ff434e4c9e7ad3526a8da1b27c3833a378adf5e15",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ],
+        "btf": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {
+        "cred": {
+          "size": 168,
+          "member_bits": {
+            "usage": 0,
+            "uid": 32,
+            "gid": 64,
+            "suid": 96,
+            "sgid": 128,
+            "euid": 160,
+            "egid": 192,
+            "fsuid": 224,
+            "fsgid": 256,
+            "securebits": 288,
+            "cap_inheritable": 320,
+            "cap_permitted": 384,
+            "cap_effective": 448,
+            "cap_bset": 512,
+            "cap_ambient": 576,
+            "jit_keyring": 640,
+            "session_keyring": 704,
+            "process_keyring": 768,
+            "thread_keyring": 832,
+            "request_key_auth": 896,
+            "security": 960,
+            "user": 1024,
+            "user_ns": 1088,
+            "group_info": 1152,
+            "": 1216
+          }
+        },
+        "subprocess_info": {
+          "size": 112,
+          "member_bits": {
+            "work": 0,
+            "complete": 384,
+            "path": 448,
+            "argv": 512,
+            "envp": 576,
+            "wait": 640,
+            "retval": 672,
+            "init": 704,
+            "cleanup": 768,
+            "data": 832
+          }
+        },
+        "kthread_work": {
+          "size": 40,
+          "member_bits": {
+            "node": 0,
+            "func": 128,
+            "worker": 192,
+            "canceling": 256
+          }
+        },
+        "kthread_worker": {
+          "size": 56,
+          "member_bits": {
+            "flags": 0,
+            "lock": 32,
+            "work_list": 64,
+            "delayed_work_list": 192,
+            "task": 320,
+            "current_work": 384
+          }
+        },
+        "task_security_struct": {
+          "size": 24,
+          "member_bits": {
+            "osid": 0,
+            "sid": 32,
+            "exec_sid": 64,
+            "create_sid": 96,
+            "keycreate_sid": 128,
+            "sockcreate_sid": 160
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android13-5.15",
+      "image_sha256": "080869136d6fec2592533e2e4e578c32dc981e9af6936c8a2b41de0a41d4811e",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ],
+        "btf": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {
+        "cred": {
+          "size": 176,
+          "member_bits": {
+            "usage": 0,
+            "uid": 32,
+            "gid": 64,
+            "suid": 96,
+            "sgid": 128,
+            "euid": 160,
+            "egid": 192,
+            "fsuid": 224,
+            "fsgid": 256,
+            "securebits": 288,
+            "cap_inheritable": 320,
+            "cap_permitted": 384,
+            "cap_effective": 448,
+            "cap_bset": 512,
+            "cap_ambient": 576,
+            "jit_keyring": 640,
+            "session_keyring": 704,
+            "process_keyring": 768,
+            "thread_keyring": 832,
+            "request_key_auth": 896,
+            "security": 960,
+            "user": 1024,
+            "user_ns": 1088,
+            "ucounts": 1152,
+            "group_info": 1216,
+            "": 1280
+          }
+        },
+        "subprocess_info": {
+          "size": 112,
+          "member_bits": {
+            "work": 0,
+            "complete": 384,
+            "path": 448,
+            "argv": 512,
+            "envp": 576,
+            "wait": 640,
+            "retval": 672,
+            "init": 704,
+            "cleanup": 768,
+            "data": 832
+          }
+        },
+        "kthread_work": {
+          "size": 40,
+          "member_bits": {
+            "node": 0,
+            "func": 128,
+            "worker": 192,
+            "canceling": 256
+          }
+        },
+        "kthread_worker": {
+          "size": 56,
+          "member_bits": {
+            "flags": 0,
+            "lock": 32,
+            "work_list": 64,
+            "delayed_work_list": 192,
+            "task": 320,
+            "current_work": 384
+          }
+        },
+        "task_security_struct": {
+          "size": 24,
+          "member_bits": {
+            "osid": 0,
+            "sid": 32,
+            "exec_sid": 64,
+            "create_sid": 96,
+            "keycreate_sid": 128,
+            "sockcreate_sid": 160
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android14-5.15",
+      "image_sha256": "d6d02cf8941be4efe6d042a47cdab27699ebc36e3b85c6e553355cc7a1fc752d",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ],
+        "btf": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {
+        "cred": {
+          "size": 176,
+          "member_bits": {
+            "usage": 0,
+            "uid": 32,
+            "gid": 64,
+            "suid": 96,
+            "sgid": 128,
+            "euid": 160,
+            "egid": 192,
+            "fsuid": 224,
+            "fsgid": 256,
+            "securebits": 288,
+            "cap_inheritable": 320,
+            "cap_permitted": 384,
+            "cap_effective": 448,
+            "cap_bset": 512,
+            "cap_ambient": 576,
+            "jit_keyring": 640,
+            "session_keyring": 704,
+            "process_keyring": 768,
+            "thread_keyring": 832,
+            "request_key_auth": 896,
+            "security": 960,
+            "user": 1024,
+            "user_ns": 1088,
+            "ucounts": 1152,
+            "group_info": 1216,
+            "": 1280
+          }
+        },
+        "subprocess_info": {
+          "size": 112,
+          "member_bits": {
+            "work": 0,
+            "complete": 384,
+            "path": 448,
+            "argv": 512,
+            "envp": 576,
+            "wait": 640,
+            "retval": 672,
+            "init": 704,
+            "cleanup": 768,
+            "data": 832
+          }
+        },
+        "kthread_work": {
+          "size": 40,
+          "member_bits": {
+            "node": 0,
+            "func": 128,
+            "worker": 192,
+            "canceling": 256
+          }
+        },
+        "kthread_worker": {
+          "size": 56,
+          "member_bits": {
+            "flags": 0,
+            "lock": 32,
+            "work_list": 64,
+            "delayed_work_list": 192,
+            "task": 320,
+            "current_work": 384
+          }
+        },
+        "task_security_struct": {
+          "size": 24,
+          "member_bits": {
+            "osid": 0,
+            "sid": 32,
+            "exec_sid": 64,
+            "create_sid": 96,
+            "keycreate_sid": 128,
+            "sockcreate_sid": 160
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android14-6.1",
+      "image_sha256": "bbb9762942d0142acd1ec8fc316faaced629cee6fd7a9d0303338d19685f7b8c",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ],
+        "btf": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {
+        "cred": {
+          "size": 176,
+          "member_bits": {
+            "usage": 0,
+            "uid": 32,
+            "gid": 64,
+            "suid": 96,
+            "sgid": 128,
+            "euid": 160,
+            "egid": 192,
+            "fsuid": 224,
+            "fsgid": 256,
+            "securebits": 288,
+            "cap_inheritable": 320,
+            "cap_permitted": 384,
+            "cap_effective": 448,
+            "cap_bset": 512,
+            "cap_ambient": 576,
+            "jit_keyring": 640,
+            "session_keyring": 704,
+            "process_keyring": 768,
+            "thread_keyring": 832,
+            "request_key_auth": 896,
+            "security": 960,
+            "user": 1024,
+            "user_ns": 1088,
+            "ucounts": 1152,
+            "group_info": 1216,
+            "": 1280
+          }
+        },
+        "subprocess_info": {
+          "size": 112,
+          "member_bits": {
+            "work": 0,
+            "complete": 384,
+            "path": 448,
+            "argv": 512,
+            "envp": 576,
+            "wait": 640,
+            "retval": 672,
+            "init": 704,
+            "cleanup": 768,
+            "data": 832
+          }
+        },
+        "kthread_work": {
+          "size": 40,
+          "member_bits": {
+            "node": 0,
+            "func": 128,
+            "worker": 192,
+            "canceling": 256
+          }
+        },
+        "kthread_worker": {
+          "size": 56,
+          "member_bits": {
+            "flags": 0,
+            "lock": 32,
+            "work_list": 64,
+            "delayed_work_list": 192,
+            "task": 320,
+            "current_work": 384
+          }
+        },
+        "task_security_struct": {
+          "size": 24,
+          "member_bits": {
+            "osid": 0,
+            "sid": 32,
+            "exec_sid": 64,
+            "create_sid": 96,
+            "keycreate_sid": 128,
+            "sockcreate_sid": 160
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android15-6.6",
+      "image_sha256": "1c613d579069091b153ed786b57c2a51ee5bfa09b2ec350b1cc9092a556c5ef1",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 128,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          128,
+          28,
+          -1
+        ],
+        "btf": [
+          0,
+          56,
+          128,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {
+        "cred": {
+          "size": 184,
+          "member_bits": {
+            "usage": 0,
+            "uid": 64,
+            "gid": 96,
+            "suid": 128,
+            "sgid": 160,
+            "euid": 192,
+            "egid": 224,
+            "fsuid": 256,
+            "fsgid": 288,
+            "securebits": 320,
+            "cap_inheritable": 384,
+            "cap_permitted": 448,
+            "cap_effective": 512,
+            "cap_bset": 576,
+            "cap_ambient": 640,
+            "jit_keyring": 704,
+            "session_keyring": 768,
+            "process_keyring": 832,
+            "thread_keyring": 896,
+            "request_key_auth": 960,
+            "security": 1024,
+            "user": 1088,
+            "user_ns": 1152,
+            "ucounts": 1216,
+            "group_info": 1280,
+            "": 1344
+          }
+        },
+        "subprocess_info": {
+          "size": 112,
+          "member_bits": {
+            "work": 0,
+            "complete": 384,
+            "path": 448,
+            "argv": 512,
+            "envp": 576,
+            "wait": 640,
+            "retval": 672,
+            "init": 704,
+            "cleanup": 768,
+            "data": 832
+          }
+        },
+        "kthread_work": {
+          "size": 40,
+          "member_bits": {
+            "node": 0,
+            "func": 128,
+            "worker": 192,
+            "canceling": 256
+          }
+        },
+        "kthread_worker": {
+          "size": 56,
+          "member_bits": {
+            "flags": 0,
+            "lock": 32,
+            "work_list": 64,
+            "delayed_work_list": 192,
+            "task": 320,
+            "current_work": 384
+          }
+        },
+        "task_security_struct": {
+          "size": 24,
+          "member_bits": {
+            "osid": 0,
+            "sid": 32,
+            "exec_sid": 64,
+            "create_sid": 96,
+            "keycreate_sid": 128,
+            "sockcreate_sid": 160
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android16-6.12",
+      "image_sha256": "8ad7edca7e73173b784aefcb17dfce94d2645d5048fe5451379b4aa1b796c848",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 40,
+        "security": 128,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          40,
+          128,
+          28,
+          -1
+        ],
+        "btf": [
+          0,
+          40,
+          128,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {
+        "cred": {
+          "size": 184,
+          "member_bits": {
+            "usage": 0,
+            "uid": 64,
+            "gid": 96,
+            "suid": 128,
+            "sgid": 160,
+            "euid": 192,
+            "egid": 224,
+            "fsuid": 256,
+            "fsgid": 288,
+            "securebits": 320,
+            "cap_inheritable": 384,
+            "cap_permitted": 448,
+            "cap_effective": 512,
+            "cap_bset": 576,
+            "cap_ambient": 640,
+            "jit_keyring": 704,
+            "session_keyring": 768,
+            "process_keyring": 832,
+            "thread_keyring": 896,
+            "request_key_auth": 960,
+            "security": 1024,
+            "user": 1088,
+            "user_ns": 1152,
+            "ucounts": 1216,
+            "group_info": 1280,
+            "": 1344
+          }
+        },
+        "subprocess_info": {
+          "size": 96,
+          "member_bits": {
+            "work": 0,
+            "complete": 256,
+            "path": 320,
+            "argv": 384,
+            "envp": 448,
+            "wait": 512,
+            "retval": 544,
+            "init": 576,
+            "cleanup": 640,
+            "data": 704
+          }
+        },
+        "kthread_work": {
+          "size": 40,
+          "member_bits": {
+            "node": 0,
+            "func": 128,
+            "worker": 192,
+            "canceling": 256
+          }
+        },
+        "kthread_worker": {
+          "size": 56,
+          "member_bits": {
+            "flags": 0,
+            "lock": 32,
+            "work_list": 64,
+            "delayed_work_list": 192,
+            "task": 320,
+            "current_work": 384
+          }
+        },
+        "task_security_struct": {
+          "size": 24,
+          "member_bits": {
+            "osid": 0,
+            "sid": 32,
+            "exec_sid": 64,
+            "create_sid": 96,
+            "keycreate_sid": 128,
+            "sockcreate_sid": 160
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_mi10-4.19",
+      "image_sha256": "cedd94d2e9a740075d0cc9853705ebe695a43c63502a62660c30aba018ed6823",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 0,
+        "sid_with_raw_blob": 4,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          120,
+          4,
+          -1
+        ]
+      },
+      "btf_fields": {}
+    },
+    {
+      "image": "kernel_mi11-5.4",
+      "image_sha256": "4211656a1250a81bdbc9d3710c18bcbca7e90834bab57b639f9dbcacc4ea50c8",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 56,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 24,
+        "sid_with_raw_blob": 28,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": -1,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          56,
+          120,
+          28,
+          -1
+        ]
+      },
+      "btf_fields": {}
+    },
+    {
+      "image": "kernel_mi6-4.4",
+      "image_sha256": "cd92912fc52a9f422625eaf2db98937a407644b70b2cf5149f6df7eb1f17b930",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 40,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 0,
+        "sid_with_raw_blob": 4,
+        "legacy_worker_size": 40
+      },
+      "task_cred_inputs": {
+        "real_cred": 1976,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          40,
+          120,
+          4,
+          40
+        ]
+      },
+      "btf_fields": {}
+    },
+    {
+      "image": "kernel_mi8-4.9",
+      "image_sha256": "93d2c9ffd6b893bf86728f82db3174f3edff0d18f92977cb49dfedd7f2fd8b64",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 40,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 0,
+        "sid_with_raw_blob": 4,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": 2104,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          40,
+          120,
+          4,
+          -1
+        ]
+      },
+      "btf_fields": {}
+    },
+    {
+      "image": "kernel_mi9-4.14",
+      "image_sha256": "229bdf7bfbc2c74a4e2fcb553bb10635624bc4d5b42a9b476d00319f2aa879fb",
+      "reference_basis": "actual entry disassembly and raw BTF member records; blob initializer is not a running-kernel offset",
+      "reference": {
+        "path": 40,
+        "security": 120,
+        "sid_in_security_struct": 4,
+        "raw_blob_initializer": 0,
+        "sid_with_raw_blob": 4,
+        "legacy_worker_size": -1
+      },
+      "task_cred_inputs": {
+        "real_cred": 2048,
+        "cred": -1
+      },
+      "observations": {
+        "functions": [
+          0,
+          40,
+          120,
+          4,
+          -1
+        ]
+      },
+      "btf_fields": {}
+    }
+  ],
+  "raw_results_equivalent": true,
+  "kernel_6_18": "deferred by user until KP support",
+  "text_size_before": 7408,
+  "text_size_after": 7928,
+  "new_import": "kf_strncmp",
+  "export_evidence": "KernelPatch/kernel/patch/ksyms/libs.c:70-71 at b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "build_manifest": "Developer/reports/data/2026-10-10-run-cmd-common-btf-build.json",
+  "builds": [
+    {
+      "module": "run_cmd_demo",
+      "version": "1.2.0",
+      "kind": "exploration",
+      "build_id": "run_cmd_demo-1.2.0+gfd06b5353361.rbaa8f505.kpb51197a.ndk26.3.11579264",
+      "variant": "base",
+      "recorded_at": "2026-10-10T17:58:37Z",
+      "source_commit": "5b3dc4656b9d1653e6a38d497a1dfa78ca905cfa",
+      "source_dirty": true,
+      "source_tree_sha256": "fd06b5353361d346b4ab681926eb8b055a2ee867793d5a98241eec0ff28c1cdc",
+      "source_tree_blob_sha256": "39d5a0a08624fa20d8783c4f3c58ce4deac369aac67c220413748d60ab326bf4",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc",
+          "blob_sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc"
+        },
+        {
+          "path": "patch_offsets.py",
+          "sha256": "19281fd658eb32bca2c739244f2126adb8830923e1041c131284639af9e24551",
+          "blob_sha256": "19281fd658eb32bca2c739244f2126adb8830923e1041c131284639af9e24551"
+        },
+        {
+          "path": "run_cmd_demo/Makefile",
+          "sha256": "527ee6f14dd22d2a47a1a04e4c5a42f64b00c59d8398ef562b1439e5d4a02e2e",
+          "blob_sha256": "527ee6f14dd22d2a47a1a04e4c5a42f64b00c59d8398ef562b1439e5d4a02e2e"
+        },
+        {
+          "path": "run_cmd_demo/rc_offsets.c",
+          "sha256": "288ce7e29c19532f6d13034e54dfb78982243efbc2626b0aa1620b6d7bb359ac",
+          "blob_sha256": "7fa4137139256f6d4949fdf1a79a129685fe3e0ecee43d8402702cbf53cdb2da"
+        },
+        {
+          "path": "run_cmd_demo/rc_utils.h",
+          "sha256": "68f1099dee805d63ff0b8f375a6b4e3123a95bae4242b390055d6a180439d5c0",
+          "blob_sha256": "68f1099dee805d63ff0b8f375a6b4e3123a95bae4242b390055d6a180439d5c0"
+        },
+        {
+          "path": "run_cmd_demo/run_cmd.c",
+          "sha256": "2570e38a49533c14294d4ef265e6704e5054db27bdc7f030a9f56822d91aa403",
+          "blob_sha256": "2570e38a49533c14294d4ef265e6704e5054db27bdc7f030a9f56822d91aa403"
+        },
+        {
+          "path": "run_cmd_demo/run_cmd.h",
+          "sha256": "a16e54a3d2b3707f79d33e65c792cae679c3f6b6a043961578f19a7360fffdf4",
+          "blob_sha256": "afe04dc202b529783f07982ba54f43a2547ee399a096b715f9e1cb7e323d0646"
+        },
+        {
+          "path": "run_cmd_demo/tools/test_compat_offsets.py",
+          "sha256": "a60b60d4118e5d9aaa5aa038c473fd7617fc15d04913bcaee2d41bbbd787c2fa",
+          "blob_sha256": "464fdf8fa67570468326c320eaa69dc5f3a9ef3c50fb6151709034263214e281"
+        },
+        {
+          "path": "run_cmd_demo/tools/test_run_cmd.c",
+          "sha256": "919408ecd5f331e15674980342f163776757a3a5063d0fb084fbe7be7e6ca928",
+          "blob_sha256": "919408ecd5f331e15674980342f163776757a3a5063d0fb084fbe7be7e6ca928"
+        },
+        {
+          "path": "run_cmd_demo/tools/test_run_cmd.py",
+          "sha256": "9323fab75b4717c71fcb1d6b8df13e33fa7d1926fe3597cada059253a721609b",
+          "blob_sha256": "0a369badf2027882c895946f348020de055be5329d9fd1d2045b2eb252d6ebcc"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "baa8f5058c4d96b3be216f981e25f68f2745dd1eb4bb250a587a2d2c8e037baf",
+      "recipe": {
+        "captured": true,
+        "command": "make -C run_cmd_demo all debug",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "c162f306634d194225aaaa14ae0c42bf0c678082c6373a7a950ab9e409efa62f",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\\\"1.2.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include run_cmd.c -r -o run_cmd_demo_1.2.0.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\\\"1.2.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include run_cmd.c -r -o run_cmd_demo_1.2.0_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "5b3dc4656b9d1653e6a38d497a1dfa78ca905cfa",
+        "source_tree_sha256": "fd06b5353361d346b4ab681926eb8b055a2ee867793d5a98241eec0ff28c1cdc",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "c162f306634d194225aaaa14ae0c42bf0c678082c6373a7a950ab9e409efa62f",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "run_cmd_demo_1.2.0.kpm",
+          "sha256": "9b39623b3750323eafc7584461252b294a8f79188aaf49d8a4d3109f2cd29e46",
+          "size": 26744,
+          "embedded": {
+            "name": "run_cmd_demo",
+            "version": "1.2.0",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "Run shell commands with a usermode helper; DO NOT UNLOAD"
+          },
+          "path": "artifacts/run_cmd_demo-1.2.0+gfd06b5353361.rbaa8f505.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0.kpm"
+        }
+      ],
+      "instance_id": "run_cmd_demo-1.2.0+gfd06b5353361.rbaa8f505.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "run_cmd_demo",
+      "version": "1.2.0",
+      "kind": "exploration",
+      "build_id": "run_cmd_demo-1.2.0_debug+gfd06b5353361.r521c896b.kpb51197a.ndk26.3.11579264",
+      "variant": "debug",
+      "recorded_at": "2026-10-10T17:58:37Z",
+      "source_commit": "5b3dc4656b9d1653e6a38d497a1dfa78ca905cfa",
+      "source_dirty": true,
+      "source_tree_sha256": "fd06b5353361d346b4ab681926eb8b055a2ee867793d5a98241eec0ff28c1cdc",
+      "source_tree_blob_sha256": "39d5a0a08624fa20d8783c4f3c58ce4deac369aac67c220413748d60ab326bf4",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc",
+          "blob_sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc"
+        },
+        {
+          "path": "patch_offsets.py",
+          "sha256": "19281fd658eb32bca2c739244f2126adb8830923e1041c131284639af9e24551",
+          "blob_sha256": "19281fd658eb32bca2c739244f2126adb8830923e1041c131284639af9e24551"
+        },
+        {
+          "path": "run_cmd_demo/Makefile",
+          "sha256": "527ee6f14dd22d2a47a1a04e4c5a42f64b00c59d8398ef562b1439e5d4a02e2e",
+          "blob_sha256": "527ee6f14dd22d2a47a1a04e4c5a42f64b00c59d8398ef562b1439e5d4a02e2e"
+        },
+        {
+          "path": "run_cmd_demo/rc_offsets.c",
+          "sha256": "288ce7e29c19532f6d13034e54dfb78982243efbc2626b0aa1620b6d7bb359ac",
+          "blob_sha256": "7fa4137139256f6d4949fdf1a79a129685fe3e0ecee43d8402702cbf53cdb2da"
+        },
+        {
+          "path": "run_cmd_demo/rc_utils.h",
+          "sha256": "68f1099dee805d63ff0b8f375a6b4e3123a95bae4242b390055d6a180439d5c0",
+          "blob_sha256": "68f1099dee805d63ff0b8f375a6b4e3123a95bae4242b390055d6a180439d5c0"
+        },
+        {
+          "path": "run_cmd_demo/run_cmd.c",
+          "sha256": "2570e38a49533c14294d4ef265e6704e5054db27bdc7f030a9f56822d91aa403",
+          "blob_sha256": "2570e38a49533c14294d4ef265e6704e5054db27bdc7f030a9f56822d91aa403"
+        },
+        {
+          "path": "run_cmd_demo/run_cmd.h",
+          "sha256": "a16e54a3d2b3707f79d33e65c792cae679c3f6b6a043961578f19a7360fffdf4",
+          "blob_sha256": "afe04dc202b529783f07982ba54f43a2547ee399a096b715f9e1cb7e323d0646"
+        },
+        {
+          "path": "run_cmd_demo/tools/test_compat_offsets.py",
+          "sha256": "a60b60d4118e5d9aaa5aa038c473fd7617fc15d04913bcaee2d41bbbd787c2fa",
+          "blob_sha256": "464fdf8fa67570468326c320eaa69dc5f3a9ef3c50fb6151709034263214e281"
+        },
+        {
+          "path": "run_cmd_demo/tools/test_run_cmd.c",
+          "sha256": "919408ecd5f331e15674980342f163776757a3a5063d0fb084fbe7be7e6ca928",
+          "blob_sha256": "919408ecd5f331e15674980342f163776757a3a5063d0fb084fbe7be7e6ca928"
+        },
+        {
+          "path": "run_cmd_demo/tools/test_run_cmd.py",
+          "sha256": "9323fab75b4717c71fcb1d6b8df13e33fa7d1926fe3597cada059253a721609b",
+          "blob_sha256": "0a369badf2027882c895946f348020de055be5329d9fd1d2045b2eb252d6ebcc"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "521c896b54283fa9b2f592d4d416b126afc638923e8d6afabc30bfd62192a69d",
+      "recipe": {
+        "captured": true,
+        "command": "make -C run_cmd_demo all debug",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "c162f306634d194225aaaa14ae0c42bf0c678082c6373a7a950ab9e409efa62f",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\\\"1.2.0\\\"  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include run_cmd.c -r -o run_cmd_demo_1.2.0.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\\\"1.2.0_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include run_cmd.c -r -o run_cmd_demo_1.2.0_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "5b3dc4656b9d1653e6a38d497a1dfa78ca905cfa",
+        "source_tree_sha256": "fd06b5353361d346b4ab681926eb8b055a2ee867793d5a98241eec0ff28c1cdc",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "c162f306634d194225aaaa14ae0c42bf0c678082c6373a7a950ab9e409efa62f",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "run_cmd_demo_1.2.0_debug.kpm",
+          "sha256": "3d2e97459bb775e58e494691f3574426d9f59648b83c7ca049efaa74ae46ebc0",
+          "size": 26744,
+          "embedded": {
+            "name": "run_cmd_demo",
+            "version": "1.2.0_d",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "Run shell commands with a usermode helper; DO NOT UNLOAD"
+          },
+          "path": "artifacts/run_cmd_demo-1.2.0_debug+gfd06b5353361.r521c896b.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0_debug.kpm"
+        }
+      ],
+      "instance_id": "run_cmd_demo-1.2.0_debug+gfd06b5353361.r521c896b.kpb51197a.ndk26.3.11579264#1"
+    }
+  ],
+  "compat": [
+    {
+      "source": "artifacts/run_cmd_demo-1.2.0+gfd06b5353361.rbaa8f505.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0.kpm",
+      "output": "local/run-cmd-common-btf-c2vas7zc/compat/run_cmd_demo_1.2.0_legacy.kpm",
+      "instance_id": "run_cmd_demo-1.2.0+gfd06b5353361.rbaa8f505.kpb51197a.ndk26.3.11579264#1",
+      "receipt": {
+        "schema": 1,
+        "kind": "binary-port",
+        "kpm": "run_cmd_demo_1.2.0_legacy.kpm",
+        "parent_kpm": "run_cmd_demo_1.2.0.kpm",
+        "parent_sha256": "9b39623b3750323eafc7584461252b294a8f79188aaf49d8a4d3109f2cd29e46",
+        "sha256": "2d44f03ad16251f488e5339756e05e233d1898753e86176f2c2aa1137468a945",
+        "lookup_mode": "exact",
+        "import_from": "kallsyms_lookup_name_by_suffix",
+        "pointer_import": "kallsyms_lookup_name",
+        "pointer_import_added": true,
+        "adapter": "adrp-ldr-br-x16",
+        "imports_resolved": 1,
+        "modified_ranges": [
+          {
+            "offset": 40,
+            "size": 8
+          },
+          {
+            "offset": 60,
+            "size": 2
+          },
+          {
+            "offset": 26744,
+            "size": 5480
+          }
+        ]
+      },
+      "text_size": 7928,
+      "undefined_imports": [
+        "kallsyms_lookup_name_by_suffix",
+        "cred_offset",
+        "printk",
+        "task_struct_offset",
+        "kf_strnlen",
+        "kf_strcmp",
+        "kf_snprintf",
+        "kf_strlen",
+        "compat_copy_to_user",
+        "kf_memcpy",
+        "kf_strncmp",
+        "kf_memset"
+      ]
+    },
+    {
+      "source": "artifacts/run_cmd_demo-1.2.0_debug+gfd06b5353361.r521c896b.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0_debug.kpm",
+      "output": "local/run-cmd-common-btf-c2vas7zc/compat/run_cmd_demo_1.2.0_debug_legacy.kpm",
+      "instance_id": "run_cmd_demo-1.2.0_debug+gfd06b5353361.r521c896b.kpb51197a.ndk26.3.11579264#1",
+      "receipt": {
+        "schema": 1,
+        "kind": "binary-port",
+        "kpm": "run_cmd_demo_1.2.0_debug_legacy.kpm",
+        "parent_kpm": "run_cmd_demo_1.2.0_debug.kpm",
+        "parent_sha256": "3d2e97459bb775e58e494691f3574426d9f59648b83c7ca049efaa74ae46ebc0",
+        "sha256": "38ba7653ab2305598654071c7e28bdba952b2e6e8462ce95ba13a975e7e2cd3b",
+        "lookup_mode": "exact",
+        "import_from": "kallsyms_lookup_name_by_suffix",
+        "pointer_import": "kallsyms_lookup_name",
+        "pointer_import_added": true,
+        "adapter": "adrp-ldr-br-x16",
+        "imports_resolved": 1,
+        "modified_ranges": [
+          {
+            "offset": 40,
+            "size": 8
+          },
+          {
+            "offset": 60,
+            "size": 2
+          },
+          {
+            "offset": 26744,
+            "size": 5480
+          }
+        ]
+      },
+      "text_size": 7928,
+      "undefined_imports": [
+        "kallsyms_lookup_name_by_suffix",
+        "cred_offset",
+        "printk",
+        "task_struct_offset",
+        "kf_strnlen",
+        "kf_strcmp",
+        "kf_snprintf",
+        "kf_strlen",
+        "compat_copy_to_user",
+        "kf_memcpy",
+        "kf_strncmp",
+        "kf_memset"
+      ]
+    }
+  ],
+  "selfchecks": {
+    "host": {
+      "path": "local/run-cmd-common-btf-c2vas7zc/host/receipt.json",
+      "sha256": "d08d91433cf43bb18215c1d1346b60b594a15058d59ef0a58c6e850c9e411fd4",
+      "stdout": "run_cmd production async/credential/offset tests passed\n"
+    },
+    "Sony": {
+      "path": "local/run-cmd-common-btf-c2vas7zc/Sony/receipt.json",
+      "sha256": "d29d9e7497ac2829d488ba732f3790beabd47c716569cc153e25e240c0f901c8",
+      "stdout": "BTF fields matched reference\ninstruction fields: path=0x38 security=0x78 sid=0x4 worker_size=-1\n"
+    }
+  }
+}

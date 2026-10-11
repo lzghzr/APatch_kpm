@@ -1,0 +1,20 @@
+--- a/.agents/skills/kpm-static-binary-port/SKILL.md
++++ b/.agents/skills/kpm-static-binary-port/SKILL.md
+@@ -63,7 +63,7 @@
+ python3 patch_offsets.py legacy-kp local/target.kpm --output local/target-legacy.kpm
+ ```
+ 
+-只替换 ELF 未定义导入的字符串，保留代码、重定位、偏移表和模块信息，输出新 KPM 与 `.compat.json` 来源哈希收据。存在配套布局 JSON 时先验证，再生成哈希更新的输出布局；布局另存时用 `--layout <文件>`。动态版不要求静态偏移表。原始候选和清单保留，派生产物单独记录哈希并交 Tester 验证。
++KP 的 `kallsyms_lookup_name` 是函数指针变量，不能直接替换函数导入名。工具保留原调用重定位，将 suffix 导入定义为模块内的 12 字节 `ADRP/LDR/BR x16` 转接，读取原名函数指针后尾调用。要求输入同时有未定义的 suffix 函数与原名指针导入，否则拒绝处理；当前 run_cmd_demo 不满足此条件。原有代码、重定位、模块信息与静态配置段保留，新增可执行节及其两条重定位，另存新节表。输出新 KPM 与 `.compat.json` 来源哈希收据；配套布局先验证，再更新输出哈希。原候选保留，派生产物需独立审计与真机验证。
+ 
+ 这是 KP 兼容问题修复前的临时入口，构建与发布不默认应用。运行端 KP 修复后使用原始产物；入口及其专用自检可删除。
+ 
+@@ -79,7 +79,7 @@
+ 
+ ## 验证边界
+ 
+-- 偏移替换前后只允许配置段范围内变化，代码、符号、重定位和模块元数据保持逐字节一致；统一基线的释放选择只在表内变化，旧固定 ABI 标记保持逐字节一致。对 JSON 和 blob 两种路径都做往返检查。临时 `legacy-kp` 操作另核对仅目标导入的字符串范围改变，其余符号名称及所有其它字节不变。
++- 偏移替换前后只允许配置段范围内变化，代码、符号、重定位和模块元数据保持逐字节一致；统一基线的释放选择只在表内变化，旧固定 ABI 标记保持逐字节一致。对 JSON 和 blob 两种路径都做往返检查。临时 `legacy-kp` 操作另核对可执行转接、函数指针解引用、275/286 重定位及原配置段保留；字符串替换通过不能证明调用契约正确。
+ - 重新枚举 ELF 的全部未定义导入，与实际 KP SDK 导出比较。`-fno-builtin` 仍可能留下裸 `memcpy`/`memset`，不能只看编译成功。
+ - ARM64 使用 `-mgeneral-regs-only -ffixed-x18 -mno-outline-atomics`，检查真实反汇编的 FP/SIMD/SVE；按指令行解析，避免 `\s` 跨行把符号名认成寄存器。
+ - 主机 ASan/UBSan 验证业务、边界和失败路径，目标锁、hook、真实 ACK、卸载和应用响应需单独验证。不得把离线检查写成 Android 实机通过。

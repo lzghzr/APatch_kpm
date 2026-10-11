@@ -1,0 +1,103 @@
+{
+  "module": "cgroupv2_freeze",
+  "version": "1.0.12",
+  "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "handoff_by": "Developer",
+  "handoff_at": "2026-10-10T12:58:28Z",
+  "note": "归档产物需随清单一起转移：artifacts/<instance_id>/（导入时会逐个核验哈希）",
+  "builds": [
+    {
+      "module": "cgroupv2_freeze",
+      "version": "1.0.12",
+      "kind": "exploration",
+      "build_id": "cgroupv2_freeze-1.0.12_debug+g4e33886a317b.rd8aa4760.kpb51197a.ndk26.3.11579264",
+      "variant": "debug",
+      "recorded_at": "2026-10-10T12:58:28Z",
+      "source_commit": "7cb89e0c8c065443ac019f147c9bf4995f01db61",
+      "source_dirty": true,
+      "source_tree_sha256": "4e33886a317bf4a92037bf3eb62c42560b9721ca454d8ec9d75a1d6521380694",
+      "source_tree_blob_sha256": "fdccad18012346f416c0663903cfeaa233470983e58946f517d9e6338d401585",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": "cgroupv2_freeze/Makefile",
+          "sha256": "a3aa3ac1c0ab41ac1bff14cafa98a474f80893d6158eade5b230c62860f5a070",
+          "blob_sha256": "a3aa3ac1c0ab41ac1bff14cafa98a474f80893d6158eade5b230c62860f5a070"
+        },
+        {
+          "path": "cgroupv2_freeze/cfv2_offsets.c",
+          "sha256": "71bd212835471158abf567da54567ef73b228cc5e67d714f6ea0ac2b94e6a84e",
+          "blob_sha256": "8b5d4e549faf460412304a64b6a52a8ddccc162a84cd0536275691270cbd03e1"
+        },
+        {
+          "path": "cgroupv2_freeze/cfv2_utils.h",
+          "sha256": "706c870d3b0c60d6afbe712731b65bb75114d86423b86e56c9cc8f27d6dce4db",
+          "blob_sha256": "706c870d3b0c60d6afbe712731b65bb75114d86423b86e56c9cc8f27d6dce4db"
+        },
+        {
+          "path": "cgroupv2_freeze/cgroupv2_freeze.c",
+          "sha256": "232c4be1a5f1621d5e4e46ff960f84cd19e21415c708415c114744d65fd68051",
+          "blob_sha256": "232c4be1a5f1621d5e4e46ff960f84cd19e21415c708415c114744d65fd68051"
+        },
+        {
+          "path": "cgroupv2_freeze/cgroupv2_freeze.h",
+          "sha256": "39a00833215da4fcabb2725cbbab9ef60985fe5a5126ac5e2c1c88e86f4f32ec",
+          "blob_sha256": "39a00833215da4fcabb2725cbbab9ef60985fe5a5126ac5e2c1c88e86f4f32ec"
+        },
+        {
+          "path": "kpm_utils.h",
+          "sha256": "65dc6b7162a5dee10643e9acfed23c81ef5633ea5b5f7518e9e76643b4d1a097",
+          "blob_sha256": "cc75e091ff8a7cd3c98524e7d5dfb078d713f759fdc11160be7dd2d03d5ba162"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85",
+          "blob_sha256": "10accaa154cff20091bbfed6cad8e58910b754c61548a98775cce8d543c79b85"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "d8aa476054eedcc7488c072789331dfdc9fb30a114fbf175c62c197f11389914",
+      "recipe": {
+        "captured": true,
+        "command": "make -C cgroupv2_freeze debug",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "620348a63517eb0c97f8eafb774413b355621a41e06106112de50d1af44a8ae4",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -DMYKPM_VERSION=\\\"1.0.12_d\\\" -DCONFIG_DEBUG  -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include cgroupv2_freeze.c -r -o cgroupv2_freeze_1.0.12_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "7cb89e0c8c065443ac019f147c9bf4995f01db61",
+        "source_tree_sha256": "4e33886a317bf4a92037bf3eb62c42560b9721ca454d8ec9d75a1d6521380694",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "620348a63517eb0c97f8eafb774413b355621a41e06106112de50d1af44a8ae4",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "cgroupv2_freeze_1.0.12_debug.kpm",
+          "sha256": "ae1428f095a369b0ba67e7e5656b46a2c1c76a7f22ba1fbd44130c26977f18bd",
+          "size": 34336,
+          "embedded": {
+            "name": "cgroupv2_freeze",
+            "version": "1.0.12_d",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "add cgroup.freeze, support 4.4 ~ 4.19"
+          },
+          "path": "artifacts/cgroupv2_freeze-1.0.12_debug+g4e33886a317b.rd8aa4760.kpb51197a.ndk26.3.11579264/cgroupv2_freeze_1.0.12_debug.kpm"
+        }
+      ],
+      "instance_id": "cgroupv2_freeze-1.0.12_debug+g4e33886a317b.rd8aa4760.kpb51197a.ndk26.3.11579264#1"
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+{
+  "schema": 1,
+  "state": "dirty-exploration; Developer authorized diagnostic, not independent acceptance",
+  "issue": "DEV-028",
+  "parent_source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+  "parent_instance_id": "re_kernel-11.7_debug+g74820b6486a2.r58923f37.kpb51197a.ndk26.3.11579264#1",
+  "parent_sha256": "c04a293446c8f9920fa1746d6fa215b956b22b87523b9734479cc76740e159da",
+  "tested_sha256": "25dbdf61103247f83f14209400e3d1d7f52dae4eb84e641974e27e7502f01342",
+  "device_hash": "b754dad7",
+  "runtime": {
+    "kernel": "4.4.192-perf+",
+    "kp_encoded": "d04",
+    "kp_version": "0.13.4"
+  },
+  "load_time_utc": "2026-10-10T16:04:58.225284+00:00",
+  "load_attempts": 1,
+  "load_result": "STOP: load-candidate timed out",
+  "automatic_retries": 0,
+  "reboot_operations": 0,
+  "post_crash_device_operations": 0,
+  "crash_excerpt": [
+    "[ 1377.989584] [+] KP D     .text ffffff960b4c5228 5f2c",
+    "[ 1377.992191] kernel function cgroup_freezing addr: ffffff948e145628",
+    "[ 1377.992203] Unable to handle kernel paging request at virtual address ffffff960b18cda0",
+    "[ 1377.992403] Internal error: Oops - BUG: 8600000f [#1] PREEMPT SMP",
+    "[ 1377.992456] PC is at 0xffffff960b18cda0",
+    "[ 1377.992462] LR is at 0xffffff960b4c5294"
+  ],
+  "root_cause": "CALL26 relocated to address of exported function-pointer object rather than pointed-to function",
+  "file_sha256": {
+    "patch_offsets.py": "2a6fcd0e5a887886555ebc09fe0b07ff302de6219b335c28a0a86f4b82400de1",
+    "Developer/tools/test_legacy_kp.py": "cbe4e29e60fe010bfbe2dcbd988cdeffe7b6377dfa94c85caa2991aba2ea022a",
+    "Developer/tools/test_legacy_kp_adapter.py": "b0dc1d6e62789855d143645e018d350ff57834eddaf1a83d257f7b8e50fbc529",
+    "local/rek-authorized-test-dswhnh6f/diagnose.py": "c808ef7e6d90a557125c1a777a5d0d033c17b8a750b4b018f715cbc2e60eaaf4",
+    "local/rek-authorized-test-dswhnh6f/live-dmesg.txt": "45ba670e6b61a2a50d4f5401b89d575dfa72fe9a5a07c44e1e6ce2d6136f041b",
+    "local/rek-authorized-test-dswhnh6f/test-receipt.json": "a6a59174401de66a7b9e187a7924bde8c48a27a5c6b93b537c69cec6672c77de"
+  },
+  "offline": {
+    "adapter_actual_pass": 8,
+    "static_layouts_checked": 4,
+    "run_cmd_demo_rejected": 2,
+    "old_oracle": "FAIL at line 82; preserved assertion requires name-only substitution",
+    "tools_selftest": "21/21 PASS",
+    "oracle_change": "none; independent review requested for future assertion revision"
+  },
+  "adapters": [
+    {
+      "module": "re_kernel",
+      "variant": "base",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "parent_instance_id": "re_kernel-11.7+g74820b6486a2.r08a88aa8.kpb51197a.ndk26.3.11579264#1",
+      "parent_path": "artifacts/re_kernel-11.7+g74820b6486a2.r08a88aa8.kpb51197a.ndk26.3.11579264/re_kernel_11.7.kpm",
+      "parent_sha256": "fc8992f63e890bc2145fd2500c537d6cc49026389853e5852241f2acacf108a3",
+      "path": "local/legacy-kp-3figbbkb/selftest-final/actual-0.kpm",
+      "sha256": "7fe6895d235b77ad1f1fe73ac8de071ab6d28414cff94b7134764fc412016f54",
+      "modified_ranges": [
+        {
+          "offset": 78503,
+          "size": 31
+        }
+      ],
+      "adapter_sha256": "79ef896bf4661a49fbde75d6d2aba991809ba336cffdfb6f9bd093d628a4d328",
+      "adapter_path": "local/legacy-adapter-ukyhihlr/rek-tests/actual-0.kpm",
+      "checks": "PASS"
+    },
+    {
+      "module": "re_kernel",
+      "variant": "baselines",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "parent_instance_id": "re_kernel-11.7_baselines+g74820b6486a2.r08ce5a98.kpb51197a.ndk26.3.11579264#1",
+      "parent_path": "artifacts/re_kernel-11.7_baselines+g74820b6486a2.r08ce5a98.kpb51197a.ndk26.3.11579264/re_kernel_11.7_baselines.kpm",
+      "parent_sha256": "3da1a47763da15853a9016c81e03215383c13d88d75bac04cd8519f85479eb13",
+      "path": "local/legacy-kp-3figbbkb/selftest-final/actual-1.kpm",
+      "sha256": "3482d50ae5ade028f22f394f4b27d64d6682385ef6aff3b91efe248ca12efc14",
+      "modified_ranges": [
+        {
+          "offset": 32916,
+          "size": 31
+        }
+      ],
+      "adapter_sha256": "eda7f2af1e13e42832106ac73b110d980d2ad96f13499ea4b296e24d34bf3478",
+      "adapter_path": "local/legacy-adapter-ukyhihlr/rek-tests/actual-1.kpm",
+      "checks": "PASS"
+    },
+    {
+      "module": "re_kernel",
+      "variant": "baselines_debug",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "parent_instance_id": "re_kernel-11.7_baselines_debug+g74820b6486a2.r127cc051.kpb51197a.ndk26.3.11579264#1",
+      "parent_path": "artifacts/re_kernel-11.7_baselines_debug+g74820b6486a2.r127cc051.kpb51197a.ndk26.3.11579264/re_kernel_11.7_baselines_debug.kpm",
+      "parent_sha256": "0bc6e3476f2892964b79f334e41f84fee67f141d9b3df1286a1e88421bc3acda",
+      "path": "local/legacy-kp-3figbbkb/selftest-final/actual-2.kpm",
+      "sha256": "374d8a59594f3ebb96c9068c2d5cda076482ad454731ddf92602439759784788",
+      "modified_ranges": [
+        {
+          "offset": 33708,
+          "size": 31
+        }
+      ],
+      "adapter_sha256": "dc297f3b89280a00d284a10b6e71ad70240582056fe02abf567df31a980ba3bb",
+      "adapter_path": "local/legacy-adapter-ukyhihlr/rek-tests/actual-2.kpm",
+      "checks": "PASS"
+    },
+    {
+      "module": "re_kernel",
+      "variant": "debug",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "parent_instance_id": "re_kernel-11.7_debug+g74820b6486a2.r58923f37.kpb51197a.ndk26.3.11579264#1",
+      "parent_path": "artifacts/re_kernel-11.7_debug+g74820b6486a2.r58923f37.kpb51197a.ndk26.3.11579264/re_kernel_11.7_debug.kpm",
+      "parent_sha256": "c04a293446c8f9920fa1746d6fa215b956b22b87523b9734479cc76740e159da",
+      "path": "local/legacy-kp-3figbbkb/selftest-final/actual-3.kpm",
+      "sha256": "25dbdf61103247f83f14209400e3d1d7f52dae4eb84e641974e27e7502f01342",
+      "modified_ranges": [
+        {
+          "offset": 83537,
+          "size": 31
+        }
+      ],
+      "adapter_sha256": "1c135ef7a0afb4475af8f803120e75f55ce828bd7a4b78205332bb2fcef673a9",
+      "adapter_path": "local/legacy-adapter-ukyhihlr/rek-tests/actual-3.kpm",
+      "checks": "PASS"
+    },
+    {
+      "module": "re_kernel_x",
+      "variant": "base",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "parent_instance_id": "re_kernel_x-1.6-20261008+gd80a957dbb14.r3923dc8d.kpb51197a.ndk26.3.11579264#1",
+      "parent_path": "artifacts/re_kernel_x-1.6-20261008+gd80a957dbb14.r3923dc8d.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6-20261008.kpm",
+      "parent_sha256": "151ef48c73afe7703c13778cbaffccf0c5b900bd1e6b98aea2d483933b33030f",
+      "path": "local/legacy-kp-3figbbkb/selftest-final/actual-4.kpm",
+      "sha256": "cf634d05df1b4083be82c5602b441e35bdd2a0b11de6bdbee4d97e2e1b51ddf5",
+      "modified_ranges": [
+        {
+          "offset": 91734,
+          "size": 31
+        }
+      ],
+      "adapter_sha256": "4f819249ad0440757ca3e017a9a8438f0e1ef0a257cb39c461dcedfdeae6d89a",
+      "adapter_path": "local/legacy-adapter-ukyhihlr/rek-tests/actual-4.kpm",
+      "checks": "PASS"
+    },
+    {
+      "module": "re_kernel_x",
+      "variant": "baselines",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "parent_instance_id": "re_kernel_x-1.6-20261008_baselines+gd80a957dbb14.r7abf0995.kpb51197a.ndk26.3.11579264#1",
+      "parent_path": "artifacts/re_kernel_x-1.6-20261008_baselines+gd80a957dbb14.r7abf0995.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6-20261008_baselines.kpm",
+      "parent_sha256": "2933c90f15c4ec66872fce0e6f2222e10fd314dfe31a69d7ca998df60201144a",
+      "path": "local/legacy-kp-3figbbkb/selftest-final/actual-5.kpm",
+      "sha256": "5ea38087cf3f6a8d49341717a8119f2bdf1d7e1328e731d878c814d63b2cde8e",
+      "modified_ranges": [
+        {
+          "offset": 40405,
+          "size": 31
+        }
+      ],
+      "adapter_sha256": "567ddbc1384bdfdce29c9f325259f6eb96f41543660ad9888911e1e12fcef961",
+      "adapter_path": "local/legacy-adapter-ukyhihlr/rek-tests/actual-5.kpm",
+      "checks": "PASS"
+    },
+    {
+      "module": "re_kernel_x",
+      "variant": "baselines_debug",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "parent_instance_id": "re_kernel_x-1.6-20261008_baselines_debug+gd80a957dbb14.r00cb6cab.kpb51197a.ndk26.3.11579264#1",
+      "parent_path": "artifacts/re_kernel_x-1.6-20261008_baselines_debug+gd80a957dbb14.r00cb6cab.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6-20261008_baselines_debug.kpm",
+      "parent_sha256": "ed6f97dcf8cdaf8498d22ecc5de410a4887e3492e38aa585f2ffded091ad8b0a",
+      "path": "local/legacy-kp-3figbbkb/selftest-final/actual-6.kpm",
+      "sha256": "55b8a63268b0cd94eab06494805ba65d48811b6494a3b1522d0c61fff59a2114",
+      "modified_ranges": [
+        {
+          "offset": 39773,
+          "size": 31
+        }
+      ],
+      "adapter_sha256": "b714da401bd1e722517232316bf1f95fd5a6e4d0c429fbec610aa9eb95c562d1",
+      "adapter_path": "local/legacy-adapter-ukyhihlr/rek-tests/actual-6.kpm",
+      "checks": "PASS"
+    },
+    {
+      "module": "re_kernel_x",
+      "variant": "debug",
+      "source_commit": "820165f403960a5b0e31f5d66df08014b55e3844",
+      "parent_instance_id": "re_kernel_x-1.6-20261008_debug+gd80a957dbb14.r404552af.kpb51197a.ndk26.3.11579264#1",
+      "parent_path": "artifacts/re_kernel_x-1.6-20261008_debug+gd80a957dbb14.r404552af.kpb51197a.ndk26.3.11579264/re_kernel_x_1.6-20261008_debug.kpm",
+      "parent_sha256": "e6ce734b2ad7c60290b495c86244a988e8180462711a63fb57e88cbecdd73304",
+      "path": "local/legacy-kp-3figbbkb/selftest-final/actual-7.kpm",
+      "sha256": "8af5c31d44443607c72b27cadd845e1ecc87fd281b522873104961446c3cfb83",
+      "modified_ranges": [
+        {
+          "offset": 96958,
+          "size": 31
+        }
+      ],
+      "adapter_sha256": "0cc466122147c8fb48768051a7e1816f4d4347682479f20ad1511053d20060d5",
+      "adapter_path": "local/legacy-adapter-ukyhihlr/rek-tests/actual-7.kpm",
+      "checks": "PASS"
+    }
+  ]
+}

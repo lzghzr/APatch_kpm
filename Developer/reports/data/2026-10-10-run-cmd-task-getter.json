@@ -1,0 +1,142 @@
+{
+  "role": "Developer",
+  "issue": "DEV-029",
+  "status": "fixed in dirty exploration; awaiting independent review and frozen candidate",
+  "scope": "B2N-416G_boot.img; Developer offline/host selfchecks; no device execution",
+  "source_base_commit": "3dfd6ce12f25bf23f2255aae7fe7e2900266540e",
+  "source_dirty": true,
+  "tester_report": "Tester/reports/runs/2026-10-10-re_kernel-and-rekx-4.4-legacy-kp#1.md",
+  "tester_report_sha256": "f792f7c36686f0d0e42633bb89b8b8481ffe8d90ec51443eaecd19739ea5bc2e",
+  "rejected_parent_identities": [
+    {
+      "source_commit": "2257f2291e2be77c8809c266393da9d9d093d7b4",
+      "instance_id": "run_cmd_demo-1.2.0+g9669c80f9942.r2e72bd0b.kpb51197a.ndk26.3.11579264#1",
+      "path": "artifacts/run_cmd_demo-1.2.0+g9669c80f9942.r2e72bd0b.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0.kpm",
+      "sha256": "d1ebd33b0675d4a6c655348615ffdd209a2910fc12d76c57574e7658a44eb1b7"
+    },
+    {
+      "source_commit": "2257f2291e2be77c8809c266393da9d9d093d7b4",
+      "instance_id": "run_cmd_demo-1.2.0_debug+g9669c80f9942.r534a6113.kpb51197a.ndk26.3.11579264#1",
+      "path": "artifacts/run_cmd_demo-1.2.0_debug+g9669c80f9942.r534a6113.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0_debug.kpm",
+      "sha256": "a1a78b752d4638e3decce97088aa9df49f2384f7315127289258037c4a938cfc"
+    }
+  ],
+  "rejected_derived_artifacts": [
+    {
+      "path": "local/ported-4.4/20261010-v2/run_cmd_demo_1.2.0_legacy.kpm",
+      "sha256": "53b2eccb41f1cc9d6ad15dc9198b81d5983756e3c4c04a456aa77f25e8bdf8b2"
+    },
+    {
+      "path": "local/ported-4.4/20261010-v2/run_cmd_demo_1.2.0_debug_legacy.kpm",
+      "sha256": "e7b8eb29a453ef7f460b2bc62de3c5ae6eaceec196f62909ba6f9040f0d6433a"
+    }
+  ],
+  "input": {
+    "boot_sha256": "ea919143cb1f057f3d35d726294166d5186f376e9751941b83940e75d48a288c",
+    "Image_sha256": "7633fbac5ce30b726a1acdbf57f730aa847a9510984a25bc23f9ddcdb0956e1c",
+    "reference": {
+      "path": 40,
+      "security": 120,
+      "sid": 4,
+      "real_cred": 1968,
+      "worker_size": 40,
+      "image_sha256": "7633fbac5ce30b726a1acdbf57f730aa847a9510984a25bc23f9ddcdb0956e1c",
+      "runtime_blob": 0,
+      "reference_source": "B2N Image instruction chain; KP offset labels from Tester 2026-10-10 report: real_cred=0x7b0, cred=0x7a8",
+      "cred": 1960
+    },
+    "getter_offset": 2612368,
+    "disassembly": "0027dc90: stp x29, x30, [sp, #-0x30]!\n0027dc94: mov x29, sp\n0027dc98: str x19, [sp, #0x10]\n0027dc9c: str x1, [x29, #0x28]\n0027dca0: str x0, [x29, #0x20]\n0027dca4: bl #0x918f4\n0027dca8: ldr x0, [x29, #0x20]\n0027dcac: ldr x0, [x0, #0x7a8]\n0027dcb0: ldr x0, [x0, #0x78]\n0027dcb4: ldr w19, [x0, #4]\n0027dcb8: bl #0x91b0c\n0027dcbc: ldr x1, [x29, #0x28]\n0027dcc0: str w19, [x1]\n0027dcc4: ldr x19, [sp, #0x10]\n0027dcc8: ldp x29, x30, [sp], #0x30\n0027dccc: ret \n"
+  },
+  "reproduction": {
+    "before_exit_code": -6,
+    "before_stderr": "Assertion failed: (calculate_offsets() == 0), function main, file probe.c, line 1710.\n",
+    "after_exit_code": 0,
+    "after_stdout": "instruction fields: path=0x28 security=0x78 sid=0x4 worker_size=40\n"
+  },
+  "oracle": {
+    "existing_assertions_preserved": true,
+    "existing_assertions_count": 185,
+    "current_assertions_count": 191,
+    "fixture_change": "add KP task_struct_offset.cred_offset and feed separate runtime offsets; retain all old assertions",
+    "new_cases": [
+      "real_cred slot",
+      "cred slot",
+      "unknown slot",
+      "broken security base",
+      "wrong SID output",
+      "known security mismatch",
+      "chain outside 16 instructions"
+    ]
+  },
+  "source_hashes": {
+    "run_cmd_demo/rc_offsets.c": "7fa4137139256f6d4949fdf1a79a129685fe3e0ecee43d8402702cbf53cdb2da",
+    "run_cmd_demo/tools/test_run_cmd.c": "919408ecd5f331e15674980342f163776757a3a5063d0fb084fbe7be7e6ca928",
+    "run_cmd_demo/tools/test_compat_offsets.py": "464fdf8fa67570468326c320eaa69dc5f3a9ef3c50fb6151709034263214e281",
+    "run_cmd_demo/tools/test_run_cmd.py": "0a369badf2027882c895946f348020de055be5329d9fd1d2045b2eb252d6ebcc",
+    "patch_offsets.py": "19281fd658eb32bca2c739244f2126adb8830923e1041c131284639af9e24551",
+    ".clang-format": "31ddcf66d75257bc817dd103f159b35e4a5594cbb592245230e58743d713e6ee"
+  },
+  "new_build_manifest": "Developer/reports/data/2026-10-10-run-cmd-task-getter-build.json",
+  "new_artifacts": [
+    {
+      "source_commit": "3dfd6ce12f25bf23f2255aae7fe7e2900266540e",
+      "source_dirty": true,
+      "parent_instance_id": "run_cmd_demo-1.2.0+g39d5a0a08624.r5a2f161e.kpb51197a.ndk26.3.11579264#1",
+      "parent_path": "artifacts/run_cmd_demo-1.2.0+g39d5a0a08624.r5a2f161e.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0.kpm",
+      "parent_sha256": "679495209ec33eb306117e1881f5d31bb18980679ce872025e47601919d99f55",
+      "derived_path": "local/run-cmd-task-getter-ett8d3pa/run_cmd_demo_1.2.0_legacy.kpm",
+      "derived_sha256": "aa63ea85faba77d146b92d425e8d27bd6b2a5fa92f01c8070e0df64123c165fc",
+      "compat_receipt": "local/run-cmd-task-getter-ett8d3pa/run_cmd_demo_1.2.0_legacy.kpm.compat.json",
+      "undefined_imports": [
+        "cred_offset",
+        "printk",
+        "task_struct_offset",
+        "kf_strnlen",
+        "kf_strcmp",
+        "kf_snprintf",
+        "kf_strlen",
+        "compat_copy_to_user",
+        "kf_memcpy",
+        "kf_memset",
+        "kallsyms_lookup_name"
+      ],
+      "elf_and_pointer_thunk_check": "passed"
+    },
+    {
+      "source_commit": "3dfd6ce12f25bf23f2255aae7fe7e2900266540e",
+      "source_dirty": true,
+      "parent_instance_id": "run_cmd_demo-1.2.0_debug+g39d5a0a08624.r65f480c9.kpb51197a.ndk26.3.11579264#1",
+      "parent_path": "artifacts/run_cmd_demo-1.2.0_debug+g39d5a0a08624.r65f480c9.kpb51197a.ndk26.3.11579264/run_cmd_demo_1.2.0_debug.kpm",
+      "parent_sha256": "7838ab1f43c244c8bb37139db4971a23340ebe984e3726e14195204e2bf5af01",
+      "derived_path": "local/run-cmd-task-getter-ett8d3pa/run_cmd_demo_1.2.0_debug_legacy.kpm",
+      "derived_sha256": "31002a2a3fcd5cb4a999903b97d830206bd979f5eefeaef3b1bf9c892b5e15d0",
+      "compat_receipt": "local/run-cmd-task-getter-ett8d3pa/run_cmd_demo_1.2.0_debug_legacy.kpm.compat.json",
+      "undefined_imports": [
+        "cred_offset",
+        "printk",
+        "task_struct_offset",
+        "kf_strnlen",
+        "kf_strcmp",
+        "kf_snprintf",
+        "kf_strlen",
+        "compat_copy_to_user",
+        "kf_memcpy",
+        "kf_memset",
+        "kallsyms_lookup_name"
+      ],
+      "elf_and_pointer_thunk_check": "passed"
+    }
+  ],
+  "local_evidence_root": "local/run-cmd-task-getter-ett8d3pa",
+  "selfcheck_receipts": {
+    "local/run-cmd-task-getter-ett8d3pa/before/receipt.json": "e69745c1f49d6f32ee7d11eaf76b99a10268e7c47941fbadde7cda2e754ff7d2",
+    "local/run-cmd-task-getter-ett8d3pa/after/receipt.json": "60031cd7fbbbe6965f66f860e2460b9bf3fe8d9c960b235e445161f3d20948b5",
+    "local/run-cmd-task-getter-ett8d3pa/host/receipt.json": "aca9900fa1721f8a1863f89874029713e5b48710dc24ea55f6bde8dc8547e036"
+  },
+  "self_review": {
+    "are_you_sure": "Retain: two known KP credential slots plus unchanged security/SID chain; no version offset or scan-window increase",
+    "no_negative_echo": "reviewed code comments, report and generated receipts against current behavior",
+    "respect_the_oracle": "existing assertions preserved; new runtime-field inputs reproduce the real rejected case; Tier 3 only"
+  }
+}
