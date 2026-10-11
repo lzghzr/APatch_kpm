@@ -9,7 +9,7 @@
 README 面向使用者，保留用途、移植入口、公开控制接口和更新记录；实现细节、分析步骤与自检说明维护在本文件。静态移植方法见 [静态二进制移植技能](../.agents/skills/kpm-static-binary-port/SKILL.md)，偏移依据见 [偏移分析技能](../.agents/skills/kernel-offset-derivation/SKILL.md)。
 
 ## 静态移植方式
-针对目标内核 img 离线分析结构体偏移和字段宽度，替换 `re_offsets.c` 中的固定值后构建对应 KPM；有目标 BTF 时，也可以用 `re_vmlinux.c` 提取。模块直接使用这些固定值，偏移核对在移植阶段完成。
+针对目标内核 img 离线分析结构体偏移和字段宽度，替换 `re_offsets.c` 中的固定值后构建对应 KPM；有目标 BTF 时，优先从其结构体定义取得字段偏移。模块直接使用这些固定值，偏移核对在移植阶段完成。
 
 同一份基线包含 Binder 释放函数的四种调用方式，由 `re_offsets.c` 末尾的 `binder_release_abi` 选择。默认模板值为 6，移植时依据目标函数实际签名填写 3/4/5/6，不按 Linux 主版本号选择；无需编译四份 KPM。共同布局复用结构体定义，变化字段和调用选择都通过静态配置替换。初始化在安装 hook 前拒绝非法选择值，不做运行时偏移推导。
 
@@ -17,7 +17,7 @@ README 面向使用者，保留用途、移植入口、公开控制接口和更�
 
 偏移表单独放在 `.data.re_offsets`，使用 `volatile` 防止编译器把固定值折叠进指令。当前为 45 个小端 `int16_t`，共 90 字节；前 44 项偏移及配置的顺序保持原样，末项为 `binder_release_abi`。字段顺序、文件位置、当前释放 ABI 和 KPM SHA-256 随构建写入同名 `.kpm.json`，新布局 schema 为 2，没有固定 `.rodata.re_abi` 标记。模块直接读表。
 
-下一次 Releases 发布统一的非 debug 基线及其布局 JSON，debug 和两份布局同时保存在 Actions artifacts。缺少配套 JSON 时，可用同一构建提交的 `tools/patch_offsets.py` 和 `re_offsets.c` 执行 `baseline <基准.kpm> --output <基准.kpm.json>` 生成，无需 NDK；不能用不同提交的字段顺序代替。
+下一次 Releases 发布统一的非 debug 基线及其布局 JSON，debug 和两份布局同时保存在 Actions artifacts。缺少配套 JSON 时，可用同一构建提交中仓库根目录的 `patch_offsets.py` 和 `re_kernel_x/re_offsets.c` 执行 `baseline <基准.kpm> --source re_kernel_x/re_offsets.c --output <基准.kpm.json>` 生成，无需 NDK；不能用不同提交的字段顺序代替。
 
 准备一份 release 与一份 debug 基线，输出目录使用新的空目录：
 
@@ -30,10 +30,10 @@ make -C re_kernel_x baselines OUT_DIR=../local/baselines-round1
 将配套 `.kpm.json` 的 `offsets` 按目标 img 分析结果填写完整，同时选择 `binder_release_abi`，生成新的 KPM：
 
 ```bash
-python3 re_kernel_x/tools/patch_offsets.py patch local/baselines-round1/re_kernel_x_1.6-20261008.kpm --offsets local/target-offsets.json --output local/target.kpm
+python3 patch_offsets.py patch local/baselines-round1/re_kernel_x_1.6-20261008_baselines.kpm --offsets local/target-offsets.json --output local/target.kpm
 ```
 
-也可用 `dump <kpm> --output local/offsets.bin` 导出原始偏移表，按基准 JSON 的 `fields` 顺序修改，再用 `patch <kpm> --blob local/offsets.bin --output local/target.kpm` 替换。工具仅改配置数据段，包含释放 ABI 选择，保留代码与重定位；输出文件和伴随 JSON 均不覆盖已有文件。生成后的 JSON 会同步当前 binder_abi 与配置值。旧 schema 1 的固定 ABI 基线仍可使用其配套 JSON 做 dump/patch，不能添加调用选择字段，旧固定 ABI 标记仍不变；旧表与新表不混用。基线初始配置是模板，移植前需核对目标镜像。目标头文件生成器需显式传入已确认的释放调用编号，如 `./re_vmlinux 5`；头文件布局本身不能代替函数调用点分析。
+也可用 `dump <kpm> --output local/offsets.bin` 导出原始偏移表，按基准 JSON 的 `fields` 顺序修改，再用 `patch <kpm> --blob local/offsets.bin --output local/target.kpm` 替换。工具仅改配置数据段，包含释放 ABI 选择，保留代码与重定位；输出文件和伴随 JSON 均不覆盖已有文件。生成后的 JSON 会同步当前 binder_abi 与配置值。旧 schema 1 的固定 ABI 基线仍可使用其配套 JSON 做 dump/patch，不能添加调用选择字段，旧固定 ABI 标记仍不变；旧表与新表不混用。基线初始配置是模板，移植前需核对目标镜像。释放调用编号依据目标函数签名或调用点填写；结构体布局本身不能代替函数调用点分析。
 
 异步清理仍由模块自行去重：仅要求 TF_ONE_WAY，不要求低版本没有的 TF_UPDATE_TXN。binder_proc_transaction 只注册 before 回调：在 Binder 锁外取得规则策略，再按 node/inner_lock 顺序加锁扫描 async_todo。至少找到两条与新消息匹配的旧消息才摘除最早一条，只找到一条时保留。bc 加入 d 时删除 b，成功入队后成为 cd；新消息发送失败时仍留下 c。每次最多删除一条，已有积压按冗余保留，不批量压缩，也不永久保留最早消息。新事务此时尚未入队，不作为本次清理对象。
 
@@ -52,7 +52,7 @@ python3 re_kernel_x/tools/patch_offsets.py patch local/baselines-round1/re_kerne
 
 接收支持 `ADD_MONITOR_NET=2`、`DEL_MONITOR_NET=3`，参数为 `UID=40` 的 4 字节小端 u32 attribute。UID 数组容量保留 32 项，重复添加和删除不存在的 UID 返回成功；删除后压紧，满时返回 `-ENOSPC`。读写使用模块自己的短临界区锁；容量满不再扩大到监控全部 UID。
 
-控制命令只允许内核消息凭据中的 UID 1000，其他 UID 返回 `-EPERM`；包括 UID 0。凭据来自 `NETLINK_CB(skb).creds.uid`，报文中的目标 UID 与 PID 不用于鉴权。`sk_buff.cb` 和凭据复用核对过的共同布局，目标头文件生成器会检查其位置与宽度；该凭据限制不依赖新增的释放 ABI 选择。此限制作用于控制命令，组播订阅仍由内核与 SELinux 决定。
+控制命令只允许内核消息凭据中的 UID 1000，其他 UID 返回 `-EPERM`；包括 UID 0。凭据来自 `NETLINK_CB(skb).creds.uid`，报文中的目标 UID 与 PID 不用于鉴权。`sk_buff.cb` 和凭据复用核对过的共同布局，移植时需核对其位置与宽度；该凭据限制不依赖新增的释放 ABI 选择。此限制作用于控制命令，组播订阅仍由内核与 SELinux 决定。
 
 接收侧 hook 内核 `genl_rcv_msg`，只拦截本 family 的请求，返回值交给内核接收流程生成 ACK；设置 `NLM_F_ACK` 可获得处理结果。其它 family 保留原流程。本 family 限定 init_net，检查报文长度、版本和 UID attribute 的长度/标志，拒绝重复 UID、截断报文以及 dump 请求。`ADD_FREE_ASYNC=4` 使用 `STRATEGY=41`（u8）、`RPC_NAME=42`（NUL 结尾字符串，最多 139 字节）、`CODE=43`（小端 s32）；`DEL_FREE_ASYNC=5` 使用 RPC_NAME 和 CODE。code 从 -1 起，-1 为 RPC 通配规则，精确 code 优先。重复添加更新策略，删除不存在的规则返回成功；32 项固定数组满时返回 `-ENOSPC`，删除用尾项填补空位。
 
@@ -63,7 +63,7 @@ python3 re_kernel_x/tools/patch_offsets.py patch local/baselines-round1/re_kerne
 ## 当前移植进度
 Generic Netlink family 沿用静态内存块，`hdrsize/name/version/maxattr` 复用共同配置段，变化字段使用静态偏移。填写 family 和组播组配置后调用 `genl_register_family` 或 `__genl_register_family`。接收侧避免引入 `genl_ops`、`genl_info` 的跨内核布局，只新增 `sock_sk_net` 偏移来核对请求所在网络命名空间；默认值来自已有目标 BTF。
 
-注册失败时撤销新增接收 hook；Genl 初始化失败时撤销本轮安装的业务回调并返回错误。无组播订阅者（`-ESRCH`）按正常情况处理，发送失败按内核 skb 所有权约定返回错误。偏移生成器继续在编译期核对共同配置段、存储容量和计数字段宽度。tracepoint 探针在缺少 `__tracepoint_binder_transaction` 或注册/注销入口时整体跳过，不阻断其余 hook；卸载时仅对已注册的探针调用注销。控制接口 `ctl0` 校验输出缓冲后写入 `"_(._.)_"`，与动态版一致。
+注册失败时撤销新增接收 hook；Genl 初始化失败时撤销本轮安装的业务回调并返回错误。无组播订阅者（`-ESRCH`）按正常情况处理，发送失败按内核 skb 所有权约定返回错误。移植时需核对共同配置段、存储容量和计数字段宽度。tracepoint 探针在缺少 `__tracepoint_binder_transaction` 或注册/注销入口时整体跳过，不阻断其余 hook；卸载时仅对已注册的探针调用注销。控制接口 `ctl0` 校验输出缓冲后写入 `"_(._.)_"`，与动态版一致。
 
 当前 KernelPatch 在 RCU 读锁内执行模块 `exit`；family 注销与回调生命周期的卸载问题依本轮范围继续暂缓。
 
@@ -74,3 +74,11 @@ RPC 参数由模块自己的调用上下文保存：`binder_transaction` 的 bef
 Genl 自检包含实际报文字节、139 字节 RPC、attribute 写入失败与 skb 所有权、UID 与规则数组容量/更新/删除、精确及通配规则、BY_DATA 全字节/长度/读取失败/预算/并发清理、旧内核 data 读取及无读取入口时的降级、命名空间隔离、注册失败回滚、20000 个随机输入和 8 线程并发。清理自检覆盖零/一条匹配者保留、删除最早匹配者、积压单次删除、新消息发送成功/失败、skip_origin、其他 code 不计入余量，以及原生 UPDATE 和两次加锁之间的冻结状态变化。主机锁以 pthread 模拟，只验证临界区业务逻辑；目标内核锁、ACK、hook 与组播订阅的真机行为待验证。
 
 审计与实机覆盖以绑定完整提交、构建实例和产物哈希的角色报告为准；旧测试结论只绑定旧产物。
+
+## 静态与动态构建
+
+`make -C re_kernel_x all debug OUT_DIR=../local/rekx-round1` 在新的空目录生成 static、dynamic、static_debug、dynamic_debug 四份 KPM。编译入口为模块自己的 `Makefile`，静态基线定义 `CONFIG_KPM_BASELINES`，动态版不定义该宏，模块信息记录 `offset_mode`。静态版生成配套 JSON；动态版的表清零，仅 `binder_buffer_data=-1`，加载时填入目标偏移。
+
+动态模式使用本目录的 `re_btf.c` 与 `re_offsets.c`，按目标证据取得全部配置。BTF 五参数释放函数的 `off_end_offset` 与 `failed_at` 同为整数，按参数名确认语义。缺少 BTF 或原生查询接口时走固定小窗口指令推导。旧内核任务与凭据偏移使用 KP 已有计算结果；`sock_sk_net` 从 `sk_net_capable` 的短寄存器链取得。旧内核 `binder_buffer_data` 暂为 -1，缺少原生复制入口时添加清理规则返回 `-EOPNOTSUPP`，基础去重继续工作。字段初始化失败时尚未安装业务 hook。
+
+探索/候选构建须捕获共用输入：`--extra-input patch_offsets.py`。静态补丁测试入口保持 `test_static.py`；双模式入口为 `re_kernel/tools/test_modes.py`，BTF 入口为 `re_kernel/tools/test_btf.py`，旧内核入口为 `re_kernel/tools/test_dynamic_offsets.py`。目标语料必须按仓库规则先确认范围。

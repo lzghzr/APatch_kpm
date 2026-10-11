@@ -23,14 +23,18 @@
 #include <linux/string.h>
 
 #include "../kpm_utils.h"
-#include "re_offsets.c"
 #include "re_utils.h"
 
 KPM_NAME("re_kernel_x");
 KPM_VERSION(MYKPM_VERSION);
 KPM_LICENSE("GPL v3");
 KPM_AUTHOR("Nep-Timeline, lzghzr, myflavor");
-KPM_DESCRIPTION("ReKernel-X, every bit belongs to you.");
+KPM_DESCRIPTION("ReKernel-X. Binder, signal and network notifications.");
+#ifdef CONFIG_KPM_BASELINES
+KPM_INFO(offset_mode, "static", 16);
+#else
+KPM_INFO(offset_mode, "dynamic", 16);
+#endif
 
 // cgroup_freezing, cgroupv1_freeze
 static bool (*cgroup_freezing)(struct task_struct* task);
@@ -51,6 +55,9 @@ static int (*genl_rcv_msg)(struct sk_buff* skb, struct nlmsghdr* nlh);
 // hook binder_proc_transaction
 static int (*binder_proc_transaction)(struct binder_transaction* t, struct binder_proc* proc,
                                       struct binder_thread* thread);
+// hook binder_transaction
+static void (*binder_transaction)(struct binder_proc* proc, struct binder_thread* thread,
+                                  struct binder_transaction_data* tr, int reply, binder_size_t extra_buffers_size);
 // free the outdated transaction and buffer
 static void* binder_transaction_buffer_release;
 static void (*binder_alloc_free_buf)(struct binder_alloc* alloc, struct binder_buffer* buffer);
@@ -60,28 +67,10 @@ void* kfunc_def(__kmalloc)(size_t size, gfp_t flags);
 struct binder_stats kvar_def(binder_stats);
 int kfunc_def(binder_alloc_copy_from_buffer)(struct binder_alloc* alloc, void* dest, struct binder_buffer* buffer,
                                              binder_size_t offset, size_t bytes);
-// 调用方持有当前事务或队列锁；旧 Binder 的 data 是已映射的内核地址。
-static int binder_buffer_read(struct binder_alloc* alloc, void* dest, struct binder_buffer* buffer,
-                              binder_size_t offset, size_t bytes) {
-  if (kfunc(binder_alloc_copy_from_buffer))
-    return kfunc(binder_alloc_copy_from_buffer)(alloc, dest, buffer, offset, bytes);
-  if (struct_offset.binder_buffer_data < 0)
-    return -EOPNOTSUPP;
-  if (buffer->free || offset % sizeof(u32) || offset > buffer->data_size || bytes > buffer->data_size - offset)
-    return -EINVAL;
-  const unsigned char* data = *(const unsigned char**)((uintptr_t)buffer + struct_offset.binder_buffer_data);
-  if (!data)
-    return -EFAULT;
-  memcpy(dest, data + offset, bytes);
-  return 0;
-}
 // 新内核延迟安装 FD；旧内核没有此函数，无对象事务也没有 fixup。
 static void (*binder_free_txn_fixups)(struct binder_transaction* t);
 // hook do_send_sig_info
 static int (*do_send_sig_info)(int sig, struct siginfo* info, struct task_struct* p, enum pid_type type);
-// hook binder_transaction
-static void (*binder_transaction)(struct binder_proc* proc, struct binder_thread* thread,
-                                  struct binder_transaction_data* tr, int reply, binder_size_t extra_buffers_size);
 // copy_from_user
 void* kfunc_def(memdup_user)(const void __user* src, size_t len);
 void kfunc_def(kvfree)(const void* addr);
@@ -108,6 +97,24 @@ int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
 static bool trace;
 static struct rekernel_binder_context* binder_contexts;
 static unsigned int binder_context_guard, binder_context_unavailable;
+
+#include "re_offsets.c"
+
+// 调用方持有当前事务或队列锁；旧 Binder 的 data 是已映射的内核地址。
+static int binder_buffer_read(struct binder_alloc* alloc, void* dest, struct binder_buffer* buffer,
+                              binder_size_t offset, size_t bytes) {
+  if (kfunc(binder_alloc_copy_from_buffer))
+    return kfunc(binder_alloc_copy_from_buffer)(alloc, dest, buffer, offset, bytes);
+  if (struct_offset.binder_buffer_data < 0)
+    return -EOPNOTSUPP;
+  if (buffer->free || offset % sizeof(u32) || offset > buffer->data_size || bytes > buffer->data_size - offset)
+    return -EINVAL;
+  const unsigned char* data = *(const unsigned char**)((uintptr_t)buffer + struct_offset.binder_buffer_data);
+  if (!data)
+    return -EFAULT;
+  memcpy(dest, data + offset, bytes);
+  return 0;
+}
 
 // binder_node_lock
 static inline void binder_node_lock(struct binder_node* node) {
@@ -853,10 +860,12 @@ static void tcp_rcv_before(hook_fargs2_t* args, void* udata) {
 }
 
 static long inline_hook_init(const char* args, const char* event, void* __user reserved) {
+#ifdef CONFIG_KPM_BASELINES
   if (struct_offset.binder_release_abi < 3 || struct_offset.binder_release_abi > 6) {
     logkm("Invalid Binder release ABI: %d\n", struct_offset.binder_release_abi);
     return -EINVAL;
   }
+#endif
   lookup_name(cgroup_freezing);
 
   kfunc_lookup_name(__alloc_skb);
@@ -878,12 +887,6 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   lookup_name(binder_alloc_free_buf);
   binder_free_txn_fixups = (void*)kallsyms_lookup_name("binder_free_txn_fixups");
   kfunc_lookup_name(binder_alloc_copy_from_buffer);
-  if (!kfunc(binder_alloc_copy_from_buffer)) {
-    if (struct_offset.binder_buffer_data >= 0)
-      logkm("Free-async buffer reader: kernel-mapped data\n");
-    else
-      logkm("Free-async rules unavailable: buffer reader not configured\n");
-  }
   kfunc_lookup_name(kfree);
   kfunc_lookup_name(kmalloc);
   kfunc_lookup_name(__kmalloc);
@@ -906,6 +909,17 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
 #endif /* CONFIG_DEBUG_CMDLINE */
 
   int rc = 0;
+#ifndef CONFIG_KPM_BASELINES
+  rc = calculate_offsets();
+  if (rc)
+    return rc;
+#endif
+  if (!kfunc(binder_alloc_copy_from_buffer)) {
+    if (struct_offset.binder_buffer_data >= 0)
+      logkm("Free-async buffer reader: kernel-mapped data\n");
+    else
+      logkm("Free-async rules unavailable: buffer reader not configured\n");
+  }
   // 缺少 tracepoint 符号或调用入口时跳过注册，与动态版同样不阻断其余 hook。
   if (kfunc(tracepoint_probe_register) && kfunc(tracepoint_probe_unregister) && kvar(__tracepoint_binder_transaction)) {
     rc = tracepoint_probe_register(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);

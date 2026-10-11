@@ -44,7 +44,7 @@ def main():
     parser.add_argument("--legacy-baselines", type=Path, help="只读回归旧四 ABI 基准及配套 JSON")
     args = parser.parse_args()
     module = Path(__file__).resolve().parents[1]
-    tool = module / "tools/patch_offsets.py"
+    tool = module.parent / "patch_offsets.py"
     spec = importlib.util.spec_from_file_location("patch_offsets", tool)
     patcher = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(patcher)
@@ -121,7 +121,7 @@ def main():
              "--output", str(destination), ok=False)
         broken = scratch / "broken.kpm"
         broken.write_bytes(kpm.read_bytes()[:64])
-        call("python3", str(tool), "baseline", str(broken), "--output", str(wrong_layout), ok=False)
+        call("python3", str(tool), "baseline", str(broken), "--source", str(module / "re_offsets.c"), "--output", str(wrong_layout), ok=False)
         assert not destination.exists()
         print("two unified KPMs, four configured ABIs: JSON/blob roundtrip, only table bytes change, invalid inputs refused: PASS")
         print("actual ELF imports: SDK plain/suffix lookup, no task_ext dependency: PASS")
@@ -216,7 +216,7 @@ def main():
         cleanup_source.write_text(fixture)
         cleanup_binary = scratch / "cleanup-test"
         call(args.cc, "-g", "-O1", "-pthread", "-fsanitize=address,undefined", "-fno-omit-frame-pointer",
-             str(cleanup_source), "-o", str(cleanup_binary))
+             "-DCONFIG_KPM_BASELINES", str(cleanup_source), "-o", str(cleanup_binary))
         print(call(str(cleanup_binary)).strip())
 
         if args.legacy_baselines:

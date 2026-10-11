@@ -10,6 +10,14 @@
 
 #define logkm(fmt, ...) printk("[ReKernel-X] " fmt, ##__VA_ARGS__)
 
+static inline unsigned int sk_buff_tail(const struct sk_buff* skb);
+static inline __u16 sk_buff_transport_header(const struct sk_buff* skb);
+static inline unsigned char* sk_buff_head(const struct sk_buff* skb);
+static inline unsigned char* sk_buff_data(const struct sk_buff* skb);
+static inline unsigned int genl_family_n_mcgrps(const struct genl_family* family);
+static inline unsigned int genl_family_mcgrp_offset(const struct genl_family* family);
+static inline struct sock* net_genl_sock(struct net* net);
+
 // 模块自己的 0/1 锁，不传给内核；持锁区只操作上下文链表、UID 或清理规则数组。
 static inline unsigned long rekernel_context_lock(unsigned int* lock) {
   unsigned long flags;
