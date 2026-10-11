@@ -55,6 +55,13 @@ int main(void) {
                            0x2a0803e0u, 0xaa0003e1u, 0x35000841u, 0xf9401293u, 0xb4000893u};
   memcpy(code, sony, sizeof(code));
   assert(!calculate_offsets() && struct_offset.binder_transaction_from == 0x20);
+  // 4.14 保存 transaction 到 x20，后续把函数返回值保存到 x19。
+  memset(code, 0, sizeof(code));
+  const uint32_t legacy[] = {0xa9be7bfdu, 0xa9014ff4u, 0x910003fdu, 0xaa0003f4u, 0x94000001u, 0xaa0003f3u,
+                             0xb4000080u, 0xf9400260u, 0x52810481u, 0x94000001u, 0xf9401288u, 0xb4000048u};
+  memcpy(code, legacy, sizeof(legacy));
+  assert(!calculate_offsets() && struct_offset.binder_transaction_from == 0x20);
+  rejects(3, 0xd503201f);  // 调用后的 x0 是返回值，不能重新当作 transaction。
   present = false;
   struct_offset.binder_transaction_from = 0x20;
   assert(!calculate_offsets() && struct_offset.binder_transaction_from == 0x20);

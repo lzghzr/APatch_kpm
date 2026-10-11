@@ -1,3 +1,123 @@
+struct struct_offset {
+  int16_t binder_alloc_buffer_size;
+  int16_t binder_alloc_buffer;
+  int16_t binder_alloc_free_async_space;
+  int16_t binder_alloc_pid;
+  int16_t binder_node_async_todo;
+  int16_t binder_node_cookie;
+  int16_t binder_node_has_async_transaction;
+  int16_t binder_node_lock;
+  int16_t binder_node_ptr;
+  int16_t binder_proc_alloc;
+  int16_t binder_proc_context;
+  int16_t binder_proc_inner_lock;
+  int16_t binder_proc_is_frozen;
+  int16_t binder_proc_outer_lock;
+  int16_t binder_proc_outstanding_txns;
+  int16_t binder_stats_deleted_transaction;
+  int16_t binder_transaction_buffer;
+  int16_t binder_transaction_code;
+  int16_t binder_transaction_flags;
+  int16_t binder_transaction_from;
+  int16_t binder_transaction_to_proc;
+  int16_t net_genl_sock;
+  int16_t genl_family_id;
+  int16_t genl_family_config;
+  int16_t genl_family_mcgrps;
+  int16_t genl_family_n_mcgrps;
+  int16_t genl_family_n_mcgrps_size;
+  int16_t genl_family_mcgrp_offset;
+  int16_t sk_buff_data;
+  int16_t sk_buff_head;
+  int16_t sk_buff_len;
+  int16_t sk_buff_network_header;
+  int16_t sk_buff_tail;
+  int16_t sk_buff_transport_header;
+  int16_t task_struct_group_leader;
+  int16_t task_struct_jobctl;
+  int16_t task_struct_pid;
+  int16_t task_struct_tgid;
+  int16_t task_struct_cred;
+  int16_t cred_uid;
+  int16_t task_struct_comm;
+  int16_t sock_sk_net;
+  int16_t binder_proc_is_dead;
+  int16_t binder_buffer_data;
+  int16_t binder_release_abi;
+};
+
+#ifdef CONFIG_KPM_BASELINES
+// 独立数据段供离线替换；volatile 保证访问从表中读取，不折叠成指令立即数。
+volatile struct struct_offset struct_offset __attribute__((section(".data.re_offsets"), used)) = {
+    .binder_alloc_buffer = 0x40,
+    .binder_alloc_buffer_size = 0x78,
+    .binder_alloc_free_async_space = 0x68,
+    .binder_alloc_pid = 0x84,
+    .binder_node_async_todo = 0x70,
+    .binder_node_cookie = 0x60,
+    .binder_node_has_async_transaction = 0x6b,
+    .binder_node_lock = 0x4,
+    .binder_node_ptr = 0x58,
+    .binder_proc_alloc = 0x1a8,
+    .binder_proc_context = 0x240,
+    .binder_proc_inner_lock = 0x248,
+    .binder_proc_is_frozen = 0x71,
+    .binder_proc_outer_lock = 0x24c,
+    .binder_proc_outstanding_txns = 0x6c,
+    .binder_stats_deleted_transaction = 0xcc,
+    .binder_transaction_buffer = 0x50,
+    .binder_transaction_code = 0x58,
+    .binder_transaction_flags = 0x5c,
+    .binder_transaction_from = 0x20,
+    .binder_transaction_to_proc = 0x30,
+    .net_genl_sock = 0x118,
+    .genl_family_id = 0x0,
+    .genl_family_config = 0x4,
+    .genl_family_mcgrps = 0x50,
+    .genl_family_n_mcgrps = 0x27,
+    .genl_family_n_mcgrps_size = 0x1,
+    .genl_family_mcgrp_offset = 0x20,
+    .sk_buff_data = 0xd8,
+    .sk_buff_head = 0xd0,
+    .sk_buff_len = 0x70,
+    .sk_buff_network_header = 0xb4,
+    .sk_buff_tail = 0xc8,
+    .sk_buff_transport_header = 0xb2,
+    .task_struct_group_leader = 0x618,
+    .task_struct_jobctl = 0x580,
+    .task_struct_pid = 0x5d8,
+    .task_struct_tgid = 0x5dc,
+    .task_struct_cred = 0x798,
+    .cred_uid = 0x4,
+    .task_struct_comm = 0x7a8,
+    .sock_sk_net = 0x30,
+    .binder_proc_is_dead = 0x70,
+    .binder_buffer_data = -1,
+    .binder_release_abi = 6,
+};
+#else
+struct struct_offset struct_offset = {};
+#endif /* CONFIG_KPM_BASELINES */
+
+// task_comm
+static inline const char* task_comm(struct task_struct* task) {
+#ifdef CONFIG_KPM_BASELINES
+  const char* comm = (const char*)((uintptr_t)task + struct_offset.task_struct_comm);
+  return comm;
+#else
+  return get_task_comm(task);
+#endif
+}
+#ifdef CONFIG_KPM_BASELINES
+// task_uid
+#undef task_uid
+static inline kuid_t task_uid(struct task_struct* task) {
+  struct cred* cred = *(struct cred**)((uintptr_t)task + struct_offset.task_struct_cred);
+  kuid_t uid = *(kuid_t*)((uintptr_t)cred + struct_offset.cred_uid);
+  return uid;
+}
+#endif /* CONFIG_KPM_BASELINES */
+
 // task_tgid
 static inline pid_t task_tgid_nr(struct task_struct* task) {
   pid_t tgid = *(pid_t*)((uintptr_t)task + struct_offset.task_struct_tgid);
@@ -10,8 +130,7 @@ static inline unsigned long task_jobctl(struct task_struct* task) {
 }
 // binder_proc_is_dead
 static inline bool binder_proc_is_dead(struct binder_proc* proc) {
-  bool is_dead = *(bool*)((uintptr_t)proc + struct_offset.binder_proc_is_dead);
-  return is_dead;
+  return *(bool*)((uintptr_t)proc + struct_offset.binder_proc_is_dead);
 }
 // binder_proc_is_frozen
 static inline bool binder_proc_is_frozen(struct binder_proc* proc) {
@@ -114,13 +233,17 @@ static inline unsigned char* sk_buff_data(const struct sk_buff* skb) {
   return data;
 }
 
+#ifndef CONFIG_KPM_BASELINES
+#include "re_btf.c"
+
 static long calculate_offsets() {
+  int btf = calculate_btf_offsets();
+  if (btf != -ENODATA)
+    return btf;
+
   // 获取 binder_transaction_buffer_release 版本, 以参数数量做判断
   uint32_t* binder_transaction_buffer_release_src = (uint32_t*)binder_transaction_buffer_release;
   for (u32 i = 0; i < 0x100; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("binder_transaction_buffer_release %x %llx\n", i, binder_transaction_buffer_release_src[i]);
-#endif /* CONFIG_DEBUG */
     if (i < 0x10) {
       if (inst_get_str_imm_uint_rt(binder_transaction_buffer_release_src[i]) == 4
           || inst_get_mov_reg_rm(binder_transaction_buffer_release_src[i]) == 4
@@ -153,9 +276,6 @@ static long calculate_offsets() {
   // 获取 binder_proc->is_frozen, 没有就是不支持
   uint32_t* binder_proc_transaction_src = (uint32_t*)binder_proc_transaction;
   for (u32 i = 0; i < 0x70; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("binder_proc_transaction %x %llx\n", i, binder_proc_transaction_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(binder_proc_transaction_src[i])) {
       break;
     } else if (!struct_offset.binder_node_has_async_transaction
@@ -247,9 +367,6 @@ static long calculate_offsets() {
 
   uint32_t* task_clear_jobctl_trapping_src = (uint32_t*)task_clear_jobctl_trapping;
   for (u32 i = 0; i < 0x10; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("task_clear_jobctl_trapping %x %llx\n", i, task_clear_jobctl_trapping_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(task_clear_jobctl_trapping_src[i])) {
       break;
     } else if (inst_get_ldr_imm_uint_size(task_clear_jobctl_trapping_src[i]) == 0b11
@@ -267,9 +384,6 @@ static long calculate_offsets() {
   // 获取 binder_proc->context, binder_proc->inner_lock, binder_proc->outer_lock
   uint32_t* binder_transaction_src = (uint32_t*)binder_transaction;
   for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("binder_transaction %x %llx\n", i, binder_transaction_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(binder_transaction_src[i])) {
       break;
     } else if (inst_get_ldr_imm_uint_size(binder_transaction_src[i]) == 0b11) {
@@ -300,10 +414,7 @@ static long calculate_offsets() {
   }
 
   uint32_t* binder_free_proc_src = (uint32_t*)binder_free_proc;
-  for (u32 i = 0x10; i < 0x100; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("binder_free_proc %x %llx\n", i, binder_free_proc_src[i]);
-#endif /* CONFIG_DEBUG */
+  for (u32 i = 0x10; i + 1 < 0x40; i++) {
     if (inst_get_mov_reg_rd(binder_free_proc_src[i]) == 29 && inst_get_mov_reg_rm(binder_free_proc_src[i]) == 0) {
       break;
     } else if (inst_get_add_imm_sf(binder_free_proc_src[i]) == 1 && inst_get_add_imm_rd(binder_free_proc_src[i]) == 0
@@ -327,11 +438,8 @@ static long calculate_offsets() {
 
   uint32_t* binder_alloc_init_src = (uint32_t*)binder_alloc_init;
   for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("binder_alloc_init %x %llx\n", i, binder_alloc_init_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(binder_alloc_init_src[i])) {
-      for (u32 j = 1; j < 0x10; j++) {
+      for (u32 j = 1; j < 0x10 && j <= i; j++) {
         if (inst_get_add_imm_sf(binder_alloc_init_src[i - j]) == 1) {
           uint64_t binder_alloc_buffers_offset = inst_get_add_imm_imm(binder_alloc_init_src[i - j]);
           struct_offset.binder_alloc_buffer = binder_alloc_buffers_offset - 0x8;
@@ -342,7 +450,8 @@ static long calculate_offsets() {
       }
       break;
     } else if (!struct_offset.binder_alloc_pid && inst_get_str_imm_uint_size(binder_alloc_init_src[i]) == 0b10
-               && inst_get_str_imm_uint_rn(binder_alloc_init_src[i]) == 0) {
+               && inst_get_str_imm_uint_rn(binder_alloc_init_src[i]) == 0
+               && inst_get_str_imm_uint_rt(binder_alloc_init_src[i]) != 31) {
       struct_offset.binder_alloc_pid = inst_get_str_imm_uint_imm(binder_alloc_init_src[i]);
     } else if (!struct_offset.binder_alloc_pid && inst_get_ldr_imm_uint_size(binder_alloc_init_src[i]) == 0b10) {
       struct_offset.task_struct_pid = inst_get_ldr_imm_uint_imm(binder_alloc_init_src[i]);
@@ -360,8 +469,8 @@ static long calculate_offsets() {
   logkm("task_struct_tgid=0x%x\n", struct_offset.task_struct_tgid);                            // 0x5DC
   logkm("task_struct_group_leader=0x%x\n", struct_offset.task_struct_group_leader);            // 0x618
 #endif                                                                                         /* CONFIG_DEBUG */
-  if (struct_offset.binder_alloc_pid <= 0 || struct_offset.task_struct_pid <= 0
-      || struct_offset.task_struct_group_leader <= 0)
+  if (struct_offset.binder_alloc_buffer_size <= 0 || struct_offset.binder_alloc_pid <= 0
+      || struct_offset.task_struct_pid <= 0 || struct_offset.task_struct_group_leader <= 0)
     return -11;
 
   // 获取 binder_transaction->from；独立入口在加锁后读取 from 并检查空指针。
@@ -370,18 +479,18 @@ static long calculate_offsets() {
   if (binder_get_txn_from_and_acq_inner) {
     uint32_t* binder_get_txn_from_and_acq_inner_src = (uint32_t*)binder_get_txn_from_and_acq_inner;
     int transaction_reg = -1;
+    bool argument = true;
     struct_offset.binder_transaction_from = -1;
     for (u32 i = 0; i + 1 < 0x1A; i++) {
-#ifdef CONFIG_DEBUG
-      logkm("binder_get_txn_from_and_acq_inner %x %x\n", i, binder_get_txn_from_and_acq_inner_src[i]);
-#endif /* CONFIG_DEBUG */
       uint32_t word = binder_get_txn_from_and_acq_inner_src[i];
       if (inst_is_ret(word))
         break;
       if (inst_get_mov_reg_rd(word) == transaction_reg || inst_get_add_imm_rd(word) == transaction_reg)
         transaction_reg = -1;
-      if (inst_get_mov_reg_sf(word) == 1 && inst_get_mov_reg_rm(word) == 0 && inst_get_mov_reg_rd(word) >= 19
-          && inst_get_mov_reg_rd(word) <= 28)
+      if (inst_is_bl(word) || inst_is_blr(word))
+        argument = false;
+      if (argument && inst_get_mov_reg_sf(word) == 1 && inst_get_mov_reg_rm(word) == 0
+          && inst_get_mov_reg_rd(word) >= 19 && inst_get_mov_reg_rd(word) <= 28)
         transaction_reg = inst_get_mov_reg_rd(word);
       if (inst_get_ldr_imm_uint_size(word) == 0b11 && inst_get_ldr_imm_uint_rn(word) == transaction_reg
           && inst_get_ldr_imm_uint_rt(word) != 31 && inst_get_cbz_sf(binder_get_txn_from_and_acq_inner_src[i + 1]) == 1
@@ -409,22 +518,19 @@ static long calculate_offsets() {
   }
 
   uint32_t* binder_free_transaction_src = (uint32_t*)binder_free_transaction;
-  for (u32 i = 0; i < 0x100; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("binder_free_transaction %x %llx\n", i, binder_free_transaction_src[i]);
-#endif /* CONFIG_DEBUG */
+  for (u32 i = 0; i < 0x90; i++) {
     if (inst_is_adrp(binder_free_transaction_src[i])) {
       uint64_t inst_addr = (uint64_t)binder_free_transaction + i * 4;
       uint64_t adrp_offset = inst_get_adrp_label(binder_free_transaction_src[i]);
       uint64_t adrp_addr = (inst_addr + adrp_offset) & 0xFFFFFFFFFFFFF000;
       if (adrp_addr - ((uint64_t)kvar(binder_stats) & 0xFFFFFFFFFFFFF000) <= 0x1000) {
         uint64_t binder_stats_addr = (uint64_t)kvar(binder_stats) & 0xFFF;
-        for (u32 j = 0; j < 0x10; j++) {
+        for (u32 j = 0; j < 0x10 && i + j < 0x90; j++) {
           if (inst_get_add_imm_sf(binder_free_transaction_src[i + j]) == 1) {
             uint64_t adrl_addr = inst_get_add_imm_imm(binder_free_transaction_src[i + j]);
             uint64_t deleted_offset = (adrl_addr - binder_stats_addr) & 0xFFF;
             if (deleted_offset == 0) {
-              for (u32 k = 0; k < 0x10; k++) {
+              for (u32 k = 0; k < 0x10 && i + j + k < 0x90; k++) {
                 if (inst_get_add_imm_sf(binder_free_transaction_src[i + j + k]) == 1) {
                   uint64_t offset = inst_get_add_imm_imm(binder_free_transaction_src[i + j + k]);
                   if (offset > 0xC0 && offset < 0xE0) {
@@ -456,9 +562,6 @@ static long calculate_offsets() {
 
   uint32_t* skb_trim_src = (uint32_t*)skb_trim;
   for (u32 i = 0; i < 0x8; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("skb_trim %x %llx\n", i, skb_trim_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(skb_trim_src[i])) {
       break;
     } else if (inst_get_ldr_imm_uint_size(skb_trim_src[i]) == 0b10) {
@@ -478,9 +581,6 @@ static long calculate_offsets() {
 
   uint32_t* ipv6_find_tlv_src = (uint32_t*)ipv6_find_tlv;
   for (u32 i = 0; i < 0x8; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("ipv6_find_tlv %x %llx\n", i, ipv6_find_tlv_src[i]);
-#endif /* CONFIG_DEBUG */
     if (inst_is_ret(ipv6_find_tlv_src[i])) {
       break;
     } else if (inst_get_ldr_imm_uint_size(ipv6_find_tlv_src[i]) == 0b11) {
@@ -511,9 +611,6 @@ static long calculate_offsets() {
   int config_reg = -1;
   bool config_first = false;
   for (u32 i = 0; i < 0x19; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("genlmsg_put %x %x\n", i, genlmsg_put_src[i]);
-#endif /* CONFIG_DEBUG */
     uint32_t word = genlmsg_put_src[i];
     if (inst_is_bl(word) || inst_is_blr(word) || inst_is_ret(word))
       break;
@@ -568,9 +665,6 @@ static long calculate_offsets() {
   struct_offset.genl_family_n_mcgrps_size = 0;
   struct_offset.genl_family_mcgrp_offset = -1;
   for (u32 i = 0; i < 0x20; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("genlmsg_multicast_allns %x %x\n", i, genlmsg_multicast_allns_src[i]);
-#endif /* CONFIG_DEBUG */
     uint32_t word = genlmsg_multicast_allns_src[i];
     if (inst_get_ldr_imm_uint_size(word) == 0b10 && inst_get_ldr_imm_uint_rn(word) == 0) {
       if (struct_offset.genl_family_n_mcgrps < 0) {
@@ -608,9 +702,6 @@ static long calculate_offsets() {
       int count_reg = -1;
       bool count = false;
       for (u32 i = 0; i < 0x18; i++) {
-#ifdef CONFIG_DEBUG
-        logkm("genl_validate_assign_mc_groups %x %x\n", i, genl_validate_assign_mc_groups_src[i]);
-#endif /* CONFIG_DEBUG */
         uint32_t word = genl_validate_assign_mc_groups_src[i];
         if (inst_is_bl(word) || inst_is_blr(word) || inst_is_ret(word))
           break;
@@ -654,9 +745,6 @@ static long calculate_offsets() {
     // 注销组播的局部模式：mcgrps 指针参与数组寻址，事件参数 w0 为 CTRL_CMD_DELMCAST_GRP(8)。
     uint32_t* genl_unregister_family_src = (uint32_t*)genl_unregister_family;
     for (u32 i = 0x30; i < 0x55; i++) {
-#ifdef CONFIG_DEBUG
-      logkm("genl_unregister_family %x %x\n", i, genl_unregister_family_src[i]);
-#endif /* CONFIG_DEBUG */
       uint32_t word = genl_unregister_family_src[i];
       if (inst_is_ret(word))
         break;
@@ -716,9 +804,6 @@ static long calculate_offsets() {
   uint32_t* genl_pernet_exit_src = (uint32_t*)genl_pernet_exit;
   struct_offset.net_genl_sock = -1;
   for (u32 i = 0; i < 0x8; i++) {
-#ifdef CONFIG_DEBUG
-    logkm("genl_pernet_exit %x %x\n", i, genl_pernet_exit_src[i]);
-#endif /* CONFIG_DEBUG */
     uint32_t word = genl_pernet_exit_src[i];
     if (inst_get_ldr_imm_uint_size(word) == 0b11 && inst_get_ldr_imm_uint_rn(word) == 0
         && inst_get_ldr_imm_uint_rt(word) == 0) {
@@ -750,3 +835,5 @@ static long calculate_offsets() {
   }
   return 0;
 }
+
+#endif /* CONFIG_KPM_BASELINES */

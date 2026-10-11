@@ -23,12 +23,16 @@ def main():
     module = Path(__file__).resolve().parents[1]
     root = module.parent
     source = (module / "re_kernel.c").read_text()
-    genl = source.split("// Generic Netlink\n", 1)[1].split("// Binder 调用上下文\n", 1)[0]
+    genl_symbols = source.split("// Generic Netlink\n", 1)[1].split(
+        "static bool binder_transaction_buffer_release_ver6", 1)[0]
+    genl = genl_symbols + source[source.index("static struct genl_family* rekernel_genl_family;"):].split(
+        "// Binder 调用上下文\n", 1)[0]
     context = source.split("// Binder 调用上下文\n", 1)[1].split("// binder_node_lock\n", 1)[0]
     functions = instruction_source(root) + offset_source(module) + genl + context
     fixture = (module / "tools/test_genl.c").read_text().replace("/* PRODUCTION_FUNCTIONS */", functions)
     (args.output / "genl-test.c").write_text(fixture)
     (args.output / "re_kernel_host.h").write_bytes((module / "re_kernel.h").read_bytes())
+    (args.output / "re_structs.h").write_bytes((module / "re_structs.h").read_bytes())
     (args.output / "instruction_host.h").write_text(instruction_source(root))
     anchors = (module / "tools/test_genl_anchors.c").read_text().replace(
         "/* PRODUCTION_FUNCTIONS */", instruction_source(root) + offset_source(module))
@@ -67,6 +71,11 @@ def main():
         "/* INSTRUCTIONS */", instruction_source(root)).replace(
         "/* PRODUCTION_DEAD */", "// 旧 Binder 没有 is_frozen，" + binder_dead)
     (args.output / "binder-dead-test.c").write_text(fixture)
+    binder_alloc = offsets.split("  // 获取 binder_alloc->pid,", 1)[1].split("  // 获取 binder_transaction->from；", 1)[0]
+    fixture = (module / "tools/test_binder_alloc.c").read_text().replace(
+        "/* INSTRUCTIONS */", instruction_source(root)).replace(
+        "/* PRODUCTION_ALLOC */", "// 获取 binder_alloc->pid," + binder_alloc)
+    (args.output / "binder-alloc-test.c").write_text(fixture)
     results = []
     for name, flags, test in (("base", [], "genl-test.c"),
                               ("network", ["-DCONFIG_NETWORK"], "genl-test.c"),
@@ -75,7 +84,8 @@ def main():
                               ("cleanup_flow", [], "cleanup-flow-test.c"),
                               ("anchors", [], "anchors-test.c"),
                               ("binder_from", [], "binder-from-test.c"),
-                              ("binder_dead", [], "binder-dead-test.c")):
+                              ("binder_dead", [], "binder-dead-test.c"),
+                              ("binder_alloc", [], "binder-alloc-test.c")):
         binary = args.output / name
         source_path = args.output / test if test.endswith("-test.c") else Path(test)
         command = [args.cc, "-Wall", "-Werror", "-Wno-unused-function", "-Wno-macro-redefined",
@@ -90,11 +100,11 @@ def main():
         assert run.returncode == 0, run.stdout + run.stderr
         results.append({"name": name, "sha256": sha256(binary), "output": run.stdout})
         print(name + ": " + run.stdout.strip())
-    inputs = [module / name for name in ("re_kernel.c", "re_runtime.c", "re_offsets.c", "re_kernel.h", "re_utils.h",
+    inputs = [module / name for name in ("re_kernel.c", "re_runtime.c", "re_offsets.c", "re_kernel.h", "re_structs.h", "re_utils.h",
                                          "tools/test_genl.c", "tools/test_genl.py",
                                          "tools/test_genl_offsets.py", "tools/test_instructions.c", "tools/test_cleanup.c",
                                          "tools/test_cleanup_flow.c",
-                                         "tools/test_genl_anchors.c", "tools/test_binder_from.c", "tools/test_binder_dead.c")]
+                                         "tools/test_genl_anchors.c", "tools/test_binder_from.c", "tools/test_binder_dead.c", "tools/test_binder_alloc.c")]
     inputs.append(root / "kpm_utils.h")
     receipt = {"scope": "Developer host selfcheck; no device conclusion",
                "sources": {str(path.relative_to(root)): sha256(path) for path in inputs}, "results": results}

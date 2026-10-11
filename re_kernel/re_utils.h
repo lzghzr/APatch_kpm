@@ -22,47 +22,6 @@ static inline void rekernel_context_unlock(unsigned int* lock, unsigned long fla
   asm volatile("msr daif, %0" : : "r"(flags) : "memory");
 }
 
-struct struct_offset {
-  int16_t binder_alloc_buffer_size;
-  int16_t binder_alloc_buffer;
-  int16_t binder_alloc_free_async_space;
-  int16_t binder_alloc_pid;
-  int16_t binder_node_async_todo;
-  int16_t binder_node_cookie;
-  int16_t binder_node_has_async_transaction;
-  int16_t binder_node_lock;
-  int16_t binder_node_ptr;
-  int16_t binder_proc_alloc;
-  int16_t binder_proc_context;
-  int16_t binder_proc_inner_lock;
-  int16_t binder_proc_is_dead;
-  int16_t binder_proc_is_frozen;
-  int16_t binder_proc_outer_lock;
-  int16_t binder_proc_outstanding_txns;
-  int16_t binder_stats_deleted_transaction;
-  int16_t binder_transaction_buffer;
-  int16_t binder_transaction_code;
-  int16_t binder_transaction_flags;
-  int16_t binder_transaction_from;
-  int16_t binder_transaction_to_proc;
-  int16_t genl_family_id;
-  int16_t genl_family_config;
-  int16_t genl_family_mcgrps;
-  int16_t genl_family_n_mcgrps;
-  int16_t genl_family_n_mcgrps_size;
-  int16_t genl_family_mcgrp_offset;
-  int16_t net_genl_sock;
-  int16_t sk_buff_len;
-  int16_t sk_buff_transport_header;
-  int16_t sk_buff_network_header;
-  int16_t sk_buff_head;
-  int16_t sk_buff_data;
-  int16_t task_struct_group_leader;
-  int16_t task_struct_jobctl;
-  int16_t task_struct_pid;
-  int16_t task_struct_tgid;
-};
-
 extern struct sk_buff* kfunc_def(__alloc_skb)(unsigned int size, gfp_t gfp_mask, int flags, int node);
 static inline struct sk_buff* alloc_skb(unsigned int size, gfp_t priority) {
   kfunc_call(__alloc_skb, size, priority, 0, NUMA_NO_NODE);

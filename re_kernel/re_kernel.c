@@ -29,7 +29,12 @@ KPM_NAME("re_kernel");
 KPM_VERSION(MYKPM_VERSION);
 KPM_LICENSE("GPL v3");
 KPM_AUTHOR("Nep-Timeline, lzghzr");
-KPM_DESCRIPTION("Re:Kernel, support 4.4 ~ 6.6");
+KPM_DESCRIPTION("Re:Kernel. Binder, signal and network notifications.");
+#ifdef CONFIG_KPM_BASELINES
+KPM_INFO(offset_mode, "static", 16);
+#else
+KPM_INFO(offset_mode, "dynamic", 16);
+#endif
 
 enum report_type {
   BINDER,
@@ -102,16 +107,6 @@ struct tracepoint kvar_def(__tracepoint_binder_transaction);
 int kfunc_def(get_cmdline)(struct task_struct* task, char* buffer, int buflen);
 #endif /* CONFIG_DEBUG_CMDLINE */
 
-static bool binder_transaction_buffer_release_ver6, binder_transaction_buffer_release_ver5,
-    binder_transaction_buffer_release_ver4;
-
-static bool trace;
-
-struct struct_offset struct_offset = {};
-// clang-format off
-#include "re_offsets.c"
-// clang-format on
-
 // Generic Netlink
 static void* kfunc_def(genlmsg_put)(struct sk_buff* skb, u32 portid, u32 seq, const struct genl_family* family,
                                     int flags, u8 cmd);
@@ -121,6 +116,14 @@ static int kfunc_def(genl_register_family)(struct genl_family* family);
 static int kfunc_def(__genl_register_family)(struct genl_family* family);
 static int kfunc_def(genl_unregister_family)(const struct genl_family* family);
 static int (*genl_rcv_msg)(struct sk_buff* skb, struct nlmsghdr* nlh);
+
+static bool binder_transaction_buffer_release_ver6, binder_transaction_buffer_release_ver5,
+    binder_transaction_buffer_release_ver4;
+
+static bool trace;
+
+#include "re_offsets.c"
+
 static struct genl_family* rekernel_genl_family;
 static bool rekernel_genl_registered;
 static bool rekernel_genl_hooked;
@@ -483,7 +486,7 @@ static void rekernel_report(int reporttype, int type, pid_t src_pid, struct task
   }
 #ifdef CONFIG_DEBUG
   logkm("%s\n", binder_kmsg);
-  logkm("src_comm=%s,dst_comm=%s\n", get_task_comm(src), get_task_comm(dst));
+  logkm("src_comm=%s,dst_comm=%s\n", task_comm(src), task_comm(dst));
 #endif /* CONFIG_DEBUG */
 #ifdef CONFIG_DEBUG_CMDLINE
   char src_cmdline[PATH_MAX], dst_cmdline[PATH_MAX];
@@ -736,6 +739,13 @@ static void stop_rekernel_hooks(void) {
 }
 
 static long inline_hook_init(const char* args, const char* event, void* __user reserved) {
+#ifdef CONFIG_KPM_BASELINES
+  if (struct_offset.binder_release_abi < 3 || struct_offset.binder_release_abi > 6)
+    return -EINVAL;
+  binder_transaction_buffer_release_ver4 = struct_offset.binder_release_abi == 4;
+  binder_transaction_buffer_release_ver5 = struct_offset.binder_release_abi >= 5;
+  binder_transaction_buffer_release_ver6 = struct_offset.binder_release_abi == 6;
+#endif
   lookup_name(cgroup_freezing);
 
   kfunc_lookup_name(__alloc_skb);
@@ -786,9 +796,11 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   rekernel_hooks[4] = (struct rekernel_hook){tcp_v6_do_rcv, 2, tcp_rcv_before, NULL, &ipv6_version};
 
   int rc = 0;
+#ifndef CONFIG_KPM_BASELINES
   rc = calculate_offsets();
   if (rc < 0)
     return rc;
+#endif
 
   rc = prepare_rekernel_genl_server();
   if (rc)

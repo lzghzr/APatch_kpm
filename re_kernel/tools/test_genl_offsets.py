@@ -25,15 +25,16 @@ def instruction_source(root):
 
 
 def offset_source(module):
-    header = (module / "re_kernel.h").read_text()
+    header = (module / "re_structs.h").read_text()
     namesize = re.search(r"^#define GENL_NAMSIZ .*?$", header, re.M)[0]
-    family = header[header.index("struct genl_family_config {"):header.index("struct nlattr {")]
+    family = re.search(r"struct genl_family_config\s*\{.*?struct genl_family\s*\{.*?__aligned\(8\);", header, re.S)[0] + "\n"
     # 独立偏移夹具也使用生产 family 定义，保证 sizeof 与实际构建一致。
     types = "#ifndef __RE_KERNEL_H\n" + namesize + "\n#ifndef __aligned\n" + \
             "#define __aligned(n) __attribute__((aligned(n)))\n#endif\n" + family + "#endif\n"
-    offsets = re.search(r"struct struct_offset\s*\{.*?\};", (module / "re_utils.h").read_text(), re.S)[0]
-    return types + offsets + "\nstruct struct_offset struct_offset;\nstatic long calculate_offsets(void) {\n" + (module / "re_offsets.c").read_text().split(
-        "// Generic Netlink 偏移推导\n", 1)[1]
+    source = (module / "re_offsets.c").read_text()
+    offsets = re.search(r"struct struct_offset\s*\{.*?\};", source, re.S)[0]
+    return types + offsets + "\nstruct struct_offset struct_offset;\nstatic long calculate_offsets(void) {\n" + source.split("// Generic Netlink 偏移推导\n", 1)[1].rsplit(
+        "#endif /* CONFIG_KPM_BASELINES */", 1)[0]
 
 
 def main():
@@ -486,7 +487,8 @@ int probe(struct probe_code* codes, struct probe_layout* out) {
             print(name, "7 fields match;", len(negative), "negative cases passed")
     output = {"scope": "Developer offline selfcheck; no device conclusion", "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
               "kpm_utils_sha256": hashlib.sha256((root / "kpm_utils.h").read_bytes()).hexdigest(),
-              "re_utils_sha256": hashlib.sha256((module / "re_utils.h").read_bytes()).hexdigest(), "results": results}
+              "re_utils_sha256": hashlib.sha256((module / "re_utils.h").read_bytes()).hexdigest(),
+              "re_structs_sha256": hashlib.sha256((module / "re_structs.h").read_bytes()).hexdigest(), "results": results}
     with args.output.open("x") as stream:
         json.dump(output, stream, ensure_ascii=False, indent=2)
         stream.write("\n")

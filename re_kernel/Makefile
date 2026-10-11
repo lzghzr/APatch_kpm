@@ -1,4 +1,4 @@
-MYKPM_VERSION := 11.7
+MYKPM_VERSION := 11.7-20261010
 
 ifndef KP_DIR
 	KP_DIR = ../KernelPatch
@@ -25,6 +25,10 @@ else ifdef NDK_PATH
 	LD := $(NDK_PATH)/ld.lld
 endif
 
+OUT_DIR ?= .
+LAYOUT_DIR ?= $(OUT_DIR)
+PYTHON ?= python3
+
 CFLAGS = -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin -DMYKPM_VERSION=\"$(MYKPM_VERSION)$(MYKPM_VER)\"
 
 INCLUDE_DIRS := . include patch/include linux/include linux/arch/arm64/include linux/tools/arch/arm64/include
@@ -32,24 +36,33 @@ INCLUDE_DIRS := . include patch/include linux/include linux/arch/arm64/include l
 INCLUDE_FLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(KP_DIR)/kernel/$(dir))
 
 objs := re_kernel.c re_runtime.c
-headers := re_kernel.h re_utils.h re_offsets.c ../kpm_utils.h
+headers := re_kernel.h re_utils.h re_offsets.c ../kpm_utils.h ../patch_offsets.py
+headers += re_structs.h re_btf.c
 
-all: base
-debug: base_debug
+kpm := $(OUT_DIR)/re_kernel_$(MYKPM_VERSION)
+kpms := $(kpm).kpm $(kpm)_debug.kpm $(kpm)_baselines.kpm $(kpm)_baselines_debug.kpm
 
-base: re_kernel_$(MYKPM_VERSION).kpm
+all: static dynamic
+debug: static_debug dynamic_debug
+base: all
+base_debug: debug
+baselines: static static_debug
 
-base_debug: CFLAGS += -DCONFIG_DEBUG
-base_debug: MYKPM_VER := _d
-base_debug: re_kernel_$(MYKPM_VERSION)_debug.kpm
+static: $(kpm)_baselines.kpm
+dynamic: $(kpm).kpm
+static_debug: $(kpm)_baselines_debug.kpm
+dynamic_debug: $(kpm)_debug.kpm
 
-re_kernel_$(MYKPM_VERSION).kpm: ${objs} ${headers}
+$(kpm)_baselines.kpm $(kpm)_baselines_debug.kpm: CFLAGS += -DCONFIG_KPM_BASELINES
+$(kpm)_baselines_debug.kpm $(kpm)_debug.kpm: CFLAGS += -DCONFIG_DEBUG
+$(kpm)_baselines_debug.kpm $(kpm)_debug.kpm: MYKPM_VER := _d
+
+$(kpms): ${objs} ${headers} Makefile
+	@mkdir -p $(OUT_DIR) $(LAYOUT_DIR)
+	@test ! -e $@
 	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $(objs) -r -o $@
+	$(if $(filter %_baselines.kpm %_baselines_debug.kpm,$@),$(PYTHON) ../patch_offsets.py baseline $@ --source re_offsets.c --output $(LAYOUT_DIR)/$(notdir $@).json)
 
-re_kernel_$(MYKPM_VERSION)_debug.kpm: ${objs} ${headers}
-	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $(objs) -r -o $@
-
-.PHONY: all debug base base_debug clean
+.PHONY: all debug base base_debug baselines static dynamic static_debug dynamic_debug clean
 clean:
-	rm -rf *.kpm
-	find . -name "*.o" | xargs rm -f
+	rm -f *.kpm *.kpm.json *.o

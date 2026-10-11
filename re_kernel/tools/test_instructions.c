@@ -195,6 +195,15 @@ int main(void) {
   assert(inst_get_orr_imm_rn(0x32000be1u) == 31 && inst_get_orr_imm_rd(0x32000be1u) == 1);
   assert(inst_get_orr_imm_n(0x32000be1u) == 0 && inst_get_orr_imm_immr(0x32000be1u) == 0);
   assert(inst_get_orr_imm_imms(0x32000be1u) == 2);
+  const int64_t page_offsets[] = {-4294967296LL, -4096, 0, 4096, 4294963200LL};
+  for (unsigned int i = 0; i < sizeof(page_offsets) / sizeof(page_offsets[0]); i++) {
+    uint32_t immediate = (uint32_t)(page_offsets[i] / 4096) & 0x1fffffu;
+    uint32_t word = 0x90000000u | (immediate & 3) << 29 | (immediate >> 2) << 5;
+    assert(inst_get_adrp_label(word) == page_offsets[i]);
+  }
+  assert(inst_get_and_imm_imm(0x927df108u) == -8);   // and x8, x8, #0xfffffffffffffff8
+  assert(inst_get_and_imm_imm(0x927f0108u) == 2);    // and x8, x8, #2
+  assert(inst_get_and_imm_imm(0x923ffc08u) == -11);  // reserved logical immediate
   puts(
       "shared instruction macros: unsigned imm12 full range, BL signed boundaries, BLR, all memory "
       "sizes/opcodes/modes, ADD extended, MOVZ and ORR: PASS");
