@@ -1,0 +1,16 @@
+#pragma once
+#include <linux/types.h>
+#define get_unaligned(ptr) (((const struct __attribute__((packed)) { __typeof__(*(ptr)) value; }*)(ptr))->value)
+#define put_unaligned(val, ptr) (((struct __attribute__((packed)) { __typeof__(*(ptr)) value; }*)(ptr))->value = (val))
+#define get_unaligned_le16(ptr) get_unaligned((const u16*)(ptr))
+#define get_unaligned_le32(ptr) get_unaligned((const u32*)(ptr))
+#define get_unaligned_le64(ptr) get_unaligned((const u64*)(ptr))
+#define put_unaligned_le16(val, ptr) put_unaligned(val, (u16*)(ptr))
+#define put_unaligned_le32(val, ptr) put_unaligned(val, (u32*)(ptr))
+#define put_unaligned_le64(val, ptr) put_unaligned(val, (u64*)(ptr))
+#define get_unaligned_be16(ptr) __builtin_bswap16(get_unaligned_le16(ptr))
+#define get_unaligned_be32(ptr) __builtin_bswap32(get_unaligned_le32(ptr))
+#define get_unaligned_be64(ptr) __builtin_bswap64(get_unaligned_le64(ptr))
+#define put_unaligned_be16(val, ptr) put_unaligned_le16(__builtin_bswap16(val), ptr)
+#define put_unaligned_be32(val, ptr) put_unaligned_le32(__builtin_bswap32(val), ptr)
+#define put_unaligned_be64(val, ptr) put_unaligned_le64(__builtin_bswap64(val), ptr)

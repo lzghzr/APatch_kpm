@@ -227,8 +227,49 @@ def legacy_lookup(data):
     return bytes(patched), ranges, 1, not pointers
 
 
+def legacy_info(data):
+    """实际转接后同步已有 KPM 元信息；普通 ELF 不增加 KPM 节。"""
+    entries, names_index = elf_sections(data)
+    names = entries[names_index]
+    strings = data[names[4]:names[4] + names[5]]
+    matches = []
+    for index, entry in enumerate(entries):
+        end = strings.find(b"\0", entry[0])
+        if entry[0] >= len(strings) or end < 0:
+            raise ValueError("invalid section name")
+        if strings[entry[0]:end] == b".kpm.info":
+            matches.append((index, entry))
+    if not matches:
+        return data, []
+    if len(matches) != 1:
+        raise ValueError("requires a unique .kpm.info section")
+    index, entry = matches[0]
+    offset, size = entry[4:6]
+    if entry[1] != 1 or not size or offset + size > len(data) or data[offset + size - 1] != 0:
+        raise ValueError("invalid .kpm.info section")
+    if any(e[1] in (4, 9) and e[7] == index and e[5] for e in entries):
+        raise ValueError(".kpm.info must not contain relocations")
+    info = data[offset:offset + size]
+    fields = []
+    at = 0
+    for field in info.split(b"\0"):
+        if field.startswith(b"kp_compat="):
+            fields.append((at + len(b"kp_compat="), field[len(b"kp_compat="):]))
+        at += len(field) + 1
+    if len(fields) > 1 or (fields and fields[0][1] not in (b"modern", b"legacy")):
+        raise ValueError("invalid kp_compat metadata")
+    if not fields or fields[0][1] == b"legacy":
+        return data, []
+    patched = bytearray(data)
+    at = offset + fields[0][0]
+    patched[at:at + 6] = b"legacy"
+    return bytes(patched), [{"offset": at, "size": 6}]
+
+
 def legacy_kp(args, data):
     patched, ranges, count, pointer_added = legacy_lookup(data)
+    patched, info_ranges = legacy_info(patched)
+    ranges.extend(info_ranges)
     layout_path = args.layout or Path(str(args.kpm) + ".json")
     layout = None
     if args.layout or layout_path.exists():

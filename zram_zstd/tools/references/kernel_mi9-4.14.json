@@ -1,0 +1,657 @@
+{
+  "target": "kernel_mi9-4.14",
+  "image_sha256": "229bdf7bfbc2c74a4e2fcb553bb10635624bc4d5b42a9b476d00319f2aa879fb",
+  "symbols_sha256": "1e17f7128e76b64999ffe2ff79113b82997b7af2a0d80c61c8452b1bbf74f4b8",
+  "symbol_provenance": "cached Developer vendor-symbol recovery; offsets relative to _text=0; image hash rechecked",
+  "offsets": {
+    "crypto_alg_flags": 32,
+    "crypto_alg_name": 56,
+    "crypto_alg_compress": 320,
+    "crypto_alg_init": 384,
+    "crypto_tfm_ctx": 128,
+    "crypto_alg_driver_name": 184
+  },
+  "reference_basis": {
+    "crypto_alg_flags": "native lzo crypto_alg flags=2 at +0x20",
+    "crypto_alg_name": "native lzo object name at +0x38",
+    "crypto_alg_compress": "crypto_decompress loads coa_decompress; adjacent pointer -8",
+    "crypto_alg_init": "crypto_create_tfm success path loads/calls cra_init after first RET",
+    "crypto_tfm_ctx": "lzo_compress loads workspace at tfm+0x80",
+    "crypto_alg_driver_name": "__crypto_alg_lookup forms both driver/name addresses for string compare"
+  },
+  "lzo_object": {
+    "image_offset": 39827968,
+    "flags_hex": "02000000",
+    "name_hex": "6c7a6f00"
+  },
+  "entries": {
+    "crypto_decompress": {
+      "image_offset": 3784068,
+      "window_bytes": 32,
+      "sha256": "d530e8b3943e327b353e9e365cc1ff78c89cc2ac8cfc8a2168520d91b972783d",
+      "instructions": [
+        {
+          "offset": 0,
+          "bytes": "fd7bbfa9",
+          "assembly": "stp x29, x30, [sp, #-0x10]!"
+        },
+        {
+          "offset": 4,
+          "bytes": "fd030091",
+          "assembly": "mov x29, sp"
+        },
+        {
+          "offset": 8,
+          "bytes": "081c40f9",
+          "assembly": "ldr x8, [x0, #0x38]"
+        },
+        {
+          "offset": 12,
+          "bytes": "08a540f9",
+          "assembly": "ldr x8, [x8, #0x148]"
+        },
+        {
+          "offset": 16,
+          "bytes": "00013fd6",
+          "assembly": "blr x8"
+        },
+        {
+          "offset": 20,
+          "bytes": "fd7bc1a8",
+          "assembly": "ldp x29, x30, [sp], #0x10"
+        },
+        {
+          "offset": 24,
+          "bytes": "c0035fd6",
+          "assembly": "ret "
+        },
+        {
+          "offset": 28,
+          "bytes": "5f4000f1",
+          "assembly": "cmp x2, #0x10"
+        }
+      ]
+    },
+    "crypto_create_tfm": {
+      "image_offset": 3782620,
+      "window_bytes": 192,
+      "sha256": "98f609c1110f8922e6db38063d7e5113aeead9b59881e6557988288882a18ff8",
+      "instructions": [
+        {
+          "offset": 0,
+          "bytes": "fd7bbda9",
+          "assembly": "stp x29, x30, [sp, #-0x30]!"
+        },
+        {
+          "offset": 4,
+          "bytes": "f65701a9",
+          "assembly": "stp x22, x21, [sp, #0x10]"
+        },
+        {
+          "offset": 8,
+          "bytes": "fd030091",
+          "assembly": "mov x29, sp"
+        },
+        {
+          "offset": 12,
+          "bytes": "f44f02a9",
+          "assembly": "stp x20, x19, [sp, #0x20]"
+        },
+        {
+          "offset": 16,
+          "bytes": "280440f9",
+          "assembly": "ldr x8, [x1, #8]"
+        },
+        {
+          "offset": 20,
+          "bytes": "f50301aa",
+          "assembly": "mov x21, x1"
+        },
+        {
+          "offset": 24,
+          "bytes": "364c40b9",
+          "assembly": "ldr w22, [x1, #0x4c]"
+        },
+        {
+          "offset": 28,
+          "bytes": "f40300aa",
+          "assembly": "mov x20, x0"
+        },
+        {
+          "offset": 32,
+          "bytes": "00013fd6",
+          "assembly": "blr x8"
+        },
+        {
+          "offset": 36,
+          "bytes": "c802000b",
+          "assembly": "add w8, w22, w0"
+        },
+        {
+          "offset": 40,
+          "bytes": "01189052",
+          "assembly": "mov w1, #0x80c0"
+        },
+        {
+          "offset": 44,
+          "bytes": "00010211",
+          "assembly": "add w0, w8, #0x80"
+        },
+        {
+          "offset": 48,
+          "bytes": "0128a072",
+          "assembly": "movk w1, #0x140, lsl #16"
+        },
+        {
+          "offset": 52,
+          "bytes": "6568f897",
+          "assembly": "bl #0x1b59a4"
+        },
+        {
+          "offset": 56,
+          "bytes": "000200b4",
+          "assembly": "cbz x0, #0x39b854"
+        },
+        {
+          "offset": 60,
+          "bytes": "1600168b",
+          "assembly": "add x22, x0, x22"
+        },
+        {
+          "offset": 64,
+          "bytes": "a80e40f9",
+          "assembly": "ldr x8, [x21, #0x18]"
+        },
+        {
+          "offset": 68,
+          "bytes": "f30300aa",
+          "assembly": "mov x19, x0"
+        },
+        {
+          "offset": 72,
+          "bytes": "e00316aa",
+          "assembly": "mov x0, x22"
+        },
+        {
+          "offset": 76,
+          "bytes": "d41e00f9",
+          "assembly": "str x20, [x22, #0x38]"
+        },
+        {
+          "offset": 80,
+          "bytes": "00013fd6",
+          "assembly": "blr x8"
+        },
+        {
+          "offset": 84,
+          "bytes": "f503002a",
+          "assembly": "mov w21, w0"
+        },
+        {
+          "offset": 88,
+          "bytes": "e0010034",
+          "assembly": "cbz w0, #0x39b870"
+        },
+        {
+          "offset": 92,
+          "bytes": "bf2e0031",
+          "assembly": "cmn w21, #0xb"
+        },
+        {
+          "offset": 96,
+          "bytes": "61000054",
+          "assembly": "b.ne #0x39b848"
+        },
+        {
+          "offset": 100,
+          "bytes": "e00314aa",
+          "assembly": "mov x0, x20"
+        },
+        {
+          "offset": 104,
+          "bytes": "aaffff97",
+          "assembly": "bl #0x39b6ec"
+        },
+        {
+          "offset": 108,
+          "bytes": "e00313aa",
+          "assembly": "mov x0, x19"
+        },
+        {
+          "offset": 112,
+          "bytes": "7769f897",
+          "assembly": "bl #0x1b5e28"
+        },
+        {
+          "offset": 116,
+          "bytes": "02000014",
+          "assembly": "b #0x39b858"
+        },
+        {
+          "offset": 120,
+          "bytes": "75018012",
+          "assembly": "mov w21, #-0xc"
+        },
+        {
+          "offset": 124,
+          "bytes": "b37e4093",
+          "assembly": "sxtw x19, w21"
+        },
+        {
+          "offset": 128,
+          "bytes": "e00313aa",
+          "assembly": "mov x0, x19"
+        },
+        {
+          "offset": 132,
+          "bytes": "f44f42a9",
+          "assembly": "ldp x20, x19, [sp, #0x20]"
+        },
+        {
+          "offset": 136,
+          "bytes": "f65741a9",
+          "assembly": "ldp x22, x21, [sp, #0x10]"
+        },
+        {
+          "offset": 140,
+          "bytes": "fd7bc3a8",
+          "assembly": "ldp x29, x30, [sp], #0x30"
+        },
+        {
+          "offset": 144,
+          "bytes": "c0035fd6",
+          "assembly": "ret "
+        },
+        {
+          "offset": 148,
+          "bytes": "c81a40f9",
+          "assembly": "ldr x8, [x22, #0x30]"
+        },
+        {
+          "offset": 152,
+          "bytes": "48ffffb5",
+          "assembly": "cbnz x8, #0x39b85c"
+        },
+        {
+          "offset": 156,
+          "bytes": "88c240f9",
+          "assembly": "ldr x8, [x20, #0x180]"
+        },
+        {
+          "offset": 160,
+          "bytes": "08ffffb4",
+          "assembly": "cbz x8, #0x39b85c"
+        },
+        {
+          "offset": 164,
+          "bytes": "e00316aa",
+          "assembly": "mov x0, x22"
+        },
+        {
+          "offset": 168,
+          "bytes": "00013fd6",
+          "assembly": "blr x8"
+        },
+        {
+          "offset": 172,
+          "bytes": "a0feff34",
+          "assembly": "cbz w0, #0x39b85c"
+        },
+        {
+          "offset": 176,
+          "bytes": "c81e40f9",
+          "assembly": "ldr x8, [x22, #0x38]"
+        },
+        {
+          "offset": 180,
+          "bytes": "f503002a",
+          "assembly": "mov w21, w0"
+        },
+        {
+          "offset": 184,
+          "bytes": "089d40f9",
+          "assembly": "ldr x8, [x8, #0x138]"
+        },
+        {
+          "offset": 188,
+          "bytes": "08fdffb4",
+          "assembly": "cbz x8, #0x39b838"
+        }
+      ]
+    },
+    "__crypto_alg_lookup": {
+      "image_offset": 3781032,
+      "window_bytes": 192,
+      "sha256": "56de32a97279713e2e0bd99e4c67900b45faf28e89c50394968a4130b0d56126",
+      "instructions": [
+        {
+          "offset": 0,
+          "bytes": "fd7bbba9",
+          "assembly": "stp x29, x30, [sp, #-0x50]!"
+        },
+        {
+          "offset": 4,
+          "bytes": "fa6701a9",
+          "assembly": "stp x26, x25, [sp, #0x10]"
+        },
+        {
+          "offset": 8,
+          "bytes": "fd030091",
+          "assembly": "mov x29, sp"
+        },
+        {
+          "offset": 12,
+          "bytes": "f85f02a9",
+          "assembly": "stp x24, x23, [sp, #0x20]"
+        },
+        {
+          "offset": 16,
+          "bytes": "f65703a9",
+          "assembly": "stp x22, x21, [sp, #0x30]"
+        },
+        {
+          "offset": 20,
+          "bytes": "f44f04a9",
+          "assembly": "stp x20, x19, [sp, #0x40]"
+        },
+        {
+          "offset": 24,
+          "bytes": "f9120190",
+          "assembly": "adrp x25, #0x25f7000"
+        },
+        {
+          "offset": 28,
+          "bytes": "39630491",
+          "assembly": "add x25, x25, #0x118"
+        },
+        {
+          "offset": 32,
+          "bytes": "350340f9",
+          "assembly": "ldr x21, [x25]"
+        },
+        {
+          "offset": 36,
+          "bytes": "bf0219eb",
+          "assembly": "cmp x21, x25"
+        },
+        {
+          "offset": 40,
+          "bytes": "c0050054",
+          "assembly": "b.eq #0x39b288"
+        },
+        {
+          "offset": 44,
+          "bytes": "f303022a",
+          "assembly": "mov w19, w2"
+        },
+        {
+          "offset": 48,
+          "bytes": "f403012a",
+          "assembly": "mov w20, w1"
+        },
+        {
+          "offset": 52,
+          "bytes": "f60300aa",
+          "assembly": "mov x22, x0"
+        },
+        {
+          "offset": 56,
+          "bytes": "f7031faa",
+          "assembly": "mov x23, xzr"
+        },
+        {
+          "offset": 60,
+          "bytes": "3a008012",
+          "assembly": "mov w26, #-2"
+        },
+        {
+          "offset": 64,
+          "bytes": "a82240b9",
+          "assembly": "ldr w8, [x21, #0x20]"
+        },
+        {
+          "offset": 68,
+          "bytes": "09051b12",
+          "assembly": "and w9, w8, #0x60"
+        },
+        {
+          "offset": 72,
+          "bytes": "0a01144a",
+          "assembly": "eor w10, w8, w20"
+        },
+        {
+          "offset": 76,
+          "bytes": "3f010071",
+          "assembly": "cmp w9, #0"
+        },
+        {
+          "offset": 80,
+          "bytes": "4901130a",
+          "assembly": "and w9, w10, w19"
+        },
+        {
+          "offset": 84,
+          "bytes": "2009407a",
+          "assembly": "ccmp w9, #0, #0, eq"
+        },
+        {
+          "offset": 88,
+          "bytes": "a0000054",
+          "assembly": "b.eq #0x39b214"
+        },
+        {
+          "offset": 92,
+          "bytes": "b50240f9",
+          "assembly": "ldr x21, [x21]"
+        },
+        {
+          "offset": 96,
+          "bytes": "bf0219eb",
+          "assembly": "cmp x21, x25"
+        },
+        {
+          "offset": 100,
+          "bytes": "e1feff54",
+          "assembly": "b.ne #0x39b1e8"
+        },
+        {
+          "offset": 104,
+          "bytes": "1f000014",
+          "assembly": "b #0x39b28c"
+        },
+        {
+          "offset": 108,
+          "bytes": "c8002036",
+          "assembly": "tbz w8, #4, #0x39b22c"
+        },
+        {
+          "offset": 112,
+          "bytes": "a8e24239",
+          "assembly": "ldrb w8, [x21, #0xb8]"
+        },
+        {
+          "offset": 116,
+          "bytes": "88000035",
+          "assembly": "cbnz w8, #0x39b22c"
+        },
+        {
+          "offset": 120,
+          "bytes": "a82a42b9",
+          "assembly": "ldr w8, [x21, #0x228]"
+        },
+        {
+          "offset": 124,
+          "bytes": "1f01136b",
+          "assembly": "cmp w8, w19"
+        },
+        {
+          "offset": 128,
+          "bytes": "e1feff54",
+          "assembly": "b.ne #0x39b204"
+        },
+        {
+          "offset": 132,
+          "bytes": "a0e20291",
+          "assembly": "add x0, x21, #0xb8"
+        },
+        {
+          "offset": 136,
+          "bytes": "e10316aa",
+          "assembly": "mov x1, x22"
+        },
+        {
+          "offset": 140,
+          "bytes": "0e6c3594",
+          "assembly": "bl #0x10f626c"
+        },
+        {
+          "offset": 144,
+          "bytes": "f803002a",
+          "assembly": "mov w24, w0"
+        },
+        {
+          "offset": 148,
+          "bytes": "a0e20091",
+          "assembly": "add x0, x21, #0x38"
+        },
+        {
+          "offset": 152,
+          "bytes": "e10316aa",
+          "assembly": "mov x1, x22"
+        },
+        {
+          "offset": 156,
+          "bytes": "0a6c3594",
+          "assembly": "bl #0x10f626c"
+        },
+        {
+          "offset": 160,
+          "bytes": "b8000034",
+          "assembly": "cbz w24, #0x39b25c"
+        },
+        {
+          "offset": 164,
+          "bytes": "c0fdff35",
+          "assembly": "cbnz w0, #0x39b204"
+        },
+        {
+          "offset": 168,
+          "bytes": "a83240b9",
+          "assembly": "ldr w8, [x21, #0x30]"
+        },
+        {
+          "offset": 172,
+          "bytes": "1f011a6b",
+          "assembly": "cmp w8, w26"
+        },
+        {
+          "offset": 176,
+          "bytes": "6dfdff54",
+          "assembly": "b.le #0x39b204"
+        },
+        {
+          "offset": 180,
+          "bytes": "e00315aa",
+          "assembly": "mov x0, x21"
+        },
+        {
+          "offset": 184,
+          "bytes": "34ffff97",
+          "assembly": "bl #0x39af30"
+        },
+        {
+          "offset": 188,
+          "bytes": "00fdffb4",
+          "assembly": "cbz x0, #0x39b204"
+        }
+      ]
+    },
+    "lzo_compress": {
+      "image_offset": 3903000,
+      "window_bytes": 64,
+      "sha256": "e76935fcc9b174c41b497c05aabf93ad667fe10830a1f6b9369acd35d3e5df3a",
+      "instructions": [
+        {
+          "offset": 0,
+          "bytes": "fd7bbfa9",
+          "assembly": "stp x29, x30, [sp, #-0x10]!"
+        },
+        {
+          "offset": 4,
+          "bytes": "fd030091",
+          "assembly": "mov x29, sp"
+        },
+        {
+          "offset": 8,
+          "bytes": "e80304aa",
+          "assembly": "mov x8, x4"
+        },
+        {
+          "offset": 12,
+          "bytes": "044040f9",
+          "assembly": "ldr x4, [x0, #0x80]"
+        },
+        {
+          "offset": 16,
+          "bytes": "e00301aa",
+          "assembly": "mov x0, x1"
+        },
+        {
+          "offset": 20,
+          "bytes": "e103022a",
+          "assembly": "mov w1, w2"
+        },
+        {
+          "offset": 24,
+          "bytes": "e20303aa",
+          "assembly": "mov x2, x3"
+        },
+        {
+          "offset": 28,
+          "bytes": "e30308aa",
+          "assembly": "mov x3, x8"
+        },
+        {
+          "offset": 32,
+          "bytes": "25000094",
+          "assembly": "bl #0x3b8ecc"
+        },
+        {
+          "offset": 36,
+          "bytes": "fd7bc1a8",
+          "assembly": "ldp x29, x30, [sp], #0x10"
+        },
+        {
+          "offset": 40,
+          "bytes": "c0035fd6",
+          "assembly": "ret "
+        },
+        {
+          "offset": 44,
+          "bytes": "fd7bbfa9",
+          "assembly": "stp x29, x30, [sp, #-0x10]!"
+        },
+        {
+          "offset": 48,
+          "bytes": "fd030091",
+          "assembly": "mov x29, sp"
+        },
+        {
+          "offset": 52,
+          "bytes": "e00301aa",
+          "assembly": "mov x0, x1"
+        },
+        {
+          "offset": 56,
+          "bytes": "e103022a",
+          "assembly": "mov w1, w2"
+        },
+        {
+          "offset": 60,
+          "bytes": "e20303aa",
+          "assembly": "mov x2, x3"
+        }
+      ]
+    }
+  }
+}

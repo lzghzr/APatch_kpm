@@ -278,6 +278,10 @@ static inline int kpm_btf_enum(const struct kpm_btf* btf, const struct btf_type*
   static inline int inst_get_##abbr##_rn(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 9, 5) : -1; }
 #define __INST_GET_RD(abbr) \
   static inline int inst_get_##abbr##_rd(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 4, 0) : -1; }
+#define __INST_GET_RT2(abbr) \
+  static inline int inst_get_##abbr##_rt2(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 14, 10) : -1; }
+#define __INST_GET_PAIR_MODE(abbr) \
+  static inline int inst_get_##abbr##_mode(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 24, 23) : -1; }
 #define __INST_GET_RT(abbr) \
   static inline int inst_get_##abbr##_rt(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 4, 0) : -1; }
 
@@ -404,6 +408,8 @@ __INST_FUNCS(b, 0xFC000000u, 0x14000000u)
 __INST_GET_IMM26(b)
 __INST_GET_IMM26_LABEL(b)
 
+__INST_FUNCS(b_cond, 0xFF000010u, 0x54000000u)
+
 __INST_FUNCS(bl, 0xFC000000u, 0x94000000u)
 __INST_GET_IMM26(bl)
 __INST_GET_IMM26_LABEL(bl)
@@ -414,8 +420,21 @@ __INST_GET_IMM19(cbz)
 __INST_SF_RT_FUNCS(cbnz, 0x7F000000u, 0x35000000u)
 __INST_GET_IMM19(cbnz)
 
+__INST_SF_RT_FUNCS(tbz, 0x7F000000u, 0x36000000u)
+__INST_GET_IMM14(tbz)
+
 __INST_SF_RT_FUNCS(tbnz, 0x7F000000u, 0x37000000u)
 __INST_GET_IMM14(tbnz)
+
+// 通用寄存器成对访存；SIMD 编码不写通用寄存器，单独排除。
+__INST_RN_FUNCS(ldp, 0x3E400000u, 0x28400000u)
+__INST_GET_RT(ldp)
+__INST_GET_RT2(ldp)
+__INST_GET_PAIR_MODE(ldp)
+__INST_RN_FUNCS(stp, 0x3E400000u, 0x28000000u)
+__INST_GET_RT(stp)
+__INST_GET_RT2(stp)
+__INST_GET_PAIR_MODE(stp)
 
 __INST_SIZE_RN_RT_LDR_FUNCS(ldr_imm, 0x3B000000u, 0x39400000u)
 __INST_GET_IMM12(ldr_imm)
