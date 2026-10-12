@@ -82,6 +82,8 @@ def find_token_table(blob):
         if i < 0:
             return None, None, None
         start = i + 1
+        if i % 2 != 0:
+            continue
         if i + 512 > len(blob):
             return None, None, None
         v1 = struct.unpack_from("<H", blob, i + 2)[0]
@@ -198,27 +200,32 @@ def verify_names(blob, start, markers_vals, tokens, big):
 def find_names(blob, markers_start, markers_vals, tokens):
     blocks = len(markers_vals)
     need = markers_vals[1] if blocks > 1 else None
-    lo = max(0, markers_start - (markers_vals[-1] * 2 + (1 << 16)))
-    # 先按 4 字节对齐扫（快）；再用 1 字节兜底，但把窗口收窄，避免退化成本
-    for step, low, limit in ((4, lo, 24), (1, max(lo, markers_start - (1 << 20)), 4)):
-        base = low + ((step - low % step) % step)      # 保证起点与 step 对齐
-        cands = []
-        for start in range(base, markers_start, step):
-            name, _ = decode_one(blob, start, tokens, False)   # 廉价预筛
-            if not shape_ok(name or ""):
-                continue
-            if blocks > 1 and consume(blob, start, 256, False) != need:
-                continue
-            cands.append(start)
-            if len(cands) >= limit:
-                break
-        for start in cands:
-            for big in (False, True):
-                count, names, ok, reason = verify_names(blob, start, markers_vals, tokens, big)
-                if ok:
-                    return start, count, names, ("big" if big else "plain"), None
-        if cands:
-            return None, 0, None, None, f"{len(cands)} 个候选起点均未通过 markers 逐项核对"
+    # 理论与实测：names_off + markers_vals[-1] <= markers_start，末块 256 符号与对齐填充通常 < 8KB。
+    # 优先在紧凑窗口 [markers_start - markers[-1] - 64KB, markers_start - markers[-1] + 64] 反向搜索（耗时毫秒级）；
+    # 若紧凑窗口未命中，再回退到全量扫描兜底，确保判定完全等价。
+    tight_hi = min(markers_start, markers_start - markers_vals[-1] + 64)
+    tight_lo = max(0, markers_start - markers_vals[-1] - 65536)
+    wide_lo = max(0, markers_start - (markers_vals[-1] * 2 + (1 << 16)))
+
+    for step, ranges in ((4, [(tight_hi, tight_lo, -4), (markers_start, wide_lo, -4)]),
+                         (1, [(tight_hi, tight_lo, -1), (markers_start, max(wide_lo, markers_start - (1 << 20)), -1)])):
+        for hi, lo, st in ranges:
+            cands = []
+            base = hi - (hi % abs(st))
+            for start in range(base, lo - 1, st):
+                name, _ = decode_one(blob, start, tokens, False)
+                if not shape_ok(name or ""):
+                    continue
+                if blocks > 1 and consume(blob, start, 256, False) != need:
+                    continue
+                cands.append(start)
+                if len(cands) >= 24:
+                    break
+            for start in cands:
+                for big in (False, True):
+                    count, names, ok, reason = verify_names(blob, start, markers_vals, tokens, big)
+                    if ok:
+                        return start, count, names, ("big" if big else "plain"), None
     return None, 0, None, None, "未找到满足 markers[1] 约束的 names 起点"
 
 

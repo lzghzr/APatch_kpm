@@ -55,12 +55,15 @@ python3 run.py --image B2N-416G_boot.img               # 只对它跑偏移推�
 - **公开文件不写本机信息**：不写本机绝对路径、设备序列号、superkey、抓包内容（测试报告用设备指纹哈希代替序列号）。
 - **遵守测试 Oracle 与防反向过拟合**：基准测试套件视为只读 Oracle。严禁为了通过测试而私自修改、弱化或删除已有断言；严禁为了迁就宿主单测/Mock 而扭曲生产代码架构；确需变更断言时必须在报告中单独说明技术依据并由 Auditor 独立复核（详见 [.agents/skills/respect-the-oracle/SKILL.md](.agents/skills/respect-the-oracle/SKILL.md)）。
 - **不为了过门禁而放宽断言**：断言、用例、检查范围的任何缩小都要在报告中写明并给出理由。
+- **判据与机制分流**：什么算合格（身份语义、命名契约、检查范围、阈值）归维护者；让共享工具支持模块的合法结构变化（子模块迁移/改名、产物元信息新字段、转换支持）**归需要它的角色直接实现**，条件是补维护者自检里的正反夹具 + 同轮提案记录 + 维护者逐字节复核采纳，且不改判据。**这是标准授权，不必逐次请示或逐次批准**（见 [docs/process/08-review-economics.md](docs/process/08-review-economics.md) R11）。
 
 ## KPM 偏移模式默认规范
 
 有结构体偏移依赖的模块默认提供 static / dynamic 两种编译产物，共用业务实现，定义 `CONFIG_KPM_BASELINES` 选择静态基线，未定义时使用动态推导。静态版附带可替换偏移表及同名 `.kpm.json`；动态版加载时优先使用 BTF，再使用目标支持的固定小窗口推导。必要字段或共同布局无法确认时停止加载，不按版本号猜偏移。
 
 普通产物命名为 `<模块>_<版本>_baselines.kpm`、`<模块>_<版本>.kpm`，debug 增加 `_debug`，元信息记录 `offset_mode`。Releases 发布两种普通版与静态 JSON；debug 保留在 artifacts。同一模块的两种模式保留同一管理名称，每次选择一种加载。无偏移依赖的模块继续生成通用 KPM。
+
+**低版本兼容只做在二进制上（非必需）**：源码与 Makefile **只面向最新 KernelPatch**，不得含任何低版本兼容内容（不得有兼容分支、不得为旧内核改业务实现、不得在 Makefile 里放兼容目标，构建输入也不含兼容工具）；4.4 等旧 KP 目标经 `patch_offsets.py legacy-kp` 对**已构建的 `.kpm` 做字节级变换**得到派生件。派生件必须可追溯（base instance + source_commit + base 哈希 + 工具哈希与命令 + 派生哈希），设备证据/验收若用派生字节须同时写明 base 实例与派生哈希；`kp_compat` 只是**可选**自识别字段，`_legacy` 命名可被接受但非要求。**派生件的生成归 Developer**（随候选交接一并提供；本轮需要而来件缺失时，由维护者先提醒开发者补齐）；**Tester 只做真机测试**，维护者只登记与核对。变换工具与契约在派生物要交付或用于真机结论时须经独立复核。KernelPatch 修复 4.4 兼容后删除该路径（见 [docs/records/2026-10-11-clean-build-binary-adaptation.md](docs/records/2026-10-11-clean-build-binary-adaptation.md)）。
 
 当前接入 rek / rekx / run_cmd，其他模块逐个接入，各模块在自己的 Makefile 中维护构建规则，额外输入规则见 `Developer/README.md`。Android 4.4～5.10 是函数推导新增适配范围，5.15 及以上默认使用 BTF；该范围用于安排工作，偏移仍由目标证据取得。
 

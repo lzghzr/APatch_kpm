@@ -79,7 +79,19 @@ python3 tools/identity.py verify --module <module> --profile exploration
 | --- | --- |
 | exploration | 保留探索事实与历史产物；缺参数或脏树会提示，源码/产物不一致仍报告问题 |
 | candidate | 指纹可复算、非空输入和产物清单、完整可用 commit、严格参数与编译器指纹、干净源码、完整构建事务、产物在场且一致 |
+| incremental | candidate 判据中**受影响部分**的复核：修复 diff + 受影响节区/判据 + 受影响实例；其余沿用原报告并显式声明「未重做」。仅适用于输入未变、边界清晰的修复轮次 |
 | delivery | candidate 的全部判据，加对应交付绑定、交付源码一致与实际签名复验 |
+
+## 报告版本索引
+
+报告是证据，其字节身份同样按只追加管理：`metadata/modules/<module>.json` 的 `report_versions[]` 记录
+`原文基线（入库提交 blob）+ 只追加版本（整份哈希、追加段哈希、入库后的提交）`。
+
+- 判据是**原文前缀不可改写 + 追加逐一登记**，不是整份哈希恒定——后者与「授权在同一报告内追加更正」自相矛盾。
+- 被引用的报告必须**先进提交**（允许无签名检查点）再被元数据引用；验收/交付模式下门禁强制。
+- 索引字段中引用的报告哈希必须是 `report_versions[]` 中的已知版本，禁止凭空或过期引用。
+
+规则背景与成本证据见 [08-review-economics.md](08-review-economics.md)。
 
 探索实例在 candidate/delivery 档位明确失败；无匹配实例同样失败。未指定实例时，严格档位只选择 candidate；
 验收与交付建议始终指定实例。历史探索实例留在登记表中，不因后来出现新候选而成为候选。
@@ -104,10 +116,20 @@ python3 tools/identity.py bind-delivery <module> --instance-id '<build_id>#<n>' 
 绑定入口、门禁与 delivery 核验共用判据：
 
 - 绑定的 source_commit、build_id、instance_id、指纹与产物哈希必须与实例一致。
-- 源码提交为交付提交祖先，交付提交的模块树与各共享构建输入仍与候选相同。
+- 交付提交里的模块树与各共享构建输入必须与候选源码逐字节一致；**模块目录缺失或查询失败即判失败**。
+- 祖先关系仅登记在绑定里（`source_ancestor`），不作为拒绝理由：本仓库发布为压平历史，
+  原始工作提交不进入交付分支，但元数据仍按其 SHA 引用工作提交。
 - `signature_verified` 必须是布尔 true，并重新运行 `git verify-commit`；字段本身不能代替签名验证。
 - 标签存在时必须指向交付提交；本仓库交付另由维护者核验签名标签。
 - 同一实例的所有交付绑定都需校验；探索实例不可交付。
+
+### 交付绑定与回执（D → 绑定 → 回执 → E）
+
+1. **D**：签名交付提交（模块树与全部构建输入＝在册候选源码，签名可验证）；
+2. **绑定**：`python3 tools/identity.py bind-delivery <模块> --instance-id <实例> --delivery-commit <D> --by 维护者`；
+3. **回执**：逐实例 `python3 tools/identity.py verify --module <模块> --instance-id <实例> --profile delivery`，把结果与产物哈希、D、签名状态写入交付记录；
+4. **E**：把交付绑定与回执作为一次**签名记录提交**（元数据 + 交付记录），位于 D 之后；
+5. **同步**：按范围同步 Git 跟踪文件与接收副本，并说明副本一致性。
 
 签名验证需要配置可信签署者（SSH 签名使用 `gpg.ssh.allowedSignersFile`）。没有可信配置或签名验证失败即停止交付。
 交付绑定在交付 commit 之后产生，由后续签名记录提交保存；完整顺序见 [03-round-flow.md](03-round-flow.md)。

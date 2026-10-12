@@ -67,7 +67,15 @@ shell_dispatch() {
     *"dmesg -c"*) return 0 ;;
     *"ls -A /sys/fs/pstore"*) pstore_list; return 0 ;;
     *"cat /sys/fs/pstore"*) echo "mock pstore dump"; return 0 ;;
-    *"module list"*) [ -f "$DIR/loaded" ] && echo "${MOCK_MODULE:-re_kernel} mock-version"; return 0 ;;
+    *"module list"*)
+      if [ "$SCEN" = resident_fail ] && [ -f "$DIR/loaded_first_seen" ]; then
+        return 0
+      fi
+      if [ -f "$DIR/loaded" ]; then
+        [ "$SCEN" = resident_fail ] && : > "$DIR/loaded_first_seen"
+        echo "${MOCK_MODULE:-re_kernel} mock-version"
+      fi
+      return 0 ;;
     *"module unload"*)
       if [ "$SCEN" = unload_fail ]; then echo "unload failed: module not found"; return 1; fi
       rm -f "$DIR/loaded"; echo "unload ok"; return 0 ;;

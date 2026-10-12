@@ -4,6 +4,7 @@
 
 ```text
 <角色前缀>-<序号>（严重度，归属角色）一句话结论
+- 类别：product（代码/产物/安全/身份） | record（报告措辞、计数、索引、元数据文字）
 - 证据：可复现命令与实测输出（哈希、计数、异常文本、代码位置 file:line）
 - 影响：对用户/交付的实际后果
 - 建议：可执行的最小修正
@@ -16,6 +17,7 @@
 | 字段 | 要求 |
 | --- | --- |
 | 编号 | `<前缀>-<三位序号>`，前缀 `DEV`/`AUD`/`TST`/`MNT`，仓库同前缀内不复用 |
+| 类别 | `product` 走完整独立复核链；`record` 为 owner 一次更正 + 一次独立确认（同轮批量），规则见 [08-review-economics.md](../process/08-review-economics.md) |
 | 严重度 | 高 / 中 / 中低 / 低，判据见 [../process/04-issue-ticket.md](../process/04-issue-ticket.md) |
 | 归属 | Developer / Auditor / Tester / 维护者 / 环境事实（无归属） |
 | 证据 | 必须能被人复跑；代码位置写到 `file:line` |
@@ -27,6 +29,7 @@
 ```json
 {
   "id": "AUD-001",
+  "class": "product",
   "severity": "高",
   "owner": "Developer",
   "status": "open",
@@ -39,6 +42,9 @@
   "confidence": "推断",
   "found_in_build": "<build_id>#<n>",
   "fixed_in_commit": null,
-  "closed_by": null
+  "closed_by": null,
+  "reviews": []
 }
 ```
+
+`record` 类关闭时必须带 `reviews[]`（一次独立确认记录），门禁校验；`product` 类按原关闭条件执行。

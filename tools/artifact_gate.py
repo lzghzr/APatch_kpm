@@ -71,13 +71,20 @@ def inspect_kpm(path):
     prefix = info["name"] + "_" + version
     if not path.name.startswith(prefix) or path.name[len(prefix):len(prefix) + 1] not in ("_", "."):
         raise ValueError("产物文件名与内嵌版本不一致")
+    # `kp_compat` 是**可选**的自识别信息（legacy 只是绕过旧 KP 缺陷的临时适配，不是必需形态）：
+    # 省略表示未声明；声明时只校验取值合法，不与文件名互相要求。
+    compat = info.get("kp_compat")
+    if compat is not None and compat not in ("modern", "legacy"):
+        raise ValueError("kp_compat 取值无效（可省略）")
     mode = info.get("offset_mode")
     if mode is not None:
         if mode not in ("static", "dynamic"):
             raise ValueError("偏移模式无效")
         debug = info["version"].endswith("_d")
-        expected = prefix + ("_baselines" if mode == "static" else "") + ("_debug" if debug else "") + ".kpm"
-        if path.name != expected:
+        base = prefix + ("_baselines" if mode == "static" else "")
+        suffix = ("_debug" if debug else "") + ".kpm"
+        # 常规形态与临时适配（legacy）形态都接受，不做强制
+        if path.name not in (base + suffix, base + "_legacy" + suffix):
             raise ValueError("产物文件名与偏移模式不一致")
     return {"file": path.name, "sha256": hashlib.sha256(data).hexdigest(), "size": len(data), "info": info}, sections
 

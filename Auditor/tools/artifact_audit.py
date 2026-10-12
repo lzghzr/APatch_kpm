@@ -242,17 +242,32 @@ def _label_from(path, root):
     return "/".join(parts)
 
 
+CORPUS_CACHE_FILE = os.path.join(REPO, "local", "kallsyms_audit", "corpus_cache.json")
+_SKIP_CORPUS_DIRS = {"__pycache__", ".git", "build", "out", "tools", "Developer", "Tester",
+                     "KernelPatch", "auditor-scratch", "extracted", "locks", "build_logs"}
+
+
 def corpus_symbols(roots):
     """扫描本地语料：返回 ({label: set(names)}, [来源说明])。"""
     corpus, sources = {}, []
     py_suffix = (".i64", ".md", ".json", ".log", ".py", ".pyc")
+
+    cache = {}
+    if os.path.isfile(CORPUS_CACHE_FILE):
+        try:
+            with open(CORPUS_CACHE_FILE, "r", encoding="utf-8") as cf:
+                cache = json.load(cf)
+        except Exception:
+            cache = {}
+    new_cache = {}
+
     for root in roots:
         if not os.path.isdir(root):
             sources.append(f"{os.path.relpath(root, REPO)} (不在场)")
             continue
         count = 0
         for dirpath, dirs, names in os.walk(root):
-            dirs[:] = [d for d in dirs if d not in {"__pycache__", ".git"}]
+            dirs[:] = [d for d in dirs if d not in _SKIP_CORPUS_DIRS and not os.path.exists(os.path.join(dirpath, d, ".git"))]
             for name in names:
                 if name.endswith(py_suffix) or name.startswith("."):
                     continue
@@ -261,19 +276,37 @@ def corpus_symbols(roots):
                 if not is_kallsyms:
                     continue
                 path = os.path.join(dirpath, name)
-                names_set = set()
-                for line in open(path, encoding="utf-8", errors="replace"):
-                    tokens = line.split()
-                    if len(tokens) >= 3 and len(tokens[1]) == 1:
-                        names_set.add(tokens[2])
-                    elif len(tokens) == 2 and len(tokens[1]) > 1 and tokens[1][0].isalpha():
-                        names_set.add(tokens[1][1:])
-                if not names_set:
+                try:
+                    st = os.stat(path)
+                    cached_item = cache.get(path)
+                    if cached_item and cached_item.get("mtime") == st.st_mtime and cached_item.get("size") == st.st_size:
+                        names_set = set(cached_item["symbols"])
+                    else:
+                        names_set = set()
+                        for line in open(path, encoding="utf-8", errors="replace"):
+                            tokens = line.split()
+                            if len(tokens) >= 3 and len(tokens[1]) == 1:
+                                names_set.add(tokens[2])
+                            elif len(tokens) == 2 and len(tokens[1]) > 1 and tokens[1][0].isalpha():
+                                names_set.add(tokens[1][1:])
+                    if not names_set:
+                        continue
+                    new_cache[path] = {"mtime": st.st_mtime, "size": st.st_size, "symbols": list(names_set)}
+                except Exception:
                     continue
                 label = _label_from(path, root)
                 corpus.setdefault(label, set()).update(names_set)
                 count += 1
         sources.append(f"{os.path.relpath(root, REPO)} ({count} 个符号表)")
+
+    if new_cache:
+        try:
+            os.makedirs(os.path.dirname(CORPUS_CACHE_FILE), exist_ok=True)
+            with open(CORPUS_CACHE_FILE, "w", encoding="utf-8") as cf:
+                json.dump(new_cache, cf)
+        except Exception:
+            pass
+
     return corpus, sources
 
 
@@ -413,14 +446,21 @@ def lookup_names(elf):
     因此策略是：找“字符串取址”指令对，再看其后方窗口里是否出现 lookup 引用。
     """
     relocs = [r for r in elf.relocations if r["section"] == ".rela.text"]
+    relocs.sort(key=lambda x: x["offset"])
     str_secs = {s["name"]: s for s in elf.sections if s["type"] == 1 and s["name"].startswith(".rodata")}
     found = []
-    for adrp in relocs:
+    n = len(relocs)
+    for idx, adrp in enumerate(relocs):
         if adrp["type"] != R_ADR_PREL_PG_HI21 or adrp["sym_section"] not in str_secs:
             continue
-        add = next((r for r in relocs if r["type"] == R_ADD_ABS_LO12_NC
-                    and adrp["offset"] < r["offset"] <= adrp["offset"] + 8
-                    and r["sym_section"] == adrp["sym_section"]), None)
+        add = None
+        for j in range(idx + 1, n):
+            r = relocs[j]
+            if r["offset"] > adrp["offset"] + 8:
+                break
+            if r["type"] == R_ADD_ABS_LO12_NC and r["sym_section"] == adrp["sym_section"]:
+                add = r
+                break
         if add is None:
             continue
         offset = (adrp["addend"] & ~0xFFF) | (add["addend"] & 0xFFF)
@@ -431,9 +471,13 @@ def lookup_names(elf):
         text = content[offset:end].decode("utf-8", "replace")
         if not text or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]{1,127}", text):
             continue
-        refs = [r for r in relocs
-                if adrp["offset"] < r["offset"] <= adrp["offset"] + 64
-                and ((r["type"] == R_CALL26 and r["sym"] in LOOKUP_SYMBOLS) or r["sym"] in LOOKUP_SYMBOLS)]
+        refs = []
+        for j in range(idx + 1, n):
+            r = relocs[j]
+            if r["offset"] > adrp["offset"] + 64:
+                break
+            if (r["type"] == R_CALL26 and r["sym"] in LOOKUP_SYMBOLS) or r["sym"] in LOOKUP_SYMBOLS:
+                refs.append(r)
         if not refs:
             continue
         # CALL26 -> kallsyms_lookup_name_by_suffix（软：找不到为 NULL，由代码自行处理）
@@ -481,6 +525,11 @@ def scan_artifact_dirs(dirs, index):
     自己走目录；命中登记表只用于分类，不用于「跳过检查」。
     """
     findings, seen, roots = [], [], []
+    sha_to_registered = {}
+    for r, (_, sha) in index.items():
+        if sha:
+            sha_to_registered.setdefault(sha, []).append(r)
+
     for d in dirs:
         root = d if os.path.isabs(d) else os.path.join(REPO, d)
         roots.append(os.path.normpath(os.path.relpath(root, REPO)))
@@ -491,7 +540,7 @@ def scan_artifact_dirs(dirs, index):
                 continue
             digest = sha256_file(path)
             size = os.path.getsize(path)
-            same = sorted(r for r, (_, sha) in index.items() if sha and sha == digest)
+            same = sorted(sha_to_registered.get(digest, []))
             if same:
                 findings.append(("review", "duplicate_artifact_bytes",
                                  f"{rel}（{size} 字节）字节与已登记产物 {same[0]} 相同：不构成新的审计对象，"
@@ -512,7 +561,8 @@ def scan_artifact_dirs(dirs, index):
 def main():
     ap = argparse.ArgumentParser(description="KPM 产物独立审计")
     ap.add_argument("--module", required=True)
-    ap.add_argument("--build-id")
+    ap.add_argument("--build-id", action="append", help="待审计的 Build ID（可重复指定）")
+    ap.add_argument("--version", dest="target_version", help="待审计的构建版本（如 0.2.0）")
     ap.add_argument("--manifest", help="交接清单或自定义登记表路径（若未导入 metadata/modules）")
     ap.add_argument("--corpus", action="append",
                     help="符号表目录（可重复；默认 kernel_img/ 与 local/）")
@@ -569,8 +619,11 @@ def main():
     unregistered = [message for _, kind, message in scan_findings if kind == "unregistered_artifact"]
 
     targets = []
+    build_filter = set(args.build_id) if args.build_id else None
     for build in record.get("builds", []):
-        if args.build_id and build["build_id"] != args.build_id:
+        if build_filter and build.get("build_id") not in build_filter:
+            continue
+        if args.target_version and build.get("version") != args.target_version:
             continue
         for art in build.get("artifacts", []):
             path = os.path.join(REPO, art["path"])

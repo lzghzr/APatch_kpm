@@ -35,6 +35,7 @@ ADB="${ADB:-adb}"
 KP_CMD="${KP_CMD:-truncate}"
 SUPERKEY="${SUPERKEY:-}"
 RECOVER=0
+NO_UNLOAD=0
 COMMIT="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
 
 while [ $# -gt 0 ]; do
@@ -46,7 +47,8 @@ while [ $# -gt 0 ]; do
     --instance-id) INSTANCE_ID="$2"; shift 2 ;;
     --tool-freeze-commit) TOOL_FREEZE_COMMIT="$2"; shift 2 ;;
     --recover) RECOVER=1; shift ;;
-    *) echo "用法: run_test.sh --kpm <path> --module <name> [--timeout N] [--observe N] [--tool-freeze-commit SHA] [--instance-id ID] [--recover]" >&2; exit 2 ;;
+    --no-unload) NO_UNLOAD=1; shift ;;
+    *) echo "用法: run_test.sh --kpm <path> --module <name> [--timeout N] [--observe N] [--tool-freeze-commit SHA] [--instance-id ID] [--recover] [--no-unload]" >&2; exit 2 ;;
   esac
 done
 
@@ -68,11 +70,11 @@ run_to() {
   local flag; flag="$(mktemp "${TMPDIR:-/tmp}/run_to.XXXXXX")"
   "$@" &
   local pid=$!
-  ( sleep "$t"; if kill -0 "$pid" 2>/dev/null; then kill -9 "$pid" 2>/dev/null; printf x > "$flag"; fi ) &
+  ( sleep "$t"; if kill -0 "$pid" 2>/dev/null; then kill -9 "$pid" 2>/dev/null; printf x > "$flag"; fi ) >/dev/null 2>&1 &
   local wd=$!
   wait "$pid" 2>/dev/null
   local rc=$?
-  kill "$wd" 2>/dev/null
+  kill -9 "$wd" 2>/dev/null
   wait "$wd" 2>/dev/null
   [ -s "$flag" ] && rc=124
   rm -f "$flag"
@@ -217,7 +219,8 @@ escalate() {
     else
       REBOOT_TRIED=1
       local rrc=0
-      run_to 20 "$ADB" reboot >>"$LOG" 2>&1 || rrc=$?
+      local rb_to="${REBOOT_TIMEOUT:-$(( TIMEOUT < 20 ? TIMEOUT : 20 ))}"
+      run_to "$rb_to" "$ADB" reboot >>"$LOG" 2>&1 || rrc=$?
       reboots="已尝试 1 次 adb reboot（A2）：rc=${rrc}；重启不清 pstore，请立即采集 pstore"
     fi
   fi
@@ -343,8 +346,12 @@ fi
 log "基线 boot_id=$BOOT0 uptime=$UPTIME0 pstore=空 已加载模块=[$BASE_LIST]"
 
 if printf '%s' "$BASE_LIST" | grep -q "$MODULE"; then
-  log "模块 $MODULE 已在运行，先卸载再测（不覆盖旧状态）"
-  adb_out "$KP_CMD $SUPERKEY module unload $MODULE" | tee -a "$LOG"
+  if [ "$NO_UNLOAD" -eq 1 ]; then
+    log "模块 $MODULE 已在运行（--no-unload 模式：跳过初始 unload，继续测试）"
+  else
+    log "模块 $MODULE 已在运行，先卸载再测（不覆盖旧状态）"
+    adb_out "$KP_CMD $SUPERKEY module unload $MODULE" | tee -a "$LOG"
+  fi
 fi
 
 log "清空 dmesg（只在测试开始前清一次）"
@@ -406,22 +413,29 @@ fi
 LOADED_LISTED=0
 printf '%s' "$(adb_out "$KP_CMD $SUPERKEY module list")" | grep -q "$MODULE" && LOADED_LISTED=1
 
-# ---------------------------------------------------------------- 3. 卸载
-log "卸载模块"
-UNLOAD_OUT="$(adb_out "$KP_CMD $SUPERKEY module unload $MODULE")"
-UNLOAD_RC=$?
-printf '%s\n' "$UNLOAD_OUT" | tee -a "$LOG"
-timed_out "$UNLOAD_RC" && escalate "module unload 超时未返回" 1
+# ---------------------------------------------------------------- 3. 卸载或常驻存活检查
+if [ "$NO_UNLOAD" -eq 1 ]; then
+  log "跳过卸载阶段（--no-unload 模式：本模块设计为常驻，卸载会触发 UAF）"
+  AFTER_LIST="$(adb_out "$KP_CMD $SUPERKEY module list")"
+  RESIDENT_LISTED=0
+  printf '%s' "$AFTER_LIST" | grep -q "$MODULE" && RESIDENT_LISTED=1
+else
+  log "卸载模块"
+  UNLOAD_OUT="$(adb_out "$KP_CMD $SUPERKEY module unload $MODULE")"
+  UNLOAD_RC=$?
+  printf '%s\n' "$UNLOAD_OUT" | tee -a "$LOG"
+  timed_out "$UNLOAD_RC" && escalate "module unload 超时未返回" 1
 
-AFTER_LIST="$(adb_out "$KP_CMD $SUPERKEY module list")"
-STILL_LISTED=0
-printf '%s' "$AFTER_LIST" | grep -q "$MODULE" && STILL_LISTED=1
+  AFTER_LIST="$(adb_out "$KP_CMD $SUPERKEY module list")"
+  STILL_LISTED=0
+  printf '%s' "$AFTER_LIST" | grep -q "$MODULE" && STILL_LISTED=1
 
-log "观察 ${OBSERVE}s（卸载后）"
-OBS_CRASH=0
-observe "卸载后"
-if [ "$OBS_CRASH" -eq 1 ]; then
-  escalate "dmesg 出现崩溃特征（卸载后）" 0
+  log "观察 ${OBSERVE}s（卸载后）"
+  OBS_CRASH=0
+  observe "卸载后"
+  if [ "$OBS_CRASH" -eq 1 ]; then
+    escalate "dmesg 出现崩溃特征（卸载后）" 0
+  fi
 fi
 
 # ---------------------------------------------------------------- 4. 判据
@@ -432,11 +446,15 @@ judge() {  # judge <证据强度> <名称> <0/1>
   else RESULTS+=("FAIL|$1|$2"); FAIL=$((FAIL+1)); fi
 }
 
-# 存活判据：两个观察窗口内无 adb 连续超时、boot_id 不变、uptime 单调
+# 存活判据：观察窗口内无 adb 连续超时、boot_id 不变、uptime 单调
 # （任一不成立时 observe()/escalate() 已经以 90 退出；能走到这里即成立）
 judge "强" "设备存活（整轮：adb 持续响应 + boot_id 不变 + uptime 单调）" "$( [ "$OBS_BOOT_SAME" -eq 1 ] && [ "$OBS_UPTIME_MONO" -eq 1 ] && echo 0 || echo 1 )"
 judge "强" "加载成功（rc=0 且无失败特征 且 module list 出现模块）" "$( [ "$LOAD_RC" -eq 0 ] && ! fail_text "$LOAD_OUT" && [ "$LOADED_LISTED" -eq 1 ] && echo 0 || echo 1 )"
-judge "强" "卸载干净（rc=0 且无失败特征 且 module list 不含模块）" "$( [ "$UNLOAD_RC" -eq 0 ] && ! fail_text "$UNLOAD_OUT" && [ "$STILL_LISTED" -eq 0 ] && echo 0 || echo 1 )"
+if [ "$NO_UNLOAD" -eq 1 ]; then
+  judge "强" "常驻存活（--no-unload：维持运行且在 module list 中）" "$( [ "$RESIDENT_LISTED" -eq 1 ] && echo 0 || echo 1 )"
+else
+  judge "强" "卸载干净（rc=0 且无失败特征 且 module list 不含模块）" "$( [ "$UNLOAD_RC" -eq 0 ] && ! fail_text "$UNLOAD_OUT" && [ "$STILL_LISTED" -eq 0 ] && echo 0 || echo 1 )"
+fi
 
 # ---------------------------------------------------------------- 5. 报告骨架 + 日志
 REPORT_HEAD="$(git rev-parse HEAD 2>/dev/null || echo unknown)"

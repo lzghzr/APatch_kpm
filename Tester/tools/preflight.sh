@@ -36,11 +36,11 @@ run_to() {
   local flag; flag="$(mktemp "${TMPDIR:-/tmp}/run_to.XXXXXX")"
   "$@" &
   local pid=$!
-  ( sleep "$t"; if kill -0 "$pid" 2>/dev/null; then kill -9 "$pid" 2>/dev/null; printf x > "$flag"; fi ) &
+  ( sleep "$t"; if kill -0 "$pid" 2>/dev/null; then kill -9 "$pid" 2>/dev/null; printf x > "$flag"; fi ) >/dev/null 2>&1 &
   local wd=$!
   wait "$pid" 2>/dev/null
   local rc=$?
-  kill "$wd" 2>/dev/null
+  kill -9 "$wd" 2>/dev/null
   wait "$wd" 2>/dev/null
   [ -s "$flag" ] && rc=124
   rm -f "$flag"
@@ -130,12 +130,12 @@ if [ -n "$SUPERKEY" ]; then
   [ -n "$KPVER" ] || KPVER="$(dev "$KP_CMD $SUPERKEY version")"
   [ -n "$KPVER" ] || KPVER="采不到（$KP_CMD kpver/version 无输出）"
 elif [ -n "$MANAGER_UID" ]; then
-  MODULES="$(dev_root "su $MANAGER_UID -c '/data/adb/ap/bin/kpatch su kpm list'")"
+  MODULES="$(dev_root "su $MANAGER_UID -c \"/data/adb/ap/bin/kpatch su kpm list 2>/dev/null || /data/adb/kpatch su kpm list 2>/dev/null\"")"
   KP_PATH="kpatch su kpm list（Manager UID $MANAGER_UID 免密通道）"
   if [ -n "$MODULES" ]; then MODULES_OK=1; else
     MODULES="采不到（Manager UID $MANAGER_UID 执行 kpatch 无输出）"
   fi
-  KPVER="$(dev_root "su $MANAGER_UID -c '/data/adb/ap/bin/kpatch su kpver'")"
+  KPVER="$(dev_root "su $MANAGER_UID -c \"/data/adb/ap/bin/kpatch su kpver 2>/dev/null || /data/adb/kpatch su kpver 2>/dev/null\"")"
   [ -n "$KPVER" ] || KPVER="采不到（kpatch kpver 无输出）"
 fi
 

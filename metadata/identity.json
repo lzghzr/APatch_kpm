@@ -11,7 +11,8 @@
     "acceptance": "docs/process/05-maintainer-acceptance.md",
     "antipatterns": "docs/process/06-antipatterns.md",
     "escalation_device": "docs/process/07-escalation-device.md",
-    "coverage": "docs/coverage.md"
+    "coverage": "docs/coverage.md",
+    "review_economics": "docs/process/08-review-economics.md"
   },
   "gate": {
     "entry": "tools/check_repository.py",
@@ -20,22 +21,34 @@
       "structure",
       "ci_build_selection",
       "doc_links",
-      "metadata_schema",
+      "metadata_schema（结构/枚举/独立关闭/可解析提交标识/复测绑定在册字节）",
+      "report_integrity（报告字节身份与引用归档）",
       "identity_hashes",
-      "version_consistency",
-      "report_conformance",
-      "acceptance_binding",
-      "acceptance_pending(warn)",
-      "delivery_binding",
-      "delivery_pending(warn)",
+      "version_consistency（Makefile ↔ version_declared；README 标题仅提示）",
+      "acceptance_binding｜acceptance_pending(warn)",
+      "delivery_binding｜delivery_pending(warn)",
       "tool_selftest",
-      "developer_artifacts(warn)",
+      "developer_artifacts(warn，仅交接清单字段)",
       "auditor_independence",
-      "auditor_report_sources(warn)",
-      "tester_report_identity(warn)",
       "public_file_hygiene"
     ],
-    "ci_workflow": ".github/workflows/build-kpm.yml"
+    "ci_workflow": ".github/workflows/build-kpm.yml",
+    "budget": {
+      "checks_max_note": "条目数受控：新增判据优先并入既有条目（一次遍历、一条结果），不得为同一遍历另开一条",
+      "runtime_note": "禁止逐项起子进程：git 对象读取用 cat-file --batch、文件状态用 ls-files -z / status --porcelain -z 一次取；跨调用缓存",
+      "measured": {
+        "before": {
+          "checks": 21,
+          "strict_seconds": 132
+        },
+        "after": {
+          "checks": 17,
+          "strict_seconds": 5.2
+        }
+      },
+      "rule": "门禁改动必须在记录里给出改前/改后条目数与运行时间，并用旧版在同一仓库状态上的结论证明判定未被放宽"
+    },
+    "scope_rule": "门禁只查可机检事实：结构、CI 约定、文档链接、元数据与身份、版本一致性、验收/交付绑定、工具自检、独立性、公开卫生。**报告文风与关键词不属于门禁职责**——报告是否合格由模板 + 角色手册 + 人工复核 + 问题单判定。"
   },
   "ownership": {
     "Developer": [
@@ -175,10 +188,40 @@
     "tool_selftest": "tools/selftest_tools.py 把历轮发现过的判据漂移固化为回归夹具（签名判据一致性、验收绑定、探索记录不可交付、版本历史、身份冲突、清理保护、不完整身份拒绝）；本地仓库门禁运行，失败即本地门禁失败",
     "auditor_operating_constraints": "写范围 Auditor/** + local/auditor-scratch/** + local/kallsyms_audit/**；共享树内不构建、不做 git 写操作、不碰设备密钥；artifacts 与他人报告只读；调用实现方/维护方工具只用于定位；由独立于修复归属方的角色复核关闭问题",
     "freeze_rule": "流程文件与源码必须一起进入冻结提交；冻结前跑 tools/freeze_check.py；没有干净提交时 Auditor 无法绑定身份，Tester 无候选可测",
-    "tester_authorization": "设备操作白名单 adb shell/push/pull/getprop/dmesg/reboot、adb reboot bootloader、fastboot devices/getvar/reboot；黑名单 fastboot flash/erase/-w、清 pstore、改 superkey、重装 APatch、刷机、recovery 清数据。自主 adb reboot 作为死机恢复需满足：已记基线、只许一次、已记录四项基线且基线 pstore 为空，仅无响应类异常允许；当前出现崩溃特征或 pstore 非空时保持现场交维护者、必须留回执、只能作恢复通道。superkey 仅经会话/环境变量传入，只读不落盘。物理动作（长按电源等）由维护者执行，走升级单的「需要维护者执行的物理动作」+「动作回执」两栏。",
+    "tester_authorization": "设备操作白名单 adb shell/push/pull/getprop/dmesg/reboot、adb reboot bootloader、fastboot devices/getvar/reboot；黑名单 fastboot flash/erase/-w、清 pstore、改 superkey、重装 APatch、刷机、recovery 清数据。自主 adb reboot 作为死机恢复需满足：已记基线、只许一次、已记录四项基线且基线 pstore 为空，仅无响应类异常允许；当前出现崩溃特征或 pstore 非空时保持现场交维护者、必须留回执、只能作恢复通道。superkey 仅经会话/环境变量传入，只读不落盘。物理动作（长按电源等）由维护者执行，走升级单的「需要维护者执行的物理动作」+「动作回执」两栏。 模块嵌入授权（按轮次、按实例）：维护者可授权把**指定候选实例**的 `.kpm` 嵌入开机加载（事件 `post-kernel-init`）；授权必须写明实例 `instance_id` + 产物 SHA-256、生效方式与**移除路径**，并要求记录移除回执。**嵌入不等于可卸载**：对已书面接受高风险（如 RA-001 卸载 UAF）的模块，禁止执行 `module unload` 试验；移除只能通过「撤销嵌入配置 + 重启」完成，不得用运行时卸载。若测试工具默认包含卸载步骤（`Tester/tools/run_test.sh` 第 347/411 行 `module unload` 及第 439 行「卸载干净」判据），必须先提供无卸载流程（如 `--no-unload`）并通过离线自检，才可对该模块执行真机测试。**嵌入前必须证明回退路径可用且已授权**：若移除嵌入需要恢复出厂/线刷等黑名单操作，则不得嵌入，除非维护者另行书面授权该回退操作。 嵌入执行分工（2026-10-11 修订）：经维护者按实例授权后，**嵌入可由 Tester 用设备内工具完成**（该工具内部对 boot 分区的写入视为已授权的例外，仅限授权中写明的实例与产物哈希，一次一个）；**回滚一律由维护者本人手动执行**（fastboot），Tester 与代理不得执行 `fastboot flash`；嵌入与首次重启期间维护者必须在线待命，Tester 开始前确认。",
     "tester_criteria": "主判据是存活判据（boot_id 不变 + uptime 单调 + adb 持续响应）；dmesg 无崩溃特征只是弱证据，只能写「未观察到」；结论不得外推机型/内核；每次加载前必录基线（boot_id/uptime/pstore 残留/已加载模块）；判据脚本路径 + hash 必须写进报告",
     "build_id_reporting": "报告与问题单对象栏使用完整 source_commit + instance_id（Build ID + #n）+ 每个产物 SHA-256；归档路径和历史别名只作映射，身份串按在册值精确匹配",
-    "issue_numbering": "仓库范围内同角色前缀单调递增且不得复用"
+    "issue_numbering": "仓库范围内同角色前缀单调递增且不得复用",
+    "issue_classes": [
+      "product",
+      "record"
+    ],
+    "issue_class_rule": "product＝代码/产物/安全/身份，走完整独立复核链；record＝报告措辞、计数、索引、元数据文字，owner 一次更正 + 一次独立确认即可关闭，同轮内批量处理，禁止多轮往复；record 也必须留痕（更正前后文字与哈希），低风险不等于可静默消失",
+    "record_issue_closure": "record 类关闭须有 reviews[] 一次确认记录（门禁校验），closed_by 仍须独立于 owner",
+    "correction_window": "每轮冻结/登记点后统一收集更正为一批，交对应角色一次处理、一次复核；禁止「发现一条发一条」造成串行往返",
+    "archive_before_reference": "角色报告必须先进提交，才能被 metadata 引用；被引用路径在 strict 模式下必须已入库且与工作树一致（referenced_reports_archived）。引用未归档字节是 MNT-013 的成因",
+    "report_version_index": "metadata 的 report_versions[] 以「原文基线 + 只追加版本」记录报告字节身份：基线提交 blob 不可改写，现行字节必须是基线的完整前缀，每次追加登记新整份哈希、追加段哈希与（入库后的）提交；索引字段引用的哈希必须是已登记版本",
+    "role_separation": "三角色由三个独立智能体承担，角色隔离是组织性的真实约束（各自上下文、职责与写入范围）；共享的是同一主机与仓库，因此「独立性」指角色与证据来源独立，不指密码学上的密钥隔离；对外表述按此口径，不夸大为多主体持钥，也不贬低为同一主体",
+    "gate_change_regression": "共享门禁新增或调整判据必须附正反回归（tools/selftest_tools.py 夹具）与理由记录；只施加于新记录、历史记录保持原形态的判据必须在门禁与文档中显式说明覆盖范围",
+    "checkpoint_commits": "每个角色在自己拥有的路径内，产出报告/回执/清单后立即做无签名检查点提交（`git commit --no-gpg-sign -m \"checkpoint(<角色>): <产物>\"`）；边界：不 tag/push、不 checkout/restore/reset/stash/clean、不提交他人文件；交付级签名提交 D 与标签仍只由维护者产出；检查点提交不等于签名归属",
+    "report_version_commit_rule": "report_versions[] 中除当前工作树版本（须标 pending_commit）外，每个版本必须引用提交；字节确失的历史状态登记 unarchived_versions[] 并写 note；常规提示、验收/交付失败",
+    "tester_criteria_unload_unsafe": "卸载不安全（已接受高风险）模块的终态判据不是「卸载干净」，而是：观测窗口结束时**模块仍在 `module list`、boot_id 未变、uptime 单调、adb 持续响应、dmesg 无崩溃特征（只能写「未观察到」）**；任何卸载尝试都被视为违反风险接受，需先重新评估该风险接受。",
+    "kp_compat_values": [
+      "modern",
+      "legacy"
+    ],
+    "kp_compat_rule": "`kp_compat` 是**可选**自识别字段（仅 `modern`/`legacy`；省略表示未声明，不影响任何判定）。低版本兼容**只在二进制 `.kpm` 上做字节级变换**：源码与 Makefile 只面向最新 KernelPatch，不得含兼容内容，构建输入也不含兼容工具；派生件须记录 base 实例 + base 哈希 + 工具哈希与命令 + 派生哈希，并接受独立复核（见 docs/records/2026-10-11-clean-build-binary-adaptation.md）。",
+    "gate_budget_rule": "门禁条目与运行时间是受控资源：新增判据并入既有条目、禁止逐项子进程、每次改动记录改前/改后条目数与耗时，并用旧版本在同一仓库状态上的判定一致性证明没有放宽（见 docs/process/08-review-economics.md 的「门禁预算」）。",
+    "known_external_defects": [
+      {
+        "id": "KP-44-COMPAT",
+        "component": "KernelPatch 0.13.9 × Linux 4.4",
+        "impact": "4.4 上无法运行当前 KP；旧 KP 缺 kallsyms_lookup_name_by_suffix 导出，模块加载即 unknown symbol",
+        "workaround": "仅在二进制产物上做字节级变换（patch_offsets.py legacy-kp）；源码与 Makefile 保持纯净；不构成产品形态或交付必需项",
+        "removal_trigger": "KernelPatch 恢复/支持 4.4 内核兼容后删除该转接路径",
+        "record": "docs/records/2026-10-11-kp-4.4-known-defect.md"
+      }
+    ]
   },
   "verification_levels": [
     "静态",

@@ -51,7 +51,7 @@ IGNORED_DIRS = {".git", "__pycache__", ".vscode", "node_modules", "target", "art
 IGNORED_SUFFIX = (".kpm", ".o", ".i64", ".bak", ".pyc")
 VARIANT_SUFFIX = {"base": "", "network": "_n", "debug": "_d", "network_debug": "_nd",
                   "static": "", "dynamic": "", "static_debug": "_d", "dynamic_debug": "_d",
-                  "baselines": "", "baselines_debug": "_d"}
+                  "baselines": "", "baselines_debug": "_d", "legacy": "", "legacy_debug": "_d"}
 
 
 def die(msg, code=1):
@@ -84,20 +84,124 @@ def git(args, cwd=None):
         return ""
 
 
-def git_blob_at(commit, relpath, filters=False):
-    """按提交读取文件内容；读不到返回 None。
+_GITLINK_CACHE = {}
+_BLOB_CACHE = {}
+_TREE_CACHE = {}
+_SUBMODULE_REPO_CACHE = {}
 
-    filters=False → 仓库里存的字节（blob，跨机器一致）；
-    filters=True  → 走 checkout 过滤后的字节（与工作树一致，受 core.autocrlf 等影响）。
+
+def gitlink_map(commit):
+    """一次 ls-tree -r 取该提交里所有 gitlink（子模块）路径 → 冻结的子模块提交。"""
+    if commit in _GITLINK_CACHE:
+        return _GITLINK_CACHE[commit]
+    links = {}
+    out = git(["ls-tree", "-r", commit], cwd=REPO)
+    for line in out.splitlines():
+        meta, _, path = line.partition("\t")
+        fields = meta.split()
+        if len(fields) == 3 and fields[0] == "160000" and fields[1] == "commit":
+            links[path] = fields[2]
+    _GITLINK_CACHE[commit] = links
+    return links
+
+
+def _submodule_repo(commit, prefix):
+    """迁移后仍通过冻结声明的稳定子模块名读取对象库。"""
+    checkout = REPO / prefix
+    if checkout.is_dir():
+        return checkout
+    key = (str(REPO), commit, prefix)
+    if key not in _SUBMODULE_REPO_CACHE:
+        repo = checkout
+        entries = git(["config", "--blob", f"{commit}:.gitmodules", "--get-regexp",
+                       r"^submodule\..*\.path$"])
+        common = git(["rev-parse", "--git-common-dir"])
+        for line in entries.splitlines():
+            field, path = line.split(None, 1)
+            if path == prefix and common:
+                name = field[len("submodule."):-len(".path")]
+                repo = REPO / common / "modules" / name
+                break
+        _SUBMODULE_REPO_CACHE[key] = repo
+    return _SUBMODULE_REPO_CACHE[key]
+
+
+def _locate(commit, relpath, links):
+    """把路径映射到 (仓库目录, 冻结对象提交, 仓内相对路径)；落在子模块内则用 gitlink。"""
+    parts = Path(relpath).parts
+    for count in range(len(parts) - 1, 0, -1):
+        prefix = Path(*parts[:count]).as_posix()
+        sub = links.get(prefix)
+        if sub:
+            return _submodule_repo(commit, prefix), sub, Path(*parts[count:]).as_posix()
+    return REPO, commit, Path(relpath).as_posix()
+
+
+def _batch_blobs(repo, commit, paths):
+    """单个对象库内一次 cat-file --batch 取多个路径的 blob 字节。"""
+    specs = [f"{commit}:{path}" for path in paths]
+    result = subprocess.run(["git", "-C", str(repo), "cat-file", "--batch"],
+                            input=("\n".join(specs) + "\n").encode(),
+                            capture_output=True)
+    out, blobs, cursor = result.stdout, {}, 0
+    for spec, path in zip(specs, paths):
+        nl = out.find(b"\n", cursor)
+        if nl < 0:
+            blobs[path] = None
+            continue
+        header = out[cursor:nl].split()
+        cursor = nl + 1
+        if len(header) == 2 and header[1] == b"missing":
+            blobs[path] = None
+            continue
+        size = int(header[2])
+        blobs[path] = out[cursor:cursor + size]
+        cursor += size + 1
+    return blobs
+
+
+def git_blob_at(commit, relpath, filters=False):
+    """按提交取单个文件的 blob 字节；子模块内容按父提交的 gitlink 冻结读取。
+
+    批量取用 source_tree_at_commit（同提交多文件共享进程与缓存）。
     """
+    return blobs_at(commit, [relpath], filters=filters).get(relpath)
+
+
+def blobs_at(commit, relpaths, filters=False):
+    """批量取多个路径的 blob；返回 {path: bytes|None}。跨调用缓存，子模块用冻结 gitlink。"""
     if not commit:
-        return None
-    base = ["git", "-C", str(REPO), "cat-file"]
-    cmd = base + (["--filters"] if filters else ["blob"]) + [f"{commit}:{relpath}"]
-    try:
-        return subprocess.run(cmd, capture_output=True, check=True).stdout
-    except Exception:
-        return None
+        return {rel: None for rel in relpaths}
+    pending, result = [], {}
+    for rel in relpaths:
+        key = (commit, rel, filters)
+        if key in _BLOB_CACHE:
+            result[rel] = _BLOB_CACHE[key]
+        else:
+            pending.append(rel)
+    if not pending:
+        return result
+    links = gitlink_map(commit)
+    groups = {}
+    for rel in pending:
+        repo, frozen, inner = _locate(commit, rel, links)
+        groups.setdefault((repo, frozen), []).append((rel, inner))
+    for (repo, frozen), items in groups.items():
+        if not repo.is_dir():
+            for rel, _ in items:
+                result[rel] = None
+        elif filters:
+            for rel, inner in items:            # --filters 不能与 --batch 合用
+                blob = subprocess.run(["git", "-C", str(repo), "cat-file", "--filters",
+                                       f"{frozen}:{inner}"], capture_output=True)
+                result[rel] = blob.stdout if blob.returncode == 0 else None
+        else:
+            got = _batch_blobs(repo, frozen, [inner for _, inner in items])
+            for rel, inner in items:
+                result[rel] = got.get(inner)
+    for rel in pending:
+        _BLOB_CACHE[(commit, rel, filters)] = result.get(rel)
+    return result
 
 
 def commit_exists(sha):
@@ -165,6 +269,9 @@ def source_files(module, mdir, extra=()):
                 continue
             if name in BUILD_INPUT_NAMES or name.endswith(BUILD_INPUT_EXT):
                 files.append(str(Path(root, name).relative_to(REPO)))
+    # 子模块初始化配方随同冻结内容捕获。
+    if any((Path(root) / ".git").is_file() for root, _, _ in os.walk(mdir)) and (REPO / ".gitmodules").is_file():
+        files.append(".gitmodules")
     shared = REPO / "kpm_utils.h"
     if shared.is_file():
         files.append("kpm_utils.h")
@@ -189,16 +296,20 @@ def source_tree_at_commit(commit, files, filters=False):
     返回两种表示：filters=False 是仓库 blob 字节（跨机器稳定），
     filters=True 是 checkout 后的字节（与工作树一致）。
     """
+    key = (commit, tuple(files), filters)
+    if key in _TREE_CACHE:
+        return _TREE_CACHE[key]
+    blobs = blobs_at(commit, list(files), filters=filters)
     pairs, missing = [], []
     for rel in files:
-        blob = git_blob_at(commit, rel, filters=filters)
+        blob = blobs.get(rel)
         if blob is None:
             missing.append(rel)
         else:
             pairs.append((rel, sha256_bytes(blob)))
-    if missing:
-        return None, missing
-    return source_tree_sha256_from_files(pairs), []
+    result = (None, missing) if missing else (source_tree_sha256_from_files(pairs), [])
+    _TREE_CACHE[key] = result
+    return result
 
 
 def build_id_of(module, version, variant, source_tree, toolchain, kp_commit, flags_sha):
@@ -448,9 +559,10 @@ def build_entry(module, mdir, version, variant, toolchain, build_cmd, env_extra,
     flags_sha = ""
     build_id, fp = build_id_of(module, version, variant, tree, toolchain, kp_commit, flags_sha)
     blob_tree, blob_missing = source_tree_at_commit(commit, files, filters=False) if commit else (None, files)
+    blobs = blobs_at(commit, list(files), filters=False) if commit else {}
     sources = []
     for rel in files:
-        blob = git_blob_at(commit, rel, filters=False) if commit else None
+        blob = blobs.get(rel)
         sources.append({"path": rel, "sha256": sha256_file(REPO / rel),
                         "blob_sha256": sha256_bytes(blob) if blob is not None else None})
     recipe = prepared_recipe if prepared_recipe is not None else capture_build_recipe(build_cmd, env_extra)
@@ -727,9 +839,8 @@ def cmd_bind_delivery(args):
         if not commit_exists(delivery_commit):
             die(f"交付提交不存在或不是提交对象：{delivery_commit}")
         source_commit = entry.get("source_commit")
-        if source_commit and not is_ancestor(source_commit, delivery_commit):
-            die(f"源码提交 {source_commit[:12]} 不是交付提交 {delivery_commit[:12]} 的祖先："
-                "这份源码没有被包含在交付提交里")
+        # 交付按**内容同一性**判定（模块树 + 全部构建输入逐字节一致，由 delivery_problems 复核）；
+        # 祖先关系只记录，不作为拒绝理由——本仓库交付是策展/压平历史，原始工作提交不进入交付分支。
         missing = [a["name"] for a in entry.get("artifacts", []) if not (REPO / a["path"]).is_file()]
         if missing:
             die("产物不在场，不能绑定交付：" + ", ".join(missing))
@@ -751,6 +862,7 @@ def cmd_bind_delivery(args):
             "artifacts": {a["name"]: a["sha256"] for a in entry.get("artifacts", [])},
             "signature_verified": signed,
             "signature_note": note,
+            "source_ancestor": is_ancestor(source_commit, delivery_commit) if source_commit else None,
             "bound_by": args.by,
             "bound_at": utcnow(),
             "note": args.note or "",
@@ -786,18 +898,42 @@ def delivery_problems(entry, binding):
     if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{40}", commit) or not commit_exists(commit):
         problems.append("交付提交必须是存在的完整 commit SHA")
         return problems
-    if not is_ancestor(entry.get("source_commit"), commit):
-        problems.append("源码提交不是交付提交的祖先")
+    # 交付要求的是**内容同一性**：交付提交里的模块树与全部构建输入必须与候选源码逐字节一致。
+    # 历史祖先关系只记录不判失败：本仓库的交付是策展/压平历史（远程基线 + 少量 [模块名] 提交），
+    # 原始工作提交不会进入交付分支（与既有发布约定一致）。
+    binding.setdefault("source_ancestor", is_ancestor(entry.get("source_commit"), commit))
     module = entry.get("module", "")
     source_commit = entry.get("source_commit")
     # 比较整个模块树，可同时发现新增构建输入；仓库共享输入逐项比对。
-    if git(["rev-parse", f"{source_commit}:{module}"]) != git(["rev-parse", f"{commit}:{module}"]):
+    # 查询失败（提交里没有该模块目录，或对象不是 tree）必须判失败——两个空结果相等会误放行（DEV-031）。
+    def module_tree(commit_sha):
+        """取提交里的模块树；不存在或不是 tree 一律视为查询失败（DEV-031）。"""
+        if not commit_sha:
+            return None
+        spec = f"{commit_sha}:{module}"
+        kind = subprocess.run(["git", "-C", str(REPO), "cat-file", "-t", spec],
+                              capture_output=True, text=True)
+        if kind.returncode != 0 or kind.stdout.strip() != "tree":
+            return None
+        result = subprocess.run(["git", "-C", str(REPO), "rev-parse", "--verify", "--quiet", spec],
+                                capture_output=True, text=True)
+        value = result.stdout.strip()
+        return value if value else None
+
+    source_tree, delivery_tree = module_tree(source_commit), module_tree(commit)
+    if source_tree is None:
+        problems.append(f"候选源码提交 {str(source_commit)[:12]} 中不存在模块目录 {module}")
+    elif delivery_tree is None:
+        problems.append(f"交付提交 {commit[:12]} 中不存在模块目录 {module}")
+    elif source_tree != delivery_tree:
         problems.append("交付提交中的模块树与候选源码不同")
-    for src in entry.get("sources", []):
-        before = git_blob_at(source_commit, src["path"])
-        after = git_blob_at(commit, src["path"])
+    paths = [src["path"] for src in entry.get("sources", [])]
+    before_blobs = blobs_at(source_commit, paths, filters=False) if source_commit else {}
+    after_blobs = blobs_at(commit, paths, filters=False) if commit else {}
+    for path in paths:
+        before, after = before_blobs.get(path), after_blobs.get(path)
         if before is None or after != before:
-            problems.append(f"交付提交中的构建输入不同：{src['path']}")
+            problems.append(f"交付提交中的构建输入不同：{path}")
     if binding.get("signature_verified") is not True:
         problems.append("交付提交签名未验证")
     signed, note = signature_status(commit)
@@ -889,24 +1025,29 @@ def verify_build(entry, worktree=False, check_build_args=False, profile="explora
     recorded = entry.get("source_tree_sha256")
     commit = entry.get("source_commit")
     per_file, mismatched, used = [], [], {}
-    for src in entry.get("sources", []):
+    source_entries = entry.get("sources", [])
+    raw_blobs = blobs_at(commit, [s["path"] for s in source_entries], filters=False) \
+        if (commit and not worktree) else {}
+    for src in source_entries:
         rel = src["path"]
         recorded_file = src.get("sha256")
+        expected = {recorded_file}
+        if src.get("blob_sha256"):
+            expected.add(src["blob_sha256"])
         candidates = {}
         if worktree:
             path = REPO / rel
             if path.is_file():
                 candidates["工作树字节"] = sha256_file(path)
         else:
-            raw = git_blob_at(commit, rel, filters=False) if commit else None
+            raw = raw_blobs.get(rel)
             if raw is not None:
                 candidates["提交 blob"] = sha256_bytes(raw)
-            filt = git_blob_at(commit, rel, filters=True) if commit else None
-            if filt is not None:
-                candidates["提交内容按 checkout 过滤"] = sha256_bytes(filt)
-        expected = {recorded_file}
-        if src.get("blob_sha256"):
-            expected.add(src["blob_sha256"])
+            # 仅当 blob 表示未命中期望时才取 checkout 过滤表示（逐文件回退，判定不变）
+            if not any(value in expected for value in candidates.values()):
+                filt = git_blob_at(commit, rel, filters=True) if commit else None
+                if filt is not None:
+                    candidates["提交内容按 checkout 过滤"] = sha256_bytes(filt)
         hit = next((label for label, value in candidates.items() if value in expected), None)
         if hit is None:
             mismatched.append(f"{rel}（记录 {str(recorded_file)[:12]}，"

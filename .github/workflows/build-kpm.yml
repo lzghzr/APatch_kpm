@@ -94,7 +94,7 @@ jobs:
             fi
             echo "build ${dir}"
             printf "%s\n" "${dir%/}" >> target/modules.txt
-            if [ "${dir%/}" = "re_kernel_x" ] || [ "${dir%/}" = "re_kernel" ] || [ "${dir%/}" = "run_cmd_demo" ]; then
+            if [ "${dir%/}" = "re_kernel_x" ] || [ "${dir%/}" = "re_kernel" ] || [ "${dir%/}" = "run_cmd_demo" ] || [ "${dir%/}" = "zram_zstd" ]; then
               make -C "${dir}" all debug
               mv "${dir}"*.kpm "${dir}"*.kpm.json target
             else

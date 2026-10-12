@@ -16,13 +16,15 @@
 | 工作树 | 探索阶段允许工作树不干净；候选交接必须**从冻结提交构建**，推荐 `git worktree add ../<repo>-dev <sha>`；构建产物归档到 `artifacts/<build_id>[#n]/`（不可覆盖） | 不得用未提交源码交接；不得覆盖已归档产物 |
 | 归属未明的路径 | `.agents/`（技能与流程类文档）归维护者；镜像输入 `kernel_img/` 的镜像/符号表与 `local/` 的运行产物属本地数据（不进 git）；`kernel_img/offset_harness/` 是 Developer 源码 | 技能内容变更由 Developer 提建议、维护者落地 |
 | 跨角色改动 | 任何角色都可以提交**补丁建议**（`git format-patch`/diff + 说明）给所有者 | 由所有者落地；不得直接改别人的结论性文件 |
-| 共享门禁调整 | 维护者拥有 `tools/` 门禁及维护者自检；Tester/Auditor/Developer 提交补丁建议与复现证据，由维护者落地 | 调整检查范围需记录理由与正反回归；各类报告和修复响应中的产物身份引用统一核验 |
+| 共享门禁调整 | **判据归维护者**：什么算合格（身份语义、命名契约、检查范围与阈值）由维护者定，Tester/Auditor/Developer 提补丁建议与复现证据 | 调整检查范围需记录理由与正反回归；各类报告和修复响应中的产物身份引用统一核验 |
+| 共享工具机制适配（标准授权） | **机制归需要它的角色**：让共享工具支持模块的合法结构变化（子模块迁移/改名、新增产物元信息字段、转换支持等）**无需逐次请示**，由该角色直接实现 | 五个条件：① 不改变任何判据/阈值/检查范围；② 在维护者自检文件（`tools/selftest_tools.py`／`tools/selftest_artifact_gate.py`）补正反夹具；③ 同轮留下提案记录（patch + 说明 + 复现证据）；④ 维护者同轮逐字节复核并采纳或回退；⑤ 一旦涉及判据即回到上一条。**本条本身即是授权，用户不必逐次批准** |
 | 读取权 | **所有角色都可以读任何角色的工具、报告与原始证据**（用于本地诊断、复现问题、准备修复） | 读取不等于修改：修改权、结论权、真机设备操作权仍分别归属；引用他人结论时必须标注来源与是否独立复现 |
 | Auditor 隔离构建 | 可在 `local/auditor-scratch/`（已被 `.gitignore` 覆盖）或仓库外工作树里独立重编译 | 不在共享工作树内 `make`；产物不回写 `re_kernel/` 与 `artifacts/`；不清理 `local/stale/` |
 | Auditor 自建语料 | 可自建**独立**的 kallsyms 提取（不得调用 `kernel_img/offset_harness`），用于降低「语料由 Developer 提供」的同源风险 | 提取产物放 `local/kallsyms_audit/`；报告里要说明提取器与实现方无关、并声明残余同源风险 |
 | 语料范围 | 以使用者当前放在 `kernel_img/` 的镜像/符号表为准；harness 取不到符号表时按 **SKIP（未覆盖）** 记录，不算失败、也不算缺陷 | **不得把"本 harness 提取失败"写成"内核不含 kallsyms"**，定性需独立提取器；结论要写明实际语料清单 |
 | Auditor 只读网络 | 可以为上游核对（KernelPatch 导出符号、内核源码）拉取公开仓库与文档 | 仅读；不上传、不外发语料/设备数据；引用外部结论要标 URL 与访问时间 |
-| Auditor 版本控制 | 需要改他人文件时走 `git format-patch` 补丁建议 | 不做 `git add/commit/tag/push`（签名交付是维护者动作）；不执行 `checkout/restore/reset/stash/clean` |
+| 角色检查点提交 | 三角色在**自己拥有的路径**内可创建**无签名检查点提交**：`git add <自己的文件> && git commit --no-gpg-sign -m "checkpoint(<角色>): <产物>"`；报告/回执/交接清单一产出即提交（见 [08-review-economics.md](08-review-economics.md) R8） | 只允许无签名检查点；不得 `tag`/`push`、不得 `checkout/restore/reset/stash/clean`、不得提交他人拥有的文件；交付级签名提交 D 与标签仍只由维护者产出 |
+| Auditor 版本控制 | 需要改他人文件时走 `git format-patch` 补丁建议；可做自己路径内的无签名检查点提交（见上一行） | 不做签名提交与 `tag`/`push`；不执行 `checkout/restore/reset/stash/clean` |
 | Auditor 设备与密钥 | 真机操作与 superkey 属 Tester/维护者域 | 不碰设备、不读取或落盘密钥/设备标识 |
 
 ## 所有权表（本仓库路径）

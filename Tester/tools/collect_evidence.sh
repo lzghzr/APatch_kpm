@@ -36,11 +36,11 @@ run_to() {
   local t="$1"; shift
   "$@" &
   local pid=$!
-  ( sleep "$t"; kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null ) &
+  ( sleep "$t"; kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null ) >/dev/null 2>&1 &
   local wd=$!
   wait "$pid" 2>/dev/null
   local rc=$?
-  kill "$wd" 2>/dev/null
+  kill -9 "$wd" 2>/dev/null
   wait "$wd" 2>/dev/null
   return $rc
 }

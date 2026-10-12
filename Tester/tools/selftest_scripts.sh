@@ -211,6 +211,21 @@ if [ "$HAVE_REAL" -eq 1 ]; then
   check_has "pstore 残留：日志说明原因" "$LOG" 'pstore 基线'
   check_not "pstore 残留：未进入加载" "$LOG" '加载模块'
 
+  # ---- 5. --no-unload 常驻正反用例（AUD-009 / RA-001 / 复测要求） ------------
+  run run_no_unload ok 0 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" \
+    --instance-id "$REAL_ID" --no-unload
+  check_rc "run_test/--no-unload 正常常驻" 0 "$?"
+  LOG="$(first "$CASE_DIR/runs" .log)"
+  check_has "--no-unload：常驻判据判 PASS" "$LOG" '[PASS]（强）常驻存活（--no-unload：维持运行且在 module list 中）'
+  check_not "--no-unload：不触发卸载" "$LOG" '卸载模块'
+  check_has "--no-unload：日志标明跳过卸载" "$LOG" '跳过卸载阶段（--no-unload 模式'
+
+  run run_no_unload_fail resident_fail 0 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" \
+    --instance-id "$REAL_ID" --no-unload
+  check_rc "run_test/--no-unload 常驻失败" 1 "$?"
+  LOG="$(first "$CASE_DIR/runs" .log)"
+  check_has "--no-unload 反例：常驻判据判 FAIL" "$LOG" '[FAIL]（强）常驻存活（--no-unload：维持运行且在 module list 中）'
+
   # ---- MNT-008 独立复核回归：升级目录已有同名 #1，运行目录为空，不得覆盖旧升级单 ----
   rm -rf "$STATE"; mkdir -p "$STATE"
   CASE_DIR="$WORK/cases/esc_collision"; mkdir -p "$CASE_DIR/runs" "$CASE_DIR/esc"

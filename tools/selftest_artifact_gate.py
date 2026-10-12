@@ -12,7 +12,7 @@ from pathlib import Path
 from artifact_gate import validate
 
 
-def fixture(unified=False, debug=False):
+def fixture(unified=False, debug=False, kp_compat=None, offset_mode=None):
     sections = [("", 0, b""), (".shstrtab", 3, b""),
                 (".kpm.info", 1, b"name=re_kernel_x\0version=1.6\0license=GPL v3\0author=Fixture\0description=Artifact fixture\0"),
                 (".kpm.init", 1, bytes(8)), (".kpm.exit", 1, bytes(8)),
@@ -23,6 +23,13 @@ def fixture(unified=False, debug=False):
     if debug:
         name, kind, raw = sections[2]
         sections[2] = (name, kind, raw.replace(b"version=1.6\0", b"version=1.6_d\0"))
+    if kp_compat is not None or offset_mode is not None:
+        name, kind, raw = sections[2]
+        if offset_mode is not None:
+            raw += f"offset_mode={offset_mode}\0".encode()
+        if kp_compat is not None:
+            raw += f"kp_compat={kp_compat}\0".encode()
+        sections[2] = (name, kind, raw)
     strings = b"\0"
     indices = []
     for name, _, _ in sections:
@@ -119,6 +126,49 @@ class ArtifactGateTests(unittest.TestCase):
     def test_filename_version_mismatch(self):
         self.kpm.rename(self.root / "re_kernel_x_1.7_abi5.kpm")
         self.reject()
+
+    def test_legacy_compat_naming_accepted(self):
+        data, layout = fixture(kp_compat="legacy", offset_mode="dynamic")
+        name = "re_kernel_x_1.6_legacy.kpm"
+        result = validate(*self._legacy_case(layout, name, data))
+        self.assertEqual(result[0]["file"], name)
+        self.assertEqual(result[0]["info"]["kp_compat"], "legacy")
+
+    def test_legacy_compat_debug_naming_accepted(self):
+        data, layout = fixture(debug=True, kp_compat="legacy", offset_mode="dynamic")
+        name = "re_kernel_x_1.6_legacy_debug.kpm"
+        result = validate(*self._legacy_case(layout, name, data))
+        self.assertEqual(result[0]["file"], name)
+
+    def test_legacy_compat_without_suffix_accepted(self):
+        """kp_compat 是可选自识别：声明 legacy 但用常规命名也接受，不做强制。"""
+        data, layout = fixture(kp_compat="legacy", offset_mode="dynamic")
+        result = validate(*self._legacy_case(layout, "re_kernel_x_1.6.kpm", data))
+        self.assertEqual(result[0]["info"]["kp_compat"], "legacy")
+
+    def test_invalid_kp_compat_rejected(self):
+        data, layout = fixture(kp_compat="weird", offset_mode="dynamic")
+        with self.assertRaises(ValueError):
+            validate(*self._legacy_case(layout, "re_kernel_x_1.6.kpm", data))
+
+    def test_legacy_naming_accepted_without_field(self):
+        """临时适配形态的命名不要求 kp_compat 字段：省略字段也接受。"""
+        data, layout = fixture(offset_mode="dynamic")
+        name = "re_kernel_x_1.6_legacy.kpm"
+        result = validate(*self._legacy_case(layout, name, data))
+        self.assertEqual(result[0]["file"], name)
+        self.assertIsNone(result[0]["info"].get("kp_compat"))
+
+    def test_modern_naming_unchanged_without_field(self):
+        data, layout = fixture(offset_mode="dynamic")
+        result = validate(*self._legacy_case(layout, "re_kernel_x_1.6.kpm", data))
+        self.assertEqual(result[0]["info"].get("kp_compat", "modern"), "modern")
+
+    def _legacy_case(self, layout, name, data):
+        """写入指定命名的动态产物（不带静态布局），返回 validate 的位置参数。"""
+        root = Path(tempfile.mkdtemp(dir=self.root))
+        (root / name).write_bytes(data)
+        return root, ["re_kernel_x"]
 
     def test_filename_abi_mismatch(self):
         name = "re_kernel_x_1.6_abi3.kpm"

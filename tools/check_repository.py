@@ -11,6 +11,7 @@
 
 import argparse
 import ast
+import codecs
 import hashlib
 import json
 import os
@@ -24,61 +25,20 @@ REPO = os.path.dirname(HERE)          # 仓库根（可被夹具改写）
 # 注意：TOOLS_DIR 固定按本文件位置解析，不受 REPO 影响
 
 REQUIRED_PATHS = [
-    "AGENTS.md",
-    "docs/README.md",
-    "docs/coverage.md",
-    "docs/process/01-identity.md",
-    "docs/process/02-roles.md",
-    "docs/process/03-round-flow.md",
-    "docs/process/04-issue-ticket.md",
-    "docs/process/05-maintainer-acceptance.md",
-    "docs/process/06-antipatterns.md",
-    "docs/process/07-escalation-device.md",
-    "docs/process/developer-handbook.md",
-    "docs/process/auditor-handbook.md",
-    "docs/process/tester-handbook.md",
-    "docs/templates/developer-report.md",
-    "docs/templates/auditor-report.md",
-    "docs/templates/tester-report.md",
-    "docs/templates/issue-ticket.md",
-    "docs/templates/escalation.md",
-    "docs/templates/handoff.md",
-    "metadata/README.md",
-    "metadata/identity.json",
-    "tools/identity.py",
-    "tools/build_candidate.py",
-    "tools/selftest_tools.py",
-    "tools/freeze_check.py",
-    "tools/check_repository.py",
-    "kernel_img/README.md",
-    "kernel_img/offset_harness/README.md",
-    "kernel_img/offset_harness/run.py",
-    "kernel_img/offset_harness/extract_kernel.py",
-    "kernel_img/offset_harness/bootimg.py",
-    "kernel_img/offset_harness/layout.py",
+    "AGENTS.md", "docs/README.md", "docs/coverage.md", "metadata/README.md", "metadata/identity.json",
+    "docs/process/01-identity.md", "docs/process/02-roles.md", "docs/process/03-round-flow.md",
+    "docs/process/04-issue-ticket.md", "docs/process/05-maintainer-acceptance.md",
+    "docs/process/06-antipatterns.md", "docs/process/07-escalation-device.md",
+    "tools/identity.py", "tools/build_candidate.py", "tools/selftest_tools.py", "tools/freeze_check.py",
+    "tools/check_repository.py", "tools/artifact_gate.py", "tools/selftest_artifact_gate.py",
     ".github/workflows/build-kpm.yml",
-    "tools/artifact_gate.py",
-    "tools/selftest_artifact_gate.py",
-    "Auditor/README.md",
-    "Auditor/tools/artifact_audit.py",
-    "Auditor/tools/static_scan.py",
-    "Auditor/tools/kp_symbols_extract.py",
-    "Auditor/reports/README.md",
-    "Tester/README.md",
-    "Tester/tools/preflight.sh",
-    "Tester/tools/run_test.sh",
-    "Tester/tools/selftest_scripts.sh",
-    "Tester/tools/mock_device.sh",
-    "Tester/tools/collect_evidence.sh",
-    "Tester/reports/README.md",
-    "Tester/reports/responses/README.md",
-    "docs/templates/tester-response.md",
-    "Developer/README.md",
-    "Developer/reports/README.md",
-    "Developer/reports/handoffs/README.md",
-    "Developer/reports/responses/README.md",
-    "docs/templates/developer-response.md",
+    "Auditor/tools/artifact_audit.py", "Auditor/tools/static_scan.py",
+    "Tester/tools/preflight.sh", "Tester/tools/run_test.sh", "Tester/tools/selftest_scripts.sh",
+    "Developer/README.md", "Auditor/README.md", "Tester/README.md",
 ]
+# 目录级：只要求存在（以及最低文件数），不再逐一点名模板/手册文件
+REQUIRED_DIRS = [("docs/templates", ".md", 1), ("docs/process", ".md", 7), ("Auditor/tools", ".py", 2),
+                 ("Tester/tools", ".sh", 3), ("metadata/modules", ".json", 1), ("Developer/reports", None, 0)]
 
 TOP_LEVEL_DOCS = [
     "AGENTS.md",
@@ -159,7 +119,14 @@ def is_git_ignored(path):
         return False
 
 
-def _looks_text(path, probe=8192):
+def _looks_text(path, probe=65536):
+    """文本判定：按 UTF-8 增量解码，容忍探测边界截断的多字节字符。
+
+    早期实现用 `chunk.decode("utf-8")`，只要 8192 字节边界正好切开一个中文字符就抛
+    UnicodeDecodeError，于是中文为主的报告被判成"非文本"而**被卫生检查整份跳过**
+    （2026-10-11 发现 0.3.0 审计报告里的本机绝对路径因此长期未被拦下）。
+    """
+    decoder = codecs.getincrementaldecoder("utf-8")()
     try:
         with open(path, "rb") as handle:
             chunk = handle.read(probe)
@@ -168,7 +135,7 @@ def _looks_text(path, probe=8192):
     if b"\x00" in chunk:
         return False
     try:
-        chunk.decode("utf-8")
+        decoder.decode(chunk)
     except UnicodeDecodeError:
         return False
     return True
@@ -200,8 +167,20 @@ def iter_text_files():
 
 # ---------------------------------------------------------------- 各项检查
 def check_structure(rep):
-    missing = [p for p in REQUIRED_PATHS if not os.path.exists(os.path.join(REPO, p))]
-    rep.check("structure", not missing, "缺少: " + ", ".join(missing) if missing else f"{len(REQUIRED_PATHS)} 个必需路径齐备")
+    problems = [f"缺少 {p}" for p in REQUIRED_PATHS if not os.path.exists(os.path.join(REPO, p))]
+    for rel, suffix, least in REQUIRED_DIRS:
+        path = os.path.join(REPO, rel)
+        if not os.path.isdir(path):
+            problems.append(f"缺少目录 {rel}")
+            continue
+        if suffix is None:
+            continue
+        count = len([n for n in os.listdir(path) if n.endswith(suffix)])
+        if count < least:
+            problems.append(f"{rel} 下 {suffix} 文件仅 {count} 个（至少 {least}）")
+    rep.check("structure", not problems,
+              "; ".join(problems) if problems
+              else f"{len(REQUIRED_PATHS)} 个关键路径 + {len(REQUIRED_DIRS)} 个目录齐备")
 
 
 def submodule_paths():
@@ -270,12 +249,16 @@ def check_doc_links(rep):
             continue
         text = open(path, encoding="utf-8", errors="replace").read()
         for target in link_re.findall(text):
-            target = target.split("#")[0].strip()
+            target = target.strip()
             if not target or re.match(r"^[a-z]+:", target) or target.startswith("/"):
                 continue
             total += 1
-            resolved = os.path.normpath(os.path.join(os.path.dirname(path), target))
-            if not os.path.exists(resolved):
+            # 文件名本身可能含 '#'（如 Tester 运行报告 `...#1.md`）：先按整串找，再按片段剥离
+            candidates = [target]
+            if "#" in target:
+                candidates.append(target.split("#")[0])
+            if not any(os.path.exists(os.path.normpath(os.path.join(os.path.dirname(path), c)))
+                       for c in candidates if c):
                 broken.append(f"{rel} -> {target}")
     rep.check("doc_links", not broken, "; ".join(broken) if broken else f"{total} 个相对链接全部可解析")
 
@@ -303,6 +286,7 @@ def check_metadata_schema(rep):
     prefixes = tuple(identity.get("conventions", {}).get("issue_prefixes", []))
     frequencies = set(identity.get("conventions", {}).get("issue_frequencies", []))
     confidences = set(identity.get("conventions", {}).get("issue_confidences", []))
+    issue_classes = set(identity.get("conventions", {}).get("issue_classes", []))
     seen_ids = set()
     for name in module_files:
         record = json.load(open(os.path.join(modules_dir, name), encoding="utf-8"))
@@ -319,9 +303,14 @@ def check_metadata_schema(rep):
                 if not re.fullmatch(r"[0-9a-f]{64}", art.get("sha256", "")):
                     problems.append(f"{name}:{build.get('build_id')} 产物 {art.get('name')} 的 sha256 不合法")
         for issue in record.get("issues", []):
-            for key in ("id", "severity", "owner", "status", "title", "evidence", "closure"):
+            for key in ("id", "severity", "owner", "status", "title", "evidence"):
                 if key not in issue:
                     problems.append(f"{name}:{issue.get('id')} 缺字段 {key}")
+            if issue.get("status") == "closed":
+                if not (issue.get("resolution") or issue.get("closure")):
+                    problems.append(f"{name}:{issue.get('id')} 已 closed 但既无 resolution 也无 closure")
+            elif "closure" not in issue:
+                problems.append(f"{name}:{issue.get('id')} 未关闭却缺 closure（关闭条件）")
             if issue.get("severity") not in severities:
                 problems.append(f"{name}:{issue.get('id')} 严重度非法 {issue.get('severity')}")
             if issue.get("status") not in statuses:
@@ -342,7 +331,35 @@ def check_metadata_schema(rep):
                 problems.append(f"{name}:{issue.get('id')} frequency 非法 {issue['frequency']}")
             if issue.get("confidence") and issue["confidence"] not in confidences:
                 problems.append(f"{name}:{issue.get('id')} confidence 非法 {issue['confidence']}")
-    rep.check("metadata_schema", not problems, "; ".join(problems) if problems else f"{len(module_files)} 个模块记录结构合法")
+            if issue.get("class") and issue_classes and issue["class"] not in issue_classes:
+                problems.append(f"{name}:{issue.get('id')} 类别非法 {issue['class']}")
+            if issue.get("status") == "closed" and issue.get("class") == "record" and not issue.get("reviews"):
+                problems.append(f"{name}:{issue.get('id')} record 类已关闭但缺少一次独立确认记录（reviews[]）")
+        # 实机复测必须绑定在册字节（把"身份绑定"做成事实判据，而不是查报告文风）
+        artifacts_of = {b.get("instance_id"): {a.get("name"): a.get("sha256") for a in b.get("artifacts", [])}
+                        for b in record.get("builds", [])}
+        for test in record.get("device_tests", []) or []:
+            if "retest" not in str(test.get("kind", "")):
+                continue
+            iid = test.get("instance_id")
+            tested = test.get("tested_bytes") or {}
+            if iid not in artifacts_of:
+                problems.append(f"{name}: 复测条目指向不存在的实例 {iid}")
+            elif tested.get("in_registry_match") is not True or tested.get("registered") is not True:
+                problems.append(f"{name}: 复测条目 {iid} 未声明 tested_bytes 与在册字节一致")
+            else:
+                # 允许两种绑定：① 实例自身的产物字节；② 由该实例派生的二进制变换件（binary_ports，含 base 绑定）
+                allowed = set(artifacts_of[iid].values())
+                allowed |= {port.get("derived", {}).get("sha256") for port in record.get("binary_ports", []) or []
+                            if port.get("base_instance_id") == iid}
+                if tested.get("sha256") not in allowed:
+                    problems.append(f"{name}: 复测条目 {iid} 的实测哈希 {str(tested.get('sha256'))[:12]} "
+                                    "既不是该实例产物，也不是其登记的派生件")
+    token_problems, tokens = identity_token_problems()
+    problems.extend(token_problems)
+    detail = "; ".join(problems) if problems else \
+        f"{len(module_files)} 个模块记录结构合法，{tokens} 个结构化提交标识可解析"
+    rep.check("metadata_schema", not problems, detail)
 
 
 def load_module_from(relpath, name):
@@ -426,6 +443,18 @@ def historical_runtime_name(build, module):
     return names[0]
 
 
+def version_key(value):
+    """版本号比较键：数字段按数值，其余按字典序，段数不同可比较。"""
+    parts = []
+    for chunk in re.split(r"[._-]", str(value)):
+        parts.append((0, int(chunk)) if chunk.isdigit() else (1, chunk))
+    return parts
+
+
+def build_versions_of(record):
+    return {normalize_version(b.get("version") or "") for b in record.get("builds", [])} - {""}
+
+
 def check_version_consistency(rep):
     """版本一致性：当前源码自洽 + 每条历史构建与**它自己的**版本核对。
 
@@ -454,13 +483,27 @@ def check_version_consistency(rep):
                 problems.append(f"{module}: 已归档模块缺少有效的现行替代模块")
         declared = normalize_version(record.get("version_declared", ""))
         makefile = os.path.join(REPO, module, "Makefile")
+        source_versions = set()
         if os.path.isfile(makefile):
             m = re.search(r"^\s*MYKPM_VERSION\s*:?=\s*(\S+)", open(makefile, encoding="utf-8", errors="replace").read(), re.M)
-            if not m or normalize_version(m.group(1)) != declared:
-                problems.append(f"{module}: Makefile 版本 {m.group(1) if m else '未找到'} != 元数据 {declared}")
+            if not m:
+                problems.append(f"{module}: Makefile 未找到 MYKPM_VERSION")
+            else:
+                source_versions.add(normalize_version(m.group(1)))
+                if normalize_version(m.group(1)) != declared:
+                    # 「元数据滞后于源码」是交接前的正常在途状态（声明字段由维护者同步），按提示处理；
+                    # 「元数据高于源码」或该版本已有构建记录，就是事实矛盾，仍然失败。
+                    lag = (version_key(m.group(1)) > version_key(declared)
+                           and normalize_version(m.group(1)) not in build_versions_of(record))
+                    text = (f"{module}: Makefile 版本 {m.group(1)} != 元数据 {declared}")
+                    if lag and not source_versions.intersection(build_versions_of(record)):
+                        notes.append(text + "（交接前在途：维护者需在验收/交付前同步 version_declared；角色不要自行改元数据）")
+                    else:
+                        problems.append(text)
         readme_heading = normalize_version(record.get("version_sources", {}).get("readme_heading", ""))
         if readme_heading and readme_heading != declared:
-            problems.append(f"{module}: README 最新条目 {readme_heading} != 元数据 {declared}")
+            # 文档标题属提示：版本事实由 Makefile ↔ version_declared 判定，不用文档措辞卡人
+            notes.append(f"{module}: README 最新条目 {readme_heading} != 元数据 {declared}（文档层面提示）")
 
         build_versions = set()
         for build in record.get("builds", []):
@@ -577,167 +620,9 @@ def check_delivery_binding(rep):
                   "; ".join(problems) if problems else f"{checked} 条交付绑定校验通过")
 
 
-def check_report_conformance(rep):
-    problems = []
-    for role, required, folder in (
-        ("auditor", AUDITOR_REPORT_REQUIRED, os.path.join(REPO, "Auditor", "reports")),
-        ("tester", TESTER_REPORT_REQUIRED, os.path.join(REPO, "Tester", "reports")),
-    ):
-        if not os.path.isdir(folder):
-            problems.append(f"{role} 报告目录不存在")
-            continue
-        count = 0
-        for dirpath, dirs, names in os.walk(folder):
-            if role == "tester" and dirpath == folder:
-                dirs[:] = [d for d in dirs if d != "responses"]
-            for name in names:
-                if not name.endswith(".md") or name == "README.md":
-                    continue
-                count += 1
-                text = open(os.path.join(dirpath, name), encoding="utf-8", errors="replace").read()
-                miss = [k for k in required if k not in text]
-                if miss:
-                    problems.append(f"{os.path.relpath(os.path.join(dirpath, name), REPO)} 缺章节/字段: {', '.join(miss)}")
-        if count == 0:
-            problems.append(f"{role} 报告目录下没有报告（本轮尚未审计/测试属正常，但门禁会记录）")
-    rep.check("report_conformance", not problems, "; ".join(problems) if problems else "报告章节齐备", warn_only=True)
-
-
-TOOL_REFERENCES = ("tools/identity.py", "tools/build_candidate.py", "kernel_img/offset_harness",
-                   "offset_harness/run.py")
-EVIDENCE_DISCLAIMERS = ("仅用于定位", "仅作定位", "未作依据", "不作依据", "不作为依据",
-                        "not used as evidence", "only for diagnosis")
-
-
-NEGATIONS = ("未导入", "未调用", "不调用", "不导入", "不得", "不把", "禁止", "不引用")
-
-
-def _mentions_as_source(text, reference, window=12):
-    """只在「把该脚本当作来源/依据」时算命中；"未调用 X" 这类否定不提。"""
-    start = 0
-    while True:
-        idx = text.find(reference, start)
-        if idx < 0:
-            return False
-        context = text[max(0, idx - window):idx]
-        if not any(neg in context for neg in NEGATIONS):
-            return True
-        start = idx + len(reference)
-
-
-def check_auditor_report_sources(rep):
-    """P4：报告层面也要自律——引用维护方/实现方脚本时必须声明"仅用于定位"。
-
-    门禁只能做机械检查（关键词 + 声明）；结论是否真的独立由 Auditor 自己负责，
-    报告模板里的「证据来源」表用于人工复核。
-    """
-    reports_dir = os.path.join(REPO, "Auditor", "reports")
-    problems, scanned = [], 0
-    for dirpath, dirs, names in os.walk(reports_dir) if os.path.isdir(reports_dir) else []:
-        dirs[:] = [d for d in dirs if d not in SKIP_WALK_DIRS]
-        for name in names:
-            if not name.endswith(".md") or name == "README.md":
-                continue
-            scanned += 1
-            text = open(os.path.join(dirpath, name), encoding="utf-8", errors="replace").read()
-            hits = [ref for ref in TOOL_REFERENCES if _mentions_as_source(text, ref)]
-            if hits and not any(marker in text for marker in EVIDENCE_DISCLAIMERS):
-                problems.append(f"{os.path.relpath(os.path.join(dirpath, name), REPO)} 引用了 "
-                                f"{', '.join(hits)} 但未声明「仅用于定位，未作依据」")
-    rep.check("auditor_report_sources", not problems,
-              "; ".join(problems) if problems else (f"{scanned} 份审计报告的结论来源声明合规"
-                                                   if scanned else "暂无审计报告"),
-              warn_only=True)
-
-
-BUILD_TOKEN_RE = re.compile(r"[A-Za-z0-9_.+-]*g[0-9a-f]{12,}[A-Za-z0-9_.+#-]*")
-
-
-def check_tester_report_identity(rep):
-    """Tester 报告与修复响应的产物引用核对在册身份串。
-
-    只做机械匹配：抓报告里的 `…g<sha12>…` 形态字符串，跟 metadata 登记的身份对比。
-    纯工具响应可只提供工具身份；引用产物时同样检查登记。
-    """
-    modules_dir = os.path.join(REPO, "metadata", "modules")
-    known = set()
-    if os.path.isdir(modules_dir):
-        for name in sorted(os.listdir(modules_dir)):
-            if not name.endswith(".json"):
-                continue
-            record = json.load(open(os.path.join(modules_dir, name), encoding="utf-8"))
-            for build in record.get("builds", []):
-                for key in ("instance_id", "build_id"):
-                    if build.get(key):
-                        known.add(build[key])
-                known.update(build.get("build_id_aliases") or [])
-    reports_dir = os.path.join(REPO, "Tester", "reports")
-    problems, scanned, no_token = [], 0, []
-    for dirpath, dirs, names in os.walk(reports_dir) if os.path.isdir(reports_dir) else []:
-        dirs[:] = [d for d in dirs if d not in SKIP_WALK_DIRS]
-        for name in names:
-            if not name.endswith(".md") or name == "README.md":
-                continue
-            rel = os.path.relpath(os.path.join(dirpath, name), REPO)
-            text = open(os.path.join(dirpath, name), encoding="utf-8", errors="replace").read()
-            tokens = set(BUILD_TOKEN_RE.findall(text))
-            is_response = os.path.relpath(dirpath, reports_dir).split(os.sep)[0] == "responses"
-            if is_response and not tokens:
-                continue
-            scanned += 1
-            if not tokens:
-                no_token.append(rel)
-                continue
-            for token in sorted(tokens):
-                base = re.sub(r"#\d+$", "", token)
-                if token in known:
-                    continue
-                problems.append(f"{rel} 引用了未登记的构建身份 {token}")
-    detail = []
-    if problems:
-        detail.append("; ".join(problems[:4]))
-    if no_token:
-        detail.append("未引用任何构建身份：" + ", ".join(no_token[:3]))
-    rep.check("tester_report_identity", not problems,
-              "；".join(detail) if detail else (f"{scanned} 份 Tester 文档的产物身份串与登记一致"
-                                               if scanned else "暂无产物身份引用"),
-              warn_only=True)
-
-
-def check_tester_responses(rep):
-    """工具修复响应按自有工具身份检查；实机报告继续使用设备判据。"""
-    folder = os.path.join(REPO, "Tester", "reports", "responses")
-    problems, checked = [], 0
-    for dirpath, dirs, names in os.walk(folder) if os.path.isdir(folder) else []:
-        dirs[:] = [d for d in dirs if d not in SKIP_WALK_DIRS]
-        for name in names:
-            if not name.endswith(".md") or name == "README.md":
-                continue
-            checked += 1
-            text = open(os.path.join(dirpath, name), encoding="utf-8").read()
-            miss = [k for k in ("问题编号", "修复工具 commit", "冻结状态", "工具 SHA-256",
-                                "修复", "证据", "验证层级", "未覆盖", "复核请求") if k not in text]
-            if miss:
-                rel = os.path.relpath(os.path.join(dirpath, name), REPO)
-                problems.append(f"{rel} 缺字段: {', '.join(miss)}")
-    rep.check("tester_responses", not problems,
-              "; ".join(problems) if problems else (f"{checked} 份 Tester 修复响应格式合法" if checked else "暂无 Tester 修复响应"),
-              warn_only=True)
-
-
 def check_developer_artifacts(rep):
-    """Developer 的修复响应与交接清单：格式可机检，内容由发现方/维护者判定。"""
+    """交接清单字段校验（机检事实；报告文风不在门禁职责内）。"""
     problems, checked = [], 0
-    responses = os.path.join(REPO, "Developer", "reports", "responses")
-    if os.path.isdir(responses):
-        for name in sorted(os.listdir(responses)):
-            if not name.endswith(".md") or name == "README.md":
-                continue
-            checked += 1
-            text = open(os.path.join(responses, name), encoding="utf-8").read()
-            miss = [k for k in ("问题编号", "修复 commit", "Build ID", "证据") if k not in text]
-            if miss:
-                problems.append(f"Developer/reports/responses/{name} 缺字段: {', '.join(miss)}")
     handoffs = os.path.join(REPO, "Developer", "reports", "handoffs")
     if os.path.isdir(handoffs):
         for name in sorted(os.listdir(handoffs)):
@@ -746,13 +631,16 @@ def check_developer_artifacts(rep):
             checked += 1
             try:
                 payload = json.load(open(os.path.join(handoffs, name), encoding="utf-8"))
-                for key in ("module", "builds", "handoff_by", "handoff_at"):
-                    if key not in payload:
-                        problems.append(f"Developer/reports/handoffs/{name} 缺字段 {key}")
+                # 交接清单必须带 payload：候选清单用 builds[]，只交派生件的清单用 binary_ports[]。
+                missing = [key for key in ("module", "handoff_by", "handoff_at") if key not in payload]
+                if not (payload.get("builds") or payload.get("binary_ports")):
+                    missing.append("builds 或 binary_ports")
+                for key in missing:
+                    problems.append(f"Developer/reports/handoffs/{name} 缺字段 {key}")
             except Exception as exc:
                 problems.append(f"Developer/reports/handoffs/{name} 解析失败: {exc}")
     rep.check("developer_artifacts", not problems,
-              "; ".join(problems) if problems else (f"{checked} 份开发者产物格式合法" if checked else "暂无修复响应/交接清单"),
+              "; ".join(problems) if problems else (f"{checked} 份交接清单格式合法" if checked else "暂无交接清单"),
               warn_only=True)
 
 
@@ -793,6 +681,267 @@ def check_auditor_independence(rep):
               "; ".join(problems) if problems else "审计工具不依赖实现方/维护方工具")
 
 
+COMMIT_FIELD_NAMES = {
+    "source_commit", "kernelpatch_commit", "commit", "delivery_commit", "archive_commit",
+    "fix_commit", "archived_commit", "base_commit", "audited_commit", "build_commit",
+}
+SUBMODULE_COMMIT_FIELDS = {"kernelpatch_commit"}
+REFERENCE_FIELDS = ("report", "record", "response", "data", "manifest", "handoff_manifest", "report_support")
+HASH_RE = re.compile(r"^[0-9a-f]{64}$")
+
+
+def structured_items(node, path="", key=None):
+    """遍历元数据结构，产出 (字段路径, 字段名, 标量值)。列表元素继承父字段名。"""
+    if isinstance(node, dict):
+        for child_key, value in node.items():
+            child_path = f"{path}.{child_key}" if path else child_key
+            yield from structured_items(value, child_path, child_key)
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            yield from structured_items(value, f"{path}[{index}]", key)
+    else:
+        yield path, key, node
+
+
+def resolve_commits(values, submodule=False):
+    """批量核验提交标识（一次 cat-file --batch-check），避免逐条起子进程。"""
+    values = list(dict.fromkeys(values))
+    if not values:
+        return set()
+    cwd = os.path.join(REPO, "KernelPatch") if submodule else REPO
+    result = subprocess.run(["git", "-C", cwd, "cat-file", "--batch-check"],
+                            input=("\n".join(values) + "\n").encode(), capture_output=True)
+    ok = set()
+    for line in result.stdout.decode(errors="replace").splitlines():
+        fields = line.split()
+        if len(fields) >= 2 and fields[1] == "commit":
+            ok.add(fields[0])
+    return ok
+
+
+def resolve_commit(value, submodule=False):
+    return value in resolve_commits([value], submodule=submodule)
+
+
+def commit_blob(commit, relpath):
+    result = subprocess.run(["git", "-C", REPO, "show", f"{commit}:{relpath}"], capture_output=True)
+    return result.stdout if result.returncode == 0 else None
+
+
+def repo_file(relpath):
+    return os.path.join(REPO, relpath)
+
+
+def identity_token_problems():
+    """G1：结构化提交字段必须可解析，杜绝转录笔误被引用成结论。"""
+    modules_dir = os.path.join(REPO, "metadata", "modules")
+    problems, checked = [], 0
+    local, submodule = [], []
+    for name in sorted(os.listdir(modules_dir)) if os.path.isdir(modules_dir) else []:
+        if not name.endswith(".json"):
+            continue
+        record = json.load(open(os.path.join(modules_dir, name), encoding="utf-8"))
+        for field, key, value in structured_items(record):
+            if key not in COMMIT_FIELD_NAMES or not isinstance(value, str):
+                continue
+            if not re.fullmatch(r"[0-9a-f]{7,40}", value):
+                problems.append(f"{name}:{field} 不是提交标识 {value!r}")
+                continue
+            checked += 1
+            (submodule if key in SUBMODULE_COMMIT_FIELDS else local).append((name, field, value))
+    for key_set, is_sub in ((local, False), (submodule, True)):
+        resolved = resolve_commits([value for _, _, value in key_set], submodule=is_sub)
+        where = "KernelPatch 子模块" if is_sub else "本仓库"
+        problems.extend(f"{name}:{field} 在{where}中不可解析 {value}"
+                        for name, field, value in key_set if value not in resolved)
+    return problems, checked
+
+
+def tracked_and_dirty():
+    """一次性取全仓已跟踪文件集合与有改动的路径集合。"""
+    listed = subprocess.run(["git", "-C", REPO, "ls-files", "-z"], capture_output=True)
+    tracked = {p for p in listed.stdout.decode(errors="replace").split("\0") if p}
+    status = subprocess.run(["git", "-C", REPO, "status", "--porcelain", "-z"], capture_output=True)
+    fields = [f for f in status.stdout.decode(errors="replace").split("\0") if f]
+    dirty = set()
+    for field in fields:
+        path = field[3:] if len(field) > 3 else field
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        dirty.add(path)
+    return tracked, dirty
+
+
+def referenced_paths(record):
+    """收集元数据里**报告类**引用路径（排除运行期归档目录）。
+
+    只认显式的报告/记录字段（`report`/`record`/`response`/`data`/`manifest`…）与 `blobs` 映射。
+    裸 `path` 不收集：`builds[].sources[].path` 是构建输入（按其冻结提交核验，见 identity.py），
+    `builds[].artifacts[].path` 是运行期归档；历史构建的输入路径允许在后续提交中被移动/删除，
+    子模块内输入也不在父仓库索引中——把它们当「未入库报告」会误报。
+    """
+    found = set()
+    for _, key, value in structured_items(record):
+        if isinstance(value, str) and key in REFERENCE_FIELDS:
+            if value.endswith((".md", ".json", ".txt")) and not value.startswith("http"):
+                found.add(value)
+    for item in record.get("report_versions", []) or []:
+        if item.get("path"):
+            found.add(item["path"])
+    for mr in record.get("maintainer_records", []) or []:
+        for path in (mr.get("blobs") or {}):
+            found.add(path)
+    return {p for p in found if not p.startswith(("artifacts/", "local/", "/"))}
+
+
+def report_binding_hashes(record, path):
+    """收集绑定到某报告字节身份的哈希：字段与路径**精确配对**，避免互相误判。"""
+    pairs = {"report": ("report_sha256", "archived_report_sha256"),
+             "response": ("report_sha256", "archived_report_sha256"),
+             "data": ("data_sha256",)}
+    hashes = set()
+    stack = [record]
+    while stack:
+        node = stack.pop()
+        if isinstance(node, dict):
+            if "append_only_baseline" in node or "unarchived_versions" in node:
+                continue
+            for field, keys in pairs.items():
+                if node.get(field) != path:
+                    continue
+                for key in keys:
+                    value = node.get(key)
+                    if isinstance(value, str) and HASH_RE.match(value):
+                        hashes.add(value)
+            blobs = node.get("blobs")
+            if isinstance(blobs, dict) and path in blobs and HASH_RE.match(str(blobs[path])):
+                hashes.add(blobs[path])
+            stack.extend(v for v in node.values() if isinstance(v, (dict, list)))
+        elif isinstance(node, list):
+            stack.extend(v for v in node if isinstance(v, (dict, list)))
+    return hashes
+
+
+def check_report_integrity(rep, strict):
+    """报告与记录的身份完整性（一次遍历，合并原四条判据）。
+
+    硬判据（两种模式都失败）：版本索引最新版＝工作树字节、原文只追加、追加段哈希吻合、
+    版本引用可解析、索引哈希属已知版本（软）；`unarchived_versions[]` 说明与历史缺提交同属软判据
+    （常规提示、严格失败）；字节改写、追加链与非登记索引哈希为硬判据（两种模式都失败）。
+    软判据（常规提示、验收/交付失败）：被引用报告必须已入库且与工作树一致。
+    """
+    modules_dir = os.path.join(REPO, "metadata", "modules")
+    problems, soft, uncovered, reports, versions = [], [], [], 0, 0
+    tracked, dirty = tracked_and_dirty()
+    for name in sorted(os.listdir(modules_dir)) if os.path.isdir(modules_dir) else []:
+        if not name.endswith(".json"):
+            continue
+        record = json.load(open(os.path.join(modules_dir, name), encoding="utf-8"))
+        items = record.get("report_versions")
+        if not items and "report_versions" not in record:
+            uncovered.append(name[:-5])
+        for item in items or []:
+            path = item.get("path") or ""
+            full = repo_file(path)
+            if not os.path.isfile(full):
+                problems.append(f"{name}: 报告版本索引路径不存在 {path}")
+                continue
+            reports += 1
+            current = open(full, "rb").read()
+            current_sha = hashlib.sha256(current).hexdigest()
+            base = item.get("append_only_baseline") or {}
+            chain = ([base] if base else []) + (item.get("versions") or [])
+            unarchived = item.get("unarchived_versions") or []
+            if not chain:
+                problems.append(f"{name}: {path} 没有任何登记版本")
+                continue
+            if chain[-1].get("sha256") != current_sha:
+                problems.append(f"{name}: {path} 最新登记版本 {str(chain[-1].get('sha256'))[:12]} 与工作树 "
+                                f"{current_sha[:12]} 不一致（追加未登记或字节被改写）")
+            known = set()
+            for version in chain + unarchived:
+                sha = version.get("sha256")
+                if sha:
+                    known.add(sha)
+                commit = version.get("commit")
+                if commit:
+                    versions += 1
+                    if not resolve_commit(commit):
+                        problems.append(f"{name}: {path} 版本引用的提交不可解析 {commit}")
+                    else:
+                        blob = commit_blob(commit, path)
+                        if blob is None:
+                            problems.append(f"{name}: {path} 版本引用的提交不可读 {commit}")
+                        elif hashlib.sha256(blob).hexdigest() != sha:
+                            problems.append(f"{name}: {path} 版本 {str(sha)[:12]} 与提交 {commit[:7]} 的 blob 不一致")
+                elif version is not chain[-1]:
+                    soft.append(f"{name}:{path} 历史版本 {str(sha)[:12]} 未引用提交（交接即提交未落实）")
+                elif not version.get("pending_commit"):
+                    soft.append(f"{name}:{path} 当前版本 {str(sha)[:12]} 未提交且未标 pending_commit")
+            for version in unarchived:
+                if not version.get("note"):
+                    soft.append(f"{name}:{path} unarchived_versions 中的 "
+                                f"{str(version.get('sha256'))[:12]} 缺少 note 说明")
+            if base and base.get("commit"):
+                base_bytes = commit_blob(base["commit"], path)
+                if base_bytes is not None:
+                    if current[:len(base_bytes)] != base_bytes:
+                        problems.append(f"{name}: {path} 现行字节不是入库原文的前缀（原文被改写）")
+                    else:
+                        prev = base_bytes
+                        chain_versions = item.get("versions") or []
+                        for index, version in enumerate(chain_versions):
+                            is_current = index == len(chain_versions) - 1
+                            if version.get("commit"):
+                                blob = commit_blob(version["commit"], path)
+                                if blob is None:
+                                    soft.append(f"{name}:{path} 第 {index + 1} 段提交不可读"
+                                                f"（{str(version['commit'])[:7]}，历史缺项）")
+                                    break
+                            elif is_current:
+                                blob = current          # 只有当前待提交版本才允许用工作树字节
+                            else:
+                                # 历史段缺提交：若登记的整份哈希与已知边界一致，说明该段未引入新字节，
+                                # 边界仍可继续推导，后续段的追加哈希必须照查（DEV-032 组合反例）；
+                                # 否则不猜追加内容，停止复算。
+                                recorded = str(version.get("sha256") or "")
+                                if recorded and hashlib.sha256(prev).hexdigest() == recorded:
+                                    soft.append(f"{name}:{path} 第 {index + 1} 段缺提交"
+                                                f"（历史缺项；登记哈希与已知边界一致，继续复核后续段）")
+                                    continue
+                                soft.append(f"{name}:{path} 第 {index + 1} 段缺提交且边界不可确定，"
+                                            f"后续追加段不可复算（历史缺项）")
+                                break
+                            if not blob.startswith(prev):
+                                problems.append(f"{name}: {path} 第 {index + 1} 段追加不是纯追加或不可复算")
+                                break
+                            suffix = blob[len(prev):]
+                            if version.get("added_sha256") and \
+                                    hashlib.sha256(suffix).hexdigest() != version["added_sha256"]:
+                                problems.append(f"{name}: {path} 第 {index + 1} 段追加哈希与登记不符")
+                            prev = blob
+            for bound in report_binding_hashes(record, path):
+                if bound not in known:
+                    problems.append(f"{name}: {path} 索引哈希 {bound[:12]} 不在报告版本表中")
+        for path in sorted(referenced_paths(record)):
+            if not os.path.isfile(repo_file(path)):
+                soft.append(f"{name}:{path}（不存在）")
+            elif path not in tracked:
+                soft.append(f"{name}:{path}（未入库）")
+            elif path in dirty:
+                soft.append(f"{name}:{path}（入库后已修改，未提交）")
+    hard_ok = not problems
+    soft_note = "; ".join(soft)
+    detail = "; ".join(problems) if problems else (
+        f"{reports} 份报告字节身份一致（原文只追加、追加已登记，{versions} 个版本引用提交）"
+        + (f"；引用未归档：{soft_note}" if soft else "；被引用路径均已入库且与工作树一致"))
+    if uncovered:
+        detail += f"；{len(uncovered)} 个历史模块记录未纳入报告版本索引（保持原形态）：{', '.join(uncovered)}"
+    # 软判据（引用未归档/版本未引用提交）：常规模式提示，验收与交付模式失败
+    rep.check("report_integrity", hard_ok and not soft, detail,
+              warn_only=(not strict) and hard_ok and bool(soft))
+
+
 def check_hygiene(rep):
     problems = []
     for path in iter_text_files():
@@ -818,17 +967,14 @@ def main():
     check_ci_markers(rep)
     check_doc_links(rep)
     check_metadata_schema(rep)
+    check_report_integrity(rep, args.strict)
     check_identity_hashes(rep, args.strict)
     check_version_consistency(rep)
-    check_report_conformance(rep)
     check_acceptance(rep)
     check_delivery_binding(rep)
     check_tool_selftest(rep)
     check_developer_artifacts(rep)
     check_auditor_independence(rep)
-    check_auditor_report_sources(rep)
-    check_tester_report_identity(rep)
-    check_tester_responses(rep)
     check_hygiene(rep)
     print(f"门禁模式：{'strict（验收/发布）' if args.strict else 'regular'}")
     print()

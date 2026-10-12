@@ -182,6 +182,44 @@ def scan_file(path):
     return hits
 
 
+def discover_module_files(mdir):
+    """发现模块源码文件。
+    若存在 SOURCES.json（如基于裁剪上游子模块的 zram_zstd），聚焦于模块第一方文件与
+    SOURCES.json 明确声明参与编译的源文件/头文件，避免扫描 upstream 中无关的
+    examples/programs/tests 等用户态代码；
+    常规模块则递归扫描 *.c 与 *.h，并跳过非源码/构建产物目录。
+    """
+    sources_json_path = os.path.join(mdir, "SOURCES.json")
+    if os.path.isfile(sources_json_path):
+        try:
+            with open(sources_json_path, encoding="utf-8") as f:
+                sdata = json.load(f)
+            upstream_files = [os.path.normpath(os.path.join(mdir, item["file"]))
+                              for item in sdata.get("files", []) if "file" in item]
+            submod = sdata.get("submodule")
+            first_party = []
+            for root, dirs, fnames in os.walk(mdir):
+                dirs[:] = [d for d in dirs if d not in {"__pycache__", ".git", "out", "build"}]
+                if submod and os.path.normpath(root).startswith(os.path.normpath(os.path.join(mdir, submod))):
+                    continue
+                for fn in fnames:
+                    if fn.endswith((".c", ".h")):
+                        first_party.append(os.path.normpath(os.path.join(root, fn)))
+            all_files = sorted(set(first_party + upstream_files))
+            return [f for f in all_files if os.path.isfile(f)]
+        except Exception:
+            pass
+
+    exclude = {"__pycache__", ".git", "out", "build", "tests", "test", "examples", "programs", "zlibWrapper", "doc", "docs"}
+    files = []
+    for root, dirs, fnames in os.walk(mdir):
+        dirs[:] = [d for d in dirs if d not in exclude]
+        for fn in fnames:
+            if fn.endswith((".c", ".h")):
+                files.append(os.path.normpath(os.path.join(root, fn)))
+    return sorted(files)
+
+
 def main():
     ap = argparse.ArgumentParser(description="边界扫描 + 安全评估（启发式）")
     ap.add_argument("module")
@@ -193,8 +231,7 @@ def main():
     if not os.path.isdir(mdir):
         print(f"error: 模块目录不存在 {args.module}", file=sys.stderr)
         return 2
-    files = sorted(glob.glob(os.path.join(mdir, "**", "*.c"), recursive=True) +
-                   glob.glob(os.path.join(mdir, "**", "*.h"), recursive=True))
+    files = discover_module_files(mdir)
     all_hits = []
     for path in files:
         all_hits.extend(scan_file(path))
