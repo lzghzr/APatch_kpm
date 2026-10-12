@@ -73148,7 +73148,76 @@
       "recorded_by": "维护者"
     }
   ],
-  "deliveries": [],
+  "deliveries": [
+    {
+      "instance_id": "zram_zstd-1.0.0+g35a93831512f.r32a0362b.kpb51197a.ndk26.3.11579264#1",
+      "build_id": "zram_zstd-1.0.0+g35a93831512f.r32a0362b.kpb51197a.ndk26.3.11579264",
+      "source_commit": "c068b23c8be43d3652780ed8f079bfe3b9799203",
+      "fingerprint_sha256": "32a0362bdf3c8296acd4b35e527203698314070d43780d6aedfa1db991907fa1",
+      "delivery_commit": "591bf5e599a8c827f3041617fdf3482dcaaea76f",
+      "tag": "",
+      "artifacts": {
+        "zram_zstd_1.0.0.kpm": "3a91f9631c2dba8dde5616512333ce17ca262f934ed6f76cfafb2b6ff7f25e10"
+      },
+      "signature_verified": true,
+      "signature_note": "git verify-commit 通过",
+      "source_ancestor": false,
+      "bound_by": "维护者",
+      "bound_at": "2026-10-12T03:32:37Z",
+      "note": "1.0.0 交付内容 D；普通候选与已登记二进制派生件按各自验收范围。"
+    },
+    {
+      "instance_id": "zram_zstd-1.0.0_baselines+g35a93831512f.rb8abf97f.kpb51197a.ndk26.3.11579264#1",
+      "build_id": "zram_zstd-1.0.0_baselines+g35a93831512f.rb8abf97f.kpb51197a.ndk26.3.11579264",
+      "source_commit": "c068b23c8be43d3652780ed8f079bfe3b9799203",
+      "fingerprint_sha256": "b8abf97f133c914d7a74a456a740cf5f3d49770862339092e54c84c47959f00d",
+      "delivery_commit": "591bf5e599a8c827f3041617fdf3482dcaaea76f",
+      "tag": "",
+      "artifacts": {
+        "zram_zstd_1.0.0_baselines.kpm": "f90d2e1713e6aa1f8c6329571ee6df9f8c5970899382b1a7a76f132677646f88"
+      },
+      "signature_verified": true,
+      "signature_note": "git verify-commit 通过",
+      "source_ancestor": false,
+      "bound_by": "维护者",
+      "bound_at": "2026-10-12T03:32:38Z",
+      "note": "1.0.0 交付内容 D；普通候选与已登记二进制派生件按各自验收范围。"
+    },
+    {
+      "instance_id": "zram_zstd-1.0.0_baselines_debug+g35a93831512f.r84e7517d.kpb51197a.ndk26.3.11579264#1",
+      "build_id": "zram_zstd-1.0.0_baselines_debug+g35a93831512f.r84e7517d.kpb51197a.ndk26.3.11579264",
+      "source_commit": "c068b23c8be43d3652780ed8f079bfe3b9799203",
+      "fingerprint_sha256": "84e7517dbb5e26a040b7d302e1a38d55540dbb45355a6f64b82f1264d094c12f",
+      "delivery_commit": "591bf5e599a8c827f3041617fdf3482dcaaea76f",
+      "tag": "",
+      "artifacts": {
+        "zram_zstd_1.0.0_baselines_debug.kpm": "3e0bbda70ecc90d53b1c7488af7cdaac2e0024d098f3b704f296cdc91a1682a8"
+      },
+      "signature_verified": true,
+      "signature_note": "git verify-commit 通过",
+      "source_ancestor": false,
+      "bound_by": "维护者",
+      "bound_at": "2026-10-12T03:32:38Z",
+      "note": "1.0.0 交付内容 D；普通候选与已登记二进制派生件按各自验收范围。"
+    },
+    {
+      "instance_id": "zram_zstd-1.0.0_debug+g35a93831512f.r95cc9104.kpb51197a.ndk26.3.11579264#1",
+      "build_id": "zram_zstd-1.0.0_debug+g35a93831512f.r95cc9104.kpb51197a.ndk26.3.11579264",
+      "source_commit": "c068b23c8be43d3652780ed8f079bfe3b9799203",
+      "fingerprint_sha256": "95cc9104371469128482007db1ed1ed43548b2dc6f1fe78cf9b895ffd89d60c8",
+      "delivery_commit": "591bf5e599a8c827f3041617fdf3482dcaaea76f",
+      "tag": "",
+      "artifacts": {
+        "zram_zstd_1.0.0_debug.kpm": "27dbd862e86095748e30ab959e206668beb6529b35d494fb54cde521883825ec"
+      },
+      "signature_verified": true,
+      "signature_note": "git verify-commit 通过",
+      "source_ancestor": false,
+      "bound_by": "维护者",
+      "bound_at": "2026-10-12T03:32:38Z",
+      "note": "1.0.0 交付内容 D；普通候选与已登记二进制派生件按各自验收范围。"
+    }
+  ],
   "report_versions": [
     {
       "path": "Auditor/reports/2026-10-10-zram-zstd-module-audit.md",
@@ -73920,9 +73989,21 @@
       ],
       "verification": "四个 candidate 核验通过；整理保持模块树和全部构建输入一致。31 项维护者判据、49 项产物门禁、Tester mock 自检通过；原报告、候选产物和清单保留。",
       "pending": "交付 D 签名、逐实例绑定、delivery 回执 E、跟踪文件同步和 MNT-017 独立关闭；派生交接清单缺两来源字段的警告保留。"
+    },
+    {
+      "at": "2026-10-12T03:44:15Z",
+      "by": "维护者",
+      "scope": "zram_zstd 1.0.0 实际签名交付 D、四实例交付绑定、派生字节绑定与核验回执归档；MNT-017 等待独立复核。",
+      "record": "docs/records/2026-10-11-zram-zstd-1.0.0-delivery-record.md",
+      "receipt": "docs/records/2026-10-11-zram-zstd-1.0.0-delivery-receipt.json",
+      "receipt_sha256": "f03fa8696727be26807afa1361848f69572e3c22fba659637aa5a90a2bba3646",
+      "delivery_commit": "591bf5e599a8c827f3041617fdf3482dcaaea76f",
+      "source_commit": "c068b23c8be43d3652780ed8f079bfe3b9799203",
+      "verification": "三笔实际验签；4/4 delivery 核验零问题；两份派生文件及回执核对；D 接收副本一致。",
+      "receiving_method": "用户指定 Git pull --ff-only，从本地仓库拉取；以后不重复逐文件复制。"
     }
   ],
-  "updated_at": "2026-10-12T03:08:39Z",
+  "updated_at": "2026-10-12T03:44:15Z",
   "updated_by": "维护者",
   "risk_acceptances": [
     {
@@ -74450,6 +74531,48 @@
           "Android 4.9/4.14 设备离线，属未验证；5.15+ 不需也不得加载派生件"
         ]
       }
+    }
+  ],
+  "binary_port_deliveries": [
+    {
+      "kind": "binary-port-delivery",
+      "source_commit": "c068b23c8be43d3652780ed8f079bfe3b9799203",
+      "base_instance_id": "zram_zstd-1.0.0+g35a93831512f.r32a0362b.kpb51197a.ndk26.3.11579264#1",
+      "base_artifact_sha256": "3a91f9631c2dba8dde5616512333ce17ca262f934ed6f76cfafb2b6ff7f25e10",
+      "derived": {
+        "path": "artifacts/binary-port/zram_zstd/e829df670157a8024484e16840858f07b3613ec292b252d5c1b89333e3ca535c/zram_zstd_1.0.0.kpm",
+        "name": "zram_zstd_1.0.0.kpm",
+        "sha256": "e829df670157a8024484e16840858f07b3613ec292b252d5c1b89333e3ca535c",
+        "size": 548912
+      },
+      "tool_sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033",
+      "conversion_receipt_sha256": "32da113bef5fe2d9e271cb73eedbae150615bba418e8a88d9d419457b11eadae",
+      "delivery_commit": "591bf5e599a8c827f3041617fdf3482dcaaea76f",
+      "signature_verified": true,
+      "bound_by": "维护者",
+      "bound_at": "2026-10-12T03:44:15Z",
+      "scope": "二进制派生件：变换可复算（Auditor 独立重跑逐字节一致）+ 4.4 真机 12/12 强判据（绑定基准实例与派生哈希）",
+      "audit_report": "Auditor/reports/2026-10-11-zram-zstd-1.0.0-binary-port-audit.md"
+    },
+    {
+      "kind": "binary-port-delivery",
+      "source_commit": "c068b23c8be43d3652780ed8f079bfe3b9799203",
+      "base_instance_id": "zram_zstd-1.0.0_debug+g35a93831512f.r95cc9104.kpb51197a.ndk26.3.11579264#1",
+      "base_artifact_sha256": "27dbd862e86095748e30ab959e206668beb6529b35d494fb54cde521883825ec",
+      "derived": {
+        "path": "artifacts/binary-port/zram_zstd/75a124a68c569bcad1bba97d3a906daea0dc04bed1abefaa37948d46c88fb7fd/zram_zstd_1.0.0_debug.kpm",
+        "name": "zram_zstd_1.0.0_debug.kpm",
+        "sha256": "75a124a68c569bcad1bba97d3a906daea0dc04bed1abefaa37948d46c88fb7fd",
+        "size": 548920
+      },
+      "tool_sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033",
+      "conversion_receipt_sha256": "e520eaaf57d2d1d175fedf0b74441b1c9c19dba9a86a53d5900377739fa2c939",
+      "delivery_commit": "591bf5e599a8c827f3041617fdf3482dcaaea76f",
+      "signature_verified": true,
+      "bound_by": "维护者",
+      "bound_at": "2026-10-12T03:44:15Z",
+      "scope": "二进制派生件：变换可复算（Auditor 独立重跑逐字节一致）+ 4.4 真机 12/12 强判据（绑定基准实例与派生哈希）",
+      "audit_report": "Auditor/reports/2026-10-11-zram-zstd-1.0.0-binary-port-audit.md"
     }
   ]
 }
