@@ -1,0 +1,77 @@
+--- a/tools/identity.py
++++ b/tools/identity.py
+@@ -51,7 +51,7 @@
+ IGNORED_SUFFIX = (".kpm", ".o", ".i64", ".bak", ".pyc")
+ VARIANT_SUFFIX = {"base": "", "network": "_n", "debug": "_d", "network_debug": "_nd",
+                   "static": "", "dynamic": "", "static_debug": "_d", "dynamic_debug": "_d",
+-                  "baselines": "", "baselines_debug": "_d"}
++                  "baselines": "", "baselines_debug": "_d", "legacy": "", "legacy_debug": "_d"}
+ 
+ 
+ def die(msg, code=1):
+@@ -92,12 +92,29 @@
+     """
+     if not commit:
+         return None
+-    base = ["git", "-C", str(REPO), "cat-file"]
+-    cmd = base + (["--filters"] if filters else ["blob"]) + [f"{commit}:{relpath}"]
+-    try:
+-        return subprocess.run(cmd, capture_output=True, check=True).stdout
+-    except Exception:
+-        return None
++    repo, path, frozen = REPO, Path(relpath), commit
++    # 父提交中的 gitlink 是冻结依据；不使用子模块当前 HEAD 代替它。
++    while True:
++        cmd = ["git", "-C", str(repo), "cat-file"]
++        cmd += (["--filters"] if filters else ["blob"]) + [f"{frozen}:{path.as_posix()}"]
++        result = subprocess.run(cmd, capture_output=True)
++        if result.returncode == 0:
++            return result.stdout
++        found = False
++        for count in range(1, len(path.parts)):
++            prefix = Path(*path.parts[:count])
++            row = git(["ls-tree", frozen, "--", prefix.as_posix()], cwd=repo)
++            if not row.startswith("160000 commit "):
++                continue
++            frozen = row.split()[2]
++            repo = repo / prefix
++            if not repo.is_dir():
++                return None
++            path = Path(*path.parts[count:])
++            found = True
++            break
++        if not found:
++            return None
+ 
+ 
+ def commit_exists(sha):
+@@ -165,6 +182,9 @@
+                 continue
+             if name in BUILD_INPUT_NAMES or name.endswith(BUILD_INPUT_EXT):
+                 files.append(str(Path(root, name).relative_to(REPO)))
++    # 子模块初始化配方随同冻结内容捕获。
++    if any((Path(root) / ".git").is_file() for root, _, _ in os.walk(mdir)) and (REPO / ".gitmodules").is_file():
++        files.append(".gitmodules")
+     shared = REPO / "kpm_utils.h"
+     if shared.is_file():
+         files.append("kpm_utils.h")
+--- a/tools/artifact_gate.py
++++ b/tools/artifact_gate.py
+@@ -71,12 +71,16 @@
+     prefix = info["name"] + "_" + version
+     if not path.name.startswith(prefix) or path.name[len(prefix):len(prefix) + 1] not in ("_", "."):
+         raise ValueError("产物文件名与内嵌版本不一致")
++    compat = info.get("kp_compat", "modern")
++    if compat not in ("modern", "legacy"):
++        raise ValueError("KP 兼容形态无效")
+     mode = info.get("offset_mode")
+     if mode is not None:
+         if mode not in ("static", "dynamic"):
+             raise ValueError("偏移模式无效")
+         debug = info["version"].endswith("_d")
+-        expected = prefix + ("_baselines" if mode == "static" else "") + ("_debug" if debug else "") + ".kpm"
++        expected = (prefix + ("_baselines" if mode == "static" else "")
++                    + ("_legacy" if compat == "legacy" else "") + ("_debug" if debug else "") + ".kpm")
+         if path.name != expected:
+             raise ValueError("产物文件名与偏移模式不一致")
+     return {"file": path.name, "sha256": hashlib.sha256(data).hexdigest(), "size": len(data), "info": info}, sections

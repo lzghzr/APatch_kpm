@@ -1,0 +1,202 @@
+{
+  "fix_commit": "e1c5d6e56665c103fe43d963e34e9b412cd51196",
+  "subjects": {
+    "tools/identity.py": "8742e38cd6c41299ffeab357d39d3c92b2da5145761e5e3a276d76afeec604ca",
+    "tools/check_repository.py": "0a4081d48995dc5b14ad3ff4b0002ac25c2c17283a5e6e1465162e2496bdf3dc",
+    "tools/build_candidate.py": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+  },
+  "delivery_cases": [
+    {
+      "case": "equal bytes nonancestor",
+      "signed_independently": true,
+      "source": "7ef07c7deba110a9429ae4d762e703b20192cfda",
+      "delivery": "6df9b797ea7c9c58eaa34c0763b3f304021029c8",
+      "source_tree": "c36f162b2bf74a8457539c4871ed59eb476bea43",
+      "delivery_tree": "c36f162b2bf74a8457539c4871ed59eb476bea43",
+      "problems": [],
+      "evidence": {
+        "nonancestor": true
+      },
+      "expected": "PASS",
+      "actual": "PASS",
+      "matches": true
+    },
+    {
+      "case": "KernelPatch gitlink changed",
+      "signed_independently": true,
+      "source": "7ef07c7deba110a9429ae4d762e703b20192cfda",
+      "delivery": "787e88525775714d468bd20de03b36786ccfbc8d",
+      "source_tree": "c36f162b2bf74a8457539c4871ed59eb476bea43",
+      "delivery_tree": "22a4f6cc8933548f9bae4a4c7c8d294b63fc7401",
+      "problems": [],
+      "evidence": {
+        "source_gitlink": "160000 commit 5c8a3a1e5eb88b3b07b956099b4a9e95c7575298\tKernelPatch",
+        "delivery_gitlink": "160000 commit 2502a3359aa609cecbad816a4a6a9510d9fc21b9\tKernelPatch"
+      },
+      "expected": "PASS",
+      "actual": "PASS",
+      "matches": true
+    },
+    {
+      "case": "module missing from both commits with self-consistent forged entry",
+      "signed_independently": true,
+      "source": "254220a5c679125cbbfb49558c592dc01b0b294f",
+      "delivery": "254220a5c679125cbbfb49558c592dc01b0b294f",
+      "source_tree": "5edf3c5d496f4d4ba725ee4db4f085681635fddd",
+      "delivery_tree": "5edf3c5d496f4d4ba725ee4db4f085681635fddd",
+      "problems": [
+        "候选源码提交 254220a5c679 中不存在模块目录 mod"
+      ],
+      "evidence": {
+        "source_module_ls_tree": "",
+        "delivery_module_ls_tree": ""
+      },
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true
+    }
+  ],
+  "report_cases": [
+    {
+      "case": "合法纯追加基线",
+      "strict": true,
+      "expected": "PASS",
+      "actual": "PASS",
+      "matches": true,
+      "checks": [
+        [
+          "report_integrity",
+          "PASS",
+          "1 份报告字节身份一致（原文只追加、追加已登记，3 个版本引用提交）；被引用路径均已入库且与工作树一致"
+        ]
+      ]
+    },
+    {
+      "case": "历史缺提交",
+      "strict": false,
+      "expected": "WARN",
+      "actual": "WARN",
+      "matches": true,
+      "checks": [
+        [
+          "report_integrity",
+          "WARN",
+          "1 份报告字节身份一致（原文只追加、追加已登记，2 个版本引用提交）；引用未归档：mod.json:Auditor/reports/r.md 历史版本 ed47e3d71ce0 未引用提交（交接即提交未落实）; mod.json:Auditor/reports/r.md 第 1 段缺提交，无法复算追加链（历史缺项）"
+        ]
+      ]
+    },
+    {
+      "case": "历史缺提交",
+      "strict": true,
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "checks": [
+        [
+          "report_integrity",
+          "FAIL",
+          "1 份报告字节身份一致（原文只追加、追加已登记，2 个版本引用提交）；引用未归档：mod.json:Auditor/reports/r.md 历史版本 ed47e3d71ce0 未引用提交（交接即提交未落实）; mod.json:Auditor/reports/r.md 第 1 段缺提交，无法复算追加链（历史缺项）"
+        ]
+      ]
+    },
+    {
+      "case": "真实原文改写且哈希已登记",
+      "strict": false,
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "checks": [
+        [
+          "report_integrity",
+          "FAIL",
+          "mod.json: Auditor/reports/r.md 现行字节不是入库原文的前缀（原文被改写）"
+        ]
+      ]
+    },
+    {
+      "case": "真实原文改写且哈希已登记",
+      "strict": true,
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "checks": [
+        [
+          "report_integrity",
+          "FAIL",
+          "mod.json: Auditor/reports/r.md 现行字节不是入库原文的前缀（原文被改写）"
+        ]
+      ]
+    },
+    {
+      "case": "真实追加哈希错误",
+      "strict": false,
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "checks": [
+        [
+          "report_integrity",
+          "FAIL",
+          "mod.json: Auditor/reports/r.md 第 2 段追加哈希与登记不符"
+        ]
+      ]
+    },
+    {
+      "case": "真实追加哈希错误",
+      "strict": true,
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "checks": [
+        [
+          "report_integrity",
+          "FAIL",
+          "mod.json: Auditor/reports/r.md 第 2 段追加哈希与登记不符"
+        ]
+      ]
+    },
+    {
+      "case": "历史缺提交同时存在真实追加哈希错误",
+      "strict": false,
+      "expected": "FAIL",
+      "actual": "WARN",
+      "matches": false,
+      "checks": [
+        [
+          "report_integrity",
+          "WARN",
+          "1 份报告字节身份一致（原文只追加、追加已登记，2 个版本引用提交）；引用未归档：mod.json:Auditor/reports/r.md 历史版本 ed47e3d71ce0 未引用提交（交接即提交未落实）; mod.json:Auditor/reports/r.md 第 1 段缺提交，无法复算追加链（历史缺项）; mod.json:Auditor/reports/r.md（入库后已修改，未提交）"
+        ]
+      ]
+    },
+    {
+      "case": "历史缺提交同时存在真实追加哈希错误",
+      "strict": true,
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "checks": [
+        [
+          "report_integrity",
+          "FAIL",
+          "1 份报告字节身份一致（原文只追加、追加已登记，2 个版本引用提交）；引用未归档：mod.json:Auditor/reports/r.md 历史版本 ed47e3d71ce0 未引用提交（交接即提交未落实）; mod.json:Auditor/reports/r.md 第 1 段缺提交，无法复算追加链（历史缺项）; mod.json:Auditor/reports/r.md（入库后已修改，未提交）"
+        ]
+      ]
+    }
+  ],
+  "role": "Developer",
+  "decisions": {
+    "DEV-031": "closed",
+    "DEV-032": "open"
+  },
+  "combined_counterexample": {
+    "baseline_sha256": "ed47e3d71ce076b2acbd84f78417c21a5827068901abb060b1aaad104478149f",
+    "missing_historical_version_sha256": "ed47e3d71ce076b2acbd84f78417c21a5827068901abb060b1aaad104478149f",
+    "actual_added_sha256": "d144797a63bcab886feb7b0464928a4fb0f05871f49709a889130bcc517ffb08",
+    "registered_added_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "expected_regular": "FAIL",
+    "observed_regular": "WARN",
+    "boundary_known": "Historical version SHA-256 equals the readable committed baseline."
+  },
+  "scope": "Developer review of frozen maintainer tools; no KPM build or device test; existing Oracle unchanged."
+}

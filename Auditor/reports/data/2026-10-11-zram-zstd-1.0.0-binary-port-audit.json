@@ -1,0 +1,77 @@
+{
+  "module": "zram_zstd",
+  "version": "1.0.0",
+  "audit_type": "binary-port-and-issue-review",
+  "audited_at": "2026-10-12T02:40:00Z",
+  "auditor": "Auditor",
+  "base_commit": "c068b23c8be43d3652780ed8f079bfe3b9799203",
+  "head_commit": "660e4274364d07d9738b51354c9f62db64ad6ab9",
+  "tool": {
+    "path": "patch_offsets.py",
+    "commit": "c2f2fac17da6383cc0b4fed400077167f264d7c6",
+    "sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033"
+  },
+  "binary_ports": [
+    {
+      "name": "zram_zstd_1.0.0.kpm",
+      "variant": "release",
+      "base_instance_id": "zram_zstd-1.0.0+g35a93831512f.r32a0362b.kpb51197a.ndk26.3.11579264#1",
+      "base_sha256": "3a91f9631c2dba8dde5616512333ce17ca262f934ed6f76cfafb2b6ff7f25e10",
+      "base_size": 513616,
+      "derived_path": "artifacts/binary-port/zram_zstd/e829df670157a8024484e16840858f07b3613ec292b252d5c1b89333e3ca535c/zram_zstd_1.0.0.kpm",
+      "derived_sha256": "e829df670157a8024484e16840858f07b3613ec292b252d5c1b89333e3ca535c",
+      "derived_size": 548912,
+      "receipt_sha256": "32da113bef5fe2d9e271cb73eedbae150615bba418e8a88d9d419457b11eadae",
+      "reproduced_sha256": "e829df670157a8024484e16840858f07b3613ec292b252d5c1b89333e3ca535c",
+      "reproduced_receipt_sha256": "32da113bef5fe2d9e271cb73eedbae150615bba418e8a88d9d419457b11eadae",
+      "match": true,
+      "call26_count": 23,
+      "stub_section": ".text.kpm_legacy_lookup",
+      "stub_instructions": ["0x90000010", "0xf9400210", "0xd61f0200"]
+    },
+    {
+      "name": "zram_zstd_1.0.0_debug.kpm",
+      "variant": "debug",
+      "base_instance_id": "zram_zstd-1.0.0_debug+g35a93831512f.r95cc9104.kpb51197a.ndk26.3.11579264#1",
+      "base_sha256": "27dbd862e86095748e30ab959e206668beb6529b35d494fb54cde521883825ec",
+      "base_size": 513624,
+      "derived_path": "artifacts/binary-port/zram_zstd/75a124a68c569bcad1bba97d3a906daea0dc04bed1abefaa37948d46c88fb7fd/zram_zstd_1.0.0_debug.kpm",
+      "derived_sha256": "75a124a68c569bcad1bba97d3a906daea0dc04bed1abefaa37948d46c88fb7fd",
+      "derived_size": 548920,
+      "receipt_sha256": "e520eaaf57d2d1d175fedf0b74441b1c9c19dba9a86a53d5900377739fa2c939",
+      "reproduced_sha256": "75a124a68c569bcad1bba97d3a906daea0dc04bed1abefaa37948d46c88fb7fd",
+      "reproduced_receipt_sha256": "e520eaaf57d2d1d175fedf0b74441b1c9c19dba9a86a53d5900377739fa2c939",
+      "match": true,
+      "call26_count": 23,
+      "stub_section": ".text.kpm_legacy_lookup",
+      "stub_instructions": ["0x90000010", "0xf9400210", "0xd61f0200"]
+    }
+  ],
+  "negative_tests": {
+    "duplicate_conversion_rejected": true,
+    "corrupt_elf_rejected": true,
+    "overwrite_protected": true
+  },
+  "issues_reviewed": {
+    "MNT-018": {
+      "status": "closed",
+      "decision": "closed",
+      "verified_conditions": {
+        "scope_extensions_count": 3,
+        "covers_0_3_0_instances": 4,
+        "covers_0_3_0_ports": 2,
+        "covers_0_4_0_instances": 4,
+        "covers_1_0_0_instances": 4,
+        "covers_1_0_0_ports": 2,
+        "approved_by_user": true,
+        "constraints_stated": true,
+        "acceptances_annotated": true
+      }
+    },
+    "MNT-017": {
+      "status": "open",
+      "decision": "keep-open",
+      "reason": "等待维护者与用户完成交付签名 D 与绑定回执 E 闭环"
+    }
+  }
+}

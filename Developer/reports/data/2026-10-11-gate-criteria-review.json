@@ -1,0 +1,573 @@
+{
+  "role": "Developer",
+  "decision": "Modify",
+  "baseline_commit": "d56b5244458f5c4f04d56f065f835ee044469b25",
+  "review_commit": "239f904601a42a9c3e6d3a303db551a15d7fbfe1",
+  "user_constraint": "KernelPatch dependency is build provenance, not a hard delivery equality constraint.",
+  "subject_sha256": {
+    "tools/identity.py": "f6e6768d4bdbe4fae2c3e3b4bca2fd5b6a54be9f222d18d507d25ee637c7467d",
+    "tools/check_repository.py": "865e7d30383ec43785925980f6f57f1e993a3a438b4002ef8b1eaef9340818e8",
+    "tools/selftest_tools.py": "f836a980c06766d8dc93c7f4ea037fb6b7a43c396194ee3f687c60cb0e6e8308",
+    "tools/artifact_gate.py": "cbb11552b385fd869a39c80e796dc108ec1eee808df6e91042c3d78115af7718",
+    "tools/selftest_artifact_gate.py": "eb69244adefe01fbadfa6ee619da5ce9d989c53e486250d4eabb5ca9a7789860",
+    "docs/process/01-identity.md": "fc1f6555c93227de4b65fec0d4fe0dab6d2dd6c4f7c268d421f0610e6921f666"
+  },
+  "scope": [
+    {
+      "file": "tools/identity.py",
+      "definitions": [
+        [
+          "_batch_blobs",
+          "added"
+        ],
+        [
+          "_locate",
+          "added"
+        ],
+        [
+          "_submodule_repo",
+          "added"
+        ],
+        [
+          "blobs_at",
+          "added"
+        ],
+        [
+          "build_entry",
+          "changed"
+        ],
+        [
+          "cmd_bind_delivery",
+          "changed"
+        ],
+        [
+          "delivery_problems",
+          "changed"
+        ],
+        [
+          "git_blob_at",
+          "changed"
+        ],
+        [
+          "gitlink_map",
+          "added"
+        ],
+        [
+          "source_files",
+          "changed"
+        ],
+        [
+          "source_tree_at_commit",
+          "changed"
+        ],
+        [
+          "verify_build",
+          "changed"
+        ]
+      ]
+    },
+    {
+      "file": "tools/check_repository.py",
+      "definitions": [
+        [
+          "_looks_text",
+          "changed"
+        ],
+        [
+          "_mentions_as_source",
+          "removed"
+        ],
+        [
+          "build_versions_of",
+          "added"
+        ],
+        [
+          "check_auditor_report_sources",
+          "removed"
+        ],
+        [
+          "check_developer_artifacts",
+          "changed"
+        ],
+        [
+          "check_doc_links",
+          "changed"
+        ],
+        [
+          "check_metadata_schema",
+          "changed"
+        ],
+        [
+          "check_report_conformance",
+          "removed"
+        ],
+        [
+          "check_report_integrity",
+          "added"
+        ],
+        [
+          "check_structure",
+          "changed"
+        ],
+        [
+          "check_tester_report_identity",
+          "removed"
+        ],
+        [
+          "check_tester_responses",
+          "removed"
+        ],
+        [
+          "check_version_consistency",
+          "changed"
+        ],
+        [
+          "commit_blob",
+          "added"
+        ],
+        [
+          "identity_token_problems",
+          "added"
+        ],
+        [
+          "main",
+          "changed"
+        ],
+        [
+          "referenced_paths",
+          "added"
+        ],
+        [
+          "repo_file",
+          "added"
+        ],
+        [
+          "report_binding_hashes",
+          "added"
+        ],
+        [
+          "resolve_commit",
+          "added"
+        ],
+        [
+          "resolve_commits",
+          "added"
+        ],
+        [
+          "structured_items",
+          "added"
+        ],
+        [
+          "tracked_and_dirty",
+          "added"
+        ],
+        [
+          "version_key",
+          "added"
+        ]
+      ]
+    },
+    {
+      "file": "tools/selftest_tools.py",
+      "definitions": [
+        [
+          "_run_checks",
+          "changed"
+        ],
+        [
+          "_schema_repo",
+          "added"
+        ]
+      ]
+    },
+    {
+      "file": "tools/artifact_gate.py",
+      "definitions": [
+        [
+          "inspect_kpm",
+          "changed"
+        ]
+      ]
+    },
+    {
+      "file": "tools/selftest_artifact_gate.py",
+      "definitions": [
+        [
+          "ArtifactGateTests",
+          "changed"
+        ],
+        [
+          "fixture",
+          "changed"
+        ]
+      ]
+    }
+  ],
+  "criteria_cases": [
+    {
+      "case": "未登记新版本允许在途",
+      "expected": "PASS",
+      "actual": "PASS",
+      "matches": true,
+      "detail": [
+        [
+          "version_consistency",
+          "PASS",
+          "当前源码自洽；历史产物按各自构建版本核对；mod: Makefile 版本 3.0 != 元数据 2.0（交接前在途：维护者需在验收/交付前同步 version_declared；角色不要自行改元数据）"
+        ]
+      ]
+    },
+    {
+      "case": "声明领先源码",
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "detail": [
+        [
+          "version_consistency",
+          "FAIL",
+          "mod: Makefile 版本 2.0 != 元数据 3.0"
+        ]
+      ]
+    },
+    {
+      "case": "新版本已登记但声明滞后",
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "detail": [
+        [
+          "version_consistency",
+          "FAIL",
+          "mod: Makefile 版本 4.0 != 元数据 3.0"
+        ]
+      ]
+    },
+    {
+      "case": "已归档追加链",
+      "expected": "PASS",
+      "actual": "PASS",
+      "matches": true,
+      "detail": [
+        [
+          "report_integrity",
+          "PASS",
+          "1 份报告字节身份一致（原文只追加、追加已登记，3 个版本引用提交）；被引用路径均已入库且与工作树一致"
+        ]
+      ]
+    },
+    {
+      "case": "最新版工作树字节被改",
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "detail": [
+        [
+          "report_integrity",
+          "FAIL",
+          "mod.json: Auditor/reports/r.md 最新登记版本 1e20825dfe9c 与工作树 bd5ce92779cb 不一致（追加未登记或字节被改写）; mod.json: Auditor/reports/r.md 现行字节不是入库原文的前缀（原文被改写）"
+        ]
+      ]
+    },
+    {
+      "case": "版本引用无效提交",
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "detail": [
+        [
+          "report_integrity",
+          "FAIL",
+          "mod.json: Auditor/reports/r.md 版本引用的提交不可解析 0000000000000000000000000000000000000000; mod.json: Auditor/reports/r.md 第 1 段追加不是纯追加或不可复算"
+        ]
+      ]
+    },
+    {
+      "case": "历史版本缺提交常规提示",
+      "expected": "WARN",
+      "actual": "FAIL",
+      "matches": false,
+      "detail": [
+        [
+          "report_integrity",
+          "FAIL",
+          "mod.json: Auditor/reports/r.md 第 2 段追加哈希与登记不符"
+        ]
+      ]
+    },
+    {
+      "case": "历史版本缺提交严格失败",
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "detail": [
+        [
+          "report_integrity",
+          "FAIL",
+          "mod.json: Auditor/reports/r.md 第 2 段追加哈希与登记不符"
+        ]
+      ]
+    },
+    {
+      "case": "索引哈希不在版本表",
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "detail": [
+        [
+          "report_integrity",
+          "FAIL",
+          "mod.json: Auditor/reports/r.md 索引哈希 000000000000 不在报告版本表中"
+        ]
+      ]
+    },
+    {
+      "case": "引用未归档常规提示",
+      "expected": "WARN",
+      "actual": "WARN",
+      "matches": true,
+      "detail": [
+        [
+          "report_integrity",
+          "WARN",
+          "1 份报告字节身份一致（原文只追加、追加已登记，3 个版本引用提交）；引用未归档：mod.json:Auditor/reports/untracked.md（未入库）"
+        ]
+      ]
+    },
+    {
+      "case": "引用未归档严格失败",
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "detail": [
+        [
+          "report_integrity",
+          "FAIL",
+          "1 份报告字节身份一致（原文只追加、追加已登记，3 个版本引用提交）；引用未归档：mod.json:Auditor/reports/untracked.md（未入库）"
+        ]
+      ]
+    },
+    {
+      "case": "历史未归档缺说明常规提示",
+      "expected": "WARN",
+      "actual": "WARN",
+      "matches": true,
+      "detail": [
+        [
+          "report_integrity",
+          "WARN",
+          "1 份报告字节身份一致（原文只追加、追加已登记，4 个版本引用提交）；引用未归档：mod.json:Auditor/reports/r.md unarchived_versions 中的 ed47e3d71ce0 缺少 note 说明"
+        ]
+      ]
+    },
+    {
+      "case": "历史未归档缺说明严格失败",
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "detail": [
+        [
+          "report_integrity",
+          "FAIL",
+          "1 份报告字节身份一致（原文只追加、追加已登记，4 个版本引用提交）；引用未归档：mod.json:Auditor/reports/r.md unarchived_versions 中的 ed47e3d71ce0 缺少 note 说明"
+        ]
+      ]
+    },
+    {
+      "case": "哈希登记正确仍拒绝改写前缀",
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "detail": [
+        [
+          "report_integrity",
+          "FAIL",
+          "mod.json: Auditor/reports/r.md 现行字节不是入库原文的前缀（原文被改写）"
+        ]
+      ]
+    },
+    {
+      "case": "中文探测边界后的本机路径",
+      "expected": "FAIL",
+      "actual": "FAIL",
+      "matches": true,
+      "detail": [
+        [
+          "public_file_hygiene",
+          "FAIL",
+          "docs/report.md:2 本机绝对路径"
+        ]
+      ]
+    },
+    {
+      "case": "中文报告脱敏后",
+      "expected": "PASS",
+      "actual": "PASS",
+      "matches": true,
+      "detail": [
+        [
+          "public_file_hygiene",
+          "PASS",
+          "未发现本机路径/密钥/序列号明文"
+        ]
+      ]
+    }
+  ],
+  "delivery_evidence": {
+    "provenance": {
+      "actual_invocation": [
+        "python3",
+        "-"
+      ],
+      "recording_method": "Recovered the original six-case script and its captured stdout from this review's tool calls; no rerun.",
+      "reproduction_command": "python3 Developer/reports/data/2026-10-11-gate-delivery-repro.py",
+      "signature_method": "Temporary fixture-only ed25519 key generated by ssh-keygen; local Git SSH signing and allowedSignersFile; independent git verify-commit for every delivery commit.",
+      "independent_evidence": [
+        "git cat-file blob",
+        "git ls-tree",
+        "git write-tree",
+        "git rev-parse commit^{tree}",
+        "git merge-base --is-ancestor",
+        "git verify-commit"
+      ],
+      "subject_observation": "identity.verify_build(entry, profile='delivery', deliveries=[binding])",
+      "limitations": "Identity-tool paths only. Placeholder artifact bytes and independently constructed declarative recipe/transaction records, not a KPM build, independent compiler attestation, or complete repository-gate pass.",
+      "cleanup": "Original temporary fixture, key and local Git configuration removed in finally; reproduction uses TemporaryDirectory.",
+      "rerun_identity": "Fresh key and commit timestamps produce different commit hashes; identical missing/changed-object relationships are the reproduction criteria.",
+      "saved_script_adjustments": "Repository path adjusted for the archived script location; bytecode writes disabled. Fixture logic unchanged; original results not rerun."
+    },
+    "reachability": {
+      "4": "Allowed behavior under the user's explicit instruction that KernelPatch dependency must not be a hard delivery constraint. Standard source enumeration excludes KernelPatch files and records kernelpatch_commit separately; delivery compares module tree and sources only. Keep the recorded build dependency as provenance; do not require the delivery gitlink to match. The fixture candidate was manually constructed; no new controlled build was run.",
+      "5": "Requires forged/self-consistent candidate or import input whose source commit has no module and whose nonempty sources excludes module files; normal module_dir/source enumeration blocks creation.",
+      "6": "Requires an omitted source-list member and corresponding recomputed identity; standard source_files automatically includes kpm_utils.h. Import verification checks the provided list but does not independently enumerate completeness."
+    },
+    "prior_ancestor_rule": {
+      "exact_recorded_fixtures": "Cases 1, 2, 4, 6 have nonancestor delivery commits and would be rejected by the old ancestor condition. Case 3 is rejected by binding mismatch in both versions. Case 5 can have source == delivery because both commit-tree calls use the same tree, message, key and second; then the old ancestor rule also accepts.",
+      "equivalent_descendant_paths_not_executed": "Giving case 4 or 6's signed delivery source_commit as a parent satisfies the old ancestor check while retaining changed KP or missing unlisted header, so these holes are not established as newly introduced by dropping ancestry. A malformed absent-module candidate with delivery equal to its source also bypasses the old condition. This comparison follows the inspected old branch, not an additional experiment.",
+      "conclusion": "Keep content identity instead of ancestry. Case 4 is permitted; do not add a KernelPatch dependency hard constraint. Cases 5 and 6 describe malformed/omitted imported records, not evidence that current controlled candidates are invalid. Any module existence or input-list completeness recommendation must stay within that import-verification scope; do not restore ancestry as a remedy."
+    },
+    "independent_expected_behavior": {
+      "1": "accept equal content across flattened history",
+      "2": "reject missing recorded input",
+      "3": "reject forged binding source_commit",
+      "4": "accept changed delivery KernelPatch gitlink under explicit user scope; retain original build dependency provenance",
+      "5": "normal controlled creation is blocked; malformed imported candidate remains a distinct verification boundary",
+      "6": "normal controlled enumeration includes shared header; omitted imported candidate remains a distinct verification boundary"
+    },
+    "cases": [
+      {
+        "case": "equal bytes nonancestor",
+        "signed_independently": true,
+        "source": "ea40fe649d30581705a5ed106baad8fb74d5fab8",
+        "delivery": "eeeb2ddc86ba8056597abb6836147949e721576e",
+        "source_tree": "e47692c2468adc768f6b16628cdb73ab221ee931",
+        "delivery_tree": "e47692c2468adc768f6b16628cdb73ab221ee931",
+        "problems": [],
+        "evidence": {
+          "nonancestor": true
+        }
+      },
+      {
+        "case": "recorded shared input deleted",
+        "signed_independently": true,
+        "source": "ea40fe649d30581705a5ed106baad8fb74d5fab8",
+        "delivery": "c94ddb693e3b7dc6bd6c592b1f77a14bbd5dee7f",
+        "source_tree": "e47692c2468adc768f6b16628cdb73ab221ee931",
+        "delivery_tree": "5e7a74ee90e8a0b436f9362041b635cd207aee00",
+        "problems": [
+          "交付提交中的构建输入不同：kpm_utils.h"
+        ],
+        "evidence": null
+      },
+      {
+        "case": "forged source binding",
+        "signed_independently": true,
+        "source": "ea40fe649d30581705a5ed106baad8fb74d5fab8",
+        "delivery": "eeeb2ddc86ba8056597abb6836147949e721576e",
+        "source_tree": "e47692c2468adc768f6b16628cdb73ab221ee931",
+        "delivery_tree": "e47692c2468adc768f6b16628cdb73ab221ee931",
+        "problems": [
+          "交付绑定的 source_commit 与实例不一致"
+        ],
+        "evidence": null
+      },
+      {
+        "case": "KernelPatch gitlink changed",
+        "signed_independently": true,
+        "source": "ea40fe649d30581705a5ed106baad8fb74d5fab8",
+        "delivery": "468300afd4d2401b9bbf54c1992f0b78b7fd9dc0",
+        "source_tree": "e47692c2468adc768f6b16628cdb73ab221ee931",
+        "delivery_tree": "9f40d8717d7537fd8b3b1318827a9c15a2e13d8c",
+        "problems": [],
+        "evidence": {
+          "source_gitlink": "160000 commit efc3faa525858f5522594cc8b2bf64439f8ce506\tKernelPatch",
+          "delivery_gitlink": "160000 commit 7c0ba46f8479dc748d09559e66db6858ea800f67\tKernelPatch"
+        }
+      },
+      {
+        "case": "module missing from both commits with self-consistent forged entry",
+        "signed_independently": true,
+        "source": "e511b229117459ca1c0eee8a8b32ca2749988e20",
+        "delivery": "e511b229117459ca1c0eee8a8b32ca2749988e20",
+        "source_tree": "a1bb3c8e7b7d4d70b17a8cbe700784904e8be823",
+        "delivery_tree": "a1bb3c8e7b7d4d70b17a8cbe700784904e8be823",
+        "problems": [],
+        "evidence": {
+          "source_module_ls_tree": "",
+          "delivery_module_ls_tree": ""
+        }
+      },
+      {
+        "case": "shared input omitted from sources and deleted in delivery",
+        "signed_independently": true,
+        "source": "ea40fe649d30581705a5ed106baad8fb74d5fab8",
+        "delivery": "c94ddb693e3b7dc6bd6c592b1f77a14bbd5dee7f",
+        "source_tree": "e47692c2468adc768f6b16628cdb73ab221ee931",
+        "delivery_tree": "5e7a74ee90e8a0b436f9362041b635cd207aee00",
+        "problems": [],
+        "evidence": {
+          "source_blob": "e742ca1e3c07bb9ef69039436d008707d8f1175b",
+          "delivery_exists": false
+        }
+      }
+    ]
+  },
+  "reproduction_script": "Developer/reports/data/2026-10-11-gate-delivery-repro.py",
+  "reproduction_script_sha256": "504369e15e2e60fc9a37f6ed68b454b1a88da33fa493cff13d59bc7ed1d33baf",
+  "issue_registration": "Proposed formal issues; maintainer registration pending. No metadata changed by this review.",
+  "issues": [
+    {
+      "id": "DEV-031",
+      "class": "product",
+      "owner": "维护者",
+      "status": "open",
+      "severity": "中",
+      "title": "交付模块树查询失败被当成内容相等",
+      "evidence": "239f904601a42a9c3e6d3a303db551a15d7fbfe1 tools/identity.py:908；真实签名的缺模块临时 Git 夹具可通过 delivery 核验。正常受控构建会拒绝缺模块，未证明现有候选失效。详见 Developer/reports/2026-10-11-gate-criteria-review.md 与同名数据。",
+      "impact": "允许自洽但缺少所声明模块的导入/交付记录获得内容同一性认可。",
+      "suggestion": "区分模块对象查询失败与有效树对象，并同步身份文档中残留祖先硬要求；KernelPatch 仅保留构建溯源，不新增交付依赖硬约束。",
+      "closure": "由维护者修复后，Developer 在新冻结工具提交复核缺模块被拒、同树无祖先关系被接受、KernelPatch 依赖变化被允许；独立于维护者的角色关闭。",
+      "frequency": "未知",
+      "confidence": "已确认",
+      "closed_by": null,
+      "resolution": null
+    },
+    {
+      "id": "DEV-032",
+      "class": "product",
+      "owner": "维护者",
+      "status": "open",
+      "severity": "中低",
+      "title": "历史报告缺提交时用当前字节替代，错误报告追加哈希失败",
+      "evidence": "239f904601a42a9c3e6d3a303db551a15d7fbfe1 tools/check_repository.py:889；纯追加报告仅缺历史版本 commit，常规模式产生第 2 段追加哈希不符 FAIL，违背缺提交常规提示的分类。详见 Developer/reports/2026-10-11-gate-criteria-review.md 与同名数据。",
+      "impact": "将历史元数据缺项误判为报告字节损坏；严格模式仍失败。",
+      "suggestion": "缺失历史提交时不得使用当前字节代替；按分档提示/失败处理，并同步软硬判据说明。",
+      "closure": "由维护者修复后，Developer 在新冻结提交复核缺历史提交常规 WARN/严格 FAIL，真实前缀改写和追加哈希错误仍 FAIL；独立于维护者的角色关闭。",
+      "frequency": "低频",
+      "confidence": "已确认",
+      "closed_by": null,
+      "resolution": null
+    }
+  ],
+  "scope_limit": "Review of maintainer criteria under user instruction; not KPM build, module independent audit, device proof or whole-repository gate result."
+}

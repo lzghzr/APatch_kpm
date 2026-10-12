@@ -1,0 +1,21 @@
+{
+  "schema": 3,
+  "kpm": "zram_zstd_0.1.0_baselines_debug.kpm",
+  "sha256": "455426a2352a95586fdc05ff360d689377fd1061c9547d79a38d8b25435ae98d",
+  "table_offset": 173554,
+  "table_size": 10,
+  "fields": [
+    "crypto_alg_flags",
+    "crypto_alg_name",
+    "crypto_alg_compress",
+    "crypto_alg_init",
+    "crypto_tfm_ctx"
+  ],
+  "offsets": {
+    "crypto_alg_flags": -1,
+    "crypto_alg_name": -1,
+    "crypto_alg_compress": -1,
+    "crypto_alg_init": -1,
+    "crypto_tfm_ctx": -1
+  }
+}

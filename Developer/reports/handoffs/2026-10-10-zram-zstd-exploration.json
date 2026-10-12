@@ -1,0 +1,1078 @@
+{
+  "module": "zram_zstd",
+  "version": "0.1.0",
+  "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "handoff_by": "Developer",
+  "handoff_at": "2026-10-11T01:53:01Z",
+  "note": "归档产物需随清单一起转移：artifacts/<instance_id>/（导入时会逐个核验哈希）",
+  "builds": [
+    {
+      "module": "zram_zstd",
+      "version": "0.1.0",
+      "kind": "exploration",
+      "build_id": "zram_zstd-0.1.0+gc330fe19c6d2.r98f3a83f.kpb51197a.ndk26.3.11579264",
+      "variant": "base",
+      "recorded_at": "2026-10-11T01:53:00Z",
+      "source_commit": "459ceef810f4315b1de77f90141626fc3d20c55e",
+      "source_dirty": true,
+      "source_tree_sha256": "c330fe19c6d2b6f663b40b5724155331d09c83706f2a2861eca45957a7114bee",
+      "source_tree_blob_sha256": null,
+      "source_blob_missing": [
+        "zram_zstd/Makefile",
+        "zram_zstd/tools/selfcheck.py",
+        "zram_zstd/vendor/SOURCES.json",
+        "zram_zstd/vendor/compat/asm/unaligned.h",
+        "zram_zstd/vendor/compat/linux/compiler.h",
+        "zram_zstd/vendor/compat/linux/errno.h",
+        "zram_zstd/vendor/compat/linux/kernel.h",
+        "zram_zstd/vendor/compat/linux/math64.h",
+        "zram_zstd/vendor/compat/linux/module.h",
+        "zram_zstd/vendor/compat/linux/string.h",
+        "zram_zstd/vendor/compat/linux/types.h",
+        "zram_zstd/vendor/compat/linux/xxhash.h",
+        "zram_zstd/vendor/compat/linux/zstd.h",
+        "zram_zstd/vendor/xxhash.c",
+        "zram_zstd/vendor/zstd/bitstream.h",
+        "zram_zstd/vendor/zstd/compress.c",
+        "zram_zstd/vendor/zstd/decompress.c",
+        "zram_zstd/vendor/zstd/entropy_common.c",
+        "zram_zstd/vendor/zstd/error_private.h",
+        "zram_zstd/vendor/zstd/fse.h",
+        "zram_zstd/vendor/zstd/fse_compress.c",
+        "zram_zstd/vendor/zstd/fse_decompress.c",
+        "zram_zstd/vendor/zstd/huf.h",
+        "zram_zstd/vendor/zstd/huf_compress.c",
+        "zram_zstd/vendor/zstd/huf_decompress.c",
+        "zram_zstd/vendor/zstd/mem.h",
+        "zram_zstd/vendor/zstd/zstd_common.c",
+        "zram_zstd/vendor/zstd/zstd_internal.h",
+        "zram_zstd/vendor/zstd/zstd_opt.h",
+        "zram_zstd/zram_zstd.c",
+        "zram_zstd/zs_offsets.c",
+        "zram_zstd/zs_runtime.c"
+      ],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc",
+          "blob_sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc"
+        },
+        {
+          "path": "patch_offsets.py",
+          "sha256": "760abf91732095d45f8f119ebd48c2fab11bdd3883549ff3d9862dcecade6711",
+          "blob_sha256": "760abf91732095d45f8f119ebd48c2fab11bdd3883549ff3d9862dcecade6711"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "258c55e8d06775433b608b128162e583ca2531ca83020d283988ca46a95d6898",
+          "blob_sha256": "258c55e8d06775433b608b128162e583ca2531ca83020d283988ca46a95d6898"
+        },
+        {
+          "path": "zram_zstd/Makefile",
+          "sha256": "558f16c3357bbb7a7158729b87db42d4a4db4ce121ef63637a7191229866b130",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/tools/selfcheck.py",
+          "sha256": "775c507f9e259ddaaf2180cb579f3446d9f17119c47bd8a6b3592839629cbd5e",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/SOURCES.json",
+          "sha256": "511600bb079e6b3adef0fca9e13ec2e724e071c19f5784f61832d19f295c1ea0",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/asm/unaligned.h",
+          "sha256": "fba2756f6de85a09f3d717515560793791625e280430182be28dd16e44da3c0b",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/compiler.h",
+          "sha256": "49726394112882d9fe3b3953ad09830d37a3db3fb01e0b4dad68a6a56c2a10b1",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/errno.h",
+          "sha256": "9794e303abca0c74755b0ed9077eef303d34ac93994afd5ae2b1bd49ec0baa5f",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/kernel.h",
+          "sha256": "a826242f81d47f67971d741b58b5984fae1f7e912e1e9c7af29436ebfaed9d2c",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/math64.h",
+          "sha256": "c7ec62e81d61fe469f8d1b4dbf7a68b38094415fa17e3bb78c726c8b46427157",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/module.h",
+          "sha256": "912a3f35c3a6e53a038f335c5bf94bf8339db0b0a672123278577c75e81deecb",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/string.h",
+          "sha256": "508b4023659ef0260c13874d381e8806d62a7d3c496f5e630243171191795e93",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/types.h",
+          "sha256": "16d227e82ad2f96a3cdbdc82200f825cc415dc247d0a093ff8d85fe01caee7f1",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/xxhash.h",
+          "sha256": "b0b5efc9c14283eb6396affdc86e3c6b62c255bc1a8cb6fe7c27ca59e52f6297",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/zstd.h",
+          "sha256": "25c96c341af979a56b45deb70eaeee6f433a1fb6af864c7622412f9bfa5d4f38",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/xxhash.c",
+          "sha256": "4f41dafc8f0f28a3341d0699d120d9038f6765efcc7610bb6b5046dcaebd088f",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/bitstream.h",
+          "sha256": "e5631feece9f644936deeeebcd1458ad85f0cec8612c23a06ad1f71938e84ecd",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/compress.c",
+          "sha256": "99346ee596250920b63246203787246f5f1ce00b363f02c985f58adada47c94b",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/decompress.c",
+          "sha256": "592a78f9f5c75b38971408c9b8d75d2fe61bbb957396831eb323289763434abe",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/entropy_common.c",
+          "sha256": "7432d1356c611fa471b7fdaf1538dd8515bbbad42b40bc79573d331fa4a5c78e",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/error_private.h",
+          "sha256": "4576ea969a45d01ea9e6cfe08a3ef92a972d36b53afa49d424635c223b2c5935",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/fse.h",
+          "sha256": "793bc7431be6ca198312507d5f0e6ff8c938d44c9b9fe2508da1ed0d3607816d",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/fse_compress.c",
+          "sha256": "41ea45be613a19795619741139daaab8d86af0abfa67017107540a0cab58cfc9",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/fse_decompress.c",
+          "sha256": "5b23ed2215907a69acd66df7a1377e6e8d9b6df611d544a9b98e27ebdc0f83d9",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/huf.h",
+          "sha256": "e40135dd37a79e4c1b69ecfe9f556ac5a6df25835f0d30019bffd1cfaa962a6e",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/huf_compress.c",
+          "sha256": "677303b4d3198c6110f18eaa2e24795926495e19877c1903e0976af5b68b3001",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/huf_decompress.c",
+          "sha256": "034d05ff23f4ad14f1a5afe311536283b50700588c252f74694423f8baad0254",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/mem.h",
+          "sha256": "a31d8f70a21b74df544f37a401e90a942749eff4e4950d852db17abc88b0234d",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/zstd_common.c",
+          "sha256": "688ce2bfa628fc02d9ba986549bc2cced4c1e50311ac7b0f420336c52996c848",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/zstd_internal.h",
+          "sha256": "6f49e90a91abec4bbcb6e02b6ebbb410234242e0143b619a75a9d53ca3cfd29b",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/zstd_opt.h",
+          "sha256": "4c6a520b1a249933b393a746ea3ab7b48a71a4e952d97515a5abeaa8cfe26b51",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/zram_zstd.c",
+          "sha256": "6c36273da08972696de46354d2b8a889d17a7cda401f551d77dadee353f80dd4",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/zs_offsets.c",
+          "sha256": "b0c888fc9a140a23494969502e66761e91078ad6967809987ece0deebcb12da6",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/zs_runtime.c",
+          "sha256": "e24bd1ef9553ed2e3e478f485258aca5c1463ab81a823ed25b4dba60a76e9ef7",
+          "blob_sha256": null
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "98f3a83f6712fe79e0afa2b08eb1f3718cb0a4f998f59531ce0ec4fc6daa08c1",
+      "recipe": {
+        "captured": true,
+        "command": "make -C zram_zstd all debug LAYOUT_DIR=../local/zram-zstd-layouts-final-20261010-01",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "ed44fa08769d7165b80748184a7e9d0ea81f9881265b3d6881cf0966fe1932c5",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/compress.c -o vendor/zstd/compress.o\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/decompress.c -o vendor/zstd/decompress.o\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/entropy_common.c -o vendor/zstd/entropy_common.o\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/fse_compress.c -o vendor/zstd/fse_compress.o"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "459ceef810f4315b1de77f90141626fc3d20c55e",
+        "source_tree_sha256": "c330fe19c6d2b6f663b40b5724155331d09c83706f2a2861eca45957a7114bee",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "ed44fa08769d7165b80748184a7e9d0ea81f9881265b3d6881cf0966fe1932c5",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "zram_zstd_0.1.0.kpm",
+          "sha256": "e77e43f1194020a625b1895fa9699e078b96c2593c844a21638b8c291e9614ac",
+          "size": 228552,
+          "embedded": {
+            "name": "zram_zstd",
+            "version": "0.1.0",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "ZSTD for zram. Embed for boot use; DO NOT UNLOAD.",
+            "offset_mode": "dynamic"
+          },
+          "path": "artifacts/zram_zstd-0.1.0+gc330fe19c6d2.r98f3a83f.kpb51197a.ndk26.3.11579264/zram_zstd_0.1.0.kpm"
+        }
+      ],
+      "instance_id": "zram_zstd-0.1.0+gc330fe19c6d2.r98f3a83f.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "zram_zstd",
+      "version": "0.1.0",
+      "kind": "exploration",
+      "build_id": "zram_zstd-0.1.0_baselines+gc330fe19c6d2.rbec218b7.kpb51197a.ndk26.3.11579264",
+      "variant": "baselines",
+      "recorded_at": "2026-10-11T01:53:00Z",
+      "source_commit": "459ceef810f4315b1de77f90141626fc3d20c55e",
+      "source_dirty": true,
+      "source_tree_sha256": "c330fe19c6d2b6f663b40b5724155331d09c83706f2a2861eca45957a7114bee",
+      "source_tree_blob_sha256": null,
+      "source_blob_missing": [
+        "zram_zstd/Makefile",
+        "zram_zstd/tools/selfcheck.py",
+        "zram_zstd/vendor/SOURCES.json",
+        "zram_zstd/vendor/compat/asm/unaligned.h",
+        "zram_zstd/vendor/compat/linux/compiler.h",
+        "zram_zstd/vendor/compat/linux/errno.h",
+        "zram_zstd/vendor/compat/linux/kernel.h",
+        "zram_zstd/vendor/compat/linux/math64.h",
+        "zram_zstd/vendor/compat/linux/module.h",
+        "zram_zstd/vendor/compat/linux/string.h",
+        "zram_zstd/vendor/compat/linux/types.h",
+        "zram_zstd/vendor/compat/linux/xxhash.h",
+        "zram_zstd/vendor/compat/linux/zstd.h",
+        "zram_zstd/vendor/xxhash.c",
+        "zram_zstd/vendor/zstd/bitstream.h",
+        "zram_zstd/vendor/zstd/compress.c",
+        "zram_zstd/vendor/zstd/decompress.c",
+        "zram_zstd/vendor/zstd/entropy_common.c",
+        "zram_zstd/vendor/zstd/error_private.h",
+        "zram_zstd/vendor/zstd/fse.h",
+        "zram_zstd/vendor/zstd/fse_compress.c",
+        "zram_zstd/vendor/zstd/fse_decompress.c",
+        "zram_zstd/vendor/zstd/huf.h",
+        "zram_zstd/vendor/zstd/huf_compress.c",
+        "zram_zstd/vendor/zstd/huf_decompress.c",
+        "zram_zstd/vendor/zstd/mem.h",
+        "zram_zstd/vendor/zstd/zstd_common.c",
+        "zram_zstd/vendor/zstd/zstd_internal.h",
+        "zram_zstd/vendor/zstd/zstd_opt.h",
+        "zram_zstd/zram_zstd.c",
+        "zram_zstd/zs_offsets.c",
+        "zram_zstd/zs_runtime.c"
+      ],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc",
+          "blob_sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc"
+        },
+        {
+          "path": "patch_offsets.py",
+          "sha256": "760abf91732095d45f8f119ebd48c2fab11bdd3883549ff3d9862dcecade6711",
+          "blob_sha256": "760abf91732095d45f8f119ebd48c2fab11bdd3883549ff3d9862dcecade6711"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "258c55e8d06775433b608b128162e583ca2531ca83020d283988ca46a95d6898",
+          "blob_sha256": "258c55e8d06775433b608b128162e583ca2531ca83020d283988ca46a95d6898"
+        },
+        {
+          "path": "zram_zstd/Makefile",
+          "sha256": "558f16c3357bbb7a7158729b87db42d4a4db4ce121ef63637a7191229866b130",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/tools/selfcheck.py",
+          "sha256": "775c507f9e259ddaaf2180cb579f3446d9f17119c47bd8a6b3592839629cbd5e",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/SOURCES.json",
+          "sha256": "511600bb079e6b3adef0fca9e13ec2e724e071c19f5784f61832d19f295c1ea0",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/asm/unaligned.h",
+          "sha256": "fba2756f6de85a09f3d717515560793791625e280430182be28dd16e44da3c0b",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/compiler.h",
+          "sha256": "49726394112882d9fe3b3953ad09830d37a3db3fb01e0b4dad68a6a56c2a10b1",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/errno.h",
+          "sha256": "9794e303abca0c74755b0ed9077eef303d34ac93994afd5ae2b1bd49ec0baa5f",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/kernel.h",
+          "sha256": "a826242f81d47f67971d741b58b5984fae1f7e912e1e9c7af29436ebfaed9d2c",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/math64.h",
+          "sha256": "c7ec62e81d61fe469f8d1b4dbf7a68b38094415fa17e3bb78c726c8b46427157",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/module.h",
+          "sha256": "912a3f35c3a6e53a038f335c5bf94bf8339db0b0a672123278577c75e81deecb",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/string.h",
+          "sha256": "508b4023659ef0260c13874d381e8806d62a7d3c496f5e630243171191795e93",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/types.h",
+          "sha256": "16d227e82ad2f96a3cdbdc82200f825cc415dc247d0a093ff8d85fe01caee7f1",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/xxhash.h",
+          "sha256": "b0b5efc9c14283eb6396affdc86e3c6b62c255bc1a8cb6fe7c27ca59e52f6297",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/zstd.h",
+          "sha256": "25c96c341af979a56b45deb70eaeee6f433a1fb6af864c7622412f9bfa5d4f38",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/xxhash.c",
+          "sha256": "4f41dafc8f0f28a3341d0699d120d9038f6765efcc7610bb6b5046dcaebd088f",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/bitstream.h",
+          "sha256": "e5631feece9f644936deeeebcd1458ad85f0cec8612c23a06ad1f71938e84ecd",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/compress.c",
+          "sha256": "99346ee596250920b63246203787246f5f1ce00b363f02c985f58adada47c94b",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/decompress.c",
+          "sha256": "592a78f9f5c75b38971408c9b8d75d2fe61bbb957396831eb323289763434abe",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/entropy_common.c",
+          "sha256": "7432d1356c611fa471b7fdaf1538dd8515bbbad42b40bc79573d331fa4a5c78e",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/error_private.h",
+          "sha256": "4576ea969a45d01ea9e6cfe08a3ef92a972d36b53afa49d424635c223b2c5935",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/fse.h",
+          "sha256": "793bc7431be6ca198312507d5f0e6ff8c938d44c9b9fe2508da1ed0d3607816d",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/fse_compress.c",
+          "sha256": "41ea45be613a19795619741139daaab8d86af0abfa67017107540a0cab58cfc9",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/fse_decompress.c",
+          "sha256": "5b23ed2215907a69acd66df7a1377e6e8d9b6df611d544a9b98e27ebdc0f83d9",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/huf.h",
+          "sha256": "e40135dd37a79e4c1b69ecfe9f556ac5a6df25835f0d30019bffd1cfaa962a6e",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/huf_compress.c",
+          "sha256": "677303b4d3198c6110f18eaa2e24795926495e19877c1903e0976af5b68b3001",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/huf_decompress.c",
+          "sha256": "034d05ff23f4ad14f1a5afe311536283b50700588c252f74694423f8baad0254",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/mem.h",
+          "sha256": "a31d8f70a21b74df544f37a401e90a942749eff4e4950d852db17abc88b0234d",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/zstd_common.c",
+          "sha256": "688ce2bfa628fc02d9ba986549bc2cced4c1e50311ac7b0f420336c52996c848",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/zstd_internal.h",
+          "sha256": "6f49e90a91abec4bbcb6e02b6ebbb410234242e0143b619a75a9d53ca3cfd29b",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/zstd_opt.h",
+          "sha256": "4c6a520b1a249933b393a746ea3ab7b48a71a4e952d97515a5abeaa8cfe26b51",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/zram_zstd.c",
+          "sha256": "6c36273da08972696de46354d2b8a889d17a7cda401f551d77dadee353f80dd4",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/zs_offsets.c",
+          "sha256": "b0c888fc9a140a23494969502e66761e91078ad6967809987ece0deebcb12da6",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/zs_runtime.c",
+          "sha256": "e24bd1ef9553ed2e3e478f485258aca5c1463ab81a823ed25b4dba60a76e9ef7",
+          "blob_sha256": null
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "bec218b74132fa3444582896a289b221ecfe8c65f998eb7c0e92a2fb16a507f1",
+      "recipe": {
+        "captured": true,
+        "command": "make -C zram_zstd all debug LAYOUT_DIR=../local/zram-zstd-layouts-final-20261010-01",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "ed44fa08769d7165b80748184a7e9d0ea81f9881265b3d6881cf0966fe1932c5",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/compress.c -o vendor/zstd/compress.o\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/decompress.c -o vendor/zstd/decompress.o\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/entropy_common.c -o vendor/zstd/entropy_common.o\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/fse_compress.c -o vendor/zstd/fse_compress.o"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "459ceef810f4315b1de77f90141626fc3d20c55e",
+        "source_tree_sha256": "c330fe19c6d2b6f663b40b5724155331d09c83706f2a2861eca45957a7114bee",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "ed44fa08769d7165b80748184a7e9d0ea81f9881265b3d6881cf0966fe1932c5",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "zram_zstd_0.1.0_baselines.kpm",
+          "sha256": "64b5a23163a4f0283b409647fe1303b3b911c2d889b3db2f4dc9f63ee696df10",
+          "size": 221792,
+          "embedded": {
+            "name": "zram_zstd",
+            "version": "0.1.0",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "ZSTD for zram. Embed for boot use; DO NOT UNLOAD.",
+            "offset_mode": "static"
+          },
+          "path": "artifacts/zram_zstd-0.1.0_baselines+gc330fe19c6d2.rbec218b7.kpb51197a.ndk26.3.11579264/zram_zstd_0.1.0_baselines.kpm"
+        }
+      ],
+      "instance_id": "zram_zstd-0.1.0_baselines+gc330fe19c6d2.rbec218b7.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "zram_zstd",
+      "version": "0.1.0",
+      "kind": "exploration",
+      "build_id": "zram_zstd-0.1.0_baselines_debug+gc330fe19c6d2.r485f691a.kpb51197a.ndk26.3.11579264",
+      "variant": "baselines_debug",
+      "recorded_at": "2026-10-11T01:53:00Z",
+      "source_commit": "459ceef810f4315b1de77f90141626fc3d20c55e",
+      "source_dirty": true,
+      "source_tree_sha256": "c330fe19c6d2b6f663b40b5724155331d09c83706f2a2861eca45957a7114bee",
+      "source_tree_blob_sha256": null,
+      "source_blob_missing": [
+        "zram_zstd/Makefile",
+        "zram_zstd/tools/selfcheck.py",
+        "zram_zstd/vendor/SOURCES.json",
+        "zram_zstd/vendor/compat/asm/unaligned.h",
+        "zram_zstd/vendor/compat/linux/compiler.h",
+        "zram_zstd/vendor/compat/linux/errno.h",
+        "zram_zstd/vendor/compat/linux/kernel.h",
+        "zram_zstd/vendor/compat/linux/math64.h",
+        "zram_zstd/vendor/compat/linux/module.h",
+        "zram_zstd/vendor/compat/linux/string.h",
+        "zram_zstd/vendor/compat/linux/types.h",
+        "zram_zstd/vendor/compat/linux/xxhash.h",
+        "zram_zstd/vendor/compat/linux/zstd.h",
+        "zram_zstd/vendor/xxhash.c",
+        "zram_zstd/vendor/zstd/bitstream.h",
+        "zram_zstd/vendor/zstd/compress.c",
+        "zram_zstd/vendor/zstd/decompress.c",
+        "zram_zstd/vendor/zstd/entropy_common.c",
+        "zram_zstd/vendor/zstd/error_private.h",
+        "zram_zstd/vendor/zstd/fse.h",
+        "zram_zstd/vendor/zstd/fse_compress.c",
+        "zram_zstd/vendor/zstd/fse_decompress.c",
+        "zram_zstd/vendor/zstd/huf.h",
+        "zram_zstd/vendor/zstd/huf_compress.c",
+        "zram_zstd/vendor/zstd/huf_decompress.c",
+        "zram_zstd/vendor/zstd/mem.h",
+        "zram_zstd/vendor/zstd/zstd_common.c",
+        "zram_zstd/vendor/zstd/zstd_internal.h",
+        "zram_zstd/vendor/zstd/zstd_opt.h",
+        "zram_zstd/zram_zstd.c",
+        "zram_zstd/zs_offsets.c",
+        "zram_zstd/zs_runtime.c"
+      ],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc",
+          "blob_sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc"
+        },
+        {
+          "path": "patch_offsets.py",
+          "sha256": "760abf91732095d45f8f119ebd48c2fab11bdd3883549ff3d9862dcecade6711",
+          "blob_sha256": "760abf91732095d45f8f119ebd48c2fab11bdd3883549ff3d9862dcecade6711"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "258c55e8d06775433b608b128162e583ca2531ca83020d283988ca46a95d6898",
+          "blob_sha256": "258c55e8d06775433b608b128162e583ca2531ca83020d283988ca46a95d6898"
+        },
+        {
+          "path": "zram_zstd/Makefile",
+          "sha256": "558f16c3357bbb7a7158729b87db42d4a4db4ce121ef63637a7191229866b130",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/tools/selfcheck.py",
+          "sha256": "775c507f9e259ddaaf2180cb579f3446d9f17119c47bd8a6b3592839629cbd5e",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/SOURCES.json",
+          "sha256": "511600bb079e6b3adef0fca9e13ec2e724e071c19f5784f61832d19f295c1ea0",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/asm/unaligned.h",
+          "sha256": "fba2756f6de85a09f3d717515560793791625e280430182be28dd16e44da3c0b",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/compiler.h",
+          "sha256": "49726394112882d9fe3b3953ad09830d37a3db3fb01e0b4dad68a6a56c2a10b1",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/errno.h",
+          "sha256": "9794e303abca0c74755b0ed9077eef303d34ac93994afd5ae2b1bd49ec0baa5f",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/kernel.h",
+          "sha256": "a826242f81d47f67971d741b58b5984fae1f7e912e1e9c7af29436ebfaed9d2c",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/math64.h",
+          "sha256": "c7ec62e81d61fe469f8d1b4dbf7a68b38094415fa17e3bb78c726c8b46427157",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/module.h",
+          "sha256": "912a3f35c3a6e53a038f335c5bf94bf8339db0b0a672123278577c75e81deecb",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/string.h",
+          "sha256": "508b4023659ef0260c13874d381e8806d62a7d3c496f5e630243171191795e93",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/types.h",
+          "sha256": "16d227e82ad2f96a3cdbdc82200f825cc415dc247d0a093ff8d85fe01caee7f1",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/xxhash.h",
+          "sha256": "b0b5efc9c14283eb6396affdc86e3c6b62c255bc1a8cb6fe7c27ca59e52f6297",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/zstd.h",
+          "sha256": "25c96c341af979a56b45deb70eaeee6f433a1fb6af864c7622412f9bfa5d4f38",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/xxhash.c",
+          "sha256": "4f41dafc8f0f28a3341d0699d120d9038f6765efcc7610bb6b5046dcaebd088f",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/bitstream.h",
+          "sha256": "e5631feece9f644936deeeebcd1458ad85f0cec8612c23a06ad1f71938e84ecd",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/compress.c",
+          "sha256": "99346ee596250920b63246203787246f5f1ce00b363f02c985f58adada47c94b",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/decompress.c",
+          "sha256": "592a78f9f5c75b38971408c9b8d75d2fe61bbb957396831eb323289763434abe",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/entropy_common.c",
+          "sha256": "7432d1356c611fa471b7fdaf1538dd8515bbbad42b40bc79573d331fa4a5c78e",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/error_private.h",
+          "sha256": "4576ea969a45d01ea9e6cfe08a3ef92a972d36b53afa49d424635c223b2c5935",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/fse.h",
+          "sha256": "793bc7431be6ca198312507d5f0e6ff8c938d44c9b9fe2508da1ed0d3607816d",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/fse_compress.c",
+          "sha256": "41ea45be613a19795619741139daaab8d86af0abfa67017107540a0cab58cfc9",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/fse_decompress.c",
+          "sha256": "5b23ed2215907a69acd66df7a1377e6e8d9b6df611d544a9b98e27ebdc0f83d9",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/huf.h",
+          "sha256": "e40135dd37a79e4c1b69ecfe9f556ac5a6df25835f0d30019bffd1cfaa962a6e",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/huf_compress.c",
+          "sha256": "677303b4d3198c6110f18eaa2e24795926495e19877c1903e0976af5b68b3001",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/huf_decompress.c",
+          "sha256": "034d05ff23f4ad14f1a5afe311536283b50700588c252f74694423f8baad0254",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/mem.h",
+          "sha256": "a31d8f70a21b74df544f37a401e90a942749eff4e4950d852db17abc88b0234d",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/zstd_common.c",
+          "sha256": "688ce2bfa628fc02d9ba986549bc2cced4c1e50311ac7b0f420336c52996c848",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/zstd_internal.h",
+          "sha256": "6f49e90a91abec4bbcb6e02b6ebbb410234242e0143b619a75a9d53ca3cfd29b",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/zstd_opt.h",
+          "sha256": "4c6a520b1a249933b393a746ea3ab7b48a71a4e952d97515a5abeaa8cfe26b51",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/zram_zstd.c",
+          "sha256": "6c36273da08972696de46354d2b8a889d17a7cda401f551d77dadee353f80dd4",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/zs_offsets.c",
+          "sha256": "b0c888fc9a140a23494969502e66761e91078ad6967809987ece0deebcb12da6",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/zs_runtime.c",
+          "sha256": "e24bd1ef9553ed2e3e478f485258aca5c1463ab81a823ed25b4dba60a76e9ef7",
+          "blob_sha256": null
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "485f691a428afcc926f4b7059d2fde3e113c2f710d7fb394601ce31d0df0fa15",
+      "recipe": {
+        "captured": true,
+        "command": "make -C zram_zstd all debug LAYOUT_DIR=../local/zram-zstd-layouts-final-20261010-01",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "ed44fa08769d7165b80748184a7e9d0ea81f9881265b3d6881cf0966fe1932c5",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/compress.c -o vendor/zstd/compress.o\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/decompress.c -o vendor/zstd/decompress.o\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/entropy_common.c -o vendor/zstd/entropy_common.o\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/fse_compress.c -o vendor/zstd/fse_compress.o"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "459ceef810f4315b1de77f90141626fc3d20c55e",
+        "source_tree_sha256": "c330fe19c6d2b6f663b40b5724155331d09c83706f2a2861eca45957a7114bee",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "ed44fa08769d7165b80748184a7e9d0ea81f9881265b3d6881cf0966fe1932c5",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "zram_zstd_0.1.0_baselines_debug.kpm",
+          "sha256": "4ce9a938c695eb92ba9753c75374d3c93fe8ac52f90f6df824eedcfbb0a888e7",
+          "size": 221792,
+          "embedded": {
+            "name": "zram_zstd",
+            "version": "0.1.0_d",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "ZSTD for zram. Embed for boot use; DO NOT UNLOAD.",
+            "offset_mode": "static"
+          },
+          "path": "artifacts/zram_zstd-0.1.0_baselines_debug+gc330fe19c6d2.r485f691a.kpb51197a.ndk26.3.11579264/zram_zstd_0.1.0_baselines_debug.kpm"
+        }
+      ],
+      "instance_id": "zram_zstd-0.1.0_baselines_debug+gc330fe19c6d2.r485f691a.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "zram_zstd",
+      "version": "0.1.0",
+      "kind": "exploration",
+      "build_id": "zram_zstd-0.1.0_debug+gc330fe19c6d2.rb9c25f47.kpb51197a.ndk26.3.11579264",
+      "variant": "debug",
+      "recorded_at": "2026-10-11T01:53:01Z",
+      "source_commit": "459ceef810f4315b1de77f90141626fc3d20c55e",
+      "source_dirty": true,
+      "source_tree_sha256": "c330fe19c6d2b6f663b40b5724155331d09c83706f2a2861eca45957a7114bee",
+      "source_tree_blob_sha256": null,
+      "source_blob_missing": [
+        "zram_zstd/Makefile",
+        "zram_zstd/tools/selfcheck.py",
+        "zram_zstd/vendor/SOURCES.json",
+        "zram_zstd/vendor/compat/asm/unaligned.h",
+        "zram_zstd/vendor/compat/linux/compiler.h",
+        "zram_zstd/vendor/compat/linux/errno.h",
+        "zram_zstd/vendor/compat/linux/kernel.h",
+        "zram_zstd/vendor/compat/linux/math64.h",
+        "zram_zstd/vendor/compat/linux/module.h",
+        "zram_zstd/vendor/compat/linux/string.h",
+        "zram_zstd/vendor/compat/linux/types.h",
+        "zram_zstd/vendor/compat/linux/xxhash.h",
+        "zram_zstd/vendor/compat/linux/zstd.h",
+        "zram_zstd/vendor/xxhash.c",
+        "zram_zstd/vendor/zstd/bitstream.h",
+        "zram_zstd/vendor/zstd/compress.c",
+        "zram_zstd/vendor/zstd/decompress.c",
+        "zram_zstd/vendor/zstd/entropy_common.c",
+        "zram_zstd/vendor/zstd/error_private.h",
+        "zram_zstd/vendor/zstd/fse.h",
+        "zram_zstd/vendor/zstd/fse_compress.c",
+        "zram_zstd/vendor/zstd/fse_decompress.c",
+        "zram_zstd/vendor/zstd/huf.h",
+        "zram_zstd/vendor/zstd/huf_compress.c",
+        "zram_zstd/vendor/zstd/huf_decompress.c",
+        "zram_zstd/vendor/zstd/mem.h",
+        "zram_zstd/vendor/zstd/zstd_common.c",
+        "zram_zstd/vendor/zstd/zstd_internal.h",
+        "zram_zstd/vendor/zstd/zstd_opt.h",
+        "zram_zstd/zram_zstd.c",
+        "zram_zstd/zs_offsets.c",
+        "zram_zstd/zs_runtime.c"
+      ],
+      "sources": [
+        {
+          "path": "kpm_utils.h",
+          "sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc",
+          "blob_sha256": "0edd65942a8bba118c6c6f5a36ef7f6c1a4990e3cba2b33e27ae6c9418815cdc"
+        },
+        {
+          "path": "patch_offsets.py",
+          "sha256": "760abf91732095d45f8f119ebd48c2fab11bdd3883549ff3d9862dcecade6711",
+          "blob_sha256": "760abf91732095d45f8f119ebd48c2fab11bdd3883549ff3d9862dcecade6711"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "258c55e8d06775433b608b128162e583ca2531ca83020d283988ca46a95d6898",
+          "blob_sha256": "258c55e8d06775433b608b128162e583ca2531ca83020d283988ca46a95d6898"
+        },
+        {
+          "path": "zram_zstd/Makefile",
+          "sha256": "558f16c3357bbb7a7158729b87db42d4a4db4ce121ef63637a7191229866b130",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/tools/selfcheck.py",
+          "sha256": "775c507f9e259ddaaf2180cb579f3446d9f17119c47bd8a6b3592839629cbd5e",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/SOURCES.json",
+          "sha256": "511600bb079e6b3adef0fca9e13ec2e724e071c19f5784f61832d19f295c1ea0",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/asm/unaligned.h",
+          "sha256": "fba2756f6de85a09f3d717515560793791625e280430182be28dd16e44da3c0b",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/compiler.h",
+          "sha256": "49726394112882d9fe3b3953ad09830d37a3db3fb01e0b4dad68a6a56c2a10b1",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/errno.h",
+          "sha256": "9794e303abca0c74755b0ed9077eef303d34ac93994afd5ae2b1bd49ec0baa5f",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/kernel.h",
+          "sha256": "a826242f81d47f67971d741b58b5984fae1f7e912e1e9c7af29436ebfaed9d2c",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/math64.h",
+          "sha256": "c7ec62e81d61fe469f8d1b4dbf7a68b38094415fa17e3bb78c726c8b46427157",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/module.h",
+          "sha256": "912a3f35c3a6e53a038f335c5bf94bf8339db0b0a672123278577c75e81deecb",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/string.h",
+          "sha256": "508b4023659ef0260c13874d381e8806d62a7d3c496f5e630243171191795e93",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/types.h",
+          "sha256": "16d227e82ad2f96a3cdbdc82200f825cc415dc247d0a093ff8d85fe01caee7f1",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/xxhash.h",
+          "sha256": "b0b5efc9c14283eb6396affdc86e3c6b62c255bc1a8cb6fe7c27ca59e52f6297",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/compat/linux/zstd.h",
+          "sha256": "25c96c341af979a56b45deb70eaeee6f433a1fb6af864c7622412f9bfa5d4f38",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/xxhash.c",
+          "sha256": "4f41dafc8f0f28a3341d0699d120d9038f6765efcc7610bb6b5046dcaebd088f",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/bitstream.h",
+          "sha256": "e5631feece9f644936deeeebcd1458ad85f0cec8612c23a06ad1f71938e84ecd",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/compress.c",
+          "sha256": "99346ee596250920b63246203787246f5f1ce00b363f02c985f58adada47c94b",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/decompress.c",
+          "sha256": "592a78f9f5c75b38971408c9b8d75d2fe61bbb957396831eb323289763434abe",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/entropy_common.c",
+          "sha256": "7432d1356c611fa471b7fdaf1538dd8515bbbad42b40bc79573d331fa4a5c78e",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/error_private.h",
+          "sha256": "4576ea969a45d01ea9e6cfe08a3ef92a972d36b53afa49d424635c223b2c5935",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/fse.h",
+          "sha256": "793bc7431be6ca198312507d5f0e6ff8c938d44c9b9fe2508da1ed0d3607816d",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/fse_compress.c",
+          "sha256": "41ea45be613a19795619741139daaab8d86af0abfa67017107540a0cab58cfc9",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/fse_decompress.c",
+          "sha256": "5b23ed2215907a69acd66df7a1377e6e8d9b6df611d544a9b98e27ebdc0f83d9",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/huf.h",
+          "sha256": "e40135dd37a79e4c1b69ecfe9f556ac5a6df25835f0d30019bffd1cfaa962a6e",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/huf_compress.c",
+          "sha256": "677303b4d3198c6110f18eaa2e24795926495e19877c1903e0976af5b68b3001",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/huf_decompress.c",
+          "sha256": "034d05ff23f4ad14f1a5afe311536283b50700588c252f74694423f8baad0254",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/mem.h",
+          "sha256": "a31d8f70a21b74df544f37a401e90a942749eff4e4950d852db17abc88b0234d",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/zstd_common.c",
+          "sha256": "688ce2bfa628fc02d9ba986549bc2cced4c1e50311ac7b0f420336c52996c848",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/zstd_internal.h",
+          "sha256": "6f49e90a91abec4bbcb6e02b6ebbb410234242e0143b619a75a9d53ca3cfd29b",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/vendor/zstd/zstd_opt.h",
+          "sha256": "4c6a520b1a249933b393a746ea3ab7b48a71a4e952d97515a5abeaa8cfe26b51",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/zram_zstd.c",
+          "sha256": "6c36273da08972696de46354d2b8a889d17a7cda401f551d77dadee353f80dd4",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/zs_offsets.c",
+          "sha256": "b0c888fc9a140a23494969502e66761e91078ad6967809987ece0deebcb12da6",
+          "blob_sha256": null
+        },
+        {
+          "path": "zram_zstd/zs_runtime.c",
+          "sha256": "e24bd1ef9553ed2e3e478f485258aca5c1463ab81a823ed25b4dba60a76e9ef7",
+          "blob_sha256": null
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "b9c25f470f9015328fbadc6d01dce28e9cb078243a29807fa26748a46c62abe7",
+      "recipe": {
+        "captured": true,
+        "command": "make -C zram_zstd all debug LAYOUT_DIR=../local/zram-zstd-layouts-final-20261010-01",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "ed44fa08769d7165b80748184a7e9d0ea81f9881265b3d6881cf0966fe1932c5",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/compress.c -o vendor/zstd/compress.o\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/decompress.c -o vendor/zstd/decompress.o\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/entropy_common.c -o vendor/zstd/entropy_common.o\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -Ivendor/compat -c vendor/zstd/fse_compress.c -o vendor/zstd/fse_compress.o"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "459ceef810f4315b1de77f90141626fc3d20c55e",
+        "source_tree_sha256": "c330fe19c6d2b6f663b40b5724155331d09c83706f2a2861eca45957a7114bee",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "ed44fa08769d7165b80748184a7e9d0ea81f9881265b3d6881cf0966fe1932c5",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "zram_zstd_0.1.0_debug.kpm",
+          "sha256": "7a7d18b9f7c9bfff89f0b2e7a440b4f4a79afbb273efb6fe3e3c5d6e83a7a279",
+          "size": 228552,
+          "embedded": {
+            "name": "zram_zstd",
+            "version": "0.1.0_d",
+            "license": "GPL v2",
+            "author": "lzghzr",
+            "description": "ZSTD for zram. Embed for boot use; DO NOT UNLOAD.",
+            "offset_mode": "dynamic"
+          },
+          "path": "artifacts/zram_zstd-0.1.0_debug+gc330fe19c6d2.rb9c25f47.kpb51197a.ndk26.3.11579264/zram_zstd_0.1.0_debug.kpm"
+        }
+      ],
+      "instance_id": "zram_zstd-0.1.0_debug+gc330fe19c6d2.rb9c25f47.kpb51197a.ndk26.3.11579264#1"
+    }
+  ]
+}

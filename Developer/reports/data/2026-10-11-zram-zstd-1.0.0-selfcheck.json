@@ -1,0 +1,315 @@
+{
+  "scope": "Developer frozen candidate host selfchecks (Tier 3); independent audit and device testing pending",
+  "source_commit": "c068b23c8be43d3652780ed8f079bfe3b9799203",
+  "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "zstd_source_commit": "5d9fb4785030731a155a8abe159e10965d824e4b",
+  "handoff_manifest": "Developer/reports/handoffs/2026-10-11-zram-zstd-1.0.0-candidate.json",
+  "handoff_sha256": "86bbe965c517a12bfe144eedc1436a10709c1c15bfcb22bdf4611acb2d30cb49",
+  "candidate_verifications": [
+    {
+      "build_id": "zram_zstd-1.0.0+g35a93831512f.r32a0362b.kpb51197a.ndk26.3.11579264",
+      "instance_id": "zram_zstd-1.0.0+g35a93831512f.r32a0362b.kpb51197a.ndk26.3.11579264#1",
+      "kind": "candidate",
+      "profile": "candidate",
+      "problems": [],
+      "notes": [
+        "源码核验通过（提交 blob 430 个）"
+      ],
+      "source_verified": true,
+      "artifacts_verified": 1
+    },
+    {
+      "build_id": "zram_zstd-1.0.0_baselines+g35a93831512f.rb8abf97f.kpb51197a.ndk26.3.11579264",
+      "instance_id": "zram_zstd-1.0.0_baselines+g35a93831512f.rb8abf97f.kpb51197a.ndk26.3.11579264#1",
+      "kind": "candidate",
+      "profile": "candidate",
+      "problems": [],
+      "notes": [
+        "源码核验通过（提交 blob 430 个）"
+      ],
+      "source_verified": true,
+      "artifacts_verified": 1
+    },
+    {
+      "build_id": "zram_zstd-1.0.0_baselines_debug+g35a93831512f.r84e7517d.kpb51197a.ndk26.3.11579264",
+      "instance_id": "zram_zstd-1.0.0_baselines_debug+g35a93831512f.r84e7517d.kpb51197a.ndk26.3.11579264#1",
+      "kind": "candidate",
+      "profile": "candidate",
+      "problems": [],
+      "notes": [
+        "源码核验通过（提交 blob 430 个）"
+      ],
+      "source_verified": true,
+      "artifacts_verified": 1
+    },
+    {
+      "build_id": "zram_zstd-1.0.0_debug+g35a93831512f.r95cc9104.kpb51197a.ndk26.3.11579264",
+      "instance_id": "zram_zstd-1.0.0_debug+g35a93831512f.r95cc9104.kpb51197a.ndk26.3.11579264#1",
+      "kind": "candidate",
+      "profile": "candidate",
+      "problems": [],
+      "notes": [
+        "源码核验通过（提交 blob 430 个）"
+      ],
+      "source_verified": true,
+      "artifacts_verified": 1
+    }
+  ],
+  "layouts": [
+    {
+      "instance_id": "zram_zstd-1.0.0_baselines+g35a93831512f.rb8abf97f.kpb51197a.ndk26.3.11579264#1",
+      "path": "artifacts/zram_zstd-1.0.0_baselines+g35a93831512f.rb8abf97f.kpb51197a.ndk26.3.11579264/zram_zstd_1.0.0_baselines.kpm.json",
+      "sha256": "c2f29c4d9197243523050af0f531c5ca801617a5b05ed4a2a81d5b203cd833a4"
+    },
+    {
+      "instance_id": "zram_zstd-1.0.0_baselines_debug+g35a93831512f.r84e7517d.kpb51197a.ndk26.3.11579264#1",
+      "path": "artifacts/zram_zstd-1.0.0_baselines_debug+g35a93831512f.r84e7517d.kpb51197a.ndk26.3.11579264/zram_zstd_1.0.0_baselines_debug.kpm.json",
+      "sha256": "74fb6f67074225786a950022e550d6763cfe7995731fa05c6b729a09fdc69936"
+    }
+  ],
+  "elf_checks": [
+    {
+      "name": "zram_zstd_1.0.0.kpm",
+      "sha256": "3a91f9631c2dba8dde5616512333ce17ca262f934ed6f76cfafb2b6ff7f25e10",
+      "imports": [
+        "compat_copy_to_user",
+        "hook_wrap",
+        "kallsyms_lookup_name_by_suffix",
+        "kf_memcmp",
+        "kf_memcpy",
+        "kf_memmove",
+        "kf_memset",
+        "kf_strcmp",
+        "kf_strncmp",
+        "printk"
+      ],
+      "forbidden_register_matches": 0,
+      "info": {
+        "name": "zram_zstd",
+        "version": "1.0.0",
+        "license": "GPL v2",
+        "author": "lzghzr",
+        "description": "ZSTD for zram. Embed for boot use; DO NOT UNLOAD.",
+        "offset_mode": "dynamic"
+      }
+    },
+    {
+      "name": "zram_zstd_1.0.0_baselines.kpm",
+      "sha256": "f90d2e1713e6aa1f8c6329571ee6df9f8c5970899382b1a7a76f132677646f88",
+      "imports": [
+        "compat_copy_to_user",
+        "hook_wrap",
+        "kallsyms_lookup_name_by_suffix",
+        "kf_memcmp",
+        "kf_memcpy",
+        "kf_memmove",
+        "kf_memset",
+        "kf_strcmp",
+        "printk"
+      ],
+      "forbidden_register_matches": 0,
+      "info": {
+        "name": "zram_zstd",
+        "version": "1.0.0",
+        "license": "GPL v2",
+        "author": "lzghzr",
+        "description": "ZSTD for zram. Embed for boot use; DO NOT UNLOAD.",
+        "offset_mode": "static"
+      }
+    },
+    {
+      "name": "zram_zstd_1.0.0_baselines_debug.kpm",
+      "sha256": "3e0bbda70ecc90d53b1c7488af7cdaac2e0024d098f3b704f296cdc91a1682a8",
+      "imports": [
+        "compat_copy_to_user",
+        "hook_wrap",
+        "kallsyms_lookup_name_by_suffix",
+        "kf_memcmp",
+        "kf_memcpy",
+        "kf_memmove",
+        "kf_memset",
+        "kf_strcmp",
+        "printk"
+      ],
+      "forbidden_register_matches": 0,
+      "info": {
+        "name": "zram_zstd",
+        "version": "1.0.0_d",
+        "license": "GPL v2",
+        "author": "lzghzr",
+        "description": "ZSTD for zram. Embed for boot use; DO NOT UNLOAD.",
+        "offset_mode": "static"
+      }
+    },
+    {
+      "name": "zram_zstd_1.0.0_debug.kpm",
+      "sha256": "27dbd862e86095748e30ab959e206668beb6529b35d494fb54cde521883825ec",
+      "imports": [
+        "compat_copy_to_user",
+        "hook_wrap",
+        "kallsyms_lookup_name_by_suffix",
+        "kf_memcmp",
+        "kf_memcpy",
+        "kf_memmove",
+        "kf_memset",
+        "kf_strcmp",
+        "kf_strncmp",
+        "printk"
+      ],
+      "forbidden_register_matches": 0,
+      "info": {
+        "name": "zram_zstd",
+        "version": "1.0.0_d",
+        "license": "GPL v2",
+        "author": "lzghzr",
+        "description": "ZSTD for zram. Embed for boot use; DO NOT UNLOAD.",
+        "offset_mode": "dynamic"
+      }
+    }
+  ],
+  "codec_and_display_selfcheck": {
+    "scope": "Developer host selfcheck; not kernel registration, concurrency or device proof",
+    "image_sha256": "7633fbac5ce30b726a1acdbf57f730aa847a9510984a25bc23f9ddcdb0956e1c",
+    "symbols_sha256": "26dfcea65420dd4b5cc4699fab34c428df7a3c22906e7b3a7ecb163899d7662c",
+    "entries": {
+      "crypto_register_alg": {
+        "image_offset": 2763460,
+        "window_bytes": 128,
+        "sha256": "e229005364ba0b7478b59c9262c967ccc20b202dae8291e74d622afa1d73c4bf"
+      },
+      "crypto_compress": {
+        "image_offset": 2758792,
+        "window_bytes": 64,
+        "sha256": "c2649f28837700567dcbf40a4abe9e7dc244a1c5b69e668ab39f843f05d2e185"
+      },
+      "crypto_create_tfm": {
+        "image_offset": 2757700,
+        "window_bytes": 128,
+        "sha256": "9d8f6974fa2b5ec1e55fe59f35309e1aea89524bf0298a1bf768f391c0211671"
+      },
+      "lzo_init": {
+        "image_offset": 2875968,
+        "window_bytes": 64,
+        "sha256": "a400631936203548bfd9dab0f8e3b2169c7ee969e38e53b2069f0f0281394cb3"
+      },
+      "crypto_check_alg": {
+        "image_offset": 2760116,
+        "window_bytes": 64,
+        "sha256": "021e963fbc6396a68909f9a01d42efd28935566f4e342abebf87e9eb90f1ee97"
+      },
+      "crypto_mod_get": {
+        "image_offset": 2755440,
+        "window_bytes": 32,
+        "sha256": "82a3d24515dc6a317780af9730dffa0879d2aedb7e2fd20097d4a4d93974bc09"
+      }
+    },
+    "independent_library_sha256": "e2847c4613b386683c234913ae3b7b04299254096caf7616e3b3cd9bb97a39ab",
+    "stdout": "zram_zstd: crypto_alg_flags=0x20\nzram_zstd: crypto_alg_driver_name=0x78\nzram_zstd: crypto_alg_compress=0xc0\nzram_zstd: crypto_alg_init=0x100\nzram_zstd: crypto_tfm_ctx=0x80\nzram_zstd: crypto_alg_flags=0x20\nzram_zstd: crypto_alg_driver_name=0x78\nzram_zstd: crypto_alg_compress=0xc0\nzram_zstd: crypto_alg_init=0x100\nzram_zstd: crypto_tfm_ctx=0x80\nzram_zstd: BTF: crypto_alg or crypto_tfm missing\nzram_zstd: BTF: flags=0x20 name=0x38 driver=0x78 compress=0xc0 init=0x100 ctx=0x80\nzram_zstd: BTF: flags=0x20 name=0x38 driver=0xb8 compress=0x140 init=0x180 ctx=0x80\nzram_zstd: crypto_alg_flags=0x20\nzram_zstd: crypto_alg_driver_name=0x78\nzram_zstd: crypto_alg_compress=0xfffffffe\nzram_zstd: crypto_alg_flags=0x20\nzram_zstd: crypto_alg_driver_name=0x78\nzram_zstd: crypto_alg_compress=0xfffffffe\nzram_zstd: crypto_alg_flags=0x20\nzram_zstd: crypto_alg_driver_name=0xfffffffe\nzram_zstd: crypto_alg_flags=0x20\nzram_zstd: crypto_alg_driver_name=0x78\nzram_zstd: crypto_alg_compress=0xc0\nzram_zstd: crypto_alg_init=0x100\nzram_zstd: crypto_tfm_ctx=0x80\nPASS: BTF absence fallback, native error preservation, 64/128 names, layout rejection, missing short anchor\nzram_zstd: use post-kernel-init\nzram_zstd: zstd-kpm already available; skip loading\nzram_zstd: BTF: flags=0x20 name=0x38 driver=0xb8 compress=0x140 init=0x180 ctx=0x80\nzram_zstd: codec check=0\nzram_zstd: algorithm list helpers unavailable; select zstd-kpm directly\nzram_zstd: registered zstd-kpm 1.5.7; select zstd-kpm before zram initialization. DO NOT UNLOAD\nzram_zstd: zram algorithm list now includes zstd-kpm\nzram_zstd: zram algorithm list now includes zstd-kpm\nzram_zstd: zram algorithm list now includes zstd-kpm\nzram_zstd: zram algorithm list now includes zstd-kpm\nzram_zstd: algorithm list helpers unavailable; select zstd-kpm directly\nzram_zstd: algorithm list hook failed: -4092; select zstd-kpm directly\nzram_zstd: zram algorithm list now includes zstd-kpm\nzram_zstd: module load hook unavailable; updating the current zram list only\nzram_zstd: zram algorithm list now includes zstd-kpm\nPASS: algorithm list tokens, brackets, capacity, partial page, built-in/late module, COMING rejection, concurrent install, setup event and optional failure\nPASS: zstd-kpm name, duplicate detection, boot event, callback registration\nzram_zstd: codec check=0\nPASS: actual-entry offsets, codec check, 256 kernel pages, libzstd interoperability\nPASS: ctl0 reply, output bounds, short copy, partial allocation and serial cleanup\n",
+    "reference_sha256": "21ae1e625dbfbd3033cb229f3b70f34db377ee9b2473a1850bb9d92499ebe58a",
+    "zstd_source_commit": "5d9fb4785030731a155a8abe159e10965d824e4b",
+    "generated_codec_manifest_sha256": "f03d6fd525f8dd070dde77415ddc7b91d0467d5e239c26a56458b31fe4e2bf8d",
+    "fixture_sha256": "7538f6868e76e9d032a69267cb1b02cc8d4612a4f67b28e5fa4486896264cf24",
+    "sources": {
+      "zram_zstd/zram_zstd.c": "12b0e929ae426850ba32768956ca6457be53c426a5b55e2fb2f18a839c1af821",
+      "zram_zstd/zs_structs.h": "b5ca19c3e0f45c16f0b5ceb01d090266038f52dcf640ac32ecae379b8d05a977",
+      "zram_zstd/zs_offsets.c": "c8d5be1990825b174a8e32129fe98caf033db18f5fd4c89f1d220b4824cfb8d1",
+      "zram_zstd/zs_btf.c": "d06c8805ed364aa2e5e44c07783f455b0d46fee2f5e5a5625b6d90e0d07def27",
+      "zram_zstd/zs_display.c": "f82247c1334e09a80d4cd2259bcbe4619c630a71b34a57a76d9b4906bebbbfa5",
+      "kpm_utils.h": "b664ab3b4f97383d46e696ebbe9b6f95603e2e1758accddb745a0b67eb871bfe",
+      "zram_zstd/tools/selfcheck.py": "d14ed4959d34c32a2cdd2673e1b324ea32b89cd221cdc14ffbd738973c8b521a",
+      "zram_zstd/tools/prepare_codec.py": "131dfeee90a25ac76706e74487570db748d4aa071f24682e93f187692214a5cd",
+      "zram_zstd/tools/selfcheck_fixture.c": "f3aa172e428b481deea6c4acf57e8716f76a5a8735ca4c07621d652b8f365205",
+      "zram_zstd/tools/btf_fixture.h": "53d54a2981416deef789f2810ebe976530122181e009463128f9fbe4cb369375"
+    }
+  },
+  "target_evidence": "Developer/reports/data/2026-10-11-zram-zstd-1.0.0-targets.json",
+  "binary_conversion_selfcheck": {
+    "scope": "Developer Tier-3; original Oracle helpers unchanged",
+    "results": [
+      {
+        "name": "tagged-0.kpm",
+        "parent_sha256": "068a93be8f96f6ae289ea195e0a76acde8396ae998f7cc896dc4a3dbe690e880",
+        "sha256": "fda5b64c8b6fd871b9c0a505eaa9fefbe79c35947bc4e38fd4944d46a3f3a6e8",
+        "pointer_import_added": true,
+        "checks": "PASS"
+      },
+      {
+        "name": "tagged-1.kpm",
+        "parent_sha256": "d5377d7668b965af18a935c842653363c8aa09558b86a9cac5047ecbfaf8619b",
+        "sha256": "4af06f680630cce3e805f08c2a9fbfab34edb1741428eaba5bcaaa16eb03424b",
+        "pointer_import_added": true,
+        "checks": "PASS"
+      },
+      {
+        "name": "tagged-2.kpm",
+        "parent_sha256": "587c824ad7abbb2ce2d9d163972280b57b5e36d0e58f7d72c77f5e8c47f3a282",
+        "sha256": "446f1481f55115e00e6e8c5e5f89b02c62f726c3b7183cb35d4bc1a788227548",
+        "pointer_import_added": true,
+        "checks": "PASS"
+      },
+      {
+        "name": "tagged-3.kpm",
+        "parent_sha256": "3d896163464e578f32fd469d997f69803561257e64dcedb7d90fecb515820406",
+        "sha256": "de934789237caa9717e2dbcdb397380ba0ee2ce7c59074885c09d349d023d2cb",
+        "pointer_import_added": true,
+        "checks": "PASS"
+      },
+      {
+        "name": "tagged-0-with-pointer.kpm",
+        "parent_sha256": "030a03c2306e9515e0884af35ec08e06e8b8ad42f62391b761cd1d079d3ab53e",
+        "sha256": "137d2ee1ab30bac009094cc0ec1d3b2fbc4f215528356e7be704d376821b2ddb",
+        "pointer_import_added": false,
+        "checks": "PASS"
+      }
+    ],
+    "metadata_cases": "3 byte-preserving inputs; 3 malformed inputs rejected",
+    "unmarked_results": [
+      {
+        "name": "zram_zstd_1.0.0.kpm",
+        "parent_sha256": "3a91f9631c2dba8dde5616512333ce17ca262f934ed6f76cfafb2b6ff7f25e10",
+        "sha256": "e829df670157a8024484e16840858f07b3613ec292b252d5c1b89333e3ca535c",
+        "pointer_import_added": true,
+        "metadata": "unchanged",
+        "checks": "PASS"
+      },
+      {
+        "name": "zram_zstd_1.0.0_baselines.kpm",
+        "parent_sha256": "f90d2e1713e6aa1f8c6329571ee6df9f8c5970899382b1a7a76f132677646f88",
+        "sha256": "b2765e4bbde74483861e94a3f68a23b232688562cfaa83b97ecf8c120c4e2836",
+        "pointer_import_added": true,
+        "metadata": "unchanged",
+        "checks": "PASS"
+      },
+      {
+        "name": "zram_zstd_1.0.0_baselines_debug.kpm",
+        "parent_sha256": "3e0bbda70ecc90d53b1c7488af7cdaac2e0024d098f3b704f296cdc91a1682a8",
+        "sha256": "81503be65da5a57db5362c4635fa4aff1cdb8186bef1303a2d1679a2ca040931",
+        "pointer_import_added": true,
+        "metadata": "unchanged",
+        "checks": "PASS"
+      },
+      {
+        "name": "zram_zstd_1.0.0_debug.kpm",
+        "parent_sha256": "27dbd862e86095748e30ab959e206668beb6529b35d494fb54cde521883825ec",
+        "sha256": "75a124a68c569bcad1bba97d3a906daea0dc04bed1abefaa37948d46c88fb7fd",
+        "pointer_import_added": true,
+        "metadata": "unchanged",
+        "checks": "PASS"
+      },
+      {
+        "name": "zram_zstd_1.0.0-with-pointer.kpm",
+        "parent_sha256": "8d35ba4286e8f1434a01eaaf6f6b89462cba28f8c8e188ead641c6bbafcf7f03",
+        "sha256": "5189952e1f146cc41a49272dd624b8e2596f88e41f02e715a5d5d61b1a3427f1",
+        "pointer_import_added": false,
+        "metadata": "unchanged",
+        "checks": "PASS"
+      }
+    ]
+  },
+  "oracle": {
+    "retained_assertion_lines": 72,
+    "added_assertion_lines": 35,
+    "removed_or_modified_assertion_lines": 0
+  },
+  "target_evidence_sha256": "8931261083437dc5e9881ae012c54e82c1f4b90c2944357eb0ad6a8711c4f812"
+}

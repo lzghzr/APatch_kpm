@@ -1,0 +1,128 @@
+{
+  "role": "Developer",
+  "scope": "frozen candidate Developer selfcheck; not independent audit or device proof",
+  "source_commit": "a5e1615bdb715257b167483e3e3a6f019b4a15f0",
+  "source_dirty": false,
+  "results": [
+    {
+      "file": "zram_zstd_0.1.0.kpm",
+      "sha256": "f48f3155f6ada61803ace3cd627772ea595681489f3be6305ac192557f0ab7d2",
+      "instance_id": "zram_zstd-0.1.0+gd464ad07ccb0.r21df036f.kpb51197a.ndk26.3.11579264#1",
+      "ctl0_relocation": "ABS64 resolves to zram_zstd_ctl0",
+      "imports": [
+        "compat_copy_to_user",
+        "kallsyms_lookup_name_by_suffix",
+        "kf_memcmp",
+        "kf_memcpy",
+        "kf_memmove",
+        "kf_memset",
+        "kf_strcmp",
+        "kf_strncmp",
+        "printk"
+      ],
+      "instructions": 44091,
+      "identity": {
+        "build_id": "zram_zstd-0.1.0+gd464ad07ccb0.r21df036f.kpb51197a.ndk26.3.11579264",
+        "instance_id": "zram_zstd-0.1.0+gd464ad07ccb0.r21df036f.kpb51197a.ndk26.3.11579264#1",
+        "kind": "candidate",
+        "profile": "candidate",
+        "problems": [],
+        "notes": [
+          "源码核验通过（提交 blob 36 个）"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      }
+    },
+    {
+      "file": "zram_zstd_0.1.0_baselines.kpm",
+      "sha256": "d0c28ea484c38ecd7b13e39e13f2566a5719e9feceb99dd7fb425f733241ca7f",
+      "instance_id": "zram_zstd-0.1.0_baselines+gd464ad07ccb0.rf876d2a6.kpb51197a.ndk26.3.11579264#1",
+      "ctl0_relocation": "ABS64 resolves to zram_zstd_ctl0",
+      "imports": [
+        "compat_copy_to_user",
+        "kallsyms_lookup_name_by_suffix",
+        "kf_memcmp",
+        "kf_memcpy",
+        "kf_memmove",
+        "kf_memset",
+        "kf_strcmp",
+        "printk"
+      ],
+      "instructions": 43337,
+      "identity": {
+        "build_id": "zram_zstd-0.1.0_baselines+gd464ad07ccb0.rf876d2a6.kpb51197a.ndk26.3.11579264",
+        "instance_id": "zram_zstd-0.1.0_baselines+gd464ad07ccb0.rf876d2a6.kpb51197a.ndk26.3.11579264#1",
+        "kind": "candidate",
+        "profile": "candidate",
+        "problems": [],
+        "notes": [
+          "源码核验通过（提交 blob 36 个）"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      }
+    },
+    {
+      "file": "zram_zstd_0.1.0_baselines_debug.kpm",
+      "sha256": "455426a2352a95586fdc05ff360d689377fd1061c9547d79a38d8b25435ae98d",
+      "instance_id": "zram_zstd-0.1.0_baselines_debug+gd464ad07ccb0.r8985a06f.kpb51197a.ndk26.3.11579264#1",
+      "ctl0_relocation": "ABS64 resolves to zram_zstd_ctl0",
+      "imports": [
+        "compat_copy_to_user",
+        "kallsyms_lookup_name_by_suffix",
+        "kf_memcmp",
+        "kf_memcpy",
+        "kf_memmove",
+        "kf_memset",
+        "kf_strcmp",
+        "printk"
+      ],
+      "instructions": 43337,
+      "identity": {
+        "build_id": "zram_zstd-0.1.0_baselines_debug+gd464ad07ccb0.r8985a06f.kpb51197a.ndk26.3.11579264",
+        "instance_id": "zram_zstd-0.1.0_baselines_debug+gd464ad07ccb0.r8985a06f.kpb51197a.ndk26.3.11579264#1",
+        "kind": "candidate",
+        "profile": "candidate",
+        "problems": [],
+        "notes": [
+          "源码核验通过（提交 blob 36 个）"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      }
+    },
+    {
+      "file": "zram_zstd_0.1.0_debug.kpm",
+      "sha256": "2490abcfc0ed4497c3f2e4462c4608de57d46f41e1c5eede349f2b35805d18ad",
+      "instance_id": "zram_zstd-0.1.0_debug+gd464ad07ccb0.rf04090a6.kpb51197a.ndk26.3.11579264#1",
+      "ctl0_relocation": "ABS64 resolves to zram_zstd_ctl0",
+      "imports": [
+        "compat_copy_to_user",
+        "kallsyms_lookup_name_by_suffix",
+        "kf_memcmp",
+        "kf_memcpy",
+        "kf_memmove",
+        "kf_memset",
+        "kf_strcmp",
+        "kf_strncmp",
+        "printk"
+      ],
+      "instructions": 44091,
+      "identity": {
+        "build_id": "zram_zstd-0.1.0_debug+gd464ad07ccb0.rf04090a6.kpb51197a.ndk26.3.11579264",
+        "instance_id": "zram_zstd-0.1.0_debug+gd464ad07ccb0.rf04090a6.kpb51197a.ndk26.3.11579264#1",
+        "kind": "candidate",
+        "profile": "candidate",
+        "problems": [],
+        "notes": [
+          "源码核验通过（提交 blob 36 个）"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      }
+    }
+  ],
+  "original_assertions_preserved": 21,
+  "preserved_files": 633
+}

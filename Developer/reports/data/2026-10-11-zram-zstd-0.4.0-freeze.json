@@ -1,0 +1,90 @@
+{
+  "scope": "Developer frozen candidate verification (Tier 3); independent audit and device testing pending",
+  "source_commit": "b369a9201cb1b19eabb5c96c89d26379cccb88b2",
+  "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "zstd_source_commit": "5d9fb4785030731a155a8abe159e10965d824e4b",
+  "handoff_manifest": "Developer/reports/handoffs/2026-10-11-zram-zstd-0.4.0-candidate.json",
+  "handoff_sha256": "80ee01ee0a1a33a3332de039b2c78ff24ec22287e875016f02b2af2c3ed3c8c1",
+  "candidate_verifications": [
+    {
+      "build_id": "zram_zstd-0.4.0+ge82106ac8748.r6f3b6090.kpb51197a.ndk26.3.11579264",
+      "instance_id": "zram_zstd-0.4.0+ge82106ac8748.r6f3b6090.kpb51197a.ndk26.3.11579264#1",
+      "kind": "candidate",
+      "profile": "candidate",
+      "problems": [],
+      "notes": [
+        "源码核验通过（提交 blob 429 个）"
+      ],
+      "source_verified": true,
+      "artifacts_verified": 1
+    },
+    {
+      "build_id": "zram_zstd-0.4.0_baselines+ge82106ac8748.r03ef87a2.kpb51197a.ndk26.3.11579264",
+      "instance_id": "zram_zstd-0.4.0_baselines+ge82106ac8748.r03ef87a2.kpb51197a.ndk26.3.11579264#1",
+      "kind": "candidate",
+      "profile": "candidate",
+      "problems": [],
+      "notes": [
+        "源码核验通过（提交 blob 429 个）"
+      ],
+      "source_verified": true,
+      "artifacts_verified": 1
+    },
+    {
+      "build_id": "zram_zstd-0.4.0_baselines_debug+ge82106ac8748.rccf7f347.kpb51197a.ndk26.3.11579264",
+      "instance_id": "zram_zstd-0.4.0_baselines_debug+ge82106ac8748.rccf7f347.kpb51197a.ndk26.3.11579264#1",
+      "kind": "candidate",
+      "profile": "candidate",
+      "problems": [],
+      "notes": [
+        "源码核验通过（提交 blob 429 个）"
+      ],
+      "source_verified": true,
+      "artifacts_verified": 1
+    },
+    {
+      "build_id": "zram_zstd-0.4.0_debug+ge82106ac8748.r8253c515.kpb51197a.ndk26.3.11579264",
+      "instance_id": "zram_zstd-0.4.0_debug+ge82106ac8748.r8253c515.kpb51197a.ndk26.3.11579264#1",
+      "kind": "candidate",
+      "profile": "candidate",
+      "problems": [],
+      "notes": [
+        "源码核验通过（提交 blob 429 个）"
+      ],
+      "source_verified": true,
+      "artifacts_verified": 1
+    }
+  ],
+  "layouts": [
+    {
+      "instance_id": "zram_zstd-0.4.0_baselines+ge82106ac8748.r03ef87a2.kpb51197a.ndk26.3.11579264#1",
+      "path": "artifacts/zram_zstd-0.4.0_baselines+ge82106ac8748.r03ef87a2.kpb51197a.ndk26.3.11579264/zram_zstd_0.4.0_baselines.kpm.json",
+      "sha256": "13ebc155a863e86bf2df5969d9e86a58e8ee407807c178dde849ce51df5310df"
+    },
+    {
+      "instance_id": "zram_zstd-0.4.0_baselines_debug+ge82106ac8748.rccf7f347.kpb51197a.ndk26.3.11579264#1",
+      "path": "artifacts/zram_zstd-0.4.0_baselines_debug+ge82106ac8748.rccf7f347.kpb51197a.ndk26.3.11579264/zram_zstd_0.4.0_baselines_debug.kpm.json",
+      "sha256": "97f8ef232a056748117cf26eadc93e2a1b61ce17db57e95d06f52b0c8b7709d2"
+    }
+  ],
+  "prior_selfcheck_receipt": "Developer/reports/data/2026-10-11-zram-zstd-kernel-compat.json",
+  "prior_selfcheck_receipt_sha256": "620d5169058f41c46b15d0930c20479b5c2922b8f70114e843c4c4b6e6a3a8ed",
+  "prior_selfcheck_sources_reconfirmed": {
+    "zram_zstd/tools/test_target_functions.py": "69c2f31c8f13129e407f050c2377ebadb37e8afd0f9c97b5a908be21dcca33a7",
+    "zram_zstd/zs_structs.h": "085a72a06f3fc6125258f6a0736f42294e265bb74db14db8a6799507478f5b10",
+    "zram_zstd/zs_offsets.c": "c8d5be1990825b174a8e32129fe98caf033db18f5fd4c89f1d220b4824cfb8d1",
+    "zram_zstd/zs_btf.c": "d06c8805ed364aa2e5e44c07783f455b0d46fee2f5e5a5625b6d90e0d07def27",
+    "zram_zstd/tools/selfcheck_fixture.c": "7a9560283c45be132b3ee07097bbc9108643c5f1c091138e19937404ed6723bc",
+    "kpm_utils.h": "b664ab3b4f97383d46e696ebbe9b6f95603e2e1758accddb745a0b67eb871bfe",
+    "zram_zstd/tools/test_target_btf.py": "5eb6ba72bb32521d6c5dc8184804b3ecc3c7c9eca523b5b31a918addbbf797b4",
+    "re_kernel/tools/test_btf.py": "7b62bc2b61ec3fee1d9f119f4442e958f8576ce44bc888c5202c856e232c3b9f",
+    "zram_zstd/zram_zstd.c": "c25a031197ca5736e6a587bfdc2221025dbafc2eb1a7675daa05bf01761029bf",
+    "zram_zstd/tools/selfcheck.py": "4681b7aa40ee2bc5af28994a72b1c1262da84aee315336885cfb2fac5bcba867",
+    "zram_zstd/tools/prepare_codec.py": "131dfeee90a25ac76706e74487570db748d4aa071f24682e93f187692214a5cd",
+    "zram_zstd/tools/btf_fixture.h": "53d54a2981416deef789f2810ebe976530122181e009463128f9fbe4cb369375"
+  },
+  "prior_artifacts_byte_identical": true,
+  "target_count": 13,
+  "function_target_count": 7,
+  "btf_target_count": 6
+}
