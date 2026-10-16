@@ -1,0 +1,8 @@
+id=nomount
+metamodule=true
+name=NoMount-kpm
+version=v2.1.1-20261014
+versionCode=20261014
+author=maxsteeel, Codex
+description=通过 NoMount KPM 加载模块中的系统应用和文件。
+updateJson=https://github.com/lzghzr/APatch_kpm/releases/latest/download/NoMount-kpm.json

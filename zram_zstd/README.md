@@ -16,7 +16,6 @@
 | --- | --- |
 | 普通 `zram_zstd.kpm` | 加载时自动获取偏移，一般用这个 |
 | `zram_zstd_baselines.kpm` | 静态移植用，必须先按目标内核填写偏移，不能直接加载模板 |
-| `zram_zstd_debug.kpm` | 日志更详细，用来排查问题 |
 
 旧 KP 如果提示找不到 `kallsyms_lookup_name_by_suffix`，需要先用 Python 工具转换普通 KPM。转换和静态移植的方法见 [AGENTS.md](AGENTS.md)。
 

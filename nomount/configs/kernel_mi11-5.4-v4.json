@@ -1,0 +1,90 @@
+{
+  "target": "kernel_mi11-5.4",
+  "kernel_release": "5.4.274-qgki-g76ac0b265f44",
+  "image_sha256": "4211656a1250a81bdbc9d3710c18bcbca7e90834bab57b639f9dbcacc4ea50c8",
+  "kernel_sha256": "4211656a1250a81bdbc9d3710c18bcbca7e90834bab57b639f9dbcacc4ea50c8",
+  "config_sha256": "bb05079af6612a9953c2f2ec90aefc5ddce771bb17559fb0d19bbced64a17302",
+  "reference_scope": "Target instruction/table evidence provides field positions and complete copy lengths; declarations provide only verified post-anchor tails and alignment",
+  "offsets": {
+    "file_inode_ops": 32,
+    "file_mapping": 240,
+    "inode_superblock": 40,
+    "inode_number": 64,
+    "inode_nlink": 72,
+    "inode_size": 80,
+    "dentry_ops": 96,
+    "file_ops_size": 288,
+    "inode_ops_size": 256,
+    "super_ops_size": 272,
+    "dentry_ops_size": 192,
+    "key_type_size": 168,
+    "inode_private": 640,
+    "file_private": 200,
+    "file_position": 104,
+    "file_flags": 64,
+    "file_cred": 144,
+    "fop_open": 112,
+    "fop_release": 128,
+    "fop_mmap": 96,
+    "fop_splice_read": 200,
+    "inode_file_ops": 368,
+    "inode_data": 384,
+    "inode_data_size": 200,
+    "inode_hash": 224,
+    "inode_blocks": 144,
+    "iop_getattr": 112,
+    "sop_drop_inode": 40,
+    "sop_evict_inode": 48,
+    "dentry_lock": 88,
+    "fop_iterate": 56,
+    "dop_release": 48,
+    "mutex_size": 32,
+    "key_callbacks": 32,
+    "key_preparse_data": 40,
+    "fop_iterate_shared": 64,
+    "dop_init": 40,
+    "mutex_no_lockdep": 1,
+    "getattr_callback_args": 4,
+    "getattr_function_args": 4,
+    "kstat_inode_first": 0,
+    "name_hash_args": 3,
+    "permission_abi": 1,
+    "fillattr_abi": 2,
+    "getattr_context_kind": 0,
+    "dir_actor_abi": 0
+  },
+  "evidence_reports": [
+    "Developer/reports/2026-10-15-nomount-tail-anchors.md"
+  ],
+  "declaration_reference_commit": "7db0abb6726f611eedbbe92bbf8a4291c0dcdb69",
+  "size_derivation": {
+    "inode_ops_size": {
+      "member": "set_acl",
+      "span": 40,
+      "alignment": 64,
+      "slot": 160,
+      "size": 256
+    },
+    "super_ops_size": {
+      "member": "nr_cached_objects",
+      "span": 48,
+      "alignment": 8,
+      "slot": 224,
+      "size": 272
+    },
+    "dentry_ops_size": {
+      "member": "d_real",
+      "span": 40,
+      "alignment": 64,
+      "slot": 96,
+      "size": 192
+    },
+    "key_type_size": {
+      "member": "link",
+      "span": 16,
+      "alignment": 8,
+      "slot": 152,
+      "size": 168
+    }
+  }
+}

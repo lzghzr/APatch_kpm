@@ -36,15 +36,12 @@ codec := $(filter-out $(ZSTD_ROOT)/common/pool.c $(ZSTD_ROOT)/common/threading.c
 codec_rel := $(patsubst $(ZSTD_ROOT)/%,%,$(codec))
 codec_objs := $(addprefix $(CODEC_DIR)/,$(codec_rel:.c=.o))
 kpm := $(OUT_DIR)/zram_zstd_$(MYKPM_VERSION)
-kpms := $(kpm).kpm $(kpm)_debug.kpm $(kpm)_baselines.kpm $(kpm)_baselines_debug.kpm
+kpms := $(kpm).kpm $(kpm)_baselines.kpm
 
 all: dynamic static
-debug: dynamic_debug static_debug
 dynamic: $(kpm).kpm
 static: $(kpm)_baselines.kpm
-dynamic_debug: $(kpm)_debug.kpm
-static_debug: $(kpm)_baselines_debug.kpm
-baselines: static static_debug
+baselines: static
 
 $(GENERATED_DIR)/MANIFEST.json: tools/prepare_codec.py $(wildcard $(ZSTD_ROOT)/*.[chS] $(ZSTD_ROOT)/*/*.[chS]) zstd/contrib/freestanding_lib/freestanding.py zstd/contrib/linux-kernel/mem.h zstd/contrib/linux-kernel/zstd_deps.h
 	$(PYTHON) tools/prepare_codec.py --output $(GENERATED_DIR)
@@ -55,14 +52,12 @@ $(CODEC_DIR)/%.o: $(GENERATED_DIR)/%.c $(GENERATED_DIR)/MANIFEST.json $(wildcard
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(CFLAG) $(CODEC_FLAGS) -c $< -o $@
 
-$(kpm)_baselines.kpm $(kpm)_baselines_debug.kpm: MODE_FLAGS += -DCONFIG_KPM_BASELINES
-$(kpm)_debug.kpm $(kpm)_baselines_debug.kpm: MODE_FLAGS += -DCONFIG_DEBUG
-$(kpm)_debug.kpm $(kpm)_baselines_debug.kpm: MYKPM_VER := _d
+$(kpm)_baselines.kpm: MODE_FLAGS += -DCONFIG_KPM_BASELINES
 
 $(kpms): zram_zstd.c zs_structs.h zs_offsets.c zs_btf.c zs_display.c zs_runtime.c $(codec_objs) ../kpm_utils.h ../patch_offsets.py Makefile
 	@mkdir -p $(OUT_DIR) $(LAYOUT_DIR)
 	@test ! -e $@
-	$(CC) $(CFLAGS) $(CFLAG) $(MODE_FLAGS) -DMYKPM_VERSION=\"$(MYKPM_VERSION)$(MYKPM_VER)\" $(INCLUDE_FLAGS) $(CODEC_FLAGS) zram_zstd.c zs_runtime.c $(codec_objs) -r -o $@
-	$(if $(filter %_baselines.kpm %_baselines_debug.kpm,$@),$(PYTHON) ../patch_offsets.py baseline $@ --source zs_offsets.c --output $(LAYOUT_DIR)/$(notdir $@).json)
+	$(CC) $(CFLAGS) $(CFLAG) $(MODE_FLAGS) -DMYKPM_VERSION=\"$(MYKPM_VERSION)\" $(INCLUDE_FLAGS) $(CODEC_FLAGS) zram_zstd.c zs_runtime.c $(codec_objs) -r -o $@
+	$(if $(filter %_baselines.kpm,$@),$(PYTHON) ../patch_offsets.py baseline $@ --source zs_offsets.c --output $(LAYOUT_DIR)/$(notdir $@).json)
 
-.PHONY: all debug dynamic static dynamic_debug static_debug baselines
+.PHONY: all dynamic static baselines

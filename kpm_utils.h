@@ -53,6 +53,7 @@
 #define task_egid(task) __GET_CREDID(egid, task)
 #define task_suid(task) __GET_CREDID(suid, task)
 #define task_sgid(task) __GET_CREDID(sgid, task)
+#define task_fsuid(task) __GET_CREDID(fsuid, task)
 
 // BTF
 // BTF UAPI 的共同记录；查询与类型尺寸解析交给内核。
@@ -200,12 +201,30 @@ static inline int kpm_btf_enum(const struct kpm_btf* btf, const struct btf_type*
   static inline int inst_get_##abbr##_imm16(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 20, 5) : -1; }
 #define __INST_GET_IMM19(abbr) \
   static inline int inst_get_##abbr##_imm19(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 23, 5) : -1; }
+#define __INST_GET_COND(abbr) \
+  static inline int inst_get_##abbr##_cond(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 3, 0) : -1; }
+#define __INST_GET_COND12(abbr) \
+  static inline int inst_get_##abbr##_cond(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 15, 12) : -1; }
+#define __INST_GET_BIT_INDEX(abbr) \
+  static inline int inst_get_##abbr##_bit(uint32_t code) { \
+    return inst_is_##abbr(code) ? (bit(code, 31) << 5) | bits32(code, 23, 19) : -1; \
+  }
 #define __INST_GET_IMM26(abbr) \
   static inline int inst_get_##abbr##_imm26(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 25, 0) : -1; }
 
 #define __INST_GET_IMM26_LABEL(abbr)                                                                          \
   static inline long inst_get_##abbr##_label(uint32_t code) {                                                 \
     return inst_is_##abbr(code) ? (int64_t)(int32_t)((uint32_t)inst_get_##abbr##_imm26(code) << 6) >> 4 : -1; \
+  }
+
+#define __INST_GET_IMM19_LABEL(abbr)                                                                          \
+  static inline long inst_get_##abbr##_label(uint32_t code) {                                                 \
+    return inst_is_##abbr(code) ? (int64_t)(int32_t)((uint32_t)inst_get_##abbr##_imm19(code) << 13) >> 11 : -1; \
+  }
+
+#define __INST_GET_IMM14_LABEL(abbr)                                                                          \
+  static inline long inst_get_##abbr##_label(uint32_t code) {                                                 \
+    return inst_is_##abbr(code) ? (int64_t)(int32_t)((uint32_t)inst_get_##abbr##_imm14(code) << 18) >> 16 : -1; \
   }
 
 #define __INST_GET_N(abbr) \
@@ -282,6 +301,16 @@ static inline int kpm_btf_enum(const struct kpm_btf* btf, const struct btf_type*
   static inline int inst_get_##abbr##_rt2(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 14, 10) : -1; }
 #define __INST_GET_PAIR_MODE(abbr) \
   static inline int inst_get_##abbr##_mode(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 24, 23) : -1; }
+#define __INST_GET_PAIR_IMM(abbr)                                \
+  static inline int inst_get_##abbr##_imm(uint32_t code) {       \
+    if (!inst_is_##abbr(code))                                   \
+      return -1;                                                 \
+    int size = inst_get_##abbr##_size(code);                     \
+    if (size != 0 && size != 2)                                  \
+      return -1;                                                 \
+    int32_t value = (int32_t)(bits32(code, 21, 15) << 25) >> 25; \
+    return value * (size == 2 ? 8 : 4);                          \
+  }
 #define __INST_GET_RT(abbr) \
   static inline int inst_get_##abbr##_rt(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 4, 0) : -1; }
 
@@ -389,14 +418,33 @@ static inline int kpm_btf_enum(const struct kpm_btf* btf, const struct btf_type*
   __INST_GET_LABEL(abbr)
 
 __INST_SF_RN_RD_SH_IMM12_FUNCS(add_imm, 0x7F800000u, 0x11000000u)
+__INST_SF_RN_RD_SH_IMM12_FUNCS(sub_imm, 0x7F800000u, 0x51000000u)
+__INST_SF_RN_RD_SH_IMM12_FUNCS(subs_imm, 0x7F800000u, 0x71000000u)
 __INST_SF_RM_RN_RD_FUNCS(add_ext, 0x7FE00000u, 0x0B200000u)
 __INST_GET_OPTION(add_ext)
 __INST_GET_IMM3(add_ext)
 __INST_SF_RM_RN_RD_FUNCS(add_reg, 0x7F200000u, 0x0B000000u)
 __INST_GET_SHIFT(add_reg)
 __INST_GET_IMM6(add_reg)
+__INST_SF_RM_RN_RD_FUNCS(sub_reg, 0x7F200000u, 0x4B000000u)
+__INST_GET_SHIFT(sub_reg)
+__INST_GET_IMM6(sub_reg)
+__INST_SF_RM_RN_RD_FUNCS(subs_reg, 0x7F200000u, 0x6B000000u)
+__INST_GET_SHIFT(subs_reg)
+__INST_GET_IMM6(subs_reg)
+__INST_SF_RM_RN_RD_FUNCS(extr, 0x7FA00000u, 0x13800000u)
+__INST_GET_N(extr)
+__INST_GET_IMM6(extr)
+
+__INST_SF_RM_RN_RD_FUNCS(lslv, 0x7FE0FC00u, 0x1AC02000u)
+__INST_SF_RM_RN_RD_FUNCS(csel, 0x7FE00C00u, 0x1A800000u)
+__INST_GET_COND12(csel)
 
 __INST_SF_RN_RD_FUNCS(uxtb, 0xFFFFFC00u, 0x53001C00u)
+__INST_SF_RN_RD_FUNCS(ubfm, 0x7F800000u, 0x53000000u)
+__INST_GET_N(ubfm)
+__INST_GET_IMMR(ubfm)
+__INST_GET_IMMS(ubfm)
 
 __INST_RD_IMMLO_IMMHI_FUNCS(adrp, 0x9F000000u, 0x90000000u)
 
@@ -409,35 +457,50 @@ __INST_GET_IMM26(b)
 __INST_GET_IMM26_LABEL(b)
 
 __INST_FUNCS(b_cond, 0xFF000010u, 0x54000000u)
+__INST_GET_IMM19(b_cond)
+__INST_GET_IMM19_LABEL(b_cond)
+__INST_GET_COND(b_cond)
 
 __INST_FUNCS(bl, 0xFC000000u, 0x94000000u)
 __INST_GET_IMM26(bl)
 __INST_GET_IMM26_LABEL(bl)
 __INST_RN_FUNCS(blr, 0xFFFFFC1Fu, 0xD63F0000u)
+__INST_RN_FUNCS(br, 0xFFFFFC1Fu, 0xD61F0000u)
 
 __INST_SF_RT_FUNCS(cbz, 0x7F000000u, 0x34000000u)
 __INST_GET_IMM19(cbz)
+__INST_GET_IMM19_LABEL(cbz)
 __INST_SF_RT_FUNCS(cbnz, 0x7F000000u, 0x35000000u)
 __INST_GET_IMM19(cbnz)
+__INST_GET_IMM19_LABEL(cbnz)
 
 __INST_SF_RT_FUNCS(tbz, 0x7F000000u, 0x36000000u)
 __INST_GET_IMM14(tbz)
+__INST_GET_IMM14_LABEL(tbz)
+__INST_GET_BIT_INDEX(tbz)
 
 __INST_SF_RT_FUNCS(tbnz, 0x7F000000u, 0x37000000u)
 __INST_GET_IMM14(tbnz)
+__INST_GET_IMM14_LABEL(tbnz)
+__INST_GET_BIT_INDEX(tbnz)
 
 // 通用寄存器成对访存；SIMD 编码不写通用寄存器，单独排除。
 __INST_RN_FUNCS(ldp, 0x3E400000u, 0x28400000u)
 __INST_GET_RT(ldp)
 __INST_GET_RT2(ldp)
 __INST_GET_PAIR_MODE(ldp)
+__INST_GET_SIZE(ldp)
+__INST_GET_PAIR_IMM(ldp)
 __INST_RN_FUNCS(stp, 0x3E400000u, 0x28000000u)
 __INST_GET_RT(stp)
 __INST_GET_RT2(stp)
 __INST_GET_PAIR_MODE(stp)
+__INST_GET_SIZE(stp)
+__INST_GET_PAIR_IMM(stp)
 
 __INST_SIZE_RN_RT_LDR_FUNCS(ldr_imm, 0x3B000000u, 0x39400000u)
 __INST_GET_IMM12(ldr_imm)
+__INST_GET_SIZE_IMM12_IMM(ldr_imm)
 __INST_SIZE_RN_RT_LDR_FUNCS(ldr_imm9, 0x3B200000u, 0x38400000u)
 __INST_GET_IMM9(ldr_imm9)
 __INST_GET_MODE(ldr_imm9)
@@ -447,6 +510,7 @@ __INST_SIZE_RN_RT_IMM12_FUNCS(ldrh_imm_uint, 0xFFC00000u, 0x79400000u)
 
 __INST_SIZE_RN_RT_STR_FUNCS(str_imm, 0x3B000000u, 0x39000000u)
 __INST_GET_IMM12(str_imm)
+__INST_GET_SIZE_IMM12_IMM(str_imm)
 __INST_SIZE_RN_RT_STR_FUNCS(str_imm9, 0x3B200000u, 0x38000000u)
 __INST_GET_IMM9(str_imm9)
 __INST_GET_MODE(str_imm9)
@@ -456,15 +520,24 @@ __INST_SIZE_RN_RT_IMM12_FUNCS(strb_imm_uint, 0xFFC00000u, 0x39000000u)
 __INST_RN_FUNCS(stp_imm, 0x7FC00000u, 0x29000000u)
 
 __INST_SF_RM_RD_FUNCS(mov_reg, 0x7FE0FFE0u, 0x2A0003E0u)
+__INST_SF_FUNCS(movn_imm, 0x7F800000u, 0x12800000u)
+__INST_GET_RD(movn_imm)
+__INST_GET_IMM16(movn_imm)
+__INST_GET_HW(movn_imm)
 __INST_SF_FUNCS(movz_imm, 0x7F800000u, 0x52800000u)
 __INST_GET_RD(movz_imm)
 __INST_GET_IMM16(movz_imm)
 __INST_GET_HW(movz_imm)
+__INST_SF_FUNCS(movk_imm, 0x7F800000u, 0x72800000u)
+__INST_GET_RD(movk_imm)
+__INST_GET_IMM16(movk_imm)
+__INST_GET_HW(movk_imm)
 
 __INST_SF_RM_RN_RD_FUNCS(orr_reg, 0x7F200000u, 0x2A000000u)
 __INST_GET_IMM6(orr_reg)
 
 __INST_RN_FUNCS(ret, 0xFFFFFC1Fu, 0xD65F0000u)
+__INST_FUNCS(dmb_ishld, 0xFFFFFFFFu, 0xD50339BFu)
 
 // special
 __INST_FUNCS(mrs_sp_el0, 0xFFFFFFE0u, 0xD5384100u)

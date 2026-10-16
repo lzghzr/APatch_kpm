@@ -2,7 +2,7 @@
 
 ## 编译模式
 
-本模块共用命令执行逻辑，定义 `CONFIG_KPM_BASELINES` 编译静态基线，未定义时为动态版。两版管理名称都是 `run_cmd_demo`；文件分别为 `<模块>_<版本>_baselines.kpm` 和 `<模块>_<版本>.kpm`，debug 在末尾增加 `_debug`。模式记录在 `offset_mode` 中。
+本模块共用命令执行逻辑，定义 `CONFIG_KPM_BASELINES` 编译静态基线，未定义时为动态版。两版管理名称都是 `run_cmd_demo`；文件分别为 `<模块>_<版本>_baselines.kpm` 和 `<模块>_<版本>.kpm`。模式记录在 `offset_mode` 中。
 
 `run_cmd.c` 保存执行和控制逻辑，`run_cmd.h` 保存模块定义及核对过的工作项前缀，`rc_utils.h` 保存 KP 风格封装。偏移表、实例与计算集中于 `rc_offsets.c`，公共指令与 BTF 查询使用根目录 `kpm_utils.h`。
 
@@ -25,10 +25,10 @@ SID 的静态配置不包含 `selinux_blob_sizes.lbs_cred`。这个值由内核�
 
 ## 构建与替换
 
-各模块保留独立 Makefile。新的空输出目录中，`all` 生成两份普通版，`debug` 生成两份 debug，`baselines` 只生成静态普通/debug 两份。
+各模块保留独立 Makefile。新的空输出目录中，`all` 生成动态和静态两份普通版，`baselines` 只生成静态版。
 
 ```sh
-make -C run_cmd_demo all debug OUT_DIR=../local/run-cmd-round1
+make -C run_cmd_demo all OUT_DIR=../local/run-cmd-round1
 ```
 
 根目录 `patch_offsets.py` 的 schema 3 适用于普通偏移表；schema 1/2 保留原有 Binder ABI 契约。静态 KPM 附带同名 `.kpm.json`，生成布局时使用 `--source run_cmd_demo/rc_offsets.c`。使用目标分析结果填写完整 `offsets` 后，执行：
@@ -39,10 +39,12 @@ python3 patch_offsets.py patch run_cmd_demo_baselines.kpm --offsets target-offse
 
 已有基线只需 Python 标准库，用户侧无需 NDK。修改源码后的候选构建使用仓库统一入口，并通过 `--extra-input patch_offsets.py` 捕获共享工具；未冻结构建记为 exploration。原产物和清单不可覆盖。
 
-统一构建入口当前会把模块内的 JSON 计入源码输入，候选构建须用 `LAYOUT_DIR` 将生成的布局放在新的输出目录中，避免生成文件改变输入清单。例如目标参数为 `all debug LAYOUT_DIR=../local/run-cmd-round1/layouts`；布局与其 KPM 的 SHA-256 对应，交接时一同保存。
+统一构建入口当前会把模块内的 JSON 计入源码输入，候选构建须用 `LAYOUT_DIR` 将生成的布局放在新的输出目录中，避免生成文件改变输入清单。例如目标参数为 `all LAYOUT_DIR=../local/run-cmd-round1/layouts`；布局与其 KPM 的 SHA-256 对应，交接时一同保存。
 
 ## 自检与生命周期
 
 `tools/test_run_cmd.py` 使用既有 C Oracle 验证动态控制、执行凭据和偏移逻辑；`tools/test_baselines.py` 验证模式元信息、静态偏移补丁的字节范围及运行时 SID 加量。已有 C 断言保持原样，宿主适配只处理元信息宏和 ELF section 属性。
 
 ctl0 只提交或查询命令，worker 等待 UMH 完成。KP 的 exit 调用上下文和 worker 回调生命周期限制仍存在，当前版本通过重启移除或更换。宿主与离线结果不能替代实际 SELinux、CFI、线程和设备测试。
+
+独立debug目标不再生成：当前模块未使用CONFIG_DEBUG；既有debug归档和独立记录保留。

@@ -59,7 +59,7 @@ ZSTD v1.5.7-kernel 通过 `zstd` Git 子模块固定到 `5d9fb4785030731a155a8ab
 
 源码与 Makefile 以当前 KernelPatch SDK 构建普通 KPM。转接仅由外部 Python 工具修改已生成的 KPM 字节；保留普通候选的完整身份、转换工具提交及哈希、转换命令、输入／输出哈希和回执，写入独立的新输出目录。
 
-普通候选使用 `--target "all debug"`，额外捕获 `patch_offsets.py`。Makefile 只使用其 `baseline` 子命令生成静态布局 JSON；静态偏移配置使用 `patch` 子命令，这两项与 KP 版本转接分别处理。构建结束后，单独运行 `Developer/tools/test_legacy_kp_metadata.py` 检查普通 KPM 的二进制转接；需要 Clang 与同目录的 `ld.lld`，推荐使用 NDK 工具链。自检保留历史可选字段夹具，并覆盖实际 KPM 元信息字节保持、直接调用和原名指针导入、精确修改范围、静态布局与输出保护。回执与自检结果作为同轮证据留存。
+普通候选使用 `--target "all"`，额外捕获 `patch_offsets.py`。Makefile 只使用其 `baseline` 子命令生成静态布局 JSON；静态偏移配置使用 `patch` 子命令，这两项与 KP 版本转接分别处理。构建结束后，单独运行 `Developer/tools/test_legacy_kp_metadata.py` 检查普通 KPM 的二进制转接；需要 Clang 与同目录的 `ld.lld`，推荐使用 NDK 工具链。自检保留历史可选字段夹具，并覆盖实际 KPM 元信息字节保持、直接调用和原名指针导入、精确修改范围、静态布局与输出保护。回执与自检结果作为同轮证据留存。
 
 ## 源码准备与构建
 
@@ -68,8 +68,12 @@ ZSTD v1.5.7-kernel 通过 `zstd` Git 子模块固定到 `5d9fb4785030731a155a8ab
 ```sh
 git submodule update --init --recursive
 cd zram_zstd
-make all debug OUT_DIR=../local/zram-build LAYOUT_DIR=../local/zram-build
+make all OUT_DIR=../local/zram-build LAYOUT_DIR=../local/zram-build
 python3 ../patch_offsets.py legacy-kp 普通.kpm --output 转换后.kpm
 ```
 
 每次使用新的空输出目录。`zstd/` 是本模块的上游源码子模块；父仓库中的子模块逻辑名保持稳定，以便身份工具在目录迁移后读取历史冻结对象。正式候选仍通过统一构建入口从冻结提交登记。
+
+## 构建产物
+
+Makefile默认只生成dynamic/static两种实际偏移模式，不生成单独debug件。当前CONFIG_DEBUG不参与模块行为；初始化偏移与错误日志继续由logkm输出。原有debug归档、审计及测试记录保留，新候选使用target all。
