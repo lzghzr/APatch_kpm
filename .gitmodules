@@ -4,3 +4,6 @@
 [submodule "zram_zstd/upstream/zstd"]
 	path = zram_zstd/zstd
 	url = https://github.com/facebook/zstd.git
+[submodule "nomount/nomount"]
+	path = nomount/nomount
+	url = https://github.com/maxsteeel/nomount.git

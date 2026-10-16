@@ -184,13 +184,21 @@ def check_structure(rep):
 
 
 def submodule_paths():
+    """返回**顶层**子模块路径（`.gitmodules` 中不带 `/` 的 path）。
+
+    嵌套子模块（如 `nomount/nomount`）的**父目录**是本仓库的真实项目目录（有自己的 Makefile，
+    CI 会构建它），因此不能因为 `.gitmodules` 里出现了 `nomount/...` 就把 `nomount` 排除。
+    只有本身是顶层 gitlink 的目录才在 CI 选择中被排除（见 DEV-038）。
+    """
     gm = os.path.join(REPO, ".gitmodules")
     if not os.path.isfile(gm):
         return set()
     paths = set()
     for line in open(gm, encoding="utf-8", errors="replace"):
         if line.strip().startswith("path"):
-            paths.add(line.split("=", 1)[1].strip().split("/")[0])
+            raw = line.split("=", 1)[1].strip()
+            if "/" not in raw:
+                paths.add(raw)
     return paths
 
 
@@ -387,7 +395,7 @@ def check_identity_hashes(rep, strict):
     except Exception as exc:
         rep.check("identity_hashes", False, f"无法加载 tools/identity.py: {exc}")
         return
-    mismatches, missing, verified, instances = [], [], 0, set()
+    mismatches, missing, retained_gaps, verified, instances = [], [], [], 0, set()
     for name in sorted(os.listdir(modules_dir)):
         if not name.endswith(".json"):
             continue
@@ -397,11 +405,18 @@ def check_identity_hashes(rep, strict):
             if iid in instances:
                 mismatches.append(f"instance_id 重复: {iid}")
             instances.add(iid)
-            profile = "candidate" if strict and build.get("kind") != "exploration" else "exploration"
+            # `artifact_state=not-retained`：产物由负责人**有意不保留**（已登记原因），
+            # 只列出告警，不作为完整性失败；未登记该状态的缺失仍判失败。
+            not_retained = build.get("artifact_state") == "not-retained"
+            profile = ("exploration" if not_retained
+                       else "candidate" if strict and build.get("kind") != "exploration" else "exploration")
             result = ident.verify_build(build, profile=profile)
             for problem in result["problems"]:
                 if problem.startswith("产物不在场"):
-                    missing.append(f"{iid}: {problem}")
+                    if not_retained:
+                        retained_gaps.append(f"{iid}: {problem}")
+                    else:
+                        missing.append(f"{iid}: {problem}")
                 else:
                     mismatches.append(f"{iid}: {problem}")
             verified += result.get("artifacts_verified", 0)
@@ -410,10 +425,14 @@ def check_identity_hashes(rep, strict):
         detail += "；" + "; ".join(mismatches[:3])
     if missing:
         detail += "；" + "; ".join(missing[:3])
+    if retained_gaps:
+        detail += f"；有意不保留 {len(retained_gaps)} 份（已登记 artifact_state）: " + "; ".join(retained_gaps[:2])
     if mismatches:
         rep.check("identity_hashes", False, detail)
     elif missing:
         rep.check("identity_hashes", False, detail, warn_only=not strict)
+    elif retained_gaps:
+        rep.check("identity_hashes", True, detail, warn_only=True)
     else:
         rep.check("identity_hashes", True, detail)
 
@@ -525,7 +544,8 @@ def check_version_consistency(rep):
                     problems.append(f"{module}: 产物 {art['name']} 内嵌版本 {embedded} != 该构建版本 {expected}"
                                     f"（instance {build.get('instance_id')}）")
                 embedded_name = art.get("embedded", {}).get("name", module)
-                if expected_name is not None and embedded_name != expected_name:
+                if expected_name is not None and (embedded_name != expected_name if archived
+                                                 else embedded_name.casefold() != expected_name.casefold()):
                     problems.append(f"{module}: 产物 {art['name']} 内嵌 name={embedded_name}"
                                     f" != {'冻结源码注册名' if archived else '模块名'} {expected_name}")
         if record.get("builds") and declared and declared not in build_versions:
@@ -641,6 +661,56 @@ def check_developer_artifacts(rep):
                 problems.append(f"Developer/reports/handoffs/{name} 解析失败: {exc}")
     rep.check("developer_artifacts", not problems,
               "; ".join(problems) if problems else (f"{checked} 份交接清单格式合法" if checked else "暂无交接清单"),
+              warn_only=True)
+
+
+def _handoff_target(record):
+    """交接记录里的目标标识：新形态是对象，旧形态是字符串。"""
+    target = record.get("target")
+    if isinstance(target, dict):
+        return target.get("target") or target.get("name") or "?"
+    return target or "?"
+
+
+def check_handoff_registration(rep):
+    """交接清单的每条记录都应已在模块元数据登记（软判据）。
+
+    防两类漏登记：整份交接未导入；同一份派生字节服务多个目标时按 sha 去重误删目标身份。
+    探索类交接（`*exploration*`）与无元数据的模块不在此判据范围内——前者按约定不入候选登记。
+    """
+    problems, checked = [], 0
+    handoffs = os.path.join(REPO, "Developer", "reports", "handoffs")
+    if os.path.isdir(handoffs):
+        for name in sorted(os.listdir(handoffs)):
+            if not name.endswith(".json") or "exploration" in name:
+                continue
+            try:
+                payload = json.load(open(os.path.join(handoffs, name), encoding="utf-8"))
+            except Exception:
+                continue  # 解析失败由 developer_artifacts 报出
+            module = payload.get("module")
+            meta_path = os.path.join(REPO, "metadata", "modules", f"{module}.json") if module else None
+            if not meta_path or not os.path.isfile(meta_path):
+                continue
+            meta = json.load(open(meta_path, encoding="utf-8"))
+            instances = {b.get("instance_id") for b in meta.get("builds", [])}
+            ports = {(p.get("derived", {}).get("sha256"), _handoff_target(p))
+                     for p in meta.get("binary_ports", [])}
+            fallback_target = _handoff_target(payload)  # 旧形态：目标写在清单顶层
+            for build in payload.get("builds") or []:
+                checked += 1
+                if build.get("instance_id") not in instances:
+                    problems.append(f"{name}: 实例未登记 {build.get('instance_id')}")
+            for port in payload.get("binary_ports") or []:
+                checked += 1
+                sha = port.get("derived", {}).get("sha256")
+                target = _handoff_target(port)
+                if target == "?":
+                    target = fallback_target
+                if (sha, target) not in ports:
+                    problems.append(f"{name}: 派生记录未登记 {str(sha)[:12]} @ {target}")
+    rep.check("handoff_registration", not problems,
+              "; ".join(problems) if problems else f"{checked} 条交接记录均已登记",
               warn_only=True)
 
 
@@ -930,6 +1000,25 @@ def check_report_integrity(rep, strict):
                 soft.append(f"{name}:{path}（未入库）")
             elif path in dirty:
                 soft.append(f"{name}:{path}（入库后已修改，未提交）")
+    # 新表示的引用必须完整；展开后由原导入入口核验全部身份，不允许悬空引用蒙混过关。
+    for directory in ("Developer/reports/handoffs", "metadata/handoffs"):
+        full = os.path.join(REPO, directory)
+        if not os.path.isdir(full):
+            continue
+        ident = None
+        for name in sorted(os.listdir(full)):
+            if not name.endswith(".json"):
+                continue
+            try:
+                with open(os.path.join(full, name), encoding="utf-8") as stream:
+                    payload = json.load(stream)
+                if isinstance(payload, dict) and ("handoff_schema" in payload or "shared_data" in payload):
+                    ident = ident or load_identity_module()
+                    ident.expand_handoff(payload)
+            except (ValueError, TypeError) as exc:
+                # 旧格式 JSON 语法错误仍由既有清单检查负责。
+                if not isinstance(exc, json.JSONDecodeError):
+                    problems.append(f"{directory}/{name}: 共享输入校验失败: {exc}")
     hard_ok = not problems
     soft_note = "; ".join(soft)
     detail = "; ".join(problems) if problems else (
@@ -974,6 +1063,7 @@ def main():
     check_delivery_binding(rep)
     check_tool_selftest(rep)
     check_developer_artifacts(rep)
+    check_handoff_registration(rep)
     check_auditor_independence(rep)
     check_hygiene(rep)
     print(f"门禁模式：{'strict（验收/发布）' if args.strict else 'regular'}")

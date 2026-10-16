@@ -21,11 +21,11 @@
 
 愿望越具体，落地越快。至于「帮我写个万能模块」，建议先问问神灯还有没有上下文额度。
 
-## 拿来用 & 来拆台
+## 拿来用
 
 这是个人使用的 APatch / KernelPatch 模块仓库。模块用法见各自目录的 README，现成产物见 [Releases](https://github.com/lzghzr/APatch_kpm/releases)，适配范围以对应说明和验证记录为准。
 
-遇到 BUG，请用 [debug 版模块](https://github.com/lzghzr/APatch_kpm/releases/tag/1.0.0) 并提供 APatch 日志；公开前请移除设备序列号、密钥和本机路径。
+遇到 BUG，请提供 boot.img 和 APatch 日志；公开前请移除设备序列号、密钥和本机路径。
 
 欢迎带着需求来许愿，也欢迎带着复现日志来拆台。详细流程见 [三方交付流程](docs/README.md)。
 

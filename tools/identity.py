@@ -30,6 +30,7 @@
 
 import argparse
 import contextlib
+import copy
 import fcntl
 import hashlib
 import json
@@ -442,7 +443,10 @@ def artifact_facts(path):
 
 def variant_of(name, module, version):
     stem = f"{module}_{version}"
-    if not name.startswith(stem) or not name.endswith(".kpm"):
+    # 目录是项目ID；产物前缀可采用登记名的字母大小写。版本与后缀仍精确匹配。
+    if (name[:len(module)].casefold() != module.casefold()
+            or not name[len(module):].startswith(stem[len(module):])
+            or not name.endswith(".kpm")):
         return None
     return name[len(stem):-len(".kpm")].lstrip("_") or "base"
 
@@ -463,6 +467,88 @@ def load_record(module, required=True):
             die(f"找不到 {path.relative_to(REPO)}")
         return None
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+SHARED_HANDOFF_FIELDS = ("sources", "recipe", "build_transaction")
+
+
+def handoff_block_hash(value):
+    raw = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+    return hashlib.sha256(raw).hexdigest(), len(raw)
+
+
+def compact_handoff(payload):
+    """只复用同一清单里重复的大块；展开后与原 payload 完整相等。"""
+    if not isinstance(payload, dict) or not isinstance(payload.get("builds"), list):
+        raise ValueError("交接清单必须含构建列表")
+    if "handoff_schema" in payload or "shared_data" in payload:
+        raise ValueError("输入须为完整旧格式清单；不能重复转换")
+    result = copy.deepcopy(payload)
+    occurrences = {}
+    for entry in result.get("builds", []):
+        if not isinstance(entry, dict):
+            raise ValueError("构建条目必须是对象")
+        for field in SHARED_HANDOFF_FIELDS:
+            if field in entry:
+                value = entry[field]
+                if isinstance(value, dict) and "data_ref" in value:
+                    raise ValueError("原始字段不能占用 data_ref 引用标记")
+                digest, size = handoff_block_hash(value)
+                if size >= 512:
+                    occurrences.setdefault(digest, []).append((entry, field, value))
+    shared = {}
+    for digest, items in sorted(occurrences.items()):
+        if len(items) > 1:
+            shared[digest] = items[0][2]
+            for entry, field, _value in items:
+                entry[field] = {"data_ref": digest}
+    if not shared:
+        return result
+    result.update(handoff_schema=2, shared_data=shared)
+    if expand_handoff(result) != payload:
+        raise ValueError("共享表示未保持完整数据")
+    return result
+
+
+def expand_handoff(payload):
+    """兼容旧清单；先核对引用字节身份，再进入原候选核验。"""
+    if not isinstance(payload, dict):
+        raise ValueError("交接清单必须是对象")
+    if "handoff_schema" not in payload and "shared_data" not in payload:
+        for entry in payload.get("builds", []):
+            if isinstance(entry, dict) and any(isinstance(entry.get(k), dict) and "data_ref" in entry[k]
+                                               for k in SHARED_HANDOFF_FIELDS):
+                raise ValueError("共享引用缺少 schema")
+        return copy.deepcopy(payload)
+    if type(payload.get("handoff_schema")) is not int or payload["handoff_schema"] != 2:
+        raise ValueError("不支持的交接清单 schema")
+    shared = payload.get("shared_data")
+    if not isinstance(shared, dict) or not shared or not isinstance(payload.get("builds"), list):
+        raise ValueError("共享清单缺少完整数据")
+    for digest, value in shared.items():
+        if not re.fullmatch(r"[0-9a-f]{64}", digest) or handoff_block_hash(value)[0] != digest:
+            raise ValueError("共享数据哈希不符")
+    result, used = copy.deepcopy(payload), set()
+    result.pop("handoff_schema")
+    result.pop("shared_data")
+    for entry in result["builds"]:
+        if not isinstance(entry, dict):
+            raise ValueError("构建条目必须是对象")
+        for field in SHARED_HANDOFF_FIELDS:
+            value = entry.get(field)
+            if isinstance(value, dict) and "data_ref" in value:
+                digest = value["data_ref"]
+                if set(value) != {"data_ref"} or not isinstance(digest, str) or digest not in shared:
+                    raise ValueError("共享引用缺失或格式不合法")
+                decoded = copy.deepcopy(shared[digest])
+                if not isinstance(decoded, list if field == "sources" else dict) \
+                        or isinstance(decoded, dict) and "data_ref" in decoded:
+                    raise ValueError("共享字段类型不符或含嵌套引用")
+                entry[field] = decoded
+                used.add(digest)
+    if used != set(shared):
+        raise ValueError("共享表包含未引用数据")
+    return result
 
 
 @contextlib.contextmanager
@@ -635,6 +721,8 @@ def cmd_record(args):
 
 def record_locked(args):
     """已持模块锁时的登记实现（build_candidate 把锁覆盖到构建全过程）。"""
+    if getattr(args, "shared_inputs", False) and not args.handoff:
+        die("--shared-inputs 仅用于 --handoff 输出", 3)
     mdir = module_dir(args.module)
     if args.handoff is not None:
         handoff_path = Path(args.handoff)
@@ -752,6 +840,8 @@ def record_locked(args):
             if not path.is_absolute():
                 path = REPO / path
             path.parent.mkdir(parents=True, exist_ok=True)
+            if getattr(args, "shared_inputs", False):
+                payload = compact_handoff(payload)
             with path.open("x", encoding="utf-8") as output:
                 output.write(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
             print(f"handoff 清单: {path.relative_to(REPO)}（未写入 metadata/，由维护者 import-manifest 导入）")
@@ -773,7 +863,10 @@ def cmd_import_manifest(args):
         path = REPO / path
     if not path.is_file():
         die(f"交接清单不存在: {path}")
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        payload = expand_handoff(json.loads(path.read_text(encoding="utf-8")))
+    except (ValueError, TypeError) as exc:
+        die(f"交接清单无效: {exc}", 3)
     module = payload.get("module") or die("清单缺少 module 字段")
 
     with module_lock(module):
@@ -1156,6 +1249,7 @@ def main():
     p.add_argument("--extra-input", action="append")
     p.add_argument("--expect-source-tree", help="登记前校验输入树哈希未变（build_candidate 传入）")
     p.add_argument("--handoff", help="只写交接清单，不碰 metadata/（维护者用 import-manifest 导入）")
+    p.add_argument("--shared-inputs", action="store_true", help="交接清单内复用相同输入大块（schema 2）")
     p.add_argument("--new-instance", action="store_true", help="完全相同的复现也追加为新实例")
     p.add_argument("--no-archive", action="store_true", help="不复制产物到 artifacts/（本地自检）")
     p.set_defaults(func=cmd_record)

@@ -156,7 +156,9 @@ def validate(directory, expected=()):
         artifacts.append(artifact)
     if {p.name for p in directory.glob("*.kpm.json")} != layouts:
         raise ValueError("存在孤立的 KPM 布局文件")
-    if expected and modules != set(expected):
+    if len(modules) != len({name.casefold() for name in modules}):
+        raise ValueError("编译模块注册名存在大小写冲突")
+    if expected and {name.casefold() for name in modules} != {name.casefold() for name in expected}:
         raise ValueError(f"编译模块集合不一致：需要 {sorted(expected)}，得到 {sorted(modules)}")
     return artifacts
 

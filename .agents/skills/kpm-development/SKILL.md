@@ -26,11 +26,11 @@ KPM 是由 KernelPatch 加载到内核空间的 ARM64 可重定位 ELF，不使�
 | 动态 | 未定义 `CONFIG_KPM_BASELINES` | `<模块>_<版本>.kpm` | 由加载时查询或推导取得偏移 |
 | 静态基线 | 定义 `CONFIG_KPM_BASELINES` | `<模块>_<版本>_baselines.kpm` | 配套同名 `.kpm.json` |
 
-debug 在文件名末尾增加 `_debug`，模式在 `.kpm.info` 中记为 `offset_mode=dynamic/static`。两种产物使用同一模块管理名称，每次选择一种加载；这是编译产物的选择，不是运行时模式切换。
+新模块默认不生成单独 debug 件。只有明确需要且有独立调试用途时才添加 `_debug`，模式在 `.kpm.info` 中记为 `offset_mode=dynamic/static`。两种产物使用同一模块管理名称，每次选择一种加载；这是编译产物的选择，不是运行时模式切换。
 
 各项目保留独立 Makefile、协议与偏移实现。run_cmd 的四字段配置与静态 SID 语义见 [模块开发约定](../../../run_cmd_demo/AGENTS.md)。rek、rekx 不互相包含源码；公共指令宏和 BTF 成员查询放根目录 `kpm_utils.h`，静态补丁工具为根目录 `patch_offsets.py`。通用部分以 rekx 为准核对后分别维护。
 
-在新的空输出目录运行 `all` 生成两份普通版，`debug` 生成两份 debug；`static`、`dynamic` 可单独选择，`baselines` 生成静态普通/debug 两份。静态 JSON 默认与 KPM 同目录，也可用 `LAYOUT_DIR` 单独指定。正式候选使用仓库统一构建入口，捕获 `--extra-input patch_offsets.py` 及实际工具链、输出参数。
+在新的空输出目录运行 `all` 生成两份普通版；已有且确有用途的 `debug` 目标按模块约定保留；`static`、`dynamic` 可单独选择，`baselines` 按模块约定生成静态件。静态 JSON 默认与 KPM 同目录，也可用 `LAYOUT_DIR` 单独指定。正式候选使用仓库统一构建入口，捕获 `--extra-input patch_offsets.py` 及实际工具链、输出参数。
 
 发布规范为 Releases 提供两种普通版及静态 JSON，debug 保留在 Actions artifacts。实施前检查当前工作流；双模式 CI/发布改动见 [维护者补丁建议](../../../Developer/proposals/2026-10-10-kpm-modes/README.md)，不能把补丁副本的自检视为线上发布已生效。
 

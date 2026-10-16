@@ -16,6 +16,10 @@ on:
       - "**/Makefile"
       - "**/archive"
       - "re_kernel_x/tools/**"
+      - "nomount/module/**"
+      - "nomount/README.md"
+      - "nomount/tools/**"
+      - "nomount/nomount"
       - "KernelPatch"
       - ".gitmodules"
 
@@ -34,6 +38,10 @@ on:
       - "**/Makefile"
       - "**/archive"
       - "re_kernel_x/tools/**"
+      - "nomount/module/**"
+      - "nomount/README.md"
+      - "nomount/tools/**"
+      - "nomount/nomount"
       - "KernelPatch"
       - ".gitmodules"
 
@@ -52,7 +60,7 @@ jobs:
   Build-on-Ubuntu:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     env:
       TZ: UTC-8
 
@@ -94,8 +102,11 @@ jobs:
             fi
             echo "build ${dir}"
             printf "%s\n" "${dir%/}" >> target/modules.txt
-            if [ "${dir%/}" = "re_kernel_x" ] || [ "${dir%/}" = "re_kernel" ] || [ "${dir%/}" = "run_cmd_demo" ] || [ "${dir%/}" = "zram_zstd" ]; then
-              make -C "${dir}" all debug
+            if [ "${dir%/}" = "re_kernel_x" ] || [ "${dir%/}" = "re_kernel" ] || [ "${dir%/}" = "run_cmd_demo" ] || [ "${dir%/}" = "zram_zstd" ] || [ "${dir%/}" = "nomount" ]; then
+              make -C "${dir}" all
+              if grep -Eq '^debug[[:space:]]*:' "${dir}Makefile"; then
+                make -C "${dir}" debug
+              fi
               mv "${dir}"*.kpm "${dir}"*.kpm.json target
             else
               make -C "${dir}"
@@ -174,19 +185,12 @@ jobs:
           done
           python3 tools/artifact_gate.py release --modules target/modules.txt
 
-      - name: Upload release
+      - name: Upload prepared KPM release assets
         if: github.event.inputs.release == 'true'
-        uses: ncipollo/release-action@v1
+        uses: actions/upload-artifact@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          name: ${{ github.event.inputs.version }}
-          tag: ${{ github.event.inputs.version }}
-          artifacts: "release/*"
-          allowUpdates: true
-          generateReleaseNotes: true
-          makeLatest: true
-          omitBodyDuringUpdate: true
-          replacesArtifacts: true
+          name: release_kpms
+          path: release
 
   Upload-artifacts:
     needs: Build-on-Ubuntu
@@ -212,3 +216,90 @@ jobs:
           name: ${{ matrix.kpm }}
           path: ${{ matrix.kpm }}
           archive: false
+
+  Build-NoMount-zip:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: "recursive"
+          fetch-depth: 1
+
+      - name: Install ZIP toolchain
+        run: sdkmanager --install "ndk;26.3.11579264"
+
+      - name: Check ZIP publishing
+        run: |
+          python3 nomount/tools/test_release_zip.py
+          python3 nomount/tools/test_update_json.py
+
+      - name: Build NoMount ZIP
+        id: build_zip
+        run: |
+          mkdir -p local
+          python3 nomount/tools/build_zip.py --ndk "$ANDROID_HOME/ndk/26.3.11579264" --host-tag linux-x86_64 > local/nomount-zip-result.json
+          python3 nomount/tools/release_zip.py prepare --result local/nomount-zip-result.json --output target_zip
+          (cd target_zip && sha256sum --check SHA256SUMS)
+          python3 -c 'import json; print("zip_name=" + json.load(open("local/nomount-zip-result.json"))["artifact"]["name"])' >> "$GITHUB_OUTPUT"
+
+      - name: Upload ZIP and build identity
+        uses: actions/upload-artifact@v7
+        with:
+          name: nomount_zip
+          path: target_zip
+
+      - name: Upload versioned NoMount ZIP
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.build_zip.outputs.zip_name }}
+          path: target_zip/${{ steps.build_zip.outputs.zip_name }}
+          archive: false
+
+  Publish-release:
+    needs: [Build-on-Ubuntu, Build-NoMount-zip]
+    if: github.event.inputs.release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout publishing tools
+        uses: actions/checkout@v6
+
+      - name: Download prepared KPM assets
+        uses: actions/download-artifact@v8
+        with:
+          name: release_kpms
+          path: release
+
+      - name: Download NoMount ZIP
+        uses: actions/download-artifact@v8
+        with:
+          name: nomount_zip
+          path: target_zip
+
+      - name: Verify and combine release assets
+        env:
+          RELEASE_TAG: ${{ github.event.inputs.version }}
+        run: |
+          (cd release && sha256sum --check SHA256SUMS)
+          (cd target_zip && sha256sum --check SHA256SUMS)
+          python3 nomount/tools/release_zip.py merge --zip-dir target_zip --release-dir release --tag "$RELEASE_TAG" --repository "$GITHUB_REPOSITORY"
+          (cd release && sha256sum --check SHA256SUMS)
+
+      - name: Upload release
+        if: github.event.inputs.release == 'true'
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: ${{ github.event.inputs.version }}
+          tag: ${{ github.event.inputs.version }}
+          artifacts: "release/*"
+          commit: ${{ github.sha }}
+          artifactErrorsFailBuild: true
+          immutableCreate: true
+          allowUpdates: false
+          generateReleaseNotes: true
+          makeLatest: true

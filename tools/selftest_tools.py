@@ -379,6 +379,68 @@ def _run_checks():
     results.append(("handoff_payload_schema", positives_ok and negative_rejected,
                     f"候选与派生件清单被接受={positives_ok}，缺字段/空 payload 被提示={negative_rejected}"))
 
+    # 14e) 交接登记完整性：交接里的每条记录（实例、派生 sha+目标）必须已在模块元数据登记；
+    #      同一份派生字节服务多个目标时，按 sha 去重而漏掉目标身份必须被判失败。
+    tmp = Path(_tf.mkdtemp())
+    hod = tmp / "Developer" / "reports" / "handoffs"
+    md = tmp / "metadata" / "modules"
+    hod.mkdir(parents=True)
+    md.mkdir(parents=True)
+    shared = "a" * 64
+    handoff_payload = {"module": "mod", "handoff_by": "Developer", "handoff_at": "2026-01-01T00:00:00Z",
+                       "builds": [{"instance_id": "inst-1"}],
+                       "binary_ports": [{"derived": {"name": "a.kpm", "sha256": shared}, "target": {"target": "T1"}},
+                                        {"derived": {"name": "a.kpm", "sha256": shared}, "target": {"target": "T2"}}]}
+    (hod / "h.json").write_text(json.dumps(handoff_payload), encoding="utf-8")
+    (md / "mod.json").write_text(json.dumps({"builds": [{"instance_id": "inst-1"}],
+        "binary_ports": [{"derived": {"name": "a.kpm", "sha256": shared}, "target": {"target": "T1"}},
+                         {"derived": {"name": "a.kpm", "sha256": shared}, "target": {"target": "T2"}}]}), encoding="utf-8")
+    saved = gate.REPO
+    gate.REPO = str(tmp)
+    rep_ok = gate.Report()
+    gate.check_handoff_registration(rep_ok)
+    registered_ok = not rep_ok.failures
+    # 负例：共享字节的第二个目标身份未登记 → 必须失败
+    (md / "mod.json").write_text(json.dumps({"builds": [{"instance_id": "inst-1"}],
+        "binary_ports": [{"derived": {"name": "a.kpm", "sha256": shared}, "target": {"target": "T1"}}]}), encoding="utf-8")
+    rep_bad = gate.Report()
+    gate.check_handoff_registration(rep_bad)     # 软判据：命中进 WARN
+    gap_detected = bool(rep_bad.warnings or rep_bad.failures)
+    gate.REPO = saved
+    results.append(("handoff_registration", registered_ok and gap_detected,
+                    f"完整登记通过={registered_ok}，共享字节漏登记目标身份被拒={gap_detected}"))
+
+    # 14f) DEV-038：CI 选择摘要只排除**顶层**子模块；含嵌套子模块的父项目必须保留
+    tmp = Path(_tf.mkdtemp())
+    (tmp / "top_mod").mkdir(parents=True)
+    (tmp / "parent_mod").mkdir(parents=True)
+    (tmp / "parent_mod" / "nested").mkdir(parents=True)
+    (tmp / "parent_mod" / "Makefile").write_text("all:\n\t@true\n", encoding="utf-8")
+    (tmp / ".gitmodules").write_text(
+        '[submodule "top_mod"]\n\tpath = top_mod\n\turl = x\n'
+        '[submodule "parent_mod/nested"]\n\tpath = parent_mod/nested\n\turl = y\n', encoding="utf-8")
+    saved = gate.REPO
+    gate.REPO = str(tmp)
+    subs = gate.submodule_paths()
+    top_excluded = "top_mod" in subs
+    parent_kept = "parent_mod" not in subs
+    gate.REPO = saved
+    results.append(("ci_submodule_selection", top_excluded and parent_kept,
+                    f"顶层子模块被排除={top_excluded}，含嵌套子模块的父项目保留={parent_kept}"))
+
+    # 14g) 产物「有意不保留」：artifact_state=not-retained 只告警；未登记的缺失仍判失败
+    ghost_art = {"name": "x.kpm", "path": "artifacts/definitely-absent/x.kpm", "sha256": "b" * 64, "size": 1}
+    _gate_repo({"module": "modx", "builds": [dict(entry, artifacts=[ghost_art], artifact_state="not-retained")]}, gate)
+    rep_ok = gate.Report()
+    gate.check_identity_hashes(rep_ok, strict=True)
+    retained_ok = not rep_ok.failures
+    _gate_repo({"module": "modx", "builds": [dict(entry, artifacts=[ghost_art])]}, gate)
+    rep_bad = gate.Report()
+    gate.check_identity_hashes(rep_bad, strict=True)
+    absent_fails = bool(rep_bad.failures)
+    results.append(("artifact_not_retained", retained_ok and absent_fails,
+                    f"有意不保留只告警={retained_ok}，未登记缺失仍失败={absent_fails}"))
+
     # 15) 缺失/伪布尔值、缺事务、探索对象在候选档不能通过。
     cases = []
     for captured in (None, 0, 1, "true"):
@@ -878,6 +940,69 @@ def _run_checks():
     results.append(("hygiene_cjk_text", caught and clean,
                     f"中文报告里的绝对路径被检出={caught}，脱敏后通过={clean}"))
 
+    # 文件发现机制支持项目ID的大小写展示；不修改产物/登记名的验收判据。
+    cases = {
+        "camel_base": identity.variant_of("NoMount_0.5.2.kpm", "nomount", "0.5.2") == "base",
+        "camel_static": identity.variant_of("NoMount_0.5.2_baselines.kpm", "nomount", "0.5.2") == "baselines",
+        "underscore_name": identity.variant_of("Zram_Zstd_1.0.0.kpm", "zram_zstd", "1.0.0") == "base",
+        "wrong_project": identity.variant_of("Other_0.5.2.kpm", "nomount", "0.5.2") is None,
+        "wrong_version": identity.variant_of("NoMount_0.5.3.kpm", "nomount", "0.5.2") is None,
+        "wrong_extension": identity.variant_of("NoMount_0.5.2.ko", "nomount", "0.5.2") is None,
+    }
+    results.append(("artifact_prefix_case", all(cases.values()), str(cases)))
+    # 新生成清单复用相同大块；身份内容不省略，旧清单与既有断言保留。
+    shared_identity = load("identity_shared_inputs", REPO / "tools/identity.py")
+    source_list = [{"path": f"mod/f{n}.c", "sha256": "a" * 64} for n in range(30)]
+    plain = {"module": "mod", "builds": [
+        {"instance_id": f"variant-{n}#1", "source_commit": "b" * 40,
+         "sources": source_list, "recipe": {"captured": False, "returncode": 0, "command": "cmd" * 200}}
+        for n in range(2)]}
+    packed = shared_identity.compact_handoff(plain)
+    decode = shared_identity.expand_handoff
+    cases = {"legacy": decode(plain) == plain, "lossless": decode(packed) == plain,
+             "smaller": len(json.dumps(packed)) < len(json.dumps(plain)),
+             "input_not_mutated": "shared_data" not in plain,
+             "strict_types_preserved": decode(packed)["builds"][0]["recipe"]["captured"] is False,
+             "single_build_stays_legacy": shared_identity.compact_handoff({"builds": plain["builds"][:1]}) == {"builds": plain["builds"][:1]}}
+    def shared_reject(name, mutate):
+        bad = json.loads(json.dumps(packed))
+        mutate(bad)
+        try:
+            decode(bad)
+            cases[name] = False
+        except (ValueError, TypeError):
+            cases[name] = True
+    shared_reject("missing_object", lambda x: x["shared_data"].pop(next(iter(x["shared_data"]))))
+    shared_reject("wrong_object_hash", lambda x: x["shared_data"].__setitem__(next(iter(x["shared_data"])), []))
+    shared_reject("unknown_schema", lambda x: x.__setitem__("handoff_schema", 3))
+    shared_reject("boolean_schema", lambda x: x.__setitem__("handoff_schema", True))
+    shared_reject("absent_schema", lambda x: x.pop("handoff_schema"))
+    shared_reject("bad_pointer", lambda x: x["builds"][0].__setitem__("sources", {"data_ref": "0" * 64}))
+    extra = ["unused" * 200]
+    shared_reject("unused_object", lambda x: x["shared_data"].__setitem__(shared_identity.handoff_block_hash(extra)[0], extra))
+    shared_reject("pointer_extra_fields", lambda x: x["builds"][0]["sources"].update(extra=True))
+    # 同一 report_integrity 入口，悬空引用在 regular 和 strict 均失败。
+    tmp = make_tmp("selftest-shared-handoff-")
+    subprocess.run(["git", "-C", tmp, "init", "-q"], check=True, capture_output=True)
+    (Path(tmp) / "metadata/modules").mkdir(parents=True)
+    (Path(tmp) / "metadata/handoffs").mkdir(parents=True)
+    sample = Path(tmp) / "metadata/handoffs/current.json"
+    gate.REPO = tmp
+    sample.write_text(json.dumps(packed))
+    rep = gate.Report()
+    gate.check_report_integrity(rep, True)
+    cases["gate_valid"] = not rep.failures
+    bad = json.loads(json.dumps(packed)); bad["shared_data"].pop(next(iter(bad["shared_data"])))
+    sample.write_text(json.dumps(bad))
+    for strict in (False, True):
+        rep = gate.Report()
+        gate.check_report_integrity(rep, strict)
+        cases[f"gate_missing_{strict}"] = bool(rep.failures)
+    results.append(("handoff_shared_inputs", all(cases.values()), str(cases)))
+    # 维护者代办的报告生成机制：精确实例选择与另写协议解码器的宿主对照。
+    generation = load("selftest_report_generation", REPO / "tools/selftest_report_generation.py")
+    generation_cases = generation.run_checks()
+    results.append(("report_generation_scope", all(generation_cases.values()), str(generation_cases)))
     return results
 
 

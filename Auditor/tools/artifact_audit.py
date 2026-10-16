@@ -18,6 +18,9 @@
   默认除登记表里的产物外，还**独立扫描** `artifacts/**/*.kpm`（可用 `--artifacts-dir` 改/加目录），
   报出「未登记产物」「字节与已登记产物相同的副本」「登记了但不在场」。登记表是维护方的记录，
   不能反过来决定审计覆盖范围；`--strict-unregistered` 时存在未登记字节即返回非零。
+
+维护者记录（2026-10-16，用户授权代办）：增加本轮完整实例选择和范围回执；
+选择器只限定逐件解析对象，全局产物扫描继续执行。此工具改动的宿主验证不构成独立审计结论。
 """
 
 import argparse
@@ -352,7 +355,9 @@ def audit_artifact(path, record, snapshot, snapshot_path, corpus, makefile_versi
         if norm and norm != expected_ver:
             findings.append(("error", "version_mismatch",
                              f"内嵌 version={info.get('version')} 与构建声明 {expected_ver} 不一致"))
-    if record and info.get("name") and info["name"] != record.get("module") and record.get("module") != f"{info['name']}_static":
+    if (record and info.get("name")
+            and info["name"].casefold() != record.get("module", "").casefold()
+            and record.get("module", "").casefold() != f"{info['name']}_static".casefold()):
         findings.append(("error", "name_mismatch", f"内嵌 name={info['name']} 与模块记录 {record.get('module')} 不符"))
 
     # 身份复算
@@ -562,6 +567,7 @@ def main():
     ap = argparse.ArgumentParser(description="KPM 产物独立审计")
     ap.add_argument("--module", required=True)
     ap.add_argument("--build-id", action="append", help="待审计的 Build ID（可重复指定）")
+    ap.add_argument("--instance-id", action="append", help="待审计的完整实例（可重复；不指定时保留原范围）")
     ap.add_argument("--version", dest="target_version", help="待审计的构建版本（如 0.2.0）")
     ap.add_argument("--manifest", help="交接清单或自定义登记表路径（若未导入 metadata/modules）")
     ap.add_argument("--corpus", action="append",
@@ -619,8 +625,13 @@ def main():
     unregistered = [message for _, kind, message in scan_findings if kind == "unregistered_artifact"]
 
     targets = []
+    selected_instances = set()
+    missing_artifacts = []
+    instance_filter = set(args.instance_id) if args.instance_id else None
     build_filter = set(args.build_id) if args.build_id else None
     for build in record.get("builds", []):
+        if instance_filter and build.get("instance_id") not in instance_filter:
+            continue
         if build_filter and build.get("build_id") not in build_filter:
             continue
         if args.target_version and build.get("version") != args.target_version:
@@ -628,7 +639,14 @@ def main():
         for art in build.get("artifacts", []):
             path = os.path.join(REPO, art["path"])
             if os.path.isfile(path):
-                targets.append((build["build_id"], path))
+                targets.append((build, path))
+                selected_instances.add(build.get("instance_id"))
+            elif instance_filter:
+                missing_artifacts.append(art["path"])
+    if instance_filter and (instance_filter - selected_instances or missing_artifacts):
+        absent = sorted(instance_filter - selected_instances)
+        print("error: 所选实例未匹配完整在场产物: " + ", ".join(absent + sorted(missing_artifacts)), file=sys.stderr)
+        return 2
     if not targets and not scan_findings:
         print("error: 没有可审计的产物（产物不在场？）", file=sys.stderr)
         return 2
@@ -649,6 +667,12 @@ def main():
             "kpm_on_disk": scanned_paths,
             "registered": sorted(registered),
         },
+        "selection": {
+            "instance_ids": sorted(instance_filter) if instance_filter else None,
+            "build_ids": sorted(build_filter) if build_filter else None,
+            "version": args.target_version,
+            "audited_instances": sorted(i for i in selected_instances if i is not None),
+        },
         "artifacts": [],
         "findings": [],
     }
@@ -659,9 +683,14 @@ def main():
         })
     if args.strict_unregistered and unregistered:
         exit_code = 1
-    for build_id, path in targets:
-        facts, findings = audit_artifact(path, record, snapshot, snapshot_path, corpus, makefile_version, expected_build_id=build_id)
+    for build, path in targets:
+        build_id = build["build_id"]
+        # 精确实例核对使用该条完整登记，避免相同 Build ID 的其他实例串入身份查找。
+        audit_record = dict(record, builds=[build]) if instance_filter else record
+        facts, findings = audit_artifact(path, audit_record, snapshot, snapshot_path, corpus, makefile_version, expected_build_id=build_id)
         facts["build_id"] = build_id
+        facts["instance_id"] = build.get("instance_id")
+        facts["source_commit"] = build.get("source_commit")
         report["artifacts"].append(facts)
         for severity, kind, message in findings:
             report["findings"].append({

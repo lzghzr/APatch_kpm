@@ -61,9 +61,11 @@ python3 run.py --image B2N-416G_boot.img               # 只对它跑偏移推�
 
 有结构体偏移依赖的模块默认提供 static / dynamic 两种编译产物，共用业务实现，定义 `CONFIG_KPM_BASELINES` 选择静态基线，未定义时使用动态推导。静态版附带可替换偏移表及同名 `.kpm.json`；动态版加载时优先使用 BTF，再使用目标支持的固定小窗口推导。必要字段或共同布局无法确认时停止加载，不按版本号猜偏移。
 
-普通产物命名为 `<模块>_<版本>_baselines.kpm`、`<模块>_<版本>.kpm`，debug 增加 `_debug`，元信息记录 `offset_mode`。Releases 发布两种普通版与静态 JSON；debug 保留在 artifacts。同一模块的两种模式保留同一管理名称，每次选择一种加载。无偏移依赖的模块继续生成通用 KPM。
+普通产物命名为 `<模块>_<版本>_baselines.kpm`、`<模块>_<版本>.kpm`，默认不生成单独 debug 件；只有明确需要且有独立调试用途时才添加 `_debug`，元信息记录 `offset_mode`。Releases 发布两种普通版与静态 JSON；debug 保留在 artifacts。同一模块的两种模式保留同一管理名称，每次选择一种加载。无偏移依赖的模块继续生成通用 KPM。
 
-**低版本兼容只做在二进制上（非必需）**：源码与 Makefile **只面向最新 KernelPatch**，不得含任何低版本兼容内容（不得有兼容分支、不得为旧内核改业务实现、不得在 Makefile 里放兼容目标，构建输入也不含兼容工具）；4.4 等旧 KP 目标经 `patch_offsets.py legacy-kp` 对**已构建的 `.kpm` 做字节级变换**得到派生件。派生件必须可追溯（base instance + source_commit + base 哈希 + 工具哈希与命令 + 派生哈希），设备证据/验收若用派生字节须同时写明 base 实例与派生哈希；`kp_compat` 只是**可选**自识别字段，`_legacy` 命名可被接受但非要求。**派生件的生成归 Developer**（随候选交接一并提供；本轮需要而来件缺失时，由维护者先提醒开发者补齐）；**Tester 只做真机测试**，维护者只登记与核对。变换工具与契约在派生物要交付或用于真机结论时须经独立复核。KernelPatch 修复 4.4 兼容后删除该路径（见 [docs/records/2026-10-11-clean-build-binary-adaptation.md](docs/records/2026-10-11-clean-build-binary-adaptation.md)）。
+**真机只测一个变体**：`debug` 相对 `release` 只增加日志/断言详细度，因此真机测试**每个目标只测一个变体**（优先 `release`），未测变体由验收以审计确认的「变体差异」结论绑定；审计未确认差异仅限日志/断言时必须两个都测。判据全文见 [docs/process/tester-handbook.md](docs/process/tester-handbook.md) §4.1。
+
+**低版本兼容只做在二进制上（非必需）**：源码与 Makefile **只面向最新 KernelPatch**，不得含任何低版本兼容内容（不得有兼容分支、不得为旧内核改业务实现、不得在 Makefile 里放兼容目标，构建输入也不含兼容工具）；4.4 等旧 KP 目标经 `patch_offsets.py legacy-kp` 对**已构建的 `.kpm` 做字节级变换**得到派生件。派生件必须可追溯（base instance + source_commit + base 哈希 + 工具哈希与命令 + 派生哈希），设备证据/验收若用派生字节须同时写明 base 实例与派生哈希；`kp_compat` 只是**可选**自识别字段，`_legacy` 命名可被接受但非要求。**派生件的生成归 Developer**（随候选交接一并提供；本轮需要而来件缺失时，由维护者先提醒开发者补齐）；**Tester 只做真机测试**，维护者只登记与核对。派生件统一落在 `artifacts/binary-port/<模块>/<派生件 sha256>/<派生件名>`（目标身份记在元数据与回执里，不进路径；生成时用 `patch_offsets.py … --output <该路径>`）。变换工具与契约在派生物要交付或用于真机结论时须经独立复核。KernelPatch 修复 4.4 兼容后删除该路径（见 [docs/records/2026-10-11-clean-build-binary-adaptation.md](docs/records/2026-10-11-clean-build-binary-adaptation.md)）。
 
 当前接入 rek / rekx / run_cmd，其他模块逐个接入，各模块在自己的 Makefile 中维护构建规则，额外输入规则见 `Developer/README.md`。Android 4.4～5.10 是函数推导新增适配范围，5.15 及以上默认使用 BTF；该范围用于安排工作，偏移仍由目标证据取得。
 

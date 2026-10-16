@@ -83,6 +83,7 @@ def main():
     ap.add_argument("--allow-dirty", action="store_true",
                     help="允许脏工作树（自动降级为 exploration，不能作为候选交接）")
     ap.add_argument("--handoff", help="只产出交接清单，不写 metadata/")
+    ap.add_argument("--shared-inputs", action="store_true", help="交接清单内按哈希复用相同输入大块")
     ap.add_argument("--extra-input", action="append", help="额外构建输入（仓库相对路径）")
     ap.add_argument("--timeout", type=int, default=1800)
     ap.add_argument("--no-force", action="store_true", help="不加 -B（默认强制重建，避免旧 .o 复用）")
@@ -202,7 +203,7 @@ def main():
             module=args.module, toolchain=args.toolchain, by=args.by, kind=kind,
             variant=None, build_cmd=build_cmd,
             env=args.env, extra_input=extras, expect_source_tree=before_tree,
-            handoff=args.handoff, new_instance=True, no_archive=args.no_archive,
+            handoff=args.handoff, shared_inputs=args.shared_inputs, new_instance=True, no_archive=args.no_archive,
             prepared_recipe=before_recipe,
             build_transaction={"source_commit": source_commit, "source_tree_sha256": before_tree,
                                "kernelpatch_commit": kp_commit, "recipe_sha256": before_recipe.get("dry_run_sha256"),
