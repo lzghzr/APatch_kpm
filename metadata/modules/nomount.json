@@ -6,7 +6,7 @@
     "makefile": "2.1.1-20261014"
   },
   "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
-  "updated_at": "2026-10-16T05:07:51+00:00",
+  "updated_at": "2026-10-16T05:33:09+00:00",
   "updated_by": "维护者",
   "builds": [
     {
@@ -57191,6 +57191,28 @@
           "scope": "独立文件身份、有限来源检索和缺项处置确认；仅关闭来源映射记录。"
         }
       ]
+    },
+    {
+      "id": "MNT-020",
+      "class": "record",
+      "severity": "中",
+      "owner": "维护者",
+      "found_by": "维护者",
+      "status": "fixed",
+      "title": "ZIP CI未初始化Android SDK即调用sdkmanager，工具链步骤退出127",
+      "evidence": "https://github.com/lzghzr/APatch_kpm/actions/runs/38855517713/job/116825967619；Install ZIP toolchain: sdkmanager: command not found；exit code 127。",
+      "impact": "NoMount ZIP检查、构建和上传步骤未执行；本次未产生ZIP实例及哈希。KPM编译与产物检查作业成功，发布作业跳过。",
+      "frequency": "未知",
+      "confidence": "已确认",
+      "reference_commit": "003b45028995952264359db49efb245273cd07da",
+      "tool_path": ".github/workflows/build-kpm.yml",
+      "suggestion": "显式初始化Java和Android SDK，再安装既定NDK。",
+      "resolution": "本地加入Java17和setup-android，保持NDK26.3.11579264；YAML与已有7+3测试通过。GitHub修复版本尚未运行，fixed仅指本地改动完成。",
+      "closure": "新的GitHub运行完成工具链安装、ZIP检查、构建和上传，由Auditor独立确认后关闭；不以宿主测试替代远端执行。",
+      "fix_evidence": "docs/records/2026-10-16-ci-sdk-bootstrap.md",
+      "discovered_at": "2026-10-16T05:33:09+00:00",
+      "recorded_by": "维护者",
+      "closed_by": null
     }
   ],
   "maintainer_records": [
@@ -57894,6 +57916,14 @@
       "review_report": "Auditor/reports/2026-10-16-report-generation-adoption-review.md",
       "review_report_sha256": "e5f23fcc4949c862c19b529def5e9747859f2a1b0337441cf92c9780c75d1c80",
       "coverage_boundary": "本次无构建/设备操作；测试缺项仍未覆盖，原构建/审计/测试/验收事实不变。"
+    },
+    {
+      "at": "2026-10-16T05:33:09+00:00",
+      "by": "维护者",
+      "scope": "定位发布后push CI的SDK命令缺失；追加MNT-020并完成本地工作流初始化修复。",
+      "record": "docs/records/2026-10-16-ci-sdk-bootstrap.md",
+      "verification": "YAML/步骤顺序/NDK版本通过；原ZIP发布7/7与更新入口3/3通过。",
+      "pending": "修复签名、用户推送后的GitHub实际运行与Auditor独立确认。"
     }
   ],
   "binary_ports": [

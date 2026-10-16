@@ -228,8 +228,17 @@ jobs:
           submodules: "recursive"
           fetch-depth: 1
 
+      - name: Setup Java for Android SDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
       - name: Install ZIP toolchain
-        run: sdkmanager --install "ndk;26.3.11579264"
+        uses: android-actions/setup-android@v4
+        with:
+          packages: "ndk;26.3.11579264"
+          log-accepted-android-sdk-licenses: false
 
       - name: Check ZIP publishing
         run: |
