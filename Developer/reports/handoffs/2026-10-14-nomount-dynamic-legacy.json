@@ -1,0 +1,104 @@
+{
+  "module": "nomount",
+  "version": "2.1.1-20261014",
+  "kind": "binary-port-handoff",
+  "handoff_by": "Developer",
+  "handoff_at": "2026-10-14T23:15:00.008911+00:00",
+  "binary_ports": [
+    {
+      "kind": "binary-port",
+      "transformation": "legacy-kp",
+      "source_commit": "e9ab619ea75e7fd611c28dcc0328dbb99ebf1dfb",
+      "base_instance_id": "nomount-2.1.1-20261014+gba09058a01e9.r72c71e2f.kpb51197a.ndk26.3.11579264#1",
+      "base_artifact": {
+        "name": "NoMount_2.1.1-20261014.kpm",
+        "sha256": "d78b11a936b7781909118a66bdc104cee2925b5db8d6288c9137e08d1e7f41c0",
+        "size": 152976,
+        "embedded": {
+          "name": "NoMount",
+          "version": "2.1.1-20261014",
+          "license": "GPL v2",
+          "author": "maxsteeel, Codex",
+          "description": "NoMount: read-only file and directory views, resident until reboot",
+          "offset_mode": "dynamic",
+          "lifetime": "reboot"
+        },
+        "path": "artifacts/nomount-2.1.1-20261014+gba09058a01e9.r72c71e2f.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014.kpm"
+      },
+      "tool": {
+        "path": "patch_offsets.py",
+        "source_commit": "e9ab619ea75e7fd611c28dcc0328dbb99ebf1dfb",
+        "sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033"
+      },
+      "command": [
+        "python3",
+        "patch_offsets.py",
+        "legacy-kp",
+        "artifacts/nomount-2.1.1-20261014+gba09058a01e9.r72c71e2f.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014.kpm",
+        "--output",
+        "artifacts/binary-port/nomount/bfb85fd646159d97e5d8b2f48ac19ead454a74b87355f60f24c88300ba39b010/NoMount_2.1.1-20261014.kpm"
+      ],
+      "derived": {
+        "path": "artifacts/binary-port/nomount/bfb85fd646159d97e5d8b2f48ac19ead454a74b87355f60f24c88300ba39b010/NoMount_2.1.1-20261014.kpm",
+        "name": "NoMount_2.1.1-20261014.kpm",
+        "sha256": "bfb85fd646159d97e5d8b2f48ac19ead454a74b87355f60f24c88300ba39b010",
+        "size": 154720
+      },
+      "receipt": {
+        "path": "artifacts/binary-port/nomount/bfb85fd646159d97e5d8b2f48ac19ead454a74b87355f60f24c88300ba39b010/NoMount_2.1.1-20261014.kpm.compat.json",
+        "name": "NoMount_2.1.1-20261014.kpm.compat.json",
+        "sha256": "e4453bcb162b476bee22f2a55a722a1cd0757ed67e7d39fce33eb96384230592",
+        "size": 741,
+        "data": {
+          "schema": 1,
+          "kind": "binary-port",
+          "kpm": "NoMount_2.1.1-20261014.kpm",
+          "parent_kpm": "NoMount_2.1.1-20261014.kpm",
+          "parent_sha256": "d78b11a936b7781909118a66bdc104cee2925b5db8d6288c9137e08d1e7f41c0",
+          "sha256": "bfb85fd646159d97e5d8b2f48ac19ead454a74b87355f60f24c88300ba39b010",
+          "lookup_mode": "exact",
+          "import_from": "kallsyms_lookup_name_by_suffix",
+          "pointer_import": "kallsyms_lookup_name",
+          "pointer_import_added": false,
+          "adapter": "adrp-ldr-br-x16",
+          "imports_resolved": 1,
+          "modified_ranges": [
+            {
+              "offset": 40,
+              "size": 8
+            },
+            {
+              "offset": 60,
+              "size": 2
+            },
+            {
+              "offset": 145840,
+              "size": 24
+            },
+            {
+              "offset": 152976,
+              "size": 1744
+            }
+          ]
+        }
+      },
+      "generated_by": "Developer",
+      "generated_at": "2026-10-14T23:15:00.008911+00:00",
+      "target": {
+        "image": "B2N-416G_boot.img",
+        "kernel": "4.4.192-perf+",
+        "kernelpatch_version": "0xd04",
+        "evidence": "Tester/reports/runs/2026-10-14-nomount-2.1.1-20261014-live#1.md"
+      },
+      "load": {
+        "phase": "pre-kernel-init",
+        "arguments": [],
+        "lifetime": "reboot"
+      },
+      "limitations": [
+        "The original dynamic layout implementation is unchanged; no-BTF initialization is not fixed by this transformation.",
+        "Exact-name lookup replaces suffix lookup. Target anchor availability must be checked independently."
+      ]
+    }
+  ]
+}

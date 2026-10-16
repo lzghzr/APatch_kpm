@@ -1,0 +1,15 @@
+--- a/metadata/modules/nomount.json
++++ b/metadata/modules/nomount.json
+@@ -1,8 +1,10 @@
+ {
+   "module": "nomount",
+   "status": "candidate",
+-  "version_declared": "",
+-  "version_sources": {},
++  "version_declared": "0.1.0",
++  "version_sources": {
++    "makefile": "0.1.0"
++  },
+   "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+   "updated_at": "2026-10-13T00:46:20Z",
+   "updated_by": "维护者",

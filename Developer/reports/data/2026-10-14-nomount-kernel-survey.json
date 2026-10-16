@@ -1,0 +1,5758 @@
+{
+  "scope": "Developer pre-port survey; no target execution or independent audit",
+  "source_commit": "72dbb947e13f98c46d2946365717d4ee350d04cf",
+  "required_functions": [
+    "__mutex_init",
+    "__rcu_read_lock",
+    "__rcu_read_unlock",
+    "_raw_spin_lock",
+    "_raw_spin_unlock",
+    "call_rcu",
+    "capable",
+    "clear_inode",
+    "d_drop",
+    "d_hash_and_lookup",
+    "d_splice_alias",
+    "dentry_open",
+    "dget_parent",
+    "dput",
+    "fput",
+    "full_name_hash",
+    "generic_file_llseek",
+    "generic_file_readonly_mmap",
+    "generic_fillattr",
+    "iget5_locked",
+    "inode_permission2",
+    "iterate_dir",
+    "kern_path",
+    "kfree",
+    "memdup_user",
+    "mutex_lock",
+    "mutex_unlock",
+    "new_inode",
+    "path_put",
+    "register_key_type",
+    "set_nlink",
+    "shrink_dcache_parent",
+    "synchronize_rcu",
+    "truncate_inode_pages_final",
+    "unlock_new_inode",
+    "vfree",
+    "vfs_getattr_nosec",
+    "vfs_llseek",
+    "vfs_path_lookup",
+    "vfs_setpos",
+    "vzalloc"
+  ],
+  "deferred": [
+    "kernel_android17-6.18"
+  ],
+  "targets": [
+    {
+      "image": "boot_67.2.A.3.178.img",
+      "image_sha256": "06dbe42eccb4ea14a53e7b34d1f509bc7b176776db89d3280adba44c4b8b3731",
+      "kernel_sha256": "83a36d57811b16e3742150a72236727300cbceb345850eca6aad0dd826dd0232",
+      "release": "5.15.189-android13-8-00016-g51bba4309aac-ab14546557",
+      "symbols": 159332,
+      "symbol_cache_sha256": "97a4f9a244f2f734f9c5e11ec404f1f5ae27063c21d0ec65554d51dd1d5e8843",
+      "symbol_source": "local/zram-kernel-compat-20261011-01/boot_67.2.A.3.178.img/symbols.json",
+      "source_binding": "Existing Developer extraction: recorded extraction has trailing padding; bounded current kernel is byte-identical prefix",
+      "functions": {
+        "__mutex_init": [
+          "__mutex_init",
+          "__mutex_init.cfi_jt"
+        ],
+        "__rcu_read_lock": [
+          "__rcu_read_lock",
+          "__rcu_read_lock.cfi_jt"
+        ],
+        "__rcu_read_unlock": [
+          "__rcu_read_unlock",
+          "__rcu_read_unlock.cfi_jt"
+        ],
+        "_raw_spin_lock": [
+          "_raw_spin_lock.cfi_jt",
+          "_raw_spin_lock"
+        ],
+        "_raw_spin_unlock": [
+          "_raw_spin_unlock.cfi_jt",
+          "_raw_spin_unlock"
+        ],
+        "call_rcu": [
+          "call_rcu",
+          "call_rcu.cfi_jt"
+        ],
+        "capable": [
+          "capable",
+          "capable.cfi_jt"
+        ],
+        "clear_inode": [
+          "clear_inode",
+          "clear_inode.cfi_jt"
+        ],
+        "d_drop": [
+          "d_drop",
+          "d_drop.cfi_jt"
+        ],
+        "d_hash_and_lookup": [
+          "d_hash_and_lookup"
+        ],
+        "d_splice_alias": [
+          "d_splice_alias",
+          "d_splice_alias.cfi_jt"
+        ],
+        "dentry_open": [
+          "dentry_open",
+          "dentry_open.cfi_jt"
+        ],
+        "dget_parent": [
+          "dget_parent",
+          "dget_parent.cfi_jt"
+        ],
+        "dput": [
+          "dput",
+          "dput.cfi_jt"
+        ],
+        "fput": [
+          "fput",
+          "fput.cfi_jt"
+        ],
+        "full_name_hash": [
+          "full_name_hash",
+          "full_name_hash.cfi_jt"
+        ],
+        "generic_file_llseek": [
+          "generic_file_llseek",
+          "generic_file_llseek.cfi_jt"
+        ],
+        "generic_file_readonly_mmap": [
+          "generic_file_readonly_mmap",
+          "generic_file_readonly_mmap.cfi_jt"
+        ],
+        "generic_fillattr": [
+          "generic_fillattr",
+          "generic_fillattr.cfi_jt"
+        ],
+        "iget5_locked": [
+          "iget5_locked",
+          "iget5_locked.cfi_jt"
+        ],
+        "inode_permission2": [],
+        "iterate_dir": [
+          "iterate_dir",
+          "iterate_dir.cfi_jt"
+        ],
+        "kern_path": [
+          "kern_path",
+          "kern_path.cfi_jt"
+        ],
+        "kfree": [
+          "kfree",
+          "kfree.cfi_jt"
+        ],
+        "memdup_user": [
+          "memdup_user",
+          "memdup_user.cfi_jt"
+        ],
+        "mutex_lock": [
+          "mutex_lock.cfi_jt",
+          "mutex_lock"
+        ],
+        "mutex_unlock": [
+          "mutex_unlock.cfi_jt",
+          "mutex_unlock"
+        ],
+        "new_inode": [
+          "new_inode",
+          "new_inode.cfi_jt"
+        ],
+        "path_put": [
+          "path_put",
+          "path_put.cfi_jt"
+        ],
+        "register_key_type": [
+          "register_key_type",
+          "register_key_type.cfi_jt"
+        ],
+        "set_nlink": [
+          "set_nlink",
+          "set_nlink.cfi_jt"
+        ],
+        "shrink_dcache_parent": [
+          "shrink_dcache_parent"
+        ],
+        "synchronize_rcu": [
+          "synchronize_rcu",
+          "synchronize_rcu.cfi_jt"
+        ],
+        "truncate_inode_pages_final": [
+          "truncate_inode_pages_final",
+          "truncate_inode_pages_final.cfi_jt"
+        ],
+        "unlock_new_inode": [
+          "unlock_new_inode",
+          "unlock_new_inode.cfi_jt"
+        ],
+        "vfree": [
+          "vfree",
+          "vfree.cfi_jt"
+        ],
+        "vfs_getattr_nosec": [
+          "vfs_getattr_nosec"
+        ],
+        "vfs_llseek": [
+          "vfs_llseek",
+          "vfs_llseek.cfi_jt"
+        ],
+        "vfs_path_lookup": [
+          "vfs_path_lookup",
+          "vfs_path_lookup.cfi_jt"
+        ],
+        "vfs_setpos": [
+          "vfs_setpos",
+          "vfs_setpos.cfi_jt"
+        ],
+        "vzalloc": [
+          "vzalloc",
+          "vzalloc.cfi_jt"
+        ]
+      },
+      "missing": [
+        "inode_permission2"
+      ],
+      "btf_queries": {
+        "bpf_get_btf_vmlinux": [
+          "bpf_get_btf_vmlinux"
+        ],
+        "btf_find_by_name_kind": [
+          "btf_find_by_name_kind"
+        ],
+        "btf_type_by_id": [
+          "btf_type_by_id"
+        ],
+        "btf_name_by_offset": [
+          "btf_name_by_offset"
+        ],
+        "btf_resolve_size": [
+          "btf_resolve_size"
+        ]
+      },
+      "config": {
+        "CONFIG_KEYS": "y",
+        "CONFIG_KALLSYMS_ALL": "y",
+        "CONFIG_DEBUG_INFO_BTF": "y",
+        "CONFIG_PREEMPT_RCU": "y",
+        "CONFIG_DEBUG_LOCK_ALLOC": "n",
+        "CONFIG_LOCKDEP": "not recorded",
+        "CONFIG_CFI_CLANG": "y",
+        "CONFIG_CFI": "not recorded",
+        "CONFIG_CFI_PERMISSIVE": "n",
+        "CONFIG_SHADOW_CALL_STACK": "y"
+      },
+      "btf": {
+        "path": "local/zram-kernel-compat-20261011-01/boot_67.2.A.3.178.img/target.btf",
+        "sha256": "384f6f4915762a2d6e6a2686b590b951df29f8bb053dec2ae7ffe9e7d27af598",
+        "offset": 36565580,
+        "types": 133452,
+        "functions": {
+          "inode_permission2": null,
+          "inode_permission": "int(user_namespace*,inode*,int)",
+          "vfs_path_lookup": "int(dentry*,vfsmount*,char*,unsigned int,path*)",
+          "generic_fillattr": "void(user_namespace*,inode*,kstat*)",
+          "vfs_getattr_nosec": "int(path*,kstat*,unsigned int,unsigned int)",
+          "full_name_hash": "unsigned int(void*,char*,unsigned int)",
+          "__rcu_read_lock": "void()",
+          "__rcu_read_unlock": "void()",
+          "_raw_spin_lock": "void(raw_spinlock*)",
+          "_raw_spin_unlock": "void(raw_spinlock*)",
+          "__mutex_init": "void(mutex*,char*,lock_class_key*)",
+          "mutex_lock": "void(mutex*)",
+          "mutex_unlock": "void(mutex*)"
+        },
+        "callbacks": {
+          "dir_context.actor": "int(dir_context*,char*,int,long long,unsigned long long,unsigned int)*",
+          "inode_operations.getattr": "int(user_namespace*,path*,kstat*,unsigned int,unsigned int)*",
+          "inode_operations.permission": "int(user_namespace*,inode*,int)*",
+          "file_operations.splice_read": "long(file*,long long*,pipe_inode_info*,unsigned long,unsigned int)*",
+          "file_operations.read_iter": "long(kiocb*,iov_iter*)*",
+          "file_operations.iterate_shared": "int(file*,dir_context*)*",
+          "dentry_operations.d_revalidate": "int(dentry*,unsigned int)*",
+          "key_type.preparse": "int(key_preparsed_payload*)*",
+          "key_type.instantiate": "int(key*,key_preparsed_payload*)*"
+        },
+        "layouts": {
+          "inode": {
+            "sizeof": 752,
+            "i_mode": 0,
+            "i_opflags": 2,
+            "i_uid": 4,
+            "i_gid": 8,
+            "i_flags": 12,
+            "i_acl": 16,
+            "i_default_acl": 24,
+            "i_op": 32,
+            "i_sb": 40,
+            "i_mapping": 48,
+            "i_security": 56,
+            "i_ino": 64,
+            "i_rdev": 76,
+            "i_size": 80,
+            "i_atime": 88,
+            "i_mtime": 104,
+            "i_ctime": 120,
+            "i_lock": 136,
+            "i_bytes": 140,
+            "i_blkbits": 142,
+            "i_write_hint": 143,
+            "i_blocks": 144,
+            "i_state": 152,
+            "i_rwsem": 160,
+            "dirtied_when": 224,
+            "dirtied_time_when": 232,
+            "i_hash": 240,
+            "i_io_list": 256,
+            "i_wb": 272,
+            "i_wb_frn_winner": 280,
+            "i_wb_frn_avg_time": 284,
+            "i_wb_frn_history": 286,
+            "i_lru": 288,
+            "i_sb_list": 304,
+            "i_wb_list": 320,
+            "i_version": 352,
+            "i_sequence": 360,
+            "i_count": 368,
+            "i_dio_count": 372,
+            "i_writecount": 376,
+            "i_readcount": 380,
+            "i_flctx": 392,
+            "i_data": 400,
+            "i_devices": 672,
+            "i_generation": 696,
+            "i_fsnotify_mask": 700,
+            "i_fsnotify_marks": 704,
+            "i_crypt_info": 712,
+            "i_verity_info": 720,
+            "i_private": 728,
+            "android_kabi_reserved1": 736,
+            "android_kabi_reserved2": 744
+          },
+          "file": {
+            "sizeof": 264,
+            "f_u": 0,
+            "f_path": 16,
+            "f_inode": 32,
+            "f_op": 40,
+            "f_lock": 48,
+            "f_write_hint": 52,
+            "f_count": 56,
+            "f_flags": 64,
+            "f_mode": 68,
+            "f_pos_lock": 72,
+            "f_pos": 120,
+            "f_owner": 128,
+            "f_cred": 160,
+            "f_ra": 168,
+            "f_version": 200,
+            "f_security": 208,
+            "private_data": 216,
+            "f_ep": 224,
+            "f_mapping": 232,
+            "f_wb_err": 240,
+            "f_sb_err": 244,
+            "android_kabi_reserved1": 248,
+            "android_kabi_reserved2": 256
+          },
+          "super_block": {
+            "sizeof": 1600,
+            "s_list": 0,
+            "s_dev": 16,
+            "s_blocksize_bits": 20,
+            "s_blocksize": 24,
+            "s_maxbytes": 32,
+            "s_type": 40,
+            "s_op": 48,
+            "dq_op": 56,
+            "s_qcop": 64,
+            "s_export_op": 72,
+            "s_flags": 80,
+            "s_iflags": 88,
+            "s_magic": 96,
+            "s_root": 104,
+            "s_umount": 112,
+            "s_count": 176,
+            "s_active": 180,
+            "s_security": 184,
+            "s_xattr": 192,
+            "s_cop": 200,
+            "s_master_keys": 208,
+            "s_vop": 216,
+            "s_encoding": 224,
+            "s_encoding_flags": 232,
+            "s_roots": 240,
+            "s_mounts": 248,
+            "s_bdev": 264,
+            "s_bdi": 272,
+            "s_mtd": 280,
+            "s_instances": 288,
+            "s_quota_types": 304,
+            "s_dquot": 312,
+            "s_writers": 648,
+            "s_fs_info": 968,
+            "s_time_gran": 976,
+            "s_time_min": 984,
+            "s_time_max": 992,
+            "s_fsnotify_mask": 1000,
+            "s_fsnotify_marks": 1008,
+            "s_id": 1016,
+            "s_uuid": 1048,
+            "s_max_links": 1064,
+            "s_mode": 1068,
+            "s_vfs_rename_mutex": 1072,
+            "s_subtype": 1120,
+            "s_d_op": 1128,
+            "cleancache_poolid": 1136,
+            "s_shrink": 1144,
+            "s_remove_count": 1208,
+            "s_fsnotify_connectors": 1216,
+            "s_readonly_remount": 1224,
+            "s_wb_err": 1228,
+            "s_dio_done_wq": 1232,
+            "s_pins": 1240,
+            "s_user_ns": 1248,
+            "s_dentry_lru": 1256,
+            "s_inode_lru": 1288,
+            "rcu": 1320,
+            "destroy_work": 1336,
+            "s_sync_lock": 1384,
+            "s_stack_depth": 1432,
+            "s_inode_list_lock": 1472,
+            "s_inodes": 1480,
+            "s_inode_wblist_lock": 1496,
+            "s_inodes_wb": 1504,
+            "android_kabi_reserved1": 1520,
+            "android_kabi_reserved2": 1528,
+            "android_kabi_reserved3": 1536,
+            "android_kabi_reserved4": 1544
+          },
+          "dentry": {
+            "sizeof": 208,
+            "d_flags": 0,
+            "d_seq": 4,
+            "d_hash": 8,
+            "d_parent": 24,
+            "d_name": 32,
+            "d_inode": 48,
+            "d_iname": 56,
+            "d_lockref": 88,
+            "d_op": 96,
+            "d_sb": 104,
+            "d_time": 112,
+            "d_fsdata": 120,
+            "d_child": 144,
+            "d_subdirs": 160,
+            "d_u": 176,
+            "android_kabi_reserved1": 192,
+            "android_kabi_reserved2": 200
+          },
+          "dir_context": {
+            "sizeof": 16,
+            "actor": 0,
+            "pos": 8
+          },
+          "file_operations": {
+            "sizeof": 288,
+            "owner": 0,
+            "llseek": 8,
+            "read": 16,
+            "write": 24,
+            "read_iter": 32,
+            "write_iter": 40,
+            "iopoll": 48,
+            "iterate": 56,
+            "iterate_shared": 64,
+            "poll": 72,
+            "unlocked_ioctl": 80,
+            "compat_ioctl": 88,
+            "mmap": 96,
+            "mmap_supported_flags": 104,
+            "open": 112,
+            "flush": 120,
+            "release": 128,
+            "fsync": 136,
+            "fasync": 144,
+            "lock": 152,
+            "sendpage": 160,
+            "get_unmapped_area": 168,
+            "check_flags": 176,
+            "flock": 184,
+            "splice_write": 192,
+            "splice_read": 200,
+            "setlease": 208,
+            "fallocate": 216,
+            "show_fdinfo": 224,
+            "copy_file_range": 232,
+            "remap_file_range": 240,
+            "fadvise": 248,
+            "android_kabi_reserved1": 256,
+            "android_kabi_reserved2": 264,
+            "android_kabi_reserved3": 272,
+            "android_kabi_reserved4": 280
+          },
+          "inode_operations": {
+            "sizeof": 256,
+            "lookup": 0,
+            "get_link": 8,
+            "permission": 16,
+            "get_acl": 24,
+            "readlink": 32,
+            "create": 40,
+            "link": 48,
+            "unlink": 56,
+            "symlink": 64,
+            "mkdir": 72,
+            "rmdir": 80,
+            "mknod": 88,
+            "rename": 96,
+            "setattr": 104,
+            "getattr": 112,
+            "listxattr": 120,
+            "fiemap": 128,
+            "update_time": 136,
+            "atomic_open": 144,
+            "tmpfile": 152,
+            "set_acl": 160,
+            "fileattr_set": 168,
+            "fileattr_get": 176,
+            "android_kabi_reserved1": 184,
+            "android_kabi_reserved2": 192,
+            "android_kabi_reserved3": 200,
+            "android_kabi_reserved4": 208
+          },
+          "super_operations": {
+            "sizeof": 232,
+            "alloc_inode": 0,
+            "destroy_inode": 8,
+            "free_inode": 16,
+            "dirty_inode": 24,
+            "write_inode": 32,
+            "drop_inode": 40,
+            "evict_inode": 48,
+            "put_super": 56,
+            "sync_fs": 64,
+            "freeze_super": 72,
+            "freeze_fs": 80,
+            "thaw_super": 88,
+            "unfreeze_fs": 96,
+            "statfs": 104,
+            "remount_fs": 112,
+            "umount_begin": 120,
+            "show_options": 128,
+            "show_devname": 136,
+            "show_path": 144,
+            "show_stats": 152,
+            "quota_read": 160,
+            "quota_write": 168,
+            "get_dquots": 176,
+            "nr_cached_objects": 184,
+            "free_cached_objects": 192,
+            "android_kabi_reserved1": 200,
+            "android_kabi_reserved2": 208,
+            "android_kabi_reserved3": 216,
+            "android_kabi_reserved4": 224
+          },
+          "dentry_operations": {
+            "sizeof": 192,
+            "d_revalidate": 0,
+            "d_weak_revalidate": 8,
+            "d_hash": 16,
+            "d_compare": 24,
+            "d_delete": 32,
+            "d_init": 40,
+            "d_release": 48,
+            "d_prune": 56,
+            "d_iput": 64,
+            "d_dname": 72,
+            "d_automount": 80,
+            "d_manage": 88,
+            "d_real": 96,
+            "d_canonical_path": 104,
+            "android_kabi_reserved1": 112,
+            "android_kabi_reserved2": 120,
+            "android_kabi_reserved3": 128,
+            "android_kabi_reserved4": 136
+          },
+          "key_type": {
+            "sizeof": 184,
+            "name": 0,
+            "def_datalen": 8,
+            "flags": 16,
+            "vet_description": 24,
+            "preparse": 32,
+            "free_preparse": 40,
+            "instantiate": 48,
+            "update": 56,
+            "match_preparse": 64,
+            "match_free": 72,
+            "revoke": 80,
+            "destroy": 88,
+            "describe": 96,
+            "read": 104,
+            "request_key": 112,
+            "lookup_restriction": 120,
+            "asym_query": 128,
+            "asym_eds_op": 136,
+            "asym_verify_signature": 144,
+            "android_kabi_reserved1": 152,
+            "android_kabi_reserved2": 160,
+            "link": 168,
+            "lock_class": 184
+          },
+          "key_preparsed_payload": {
+            "sizeof": 80,
+            "orig_description": 0,
+            "description": 8,
+            "payload": 16,
+            "data": 48,
+            "datalen": 56,
+            "quotalen": 64,
+            "expiry": 72
+          },
+          "mutex": {
+            "sizeof": 48,
+            "owner": 0,
+            "wait_lock": 8,
+            "osq": 12,
+            "wait_list": 16,
+            "android_oem_data1": 32
+          },
+          "kstat": {
+            "sizeof": 144,
+            "result_mask": 0,
+            "mode": 4,
+            "nlink": 8,
+            "blksize": 12,
+            "attributes": 16,
+            "attributes_mask": 24,
+            "ino": 32,
+            "dev": 40,
+            "rdev": 44,
+            "uid": 48,
+            "gid": 52,
+            "size": 56,
+            "atime": 64,
+            "mtime": 80,
+            "ctime": 96,
+            "btime": 112,
+            "blocks": 128,
+            "mnt_id": 136
+          },
+          "mnt_idmap": {}
+        },
+        "common_prefix_comparison": {
+          "source": "Actual nm_structs.h offsetof compiled on 64-bit host; BTF target offsets separately decoded",
+          "match": {
+            "inode.i_mode": [
+              0,
+              0
+            ],
+            "inode.i_uid": [
+              4,
+              4
+            ],
+            "inode.i_gid": [
+              8,
+              8
+            ],
+            "inode.i_flags": [
+              12,
+              12
+            ],
+            "dentry.d_parent": [
+              24,
+              24
+            ],
+            "dentry.d_name": [
+              32,
+              32
+            ],
+            "dentry.d_inode": [
+              48,
+              48
+            ],
+            "super_block.s_dev": [
+              16,
+              16
+            ],
+            "super_block.s_blocksize_bits": [
+              20,
+              20
+            ],
+            "super_block.s_blocksize": [
+              24,
+              24
+            ],
+            "super_block.s_maxbytes": [
+              32,
+              32
+            ],
+            "super_block.s_type": [
+              40,
+              40
+            ],
+            "super_block.s_op": [
+              48,
+              48
+            ],
+            "file_operations.llseek": [
+              8,
+              8
+            ],
+            "file_operations.read": [
+              16,
+              16
+            ],
+            "file_operations.write": [
+              24,
+              24
+            ],
+            "file_operations.read_iter": [
+              32,
+              32
+            ],
+            "file_operations.write_iter": [
+              40,
+              40
+            ]
+          },
+          "mismatch": {},
+          "relations": {
+            "file.f_path+16=f_inode": true,
+            "file.f_inode+8=f_op": true,
+            "file.f_flags+4=f_mode": true,
+            "inode.size+8=atime": true,
+            "inode.size+24=mtime": true,
+            "inode.size+40=ctime": true
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android12-5.10",
+      "image_sha256": "ae2976e111bf11c8b56955df242757db9c9b2c06d0d12f57679b034ebfe71b0f",
+      "kernel_sha256": "ae2976e111bf11c8b56955df242757db9c9b2c06d0d12f57679b034ebfe71b0f",
+      "release": "5.10.257-android12-9-00014-g91ca44c479db-ab16466981",
+      "symbols": 143350,
+      "symbol_cache_sha256": "000e531666f72a1761a041e789c0c8e9c1a36d64937524e00baf5f4e613da0d1",
+      "symbol_source": "local/zram-kernel-compat-20261011-01/kernel_android12-5.10/symbols.json",
+      "source_binding": "Existing Developer extraction: current kernel SHA matches extraction receipt",
+      "functions": {
+        "__mutex_init": [
+          "__mutex_init",
+          "__mutex_init.cfi_jt"
+        ],
+        "__rcu_read_lock": [
+          "__rcu_read_lock",
+          "__rcu_read_lock.cfi_jt"
+        ],
+        "__rcu_read_unlock": [
+          "__rcu_read_unlock",
+          "__rcu_read_unlock.cfi_jt"
+        ],
+        "_raw_spin_lock": [
+          "_raw_spin_lock.cfi_jt",
+          "_raw_spin_lock"
+        ],
+        "_raw_spin_unlock": [
+          "_raw_spin_unlock.cfi_jt",
+          "_raw_spin_unlock"
+        ],
+        "call_rcu": [
+          "call_rcu",
+          "call_rcu.cfi_jt"
+        ],
+        "capable": [
+          "capable",
+          "capable.cfi_jt"
+        ],
+        "clear_inode": [
+          "clear_inode",
+          "clear_inode.cfi_jt"
+        ],
+        "d_drop": [
+          "d_drop"
+        ],
+        "d_hash_and_lookup": [
+          "d_hash_and_lookup"
+        ],
+        "d_splice_alias": [
+          "d_splice_alias",
+          "d_splice_alias.cfi_jt"
+        ],
+        "dentry_open": [
+          "dentry_open"
+        ],
+        "dget_parent": [
+          "dget_parent"
+        ],
+        "dput": [
+          "dput",
+          "dput.cfi_jt"
+        ],
+        "fput": [
+          "fput",
+          "fput.cfi_jt"
+        ],
+        "full_name_hash": [
+          "full_name_hash",
+          "full_name_hash.cfi_jt"
+        ],
+        "generic_file_llseek": [
+          "generic_file_llseek",
+          "generic_file_llseek.cfi_jt"
+        ],
+        "generic_file_readonly_mmap": [
+          "generic_file_readonly_mmap",
+          "generic_file_readonly_mmap.cfi_jt"
+        ],
+        "generic_fillattr": [
+          "generic_fillattr",
+          "generic_fillattr.cfi_jt"
+        ],
+        "iget5_locked": [
+          "iget5_locked",
+          "iget5_locked.cfi_jt"
+        ],
+        "inode_permission2": [],
+        "iterate_dir": [
+          "iterate_dir"
+        ],
+        "kern_path": [
+          "kern_path",
+          "kern_path.cfi_jt"
+        ],
+        "kfree": [
+          "kfree",
+          "kfree.cfi_jt"
+        ],
+        "memdup_user": [
+          "memdup_user",
+          "memdup_user.cfi_jt"
+        ],
+        "mutex_lock": [
+          "mutex_lock.cfi_jt",
+          "mutex_lock"
+        ],
+        "mutex_unlock": [
+          "mutex_unlock.cfi_jt",
+          "mutex_unlock"
+        ],
+        "new_inode": [
+          "new_inode",
+          "new_inode.cfi_jt"
+        ],
+        "path_put": [
+          "path_put",
+          "path_put.cfi_jt"
+        ],
+        "register_key_type": [
+          "register_key_type"
+        ],
+        "set_nlink": [
+          "set_nlink",
+          "set_nlink.cfi_jt"
+        ],
+        "shrink_dcache_parent": [
+          "shrink_dcache_parent"
+        ],
+        "synchronize_rcu": [
+          "synchronize_rcu",
+          "synchronize_rcu.cfi_jt"
+        ],
+        "truncate_inode_pages_final": [
+          "truncate_inode_pages_final",
+          "truncate_inode_pages_final.cfi_jt"
+        ],
+        "unlock_new_inode": [
+          "unlock_new_inode",
+          "unlock_new_inode.cfi_jt"
+        ],
+        "vfree": [
+          "vfree",
+          "vfree.cfi_jt"
+        ],
+        "vfs_getattr_nosec": [
+          "vfs_getattr_nosec"
+        ],
+        "vfs_llseek": [
+          "vfs_llseek",
+          "vfs_llseek.cfi_jt"
+        ],
+        "vfs_path_lookup": [
+          "vfs_path_lookup"
+        ],
+        "vfs_setpos": [
+          "vfs_setpos",
+          "vfs_setpos.cfi_jt"
+        ],
+        "vzalloc": [
+          "vzalloc",
+          "vzalloc.cfi_jt"
+        ]
+      },
+      "missing": [
+        "inode_permission2"
+      ],
+      "btf_queries": {
+        "bpf_get_btf_vmlinux": [
+          "bpf_get_btf_vmlinux"
+        ],
+        "btf_find_by_name_kind": [
+          "btf_find_by_name_kind"
+        ],
+        "btf_type_by_id": [
+          "btf_type_by_id"
+        ],
+        "btf_name_by_offset": [
+          "btf_name_by_offset"
+        ],
+        "btf_resolve_size": [
+          "btf_resolve_size"
+        ]
+      },
+      "config": {
+        "CONFIG_KEYS": "y",
+        "CONFIG_KALLSYMS_ALL": "y",
+        "CONFIG_DEBUG_INFO_BTF": "n",
+        "CONFIG_PREEMPT_RCU": "y",
+        "CONFIG_DEBUG_LOCK_ALLOC": "n",
+        "CONFIG_LOCKDEP": "not recorded",
+        "CONFIG_CFI_CLANG": "y",
+        "CONFIG_CFI": "not recorded",
+        "CONFIG_CFI_PERMISSIVE": "n",
+        "CONFIG_SHADOW_CALL_STACK": "y"
+      },
+      "btf": null
+    },
+    {
+      "image": "kernel_android13-5.10",
+      "image_sha256": "8eb4ef9fa91eb25ce9da8b8ff434e4c9e7ad3526a8da1b27c3833a378adf5e15",
+      "kernel_sha256": "8eb4ef9fa91eb25ce9da8b8ff434e4c9e7ad3526a8da1b27c3833a378adf5e15",
+      "release": "5.10.257-android13-4-00022-ge4ad35d74a4c-ab16466983",
+      "symbols": 147324,
+      "symbol_cache_sha256": "b6e2e742ddaceb4baf4356cdfca0c08e9447a4f4949921583842264d47a82d6a",
+      "symbol_source": "local/zram-kernel-compat-20261011-01/kernel_android13-5.10/symbols.json",
+      "source_binding": "Existing Developer extraction: current kernel SHA matches extraction receipt",
+      "functions": {
+        "__mutex_init": [
+          "__mutex_init",
+          "__mutex_init.cfi_jt"
+        ],
+        "__rcu_read_lock": [
+          "__rcu_read_lock",
+          "__rcu_read_lock.cfi_jt"
+        ],
+        "__rcu_read_unlock": [
+          "__rcu_read_unlock",
+          "__rcu_read_unlock.cfi_jt"
+        ],
+        "_raw_spin_lock": [
+          "_raw_spin_lock.cfi_jt",
+          "_raw_spin_lock"
+        ],
+        "_raw_spin_unlock": [
+          "_raw_spin_unlock.cfi_jt",
+          "_raw_spin_unlock"
+        ],
+        "call_rcu": [
+          "call_rcu",
+          "call_rcu.cfi_jt"
+        ],
+        "capable": [
+          "capable",
+          "capable.cfi_jt"
+        ],
+        "clear_inode": [
+          "clear_inode",
+          "clear_inode.cfi_jt"
+        ],
+        "d_drop": [
+          "d_drop",
+          "d_drop.cfi_jt"
+        ],
+        "d_hash_and_lookup": [
+          "d_hash_and_lookup"
+        ],
+        "d_splice_alias": [
+          "d_splice_alias",
+          "d_splice_alias.cfi_jt"
+        ],
+        "dentry_open": [
+          "dentry_open"
+        ],
+        "dget_parent": [
+          "dget_parent"
+        ],
+        "dput": [
+          "dput",
+          "dput.cfi_jt"
+        ],
+        "fput": [
+          "fput",
+          "fput.cfi_jt"
+        ],
+        "full_name_hash": [
+          "full_name_hash",
+          "full_name_hash.cfi_jt"
+        ],
+        "generic_file_llseek": [
+          "generic_file_llseek",
+          "generic_file_llseek.cfi_jt"
+        ],
+        "generic_file_readonly_mmap": [
+          "generic_file_readonly_mmap",
+          "generic_file_readonly_mmap.cfi_jt"
+        ],
+        "generic_fillattr": [
+          "generic_fillattr",
+          "generic_fillattr.cfi_jt"
+        ],
+        "iget5_locked": [
+          "iget5_locked",
+          "iget5_locked.cfi_jt"
+        ],
+        "inode_permission2": [],
+        "iterate_dir": [
+          "iterate_dir"
+        ],
+        "kern_path": [
+          "kern_path"
+        ],
+        "kfree": [
+          "kfree",
+          "kfree.cfi_jt"
+        ],
+        "memdup_user": [
+          "memdup_user",
+          "memdup_user.cfi_jt"
+        ],
+        "mutex_lock": [
+          "mutex_lock.cfi_jt",
+          "mutex_lock"
+        ],
+        "mutex_unlock": [
+          "mutex_unlock.cfi_jt",
+          "mutex_unlock"
+        ],
+        "new_inode": [
+          "new_inode",
+          "new_inode.cfi_jt"
+        ],
+        "path_put": [
+          "path_put"
+        ],
+        "register_key_type": [
+          "register_key_type"
+        ],
+        "set_nlink": [
+          "set_nlink",
+          "set_nlink.cfi_jt"
+        ],
+        "shrink_dcache_parent": [
+          "shrink_dcache_parent"
+        ],
+        "synchronize_rcu": [
+          "synchronize_rcu",
+          "synchronize_rcu.cfi_jt"
+        ],
+        "truncate_inode_pages_final": [
+          "truncate_inode_pages_final",
+          "truncate_inode_pages_final.cfi_jt"
+        ],
+        "unlock_new_inode": [
+          "unlock_new_inode",
+          "unlock_new_inode.cfi_jt"
+        ],
+        "vfree": [
+          "vfree",
+          "vfree.cfi_jt"
+        ],
+        "vfs_getattr_nosec": [
+          "vfs_getattr_nosec"
+        ],
+        "vfs_llseek": [
+          "vfs_llseek",
+          "vfs_llseek.cfi_jt"
+        ],
+        "vfs_path_lookup": [
+          "vfs_path_lookup"
+        ],
+        "vfs_setpos": [
+          "vfs_setpos"
+        ],
+        "vzalloc": [
+          "vzalloc",
+          "vzalloc.cfi_jt"
+        ]
+      },
+      "missing": [
+        "inode_permission2"
+      ],
+      "btf_queries": {
+        "bpf_get_btf_vmlinux": [
+          "bpf_get_btf_vmlinux"
+        ],
+        "btf_find_by_name_kind": [
+          "btf_find_by_name_kind"
+        ],
+        "btf_type_by_id": [
+          "btf_type_by_id"
+        ],
+        "btf_name_by_offset": [
+          "btf_name_by_offset"
+        ],
+        "btf_resolve_size": [
+          "btf_resolve_size"
+        ]
+      },
+      "config": {
+        "CONFIG_KEYS": "y",
+        "CONFIG_KALLSYMS_ALL": "y",
+        "CONFIG_DEBUG_INFO_BTF": "y",
+        "CONFIG_PREEMPT_RCU": "y",
+        "CONFIG_DEBUG_LOCK_ALLOC": "n",
+        "CONFIG_LOCKDEP": "not recorded",
+        "CONFIG_CFI_CLANG": "y",
+        "CONFIG_CFI": "not recorded",
+        "CONFIG_CFI_PERMISSIVE": "n",
+        "CONFIG_SHADOW_CALL_STACK": "y"
+      },
+      "btf": {
+        "path": "local/zram-kernel-compat-20261011-01/kernel_android13-5.10/target.btf",
+        "sha256": "ac4c10349c2b2beb0ff41c02398979cb4238f292b56cd05bb14cb97551cfd65e",
+        "offset": 40907452,
+        "types": 135231,
+        "functions": {
+          "inode_permission2": null,
+          "inode_permission": "int(inode*,int)",
+          "vfs_path_lookup": "int(dentry*,vfsmount*,char*,unsigned int,path*)",
+          "generic_fillattr": "void(inode*,kstat*)",
+          "vfs_getattr_nosec": "int(path*,kstat*,unsigned int,unsigned int)",
+          "full_name_hash": "unsigned int(void*,char*,unsigned int)",
+          "__rcu_read_lock": "void()",
+          "__rcu_read_unlock": "void()",
+          "_raw_spin_lock": "void(raw_spinlock*)",
+          "_raw_spin_unlock": "void(raw_spinlock*)",
+          "__mutex_init": "void(mutex*,char*,lock_class_key*)",
+          "mutex_lock": "void(mutex*)",
+          "mutex_unlock": "void(mutex*)"
+        },
+        "callbacks": {
+          "dir_context.actor": "int(dir_context*,char*,int,long long,unsigned long long,unsigned int)*",
+          "inode_operations.getattr": "int(path*,kstat*,unsigned int,unsigned int)*",
+          "inode_operations.permission": "int(inode*,int)*",
+          "file_operations.splice_read": "long(file*,long long*,pipe_inode_info*,unsigned long,unsigned int)*",
+          "file_operations.read_iter": "long(kiocb*,iov_iter*)*",
+          "file_operations.iterate_shared": "int(file*,dir_context*)*",
+          "dentry_operations.d_revalidate": "int(dentry*,unsigned int)*",
+          "key_type.preparse": "int(key_preparsed_payload*)*",
+          "key_type.instantiate": "int(key*,key_preparsed_payload*)*"
+        },
+        "layouts": {
+          "inode": {
+            "sizeof": 704,
+            "i_mode": 0,
+            "i_opflags": 2,
+            "i_uid": 4,
+            "i_gid": 8,
+            "i_flags": 12,
+            "i_acl": 16,
+            "i_default_acl": 24,
+            "i_op": 32,
+            "i_sb": 40,
+            "i_mapping": 48,
+            "i_security": 56,
+            "i_ino": 64,
+            "i_rdev": 76,
+            "i_size": 80,
+            "i_atime": 88,
+            "i_mtime": 104,
+            "i_ctime": 120,
+            "i_lock": 136,
+            "i_bytes": 140,
+            "i_blkbits": 142,
+            "i_write_hint": 143,
+            "i_blocks": 144,
+            "i_state": 152,
+            "i_rwsem": 160,
+            "dirtied_when": 224,
+            "dirtied_time_when": 232,
+            "i_hash": 240,
+            "i_io_list": 256,
+            "i_wb": 272,
+            "i_wb_frn_winner": 280,
+            "i_wb_frn_avg_time": 284,
+            "i_wb_frn_history": 286,
+            "i_lru": 288,
+            "i_sb_list": 304,
+            "i_wb_list": 320,
+            "i_version": 352,
+            "i_sequence": 360,
+            "i_count": 368,
+            "i_dio_count": 372,
+            "i_writecount": 376,
+            "i_readcount": 380,
+            "i_flctx": 392,
+            "i_data": 400,
+            "i_devices": 624,
+            "i_generation": 648,
+            "i_fsnotify_mask": 652,
+            "i_fsnotify_marks": 656,
+            "i_crypt_info": 664,
+            "i_verity_info": 672,
+            "i_private": 680,
+            "android_kabi_reserved1": 688,
+            "android_kabi_reserved2": 696
+          },
+          "file": {
+            "sizeof": 296,
+            "f_u": 0,
+            "f_path": 16,
+            "f_inode": 32,
+            "f_op": 40,
+            "f_lock": 48,
+            "f_write_hint": 52,
+            "f_count": 56,
+            "f_flags": 64,
+            "f_mode": 68,
+            "f_pos_lock": 72,
+            "f_pos": 120,
+            "f_owner": 128,
+            "f_cred": 160,
+            "f_ra": 168,
+            "f_version": 200,
+            "f_security": 208,
+            "private_data": 216,
+            "f_ep_links": 224,
+            "f_tfile_llink": 240,
+            "f_mapping": 256,
+            "f_wb_err": 264,
+            "f_sb_err": 268,
+            "android_kabi_reserved1": 272,
+            "android_kabi_reserved2": 280,
+            "android_oem_data1": 288
+          },
+          "super_block": {
+            "sizeof": 1600,
+            "s_list": 0,
+            "s_dev": 16,
+            "s_blocksize_bits": 20,
+            "s_blocksize": 24,
+            "s_maxbytes": 32,
+            "s_type": 40,
+            "s_op": 48,
+            "dq_op": 56,
+            "s_qcop": 64,
+            "s_export_op": 72,
+            "s_flags": 80,
+            "s_iflags": 88,
+            "s_magic": 96,
+            "s_root": 104,
+            "s_umount": 112,
+            "s_count": 176,
+            "s_active": 180,
+            "s_security": 184,
+            "s_xattr": 192,
+            "s_cop": 200,
+            "s_master_keys": 208,
+            "s_vop": 216,
+            "s_encoding": 224,
+            "s_encoding_flags": 232,
+            "s_roots": 240,
+            "s_mounts": 248,
+            "s_bdev": 264,
+            "s_bdi": 272,
+            "s_mtd": 280,
+            "s_instances": 288,
+            "s_quota_types": 304,
+            "s_dquot": 312,
+            "s_writers": 648,
+            "s_fs_info": 968,
+            "s_time_gran": 976,
+            "s_time_min": 984,
+            "s_time_max": 992,
+            "s_fsnotify_mask": 1000,
+            "s_fsnotify_marks": 1008,
+            "s_id": 1016,
+            "s_uuid": 1048,
+            "s_max_links": 1064,
+            "s_mode": 1068,
+            "s_vfs_rename_mutex": 1072,
+            "s_subtype": 1120,
+            "s_d_op": 1128,
+            "cleancache_poolid": 1136,
+            "s_shrink": 1144,
+            "s_remove_count": 1208,
+            "s_fsnotify_inode_refs": 1216,
+            "s_readonly_remount": 1224,
+            "s_wb_err": 1228,
+            "s_dio_done_wq": 1232,
+            "s_pins": 1240,
+            "s_user_ns": 1248,
+            "s_dentry_lru": 1256,
+            "s_inode_lru": 1288,
+            "rcu": 1320,
+            "destroy_work": 1336,
+            "s_sync_lock": 1384,
+            "s_stack_depth": 1432,
+            "s_inode_list_lock": 1472,
+            "s_inodes": 1480,
+            "s_inode_wblist_lock": 1496,
+            "s_inodes_wb": 1504,
+            "android_kabi_reserved1": 1520,
+            "android_kabi_reserved2": 1528,
+            "android_kabi_reserved3": 1536,
+            "android_kabi_reserved4": 1544
+          },
+          "dentry": {
+            "sizeof": 208,
+            "d_flags": 0,
+            "d_seq": 4,
+            "d_hash": 8,
+            "d_parent": 24,
+            "d_name": 32,
+            "d_inode": 48,
+            "d_iname": 56,
+            "d_lockref": 88,
+            "d_op": 96,
+            "d_sb": 104,
+            "d_time": 112,
+            "d_fsdata": 120,
+            "d_child": 144,
+            "d_subdirs": 160,
+            "d_u": 176,
+            "android_kabi_reserved1": 192,
+            "android_kabi_reserved2": 200
+          },
+          "dir_context": {
+            "sizeof": 16,
+            "actor": 0,
+            "pos": 8
+          },
+          "file_operations": {
+            "sizeof": 288,
+            "owner": 0,
+            "llseek": 8,
+            "read": 16,
+            "write": 24,
+            "read_iter": 32,
+            "write_iter": 40,
+            "iopoll": 48,
+            "iterate": 56,
+            "iterate_shared": 64,
+            "poll": 72,
+            "unlocked_ioctl": 80,
+            "compat_ioctl": 88,
+            "mmap": 96,
+            "mmap_supported_flags": 104,
+            "open": 112,
+            "flush": 120,
+            "release": 128,
+            "fsync": 136,
+            "fasync": 144,
+            "lock": 152,
+            "sendpage": 160,
+            "get_unmapped_area": 168,
+            "check_flags": 176,
+            "flock": 184,
+            "splice_write": 192,
+            "splice_read": 200,
+            "setlease": 208,
+            "fallocate": 216,
+            "show_fdinfo": 224,
+            "copy_file_range": 232,
+            "remap_file_range": 240,
+            "fadvise": 248,
+            "android_kabi_reserved1": 256,
+            "android_kabi_reserved2": 264,
+            "android_kabi_reserved3": 272,
+            "android_kabi_reserved4": 280
+          },
+          "inode_operations": {
+            "sizeof": 256,
+            "lookup": 0,
+            "get_link": 8,
+            "permission": 16,
+            "get_acl": 24,
+            "readlink": 32,
+            "create": 40,
+            "link": 48,
+            "unlink": 56,
+            "symlink": 64,
+            "mkdir": 72,
+            "rmdir": 80,
+            "mknod": 88,
+            "rename": 96,
+            "setattr": 104,
+            "getattr": 112,
+            "listxattr": 120,
+            "fiemap": 128,
+            "update_time": 136,
+            "atomic_open": 144,
+            "tmpfile": 152,
+            "set_acl": 160,
+            "android_kabi_reserved1": 168,
+            "android_kabi_reserved2": 176,
+            "android_kabi_reserved3": 184,
+            "android_kabi_reserved4": 192
+          },
+          "super_operations": {
+            "sizeof": 240,
+            "alloc_inode": 0,
+            "destroy_inode": 8,
+            "free_inode": 16,
+            "dirty_inode": 24,
+            "write_inode": 32,
+            "drop_inode": 40,
+            "evict_inode": 48,
+            "put_super": 56,
+            "sync_fs": 64,
+            "freeze_super": 72,
+            "freeze_fs": 80,
+            "thaw_super": 88,
+            "unfreeze_fs": 96,
+            "statfs": 104,
+            "remount_fs": 112,
+            "umount_begin": 120,
+            "show_options": 128,
+            "show_devname": 136,
+            "show_path": 144,
+            "show_stats": 152,
+            "quota_read": 160,
+            "quota_write": 168,
+            "get_dquots": 176,
+            "bdev_try_to_free_page": 184,
+            "nr_cached_objects": 192,
+            "free_cached_objects": 200,
+            "android_kabi_reserved1": 208,
+            "android_kabi_reserved2": 216,
+            "android_kabi_reserved3": 224,
+            "android_kabi_reserved4": 232
+          },
+          "dentry_operations": {
+            "sizeof": 192,
+            "d_revalidate": 0,
+            "d_weak_revalidate": 8,
+            "d_hash": 16,
+            "d_compare": 24,
+            "d_delete": 32,
+            "d_init": 40,
+            "d_release": 48,
+            "d_prune": 56,
+            "d_iput": 64,
+            "d_dname": 72,
+            "d_automount": 80,
+            "d_manage": 88,
+            "d_real": 96,
+            "d_canonical_path": 104,
+            "android_kabi_reserved1": 112,
+            "android_kabi_reserved2": 120,
+            "android_kabi_reserved3": 128,
+            "android_kabi_reserved4": 136
+          },
+          "key_type": {
+            "sizeof": 184,
+            "name": 0,
+            "def_datalen": 8,
+            "flags": 16,
+            "vet_description": 24,
+            "preparse": 32,
+            "free_preparse": 40,
+            "instantiate": 48,
+            "update": 56,
+            "match_preparse": 64,
+            "match_free": 72,
+            "revoke": 80,
+            "destroy": 88,
+            "describe": 96,
+            "read": 104,
+            "request_key": 112,
+            "lookup_restriction": 120,
+            "asym_query": 128,
+            "asym_eds_op": 136,
+            "asym_verify_signature": 144,
+            "android_kabi_reserved1": 152,
+            "android_kabi_reserved2": 160,
+            "link": 168,
+            "lock_class": 184
+          },
+          "key_preparsed_payload": {
+            "sizeof": 72,
+            "description": 0,
+            "payload": 8,
+            "data": 40,
+            "datalen": 48,
+            "quotalen": 56,
+            "expiry": 64
+          },
+          "mutex": {
+            "sizeof": 48,
+            "owner": 0,
+            "wait_lock": 8,
+            "osq": 12,
+            "wait_list": 16,
+            "android_oem_data1": 32
+          },
+          "kstat": {
+            "sizeof": 144,
+            "result_mask": 0,
+            "mode": 4,
+            "nlink": 8,
+            "blksize": 12,
+            "attributes": 16,
+            "attributes_mask": 24,
+            "ino": 32,
+            "dev": 40,
+            "rdev": 44,
+            "uid": 48,
+            "gid": 52,
+            "size": 56,
+            "atime": 64,
+            "mtime": 80,
+            "ctime": 96,
+            "btime": 112,
+            "blocks": 128,
+            "mnt_id": 136
+          },
+          "mnt_idmap": {}
+        },
+        "common_prefix_comparison": {
+          "source": "Actual nm_structs.h offsetof compiled on 64-bit host; BTF target offsets separately decoded",
+          "match": {
+            "inode.i_mode": [
+              0,
+              0
+            ],
+            "inode.i_uid": [
+              4,
+              4
+            ],
+            "inode.i_gid": [
+              8,
+              8
+            ],
+            "inode.i_flags": [
+              12,
+              12
+            ],
+            "dentry.d_parent": [
+              24,
+              24
+            ],
+            "dentry.d_name": [
+              32,
+              32
+            ],
+            "dentry.d_inode": [
+              48,
+              48
+            ],
+            "super_block.s_dev": [
+              16,
+              16
+            ],
+            "super_block.s_blocksize_bits": [
+              20,
+              20
+            ],
+            "super_block.s_blocksize": [
+              24,
+              24
+            ],
+            "super_block.s_maxbytes": [
+              32,
+              32
+            ],
+            "super_block.s_type": [
+              40,
+              40
+            ],
+            "super_block.s_op": [
+              48,
+              48
+            ],
+            "file_operations.llseek": [
+              8,
+              8
+            ],
+            "file_operations.read": [
+              16,
+              16
+            ],
+            "file_operations.write": [
+              24,
+              24
+            ],
+            "file_operations.read_iter": [
+              32,
+              32
+            ],
+            "file_operations.write_iter": [
+              40,
+              40
+            ]
+          },
+          "mismatch": {},
+          "relations": {
+            "file.f_path+16=f_inode": true,
+            "file.f_inode+8=f_op": true,
+            "file.f_flags+4=f_mode": true,
+            "inode.size+8=atime": true,
+            "inode.size+24=mtime": true,
+            "inode.size+40=ctime": true
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android13-5.15",
+      "image_sha256": "080869136d6fec2592533e2e4e578c32dc981e9af6936c8a2b41de0a41d4811e",
+      "kernel_sha256": "080869136d6fec2592533e2e4e578c32dc981e9af6936c8a2b41de0a41d4811e",
+      "release": "5.15.211-android13-8-00031-g703571a1a161-ab16464335",
+      "symbols": 160076,
+      "symbol_cache_sha256": "20805e08e26219d0ffd87e1418f0c5f6fbe36e4a74014b66bb6dc12739ce37bb",
+      "symbol_source": "local/zram-kernel-compat-20261011-01/kernel_android13-5.15/symbols.json",
+      "source_binding": "Existing Developer extraction: current kernel SHA matches extraction receipt",
+      "functions": {
+        "__mutex_init": [
+          "__mutex_init",
+          "__mutex_init.cfi_jt"
+        ],
+        "__rcu_read_lock": [
+          "__rcu_read_lock",
+          "__rcu_read_lock.cfi_jt"
+        ],
+        "__rcu_read_unlock": [
+          "__rcu_read_unlock",
+          "__rcu_read_unlock.cfi_jt"
+        ],
+        "_raw_spin_lock": [
+          "_raw_spin_lock.cfi_jt",
+          "_raw_spin_lock"
+        ],
+        "_raw_spin_unlock": [
+          "_raw_spin_unlock.cfi_jt",
+          "_raw_spin_unlock"
+        ],
+        "call_rcu": [
+          "call_rcu",
+          "call_rcu.cfi_jt"
+        ],
+        "capable": [
+          "capable",
+          "capable.cfi_jt"
+        ],
+        "clear_inode": [
+          "clear_inode",
+          "clear_inode.cfi_jt"
+        ],
+        "d_drop": [
+          "d_drop",
+          "d_drop.cfi_jt"
+        ],
+        "d_hash_and_lookup": [
+          "d_hash_and_lookup"
+        ],
+        "d_splice_alias": [
+          "d_splice_alias",
+          "d_splice_alias.cfi_jt"
+        ],
+        "dentry_open": [
+          "dentry_open",
+          "dentry_open.cfi_jt"
+        ],
+        "dget_parent": [
+          "dget_parent",
+          "dget_parent.cfi_jt"
+        ],
+        "dput": [
+          "dput",
+          "dput.cfi_jt"
+        ],
+        "fput": [
+          "fput",
+          "fput.cfi_jt"
+        ],
+        "full_name_hash": [
+          "full_name_hash",
+          "full_name_hash.cfi_jt"
+        ],
+        "generic_file_llseek": [
+          "generic_file_llseek",
+          "generic_file_llseek.cfi_jt"
+        ],
+        "generic_file_readonly_mmap": [
+          "generic_file_readonly_mmap",
+          "generic_file_readonly_mmap.cfi_jt"
+        ],
+        "generic_fillattr": [
+          "generic_fillattr",
+          "generic_fillattr.cfi_jt"
+        ],
+        "iget5_locked": [
+          "iget5_locked",
+          "iget5_locked.cfi_jt"
+        ],
+        "inode_permission2": [],
+        "iterate_dir": [
+          "iterate_dir",
+          "iterate_dir.cfi_jt"
+        ],
+        "kern_path": [
+          "kern_path",
+          "kern_path.cfi_jt"
+        ],
+        "kfree": [
+          "kfree",
+          "kfree.cfi_jt"
+        ],
+        "memdup_user": [
+          "memdup_user",
+          "memdup_user.cfi_jt"
+        ],
+        "mutex_lock": [
+          "mutex_lock.cfi_jt",
+          "mutex_lock"
+        ],
+        "mutex_unlock": [
+          "mutex_unlock.cfi_jt",
+          "mutex_unlock"
+        ],
+        "new_inode": [
+          "new_inode",
+          "new_inode.cfi_jt"
+        ],
+        "path_put": [
+          "path_put",
+          "path_put.cfi_jt"
+        ],
+        "register_key_type": [
+          "register_key_type",
+          "register_key_type.cfi_jt"
+        ],
+        "set_nlink": [
+          "set_nlink",
+          "set_nlink.cfi_jt"
+        ],
+        "shrink_dcache_parent": [
+          "shrink_dcache_parent"
+        ],
+        "synchronize_rcu": [
+          "synchronize_rcu",
+          "synchronize_rcu.cfi_jt"
+        ],
+        "truncate_inode_pages_final": [
+          "truncate_inode_pages_final",
+          "truncate_inode_pages_final.cfi_jt"
+        ],
+        "unlock_new_inode": [
+          "unlock_new_inode",
+          "unlock_new_inode.cfi_jt"
+        ],
+        "vfree": [
+          "vfree",
+          "vfree.cfi_jt"
+        ],
+        "vfs_getattr_nosec": [
+          "vfs_getattr_nosec"
+        ],
+        "vfs_llseek": [
+          "vfs_llseek",
+          "vfs_llseek.cfi_jt"
+        ],
+        "vfs_path_lookup": [
+          "vfs_path_lookup",
+          "vfs_path_lookup.cfi_jt"
+        ],
+        "vfs_setpos": [
+          "vfs_setpos",
+          "vfs_setpos.cfi_jt"
+        ],
+        "vzalloc": [
+          "vzalloc",
+          "vzalloc.cfi_jt"
+        ]
+      },
+      "missing": [
+        "inode_permission2"
+      ],
+      "btf_queries": {
+        "bpf_get_btf_vmlinux": [
+          "bpf_get_btf_vmlinux"
+        ],
+        "btf_find_by_name_kind": [
+          "btf_find_by_name_kind"
+        ],
+        "btf_type_by_id": [
+          "btf_type_by_id"
+        ],
+        "btf_name_by_offset": [
+          "btf_name_by_offset"
+        ],
+        "btf_resolve_size": [
+          "btf_resolve_size"
+        ]
+      },
+      "config": {
+        "CONFIG_KEYS": "y",
+        "CONFIG_KALLSYMS_ALL": "y",
+        "CONFIG_DEBUG_INFO_BTF": "y",
+        "CONFIG_PREEMPT_RCU": "y",
+        "CONFIG_DEBUG_LOCK_ALLOC": "n",
+        "CONFIG_LOCKDEP": "not recorded",
+        "CONFIG_CFI_CLANG": "y",
+        "CONFIG_CFI": "not recorded",
+        "CONFIG_CFI_PERMISSIVE": "n",
+        "CONFIG_SHADOW_CALL_STACK": "y"
+      },
+      "btf": {
+        "path": "local/zram-kernel-compat-20261011-01/kernel_android13-5.15/target.btf",
+        "sha256": "bbc21c0229bed03cd91c27bb69ddcb687be43ea6c2c90ac79ec0aae73cd022e7",
+        "offset": 36672764,
+        "types": 134078,
+        "functions": {
+          "inode_permission2": null,
+          "inode_permission": "int(user_namespace*,inode*,int)",
+          "vfs_path_lookup": "int(dentry*,vfsmount*,char*,unsigned int,path*)",
+          "generic_fillattr": "void(user_namespace*,inode*,kstat*)",
+          "vfs_getattr_nosec": "int(path*,kstat*,unsigned int,unsigned int)",
+          "full_name_hash": "unsigned int(void*,char*,unsigned int)",
+          "__rcu_read_lock": "void()",
+          "__rcu_read_unlock": "void()",
+          "_raw_spin_lock": "void(raw_spinlock*)",
+          "_raw_spin_unlock": "void(raw_spinlock*)",
+          "__mutex_init": "void(mutex*,char*,lock_class_key*)",
+          "mutex_lock": "void(mutex*)",
+          "mutex_unlock": "void(mutex*)"
+        },
+        "callbacks": {
+          "dir_context.actor": "int(dir_context*,char*,int,long long,unsigned long long,unsigned int)*",
+          "inode_operations.getattr": "int(user_namespace*,path*,kstat*,unsigned int,unsigned int)*",
+          "inode_operations.permission": "int(user_namespace*,inode*,int)*",
+          "file_operations.splice_read": "long(file*,long long*,pipe_inode_info*,unsigned long,unsigned int)*",
+          "file_operations.read_iter": "long(kiocb*,iov_iter*)*",
+          "file_operations.iterate_shared": "int(file*,dir_context*)*",
+          "dentry_operations.d_revalidate": "int(dentry*,unsigned int)*",
+          "key_type.preparse": "int(key_preparsed_payload*)*",
+          "key_type.instantiate": "int(key*,key_preparsed_payload*)*"
+        },
+        "layouts": {
+          "inode": {
+            "sizeof": 752,
+            "i_mode": 0,
+            "i_opflags": 2,
+            "i_uid": 4,
+            "i_gid": 8,
+            "i_flags": 12,
+            "i_acl": 16,
+            "i_default_acl": 24,
+            "i_op": 32,
+            "i_sb": 40,
+            "i_mapping": 48,
+            "i_security": 56,
+            "i_ino": 64,
+            "i_rdev": 76,
+            "i_size": 80,
+            "i_atime": 88,
+            "i_mtime": 104,
+            "i_ctime": 120,
+            "i_lock": 136,
+            "i_bytes": 140,
+            "i_blkbits": 142,
+            "i_write_hint": 143,
+            "i_blocks": 144,
+            "i_state": 152,
+            "i_rwsem": 160,
+            "dirtied_when": 224,
+            "dirtied_time_when": 232,
+            "i_hash": 240,
+            "i_io_list": 256,
+            "i_wb": 272,
+            "i_wb_frn_winner": 280,
+            "i_wb_frn_avg_time": 284,
+            "i_wb_frn_history": 286,
+            "i_lru": 288,
+            "i_sb_list": 304,
+            "i_wb_list": 320,
+            "i_version": 352,
+            "i_sequence": 360,
+            "i_count": 368,
+            "i_dio_count": 372,
+            "i_writecount": 376,
+            "i_readcount": 380,
+            "i_flctx": 392,
+            "i_data": 400,
+            "i_devices": 672,
+            "i_generation": 696,
+            "i_fsnotify_mask": 700,
+            "i_fsnotify_marks": 704,
+            "i_crypt_info": 712,
+            "i_verity_info": 720,
+            "i_private": 728,
+            "android_kabi_reserved1": 736,
+            "android_kabi_reserved2": 744
+          },
+          "file": {
+            "sizeof": 264,
+            "f_u": 0,
+            "f_path": 16,
+            "f_inode": 32,
+            "f_op": 40,
+            "f_lock": 48,
+            "f_write_hint": 52,
+            "f_count": 56,
+            "f_flags": 64,
+            "f_mode": 68,
+            "f_pos_lock": 72,
+            "f_pos": 120,
+            "f_owner": 128,
+            "f_cred": 160,
+            "f_ra": 168,
+            "f_version": 200,
+            "f_security": 208,
+            "private_data": 216,
+            "f_ep": 224,
+            "f_mapping": 232,
+            "f_wb_err": 240,
+            "f_sb_err": 244,
+            "android_kabi_reserved1": 248,
+            "android_kabi_reserved2": 256
+          },
+          "super_block": {
+            "sizeof": 1600,
+            "s_list": 0,
+            "s_dev": 16,
+            "s_blocksize_bits": 20,
+            "s_blocksize": 24,
+            "s_maxbytes": 32,
+            "s_type": 40,
+            "s_op": 48,
+            "dq_op": 56,
+            "s_qcop": 64,
+            "s_export_op": 72,
+            "s_flags": 80,
+            "s_iflags": 88,
+            "s_magic": 96,
+            "s_root": 104,
+            "s_umount": 112,
+            "s_count": 176,
+            "s_active": 180,
+            "s_security": 184,
+            "s_xattr": 192,
+            "s_cop": 200,
+            "s_master_keys": 208,
+            "s_vop": 216,
+            "s_encoding": 224,
+            "s_encoding_flags": 232,
+            "s_roots": 240,
+            "s_mounts": 248,
+            "s_bdev": 264,
+            "s_bdi": 272,
+            "s_mtd": 280,
+            "s_instances": 288,
+            "s_quota_types": 304,
+            "s_dquot": 312,
+            "s_writers": 648,
+            "s_fs_info": 968,
+            "s_time_gran": 976,
+            "s_time_min": 984,
+            "s_time_max": 992,
+            "s_fsnotify_mask": 1000,
+            "s_fsnotify_marks": 1008,
+            "s_id": 1016,
+            "s_uuid": 1048,
+            "s_max_links": 1064,
+            "s_mode": 1068,
+            "s_vfs_rename_mutex": 1072,
+            "s_subtype": 1120,
+            "s_d_op": 1128,
+            "cleancache_poolid": 1136,
+            "s_shrink": 1144,
+            "s_remove_count": 1208,
+            "s_fsnotify_connectors": 1216,
+            "s_readonly_remount": 1224,
+            "s_wb_err": 1228,
+            "s_dio_done_wq": 1232,
+            "s_pins": 1240,
+            "s_user_ns": 1248,
+            "s_dentry_lru": 1256,
+            "s_inode_lru": 1288,
+            "rcu": 1320,
+            "destroy_work": 1336,
+            "s_sync_lock": 1384,
+            "s_stack_depth": 1432,
+            "s_inode_list_lock": 1472,
+            "s_inodes": 1480,
+            "s_inode_wblist_lock": 1496,
+            "s_inodes_wb": 1504,
+            "android_kabi_reserved1": 1520,
+            "android_kabi_reserved2": 1528,
+            "android_kabi_reserved3": 1536,
+            "android_kabi_reserved4": 1544
+          },
+          "dentry": {
+            "sizeof": 208,
+            "d_flags": 0,
+            "d_seq": 4,
+            "d_hash": 8,
+            "d_parent": 24,
+            "d_name": 32,
+            "d_inode": 48,
+            "d_iname": 56,
+            "d_lockref": 88,
+            "d_op": 96,
+            "d_sb": 104,
+            "d_time": 112,
+            "d_fsdata": 120,
+            "d_child": 144,
+            "d_subdirs": 160,
+            "d_u": 176,
+            "android_kabi_reserved1": 192,
+            "android_kabi_reserved2": 200
+          },
+          "dir_context": {
+            "sizeof": 16,
+            "actor": 0,
+            "pos": 8
+          },
+          "file_operations": {
+            "sizeof": 288,
+            "owner": 0,
+            "llseek": 8,
+            "read": 16,
+            "write": 24,
+            "read_iter": 32,
+            "write_iter": 40,
+            "iopoll": 48,
+            "iterate": 56,
+            "iterate_shared": 64,
+            "poll": 72,
+            "unlocked_ioctl": 80,
+            "compat_ioctl": 88,
+            "mmap": 96,
+            "mmap_supported_flags": 104,
+            "open": 112,
+            "flush": 120,
+            "release": 128,
+            "fsync": 136,
+            "fasync": 144,
+            "lock": 152,
+            "sendpage": 160,
+            "get_unmapped_area": 168,
+            "check_flags": 176,
+            "flock": 184,
+            "splice_write": 192,
+            "splice_read": 200,
+            "setlease": 208,
+            "fallocate": 216,
+            "show_fdinfo": 224,
+            "copy_file_range": 232,
+            "remap_file_range": 240,
+            "fadvise": 248,
+            "android_kabi_reserved1": 256,
+            "android_kabi_reserved2": 264,
+            "android_kabi_reserved3": 272,
+            "android_kabi_reserved4": 280
+          },
+          "inode_operations": {
+            "sizeof": 256,
+            "lookup": 0,
+            "get_link": 8,
+            "permission": 16,
+            "get_acl": 24,
+            "readlink": 32,
+            "create": 40,
+            "link": 48,
+            "unlink": 56,
+            "symlink": 64,
+            "mkdir": 72,
+            "rmdir": 80,
+            "mknod": 88,
+            "rename": 96,
+            "setattr": 104,
+            "getattr": 112,
+            "listxattr": 120,
+            "fiemap": 128,
+            "update_time": 136,
+            "atomic_open": 144,
+            "tmpfile": 152,
+            "set_acl": 160,
+            "fileattr_set": 168,
+            "fileattr_get": 176,
+            "android_kabi_reserved1": 184,
+            "android_kabi_reserved2": 192,
+            "android_kabi_reserved3": 200,
+            "android_kabi_reserved4": 208
+          },
+          "super_operations": {
+            "sizeof": 232,
+            "alloc_inode": 0,
+            "destroy_inode": 8,
+            "free_inode": 16,
+            "dirty_inode": 24,
+            "write_inode": 32,
+            "drop_inode": 40,
+            "evict_inode": 48,
+            "put_super": 56,
+            "sync_fs": 64,
+            "freeze_super": 72,
+            "freeze_fs": 80,
+            "thaw_super": 88,
+            "unfreeze_fs": 96,
+            "statfs": 104,
+            "remount_fs": 112,
+            "umount_begin": 120,
+            "show_options": 128,
+            "show_devname": 136,
+            "show_path": 144,
+            "show_stats": 152,
+            "quota_read": 160,
+            "quota_write": 168,
+            "get_dquots": 176,
+            "nr_cached_objects": 184,
+            "free_cached_objects": 192,
+            "android_kabi_reserved1": 200,
+            "android_kabi_reserved2": 208,
+            "android_kabi_reserved3": 216,
+            "android_kabi_reserved4": 224
+          },
+          "dentry_operations": {
+            "sizeof": 192,
+            "d_revalidate": 0,
+            "d_weak_revalidate": 8,
+            "d_hash": 16,
+            "d_compare": 24,
+            "d_delete": 32,
+            "d_init": 40,
+            "d_release": 48,
+            "d_prune": 56,
+            "d_iput": 64,
+            "d_dname": 72,
+            "d_automount": 80,
+            "d_manage": 88,
+            "d_real": 96,
+            "d_canonical_path": 104,
+            "android_kabi_reserved1": 112,
+            "android_kabi_reserved2": 120,
+            "android_kabi_reserved3": 128,
+            "android_kabi_reserved4": 136
+          },
+          "key_type": {
+            "sizeof": 184,
+            "name": 0,
+            "def_datalen": 8,
+            "flags": 16,
+            "vet_description": 24,
+            "preparse": 32,
+            "free_preparse": 40,
+            "instantiate": 48,
+            "update": 56,
+            "match_preparse": 64,
+            "match_free": 72,
+            "revoke": 80,
+            "destroy": 88,
+            "describe": 96,
+            "read": 104,
+            "request_key": 112,
+            "lookup_restriction": 120,
+            "asym_query": 128,
+            "asym_eds_op": 136,
+            "asym_verify_signature": 144,
+            "android_kabi_reserved1": 152,
+            "android_kabi_reserved2": 160,
+            "link": 168,
+            "lock_class": 184
+          },
+          "key_preparsed_payload": {
+            "sizeof": 80,
+            "orig_description": 0,
+            "description": 8,
+            "payload": 16,
+            "data": 48,
+            "datalen": 56,
+            "quotalen": 64,
+            "expiry": 72
+          },
+          "mutex": {
+            "sizeof": 48,
+            "owner": 0,
+            "wait_lock": 8,
+            "osq": 12,
+            "wait_list": 16,
+            "android_oem_data1": 32
+          },
+          "kstat": {
+            "sizeof": 144,
+            "result_mask": 0,
+            "mode": 4,
+            "nlink": 8,
+            "blksize": 12,
+            "attributes": 16,
+            "attributes_mask": 24,
+            "ino": 32,
+            "dev": 40,
+            "rdev": 44,
+            "uid": 48,
+            "gid": 52,
+            "size": 56,
+            "atime": 64,
+            "mtime": 80,
+            "ctime": 96,
+            "btime": 112,
+            "blocks": 128,
+            "mnt_id": 136
+          },
+          "mnt_idmap": {}
+        },
+        "common_prefix_comparison": {
+          "source": "Actual nm_structs.h offsetof compiled on 64-bit host; BTF target offsets separately decoded",
+          "match": {
+            "inode.i_mode": [
+              0,
+              0
+            ],
+            "inode.i_uid": [
+              4,
+              4
+            ],
+            "inode.i_gid": [
+              8,
+              8
+            ],
+            "inode.i_flags": [
+              12,
+              12
+            ],
+            "dentry.d_parent": [
+              24,
+              24
+            ],
+            "dentry.d_name": [
+              32,
+              32
+            ],
+            "dentry.d_inode": [
+              48,
+              48
+            ],
+            "super_block.s_dev": [
+              16,
+              16
+            ],
+            "super_block.s_blocksize_bits": [
+              20,
+              20
+            ],
+            "super_block.s_blocksize": [
+              24,
+              24
+            ],
+            "super_block.s_maxbytes": [
+              32,
+              32
+            ],
+            "super_block.s_type": [
+              40,
+              40
+            ],
+            "super_block.s_op": [
+              48,
+              48
+            ],
+            "file_operations.llseek": [
+              8,
+              8
+            ],
+            "file_operations.read": [
+              16,
+              16
+            ],
+            "file_operations.write": [
+              24,
+              24
+            ],
+            "file_operations.read_iter": [
+              32,
+              32
+            ],
+            "file_operations.write_iter": [
+              40,
+              40
+            ]
+          },
+          "mismatch": {},
+          "relations": {
+            "file.f_path+16=f_inode": true,
+            "file.f_inode+8=f_op": true,
+            "file.f_flags+4=f_mode": true,
+            "inode.size+8=atime": true,
+            "inode.size+24=mtime": true,
+            "inode.size+40=ctime": true
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android14-5.15",
+      "image_sha256": "d6d02cf8941be4efe6d042a47cdab27699ebc36e3b85c6e553355cc7a1fc752d",
+      "kernel_sha256": "d6d02cf8941be4efe6d042a47cdab27699ebc36e3b85c6e553355cc7a1fc752d",
+      "release": "5.15.208-android14-11-gb56eb4e06d3e-ab16467001",
+      "symbols": 142621,
+      "symbol_cache_sha256": "db816cf1df42ba58b74c96e2e3cf986dc8230ba99b4f8113a42a5a2d4adea043",
+      "symbol_source": "local/zram-kernel-compat-20261011-01/kernel_android14-5.15/symbols.json",
+      "source_binding": "Existing Developer extraction: current kernel SHA matches extraction receipt",
+      "functions": {
+        "__mutex_init": [
+          "__mutex_init",
+          "__mutex_init.cfi_jt"
+        ],
+        "__rcu_read_lock": [
+          "__rcu_read_lock",
+          "__rcu_read_lock.cfi_jt"
+        ],
+        "__rcu_read_unlock": [
+          "__rcu_read_unlock",
+          "__rcu_read_unlock.cfi_jt"
+        ],
+        "_raw_spin_lock": [
+          "_raw_spin_lock.cfi_jt",
+          "_raw_spin_lock"
+        ],
+        "_raw_spin_unlock": [
+          "_raw_spin_unlock.cfi_jt",
+          "_raw_spin_unlock"
+        ],
+        "call_rcu": [
+          "call_rcu",
+          "call_rcu.cfi_jt"
+        ],
+        "capable": [
+          "capable",
+          "capable.cfi_jt"
+        ],
+        "clear_inode": [
+          "clear_inode",
+          "clear_inode.cfi_jt"
+        ],
+        "d_drop": [
+          "d_drop"
+        ],
+        "d_hash_and_lookup": [
+          "d_hash_and_lookup"
+        ],
+        "d_splice_alias": [
+          "d_splice_alias",
+          "d_splice_alias.cfi_jt"
+        ],
+        "dentry_open": [
+          "dentry_open"
+        ],
+        "dget_parent": [
+          "dget_parent"
+        ],
+        "dput": [
+          "dput",
+          "dput.cfi_jt"
+        ],
+        "fput": [
+          "fput",
+          "fput.cfi_jt"
+        ],
+        "full_name_hash": [
+          "full_name_hash",
+          "full_name_hash.cfi_jt"
+        ],
+        "generic_file_llseek": [
+          "generic_file_llseek",
+          "generic_file_llseek.cfi_jt"
+        ],
+        "generic_file_readonly_mmap": [
+          "generic_file_readonly_mmap",
+          "generic_file_readonly_mmap.cfi_jt"
+        ],
+        "generic_fillattr": [
+          "generic_fillattr",
+          "generic_fillattr.cfi_jt"
+        ],
+        "iget5_locked": [
+          "iget5_locked",
+          "iget5_locked.cfi_jt"
+        ],
+        "inode_permission2": [],
+        "iterate_dir": [
+          "iterate_dir"
+        ],
+        "kern_path": [
+          "kern_path",
+          "kern_path.cfi_jt"
+        ],
+        "kfree": [
+          "kfree",
+          "kfree.cfi_jt"
+        ],
+        "memdup_user": [
+          "memdup_user",
+          "memdup_user.cfi_jt"
+        ],
+        "mutex_lock": [
+          "mutex_lock.cfi_jt",
+          "mutex_lock"
+        ],
+        "mutex_unlock": [
+          "mutex_unlock.cfi_jt",
+          "mutex_unlock"
+        ],
+        "new_inode": [
+          "new_inode",
+          "new_inode.cfi_jt"
+        ],
+        "path_put": [
+          "path_put",
+          "path_put.cfi_jt"
+        ],
+        "register_key_type": [
+          "register_key_type"
+        ],
+        "set_nlink": [
+          "set_nlink",
+          "set_nlink.cfi_jt"
+        ],
+        "shrink_dcache_parent": [
+          "shrink_dcache_parent"
+        ],
+        "synchronize_rcu": [
+          "synchronize_rcu",
+          "synchronize_rcu.cfi_jt"
+        ],
+        "truncate_inode_pages_final": [
+          "truncate_inode_pages_final",
+          "truncate_inode_pages_final.cfi_jt"
+        ],
+        "unlock_new_inode": [
+          "unlock_new_inode",
+          "unlock_new_inode.cfi_jt"
+        ],
+        "vfree": [
+          "vfree",
+          "vfree.cfi_jt"
+        ],
+        "vfs_getattr_nosec": [
+          "vfs_getattr_nosec"
+        ],
+        "vfs_llseek": [
+          "vfs_llseek"
+        ],
+        "vfs_path_lookup": [
+          "vfs_path_lookup"
+        ],
+        "vfs_setpos": [
+          "vfs_setpos"
+        ],
+        "vzalloc": [
+          "vzalloc",
+          "vzalloc.cfi_jt"
+        ]
+      },
+      "missing": [
+        "inode_permission2"
+      ],
+      "btf_queries": {
+        "bpf_get_btf_vmlinux": [
+          "bpf_get_btf_vmlinux"
+        ],
+        "btf_find_by_name_kind": [
+          "btf_find_by_name_kind"
+        ],
+        "btf_type_by_id": [
+          "btf_type_by_id"
+        ],
+        "btf_name_by_offset": [
+          "btf_name_by_offset"
+        ],
+        "btf_resolve_size": [
+          "btf_resolve_size"
+        ]
+      },
+      "config": {
+        "CONFIG_KEYS": "y",
+        "CONFIG_KALLSYMS_ALL": "y",
+        "CONFIG_DEBUG_INFO_BTF": "y",
+        "CONFIG_PREEMPT_RCU": "y",
+        "CONFIG_DEBUG_LOCK_ALLOC": "n",
+        "CONFIG_LOCKDEP": "not recorded",
+        "CONFIG_CFI_CLANG": "y",
+        "CONFIG_CFI": "not recorded",
+        "CONFIG_CFI_PERMISSIVE": "n",
+        "CONFIG_SHADOW_CALL_STACK": "y"
+      },
+      "btf": {
+        "path": "local/zram-kernel-compat-20261011-01/kernel_android14-5.15/target.btf",
+        "sha256": "cd92dc6f040011cded0a368c7578a4e891162eaafaa988e1d43a17aea027ed2d",
+        "offset": 30268508,
+        "types": 122570,
+        "functions": {
+          "inode_permission2": null,
+          "inode_permission": "int(user_namespace*,inode*,int)",
+          "vfs_path_lookup": "int(dentry*,vfsmount*,char*,unsigned int,path*)",
+          "generic_fillattr": "void(user_namespace*,inode*,kstat*)",
+          "vfs_getattr_nosec": "int(path*,kstat*,unsigned int,unsigned int)",
+          "full_name_hash": "unsigned int(void*,char*,unsigned int)",
+          "__rcu_read_lock": "void()",
+          "__rcu_read_unlock": "void()",
+          "_raw_spin_lock": "void(raw_spinlock*)",
+          "_raw_spin_unlock": "void(raw_spinlock*)",
+          "__mutex_init": "void(mutex*,char*,lock_class_key*)",
+          "mutex_lock": "void(mutex*)",
+          "mutex_unlock": "void(mutex*)"
+        },
+        "callbacks": {
+          "dir_context.actor": "int(dir_context*,char*,int,long long,unsigned long long,unsigned int)*",
+          "inode_operations.getattr": "int(user_namespace*,path*,kstat*,unsigned int,unsigned int)*",
+          "inode_operations.permission": "int(user_namespace*,inode*,int)*",
+          "file_operations.splice_read": "long(file*,long long*,pipe_inode_info*,unsigned long,unsigned int)*",
+          "file_operations.read_iter": "long(kiocb*,iov_iter*)*",
+          "file_operations.iterate_shared": "int(file*,dir_context*)*",
+          "dentry_operations.d_revalidate": "int(dentry*,unsigned int)*",
+          "key_type.preparse": "int(key_preparsed_payload*)*",
+          "key_type.instantiate": "int(key*,key_preparsed_payload*)*"
+        },
+        "layouts": {
+          "inode": {
+            "sizeof": 752,
+            "i_mode": 0,
+            "i_opflags": 2,
+            "i_uid": 4,
+            "i_gid": 8,
+            "i_flags": 12,
+            "i_acl": 16,
+            "i_default_acl": 24,
+            "i_op": 32,
+            "i_sb": 40,
+            "i_mapping": 48,
+            "i_security": 56,
+            "i_ino": 64,
+            "i_rdev": 76,
+            "i_size": 80,
+            "i_atime": 88,
+            "i_mtime": 104,
+            "i_ctime": 120,
+            "i_lock": 136,
+            "i_bytes": 140,
+            "i_blkbits": 142,
+            "i_write_hint": 143,
+            "i_blocks": 144,
+            "i_state": 152,
+            "i_rwsem": 160,
+            "dirtied_when": 224,
+            "dirtied_time_when": 232,
+            "i_hash": 240,
+            "i_io_list": 256,
+            "i_wb": 272,
+            "i_wb_frn_winner": 280,
+            "i_wb_frn_avg_time": 284,
+            "i_wb_frn_history": 286,
+            "i_lru": 288,
+            "i_sb_list": 304,
+            "i_wb_list": 320,
+            "i_version": 352,
+            "i_sequence": 360,
+            "i_count": 368,
+            "i_dio_count": 372,
+            "i_writecount": 376,
+            "i_readcount": 380,
+            "i_flctx": 392,
+            "i_data": 400,
+            "i_devices": 672,
+            "i_generation": 696,
+            "i_fsnotify_mask": 700,
+            "i_fsnotify_marks": 704,
+            "i_crypt_info": 712,
+            "i_verity_info": 720,
+            "i_private": 728,
+            "android_kabi_reserved1": 736,
+            "android_kabi_reserved2": 744
+          },
+          "file": {
+            "sizeof": 264,
+            "f_u": 0,
+            "f_path": 16,
+            "f_inode": 32,
+            "f_op": 40,
+            "f_lock": 48,
+            "f_write_hint": 52,
+            "f_count": 56,
+            "f_flags": 64,
+            "f_mode": 68,
+            "f_pos_lock": 72,
+            "f_pos": 120,
+            "f_owner": 128,
+            "f_cred": 160,
+            "f_ra": 168,
+            "f_version": 200,
+            "f_security": 208,
+            "private_data": 216,
+            "f_ep": 224,
+            "f_mapping": 232,
+            "f_wb_err": 240,
+            "f_sb_err": 244,
+            "android_kabi_reserved1": 248,
+            "android_kabi_reserved2": 256
+          },
+          "super_block": {
+            "sizeof": 1600,
+            "s_list": 0,
+            "s_dev": 16,
+            "s_blocksize_bits": 20,
+            "s_blocksize": 24,
+            "s_maxbytes": 32,
+            "s_type": 40,
+            "s_op": 48,
+            "dq_op": 56,
+            "s_qcop": 64,
+            "s_export_op": 72,
+            "s_flags": 80,
+            "s_iflags": 88,
+            "s_magic": 96,
+            "s_root": 104,
+            "s_umount": 112,
+            "s_count": 176,
+            "s_active": 180,
+            "s_security": 184,
+            "s_xattr": 192,
+            "s_cop": 200,
+            "s_master_keys": 208,
+            "s_vop": 216,
+            "s_encoding": 224,
+            "s_encoding_flags": 232,
+            "s_roots": 240,
+            "s_mounts": 248,
+            "s_bdev": 264,
+            "s_bdi": 272,
+            "s_mtd": 280,
+            "s_instances": 288,
+            "s_quota_types": 304,
+            "s_dquot": 312,
+            "s_writers": 648,
+            "s_fs_info": 968,
+            "s_time_gran": 976,
+            "s_time_min": 984,
+            "s_time_max": 992,
+            "s_fsnotify_mask": 1000,
+            "s_fsnotify_marks": 1008,
+            "s_id": 1016,
+            "s_uuid": 1048,
+            "s_max_links": 1064,
+            "s_mode": 1068,
+            "s_vfs_rename_mutex": 1072,
+            "s_subtype": 1120,
+            "s_d_op": 1128,
+            "cleancache_poolid": 1136,
+            "s_shrink": 1144,
+            "s_remove_count": 1208,
+            "s_fsnotify_connectors": 1216,
+            "s_readonly_remount": 1224,
+            "s_wb_err": 1228,
+            "s_dio_done_wq": 1232,
+            "s_pins": 1240,
+            "s_user_ns": 1248,
+            "s_dentry_lru": 1256,
+            "s_inode_lru": 1288,
+            "rcu": 1320,
+            "destroy_work": 1336,
+            "s_sync_lock": 1384,
+            "s_stack_depth": 1432,
+            "s_inode_list_lock": 1472,
+            "s_inodes": 1480,
+            "s_inode_wblist_lock": 1496,
+            "s_inodes_wb": 1504,
+            "android_kabi_reserved1": 1520,
+            "android_kabi_reserved2": 1528,
+            "android_kabi_reserved3": 1536,
+            "android_kabi_reserved4": 1544
+          },
+          "dentry": {
+            "sizeof": 208,
+            "d_flags": 0,
+            "d_seq": 4,
+            "d_hash": 8,
+            "d_parent": 24,
+            "d_name": 32,
+            "d_inode": 48,
+            "d_iname": 56,
+            "d_lockref": 88,
+            "d_op": 96,
+            "d_sb": 104,
+            "d_time": 112,
+            "d_fsdata": 120,
+            "d_child": 144,
+            "d_subdirs": 160,
+            "d_u": 176,
+            "android_kabi_reserved1": 192,
+            "android_kabi_reserved2": 200
+          },
+          "dir_context": {
+            "sizeof": 16,
+            "actor": 0,
+            "pos": 8
+          },
+          "file_operations": {
+            "sizeof": 288,
+            "owner": 0,
+            "llseek": 8,
+            "read": 16,
+            "write": 24,
+            "read_iter": 32,
+            "write_iter": 40,
+            "iopoll": 48,
+            "iterate": 56,
+            "iterate_shared": 64,
+            "poll": 72,
+            "unlocked_ioctl": 80,
+            "compat_ioctl": 88,
+            "mmap": 96,
+            "mmap_supported_flags": 104,
+            "open": 112,
+            "flush": 120,
+            "release": 128,
+            "fsync": 136,
+            "fasync": 144,
+            "lock": 152,
+            "sendpage": 160,
+            "get_unmapped_area": 168,
+            "check_flags": 176,
+            "flock": 184,
+            "splice_write": 192,
+            "splice_read": 200,
+            "setlease": 208,
+            "fallocate": 216,
+            "show_fdinfo": 224,
+            "copy_file_range": 232,
+            "remap_file_range": 240,
+            "fadvise": 248,
+            "android_kabi_reserved1": 256,
+            "android_kabi_reserved2": 264,
+            "android_kabi_reserved3": 272,
+            "android_kabi_reserved4": 280
+          },
+          "inode_operations": {
+            "sizeof": 256,
+            "lookup": 0,
+            "get_link": 8,
+            "permission": 16,
+            "get_acl": 24,
+            "readlink": 32,
+            "create": 40,
+            "link": 48,
+            "unlink": 56,
+            "symlink": 64,
+            "mkdir": 72,
+            "rmdir": 80,
+            "mknod": 88,
+            "rename": 96,
+            "setattr": 104,
+            "getattr": 112,
+            "listxattr": 120,
+            "fiemap": 128,
+            "update_time": 136,
+            "atomic_open": 144,
+            "tmpfile": 152,
+            "set_acl": 160,
+            "fileattr_set": 168,
+            "fileattr_get": 176,
+            "android_kabi_reserved1": 184,
+            "android_kabi_reserved2": 192,
+            "android_kabi_reserved3": 200,
+            "android_kabi_reserved4": 208
+          },
+          "super_operations": {
+            "sizeof": 232,
+            "alloc_inode": 0,
+            "destroy_inode": 8,
+            "free_inode": 16,
+            "dirty_inode": 24,
+            "write_inode": 32,
+            "drop_inode": 40,
+            "evict_inode": 48,
+            "put_super": 56,
+            "sync_fs": 64,
+            "freeze_super": 72,
+            "freeze_fs": 80,
+            "thaw_super": 88,
+            "unfreeze_fs": 96,
+            "statfs": 104,
+            "remount_fs": 112,
+            "umount_begin": 120,
+            "show_options": 128,
+            "show_devname": 136,
+            "show_path": 144,
+            "show_stats": 152,
+            "quota_read": 160,
+            "quota_write": 168,
+            "get_dquots": 176,
+            "nr_cached_objects": 184,
+            "free_cached_objects": 192,
+            "android_kabi_reserved1": 200,
+            "android_kabi_reserved2": 208,
+            "android_kabi_reserved3": 216,
+            "android_kabi_reserved4": 224
+          },
+          "dentry_operations": {
+            "sizeof": 192,
+            "d_revalidate": 0,
+            "d_weak_revalidate": 8,
+            "d_hash": 16,
+            "d_compare": 24,
+            "d_delete": 32,
+            "d_init": 40,
+            "d_release": 48,
+            "d_prune": 56,
+            "d_iput": 64,
+            "d_dname": 72,
+            "d_automount": 80,
+            "d_manage": 88,
+            "d_real": 96,
+            "d_canonical_path": 104,
+            "android_kabi_reserved1": 112,
+            "android_kabi_reserved2": 120,
+            "android_kabi_reserved3": 128,
+            "android_kabi_reserved4": 136
+          },
+          "key_type": {
+            "sizeof": 184,
+            "name": 0,
+            "def_datalen": 8,
+            "flags": 16,
+            "vet_description": 24,
+            "preparse": 32,
+            "free_preparse": 40,
+            "instantiate": 48,
+            "update": 56,
+            "match_preparse": 64,
+            "match_free": 72,
+            "revoke": 80,
+            "destroy": 88,
+            "describe": 96,
+            "read": 104,
+            "request_key": 112,
+            "lookup_restriction": 120,
+            "asym_query": 128,
+            "asym_eds_op": 136,
+            "asym_verify_signature": 144,
+            "android_kabi_reserved1": 152,
+            "android_kabi_reserved2": 160,
+            "link": 168,
+            "lock_class": 184
+          },
+          "key_preparsed_payload": {
+            "sizeof": 80,
+            "orig_description": 0,
+            "description": 8,
+            "payload": 16,
+            "data": 48,
+            "datalen": 56,
+            "quotalen": 64,
+            "expiry": 72
+          },
+          "mutex": {
+            "sizeof": 48,
+            "owner": 0,
+            "wait_lock": 8,
+            "osq": 12,
+            "wait_list": 16,
+            "android_oem_data1": 32
+          },
+          "kstat": {
+            "sizeof": 144,
+            "result_mask": 0,
+            "mode": 4,
+            "nlink": 8,
+            "blksize": 12,
+            "attributes": 16,
+            "attributes_mask": 24,
+            "ino": 32,
+            "dev": 40,
+            "rdev": 44,
+            "uid": 48,
+            "gid": 52,
+            "size": 56,
+            "atime": 64,
+            "mtime": 80,
+            "ctime": 96,
+            "btime": 112,
+            "blocks": 128,
+            "mnt_id": 136
+          },
+          "mnt_idmap": {}
+        },
+        "common_prefix_comparison": {
+          "source": "Actual nm_structs.h offsetof compiled on 64-bit host; BTF target offsets separately decoded",
+          "match": {
+            "inode.i_mode": [
+              0,
+              0
+            ],
+            "inode.i_uid": [
+              4,
+              4
+            ],
+            "inode.i_gid": [
+              8,
+              8
+            ],
+            "inode.i_flags": [
+              12,
+              12
+            ],
+            "dentry.d_parent": [
+              24,
+              24
+            ],
+            "dentry.d_name": [
+              32,
+              32
+            ],
+            "dentry.d_inode": [
+              48,
+              48
+            ],
+            "super_block.s_dev": [
+              16,
+              16
+            ],
+            "super_block.s_blocksize_bits": [
+              20,
+              20
+            ],
+            "super_block.s_blocksize": [
+              24,
+              24
+            ],
+            "super_block.s_maxbytes": [
+              32,
+              32
+            ],
+            "super_block.s_type": [
+              40,
+              40
+            ],
+            "super_block.s_op": [
+              48,
+              48
+            ],
+            "file_operations.llseek": [
+              8,
+              8
+            ],
+            "file_operations.read": [
+              16,
+              16
+            ],
+            "file_operations.write": [
+              24,
+              24
+            ],
+            "file_operations.read_iter": [
+              32,
+              32
+            ],
+            "file_operations.write_iter": [
+              40,
+              40
+            ]
+          },
+          "mismatch": {},
+          "relations": {
+            "file.f_path+16=f_inode": true,
+            "file.f_inode+8=f_op": true,
+            "file.f_flags+4=f_mode": true,
+            "inode.size+8=atime": true,
+            "inode.size+24=mtime": true,
+            "inode.size+40=ctime": true
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android14-6.1",
+      "image_sha256": "bbb9762942d0142acd1ec8fc316faaced629cee6fd7a9d0303338d19685f7b8c",
+      "kernel_sha256": "bbb9762942d0142acd1ec8fc316faaced629cee6fd7a9d0303338d19685f7b8c",
+      "release": "6.1.176-android14-11-g6b94274dcdf4-ab16528172",
+      "symbols": 103122,
+      "symbol_cache_sha256": "047e738413ed5abd18bb18ae2ce457d2c4b1d6522a185cc4279c806054904672",
+      "symbol_source": "local/zram-kernel-compat-20261011-01/kernel_android14-6.1/symbols.json",
+      "source_binding": "Existing Developer extraction: current kernel SHA matches extraction receipt",
+      "functions": {
+        "__mutex_init": [
+          "__mutex_init"
+        ],
+        "__rcu_read_lock": [
+          "__rcu_read_lock"
+        ],
+        "__rcu_read_unlock": [
+          "__rcu_read_unlock"
+        ],
+        "_raw_spin_lock": [
+          "_raw_spin_lock"
+        ],
+        "_raw_spin_unlock": [
+          "_raw_spin_unlock"
+        ],
+        "call_rcu": [
+          "call_rcu"
+        ],
+        "capable": [
+          "capable"
+        ],
+        "clear_inode": [
+          "clear_inode"
+        ],
+        "d_drop": [
+          "d_drop"
+        ],
+        "d_hash_and_lookup": [
+          "d_hash_and_lookup"
+        ],
+        "d_splice_alias": [
+          "d_splice_alias"
+        ],
+        "dentry_open": [
+          "dentry_open"
+        ],
+        "dget_parent": [
+          "dget_parent"
+        ],
+        "dput": [
+          "dput"
+        ],
+        "fput": [
+          "fput"
+        ],
+        "full_name_hash": [
+          "full_name_hash"
+        ],
+        "generic_file_llseek": [
+          "generic_file_llseek"
+        ],
+        "generic_file_readonly_mmap": [
+          "generic_file_readonly_mmap"
+        ],
+        "generic_fillattr": [
+          "generic_fillattr"
+        ],
+        "iget5_locked": [
+          "iget5_locked"
+        ],
+        "inode_permission2": [],
+        "iterate_dir": [
+          "iterate_dir"
+        ],
+        "kern_path": [
+          "kern_path"
+        ],
+        "kfree": [
+          "kfree"
+        ],
+        "memdup_user": [
+          "memdup_user"
+        ],
+        "mutex_lock": [
+          "mutex_lock"
+        ],
+        "mutex_unlock": [
+          "mutex_unlock"
+        ],
+        "new_inode": [
+          "new_inode"
+        ],
+        "path_put": [
+          "path_put"
+        ],
+        "register_key_type": [
+          "register_key_type"
+        ],
+        "set_nlink": [
+          "set_nlink"
+        ],
+        "shrink_dcache_parent": [
+          "shrink_dcache_parent"
+        ],
+        "synchronize_rcu": [
+          "synchronize_rcu"
+        ],
+        "truncate_inode_pages_final": [
+          "truncate_inode_pages_final"
+        ],
+        "unlock_new_inode": [
+          "unlock_new_inode"
+        ],
+        "vfree": [
+          "vfree"
+        ],
+        "vfs_getattr_nosec": [
+          "vfs_getattr_nosec"
+        ],
+        "vfs_llseek": [
+          "vfs_llseek"
+        ],
+        "vfs_path_lookup": [
+          "vfs_path_lookup"
+        ],
+        "vfs_setpos": [
+          "vfs_setpos"
+        ],
+        "vzalloc": [
+          "vzalloc"
+        ]
+      },
+      "missing": [
+        "inode_permission2"
+      ],
+      "btf_queries": {
+        "bpf_get_btf_vmlinux": [
+          "bpf_get_btf_vmlinux"
+        ],
+        "btf_find_by_name_kind": [
+          "btf_find_by_name_kind"
+        ],
+        "btf_type_by_id": [
+          "btf_type_by_id"
+        ],
+        "btf_name_by_offset": [
+          "btf_name_by_offset"
+        ],
+        "btf_resolve_size": [
+          "btf_resolve_size"
+        ]
+      },
+      "config": {
+        "CONFIG_KEYS": "y",
+        "CONFIG_KALLSYMS_ALL": "y",
+        "CONFIG_DEBUG_INFO_BTF": "y",
+        "CONFIG_PREEMPT_RCU": "y",
+        "CONFIG_DEBUG_LOCK_ALLOC": "n",
+        "CONFIG_LOCKDEP": "not recorded",
+        "CONFIG_CFI_CLANG": "y",
+        "CONFIG_CFI": "not recorded",
+        "CONFIG_CFI_PERMISSIVE": "n",
+        "CONFIG_SHADOW_CALL_STACK": "y"
+      },
+      "btf": {
+        "path": "local/zram-kernel-compat-20261011-01/kernel_android14-6.1/target.btf",
+        "sha256": "a6d50a0423819928155e688e2b8b2cd8b5f7647fe87dc56677ca42abab2fe8df",
+        "offset": 23595104,
+        "types": 131614,
+        "functions": {
+          "inode_permission2": null,
+          "inode_permission": "int(user_namespace*,inode*,int)",
+          "vfs_path_lookup": "int(dentry*,vfsmount*,char*,unsigned int,path*)",
+          "generic_fillattr": "void(user_namespace*,inode*,kstat*)",
+          "vfs_getattr_nosec": "int(path*,kstat*,unsigned int,unsigned int)",
+          "full_name_hash": "unsigned int(void*,char*,unsigned int)",
+          "__rcu_read_lock": "void()",
+          "__rcu_read_unlock": "void()",
+          "_raw_spin_lock": "void(raw_spinlock*)",
+          "_raw_spin_unlock": "void(raw_spinlock*)",
+          "__mutex_init": "void(mutex*,char*,lock_class_key*)",
+          "mutex_lock": "void(mutex*)",
+          "mutex_unlock": "void(mutex*)"
+        },
+        "callbacks": {
+          "dir_context.actor": "_Bool(dir_context*,char*,int,long long,unsigned long long,unsigned int)*",
+          "inode_operations.getattr": "int(user_namespace*,path*,kstat*,unsigned int,unsigned int)*",
+          "inode_operations.permission": "int(user_namespace*,inode*,int)*",
+          "file_operations.splice_read": "long(file*,long long*,pipe_inode_info*,unsigned long,unsigned int)*",
+          "file_operations.read_iter": "long(kiocb*,iov_iter*)*",
+          "file_operations.iterate_shared": "int(file*,dir_context*)*",
+          "dentry_operations.d_revalidate": "int(dentry*,unsigned int)*",
+          "key_type.preparse": "int(key_preparsed_payload*)*",
+          "key_type.instantiate": "int(key*,key_preparsed_payload*)*"
+        },
+        "layouts": {
+          "inode": {
+            "sizeof": 704,
+            "i_mode": 0,
+            "i_opflags": 2,
+            "i_uid": 4,
+            "i_gid": 8,
+            "i_flags": 12,
+            "i_acl": 16,
+            "i_default_acl": 24,
+            "i_op": 32,
+            "i_sb": 40,
+            "i_mapping": 48,
+            "i_security": 56,
+            "i_ino": 64,
+            "i_rdev": 76,
+            "i_size": 80,
+            "i_atime": 88,
+            "i_mtime": 104,
+            "i_ctime": 120,
+            "i_lock": 136,
+            "i_bytes": 140,
+            "i_blkbits": 142,
+            "i_write_hint": 143,
+            "i_blocks": 144,
+            "i_state": 152,
+            "i_rwsem": 160,
+            "dirtied_when": 224,
+            "dirtied_time_when": 232,
+            "i_hash": 240,
+            "i_io_list": 256,
+            "i_wb": 272,
+            "i_wb_frn_winner": 280,
+            "i_wb_frn_avg_time": 284,
+            "i_wb_frn_history": 286,
+            "i_lru": 288,
+            "i_sb_list": 304,
+            "i_wb_list": 320,
+            "i_version": 352,
+            "i_sequence": 360,
+            "i_count": 368,
+            "i_dio_count": 372,
+            "i_writecount": 376,
+            "i_readcount": 380,
+            "i_flctx": 392,
+            "i_data": 400,
+            "i_devices": 640,
+            "i_generation": 664,
+            "i_fsnotify_mask": 668,
+            "i_fsnotify_marks": 672,
+            "i_crypt_info": 680,
+            "i_verity_info": 688,
+            "i_private": 696
+          },
+          "file": {
+            "sizeof": 264,
+            "f_path": 16,
+            "f_inode": 32,
+            "f_op": 40,
+            "f_lock": 48,
+            "f_count": 56,
+            "f_flags": 64,
+            "f_mode": 68,
+            "f_pos_lock": 72,
+            "f_pos": 120,
+            "f_owner": 128,
+            "f_cred": 160,
+            "f_ra": 168,
+            "f_version": 200,
+            "f_security": 208,
+            "private_data": 216,
+            "f_ep": 224,
+            "f_mapping": 232,
+            "f_wb_err": 240,
+            "f_sb_err": 244,
+            "android_kabi_reserved1": 248,
+            "android_kabi_reserved2": 256
+          },
+          "super_block": {
+            "sizeof": 1536,
+            "s_list": 0,
+            "s_dev": 16,
+            "s_blocksize_bits": 20,
+            "s_blocksize": 24,
+            "s_maxbytes": 32,
+            "s_type": 40,
+            "s_op": 48,
+            "dq_op": 56,
+            "s_qcop": 64,
+            "s_export_op": 72,
+            "s_flags": 80,
+            "s_iflags": 88,
+            "s_magic": 96,
+            "s_root": 104,
+            "s_umount": 112,
+            "s_count": 176,
+            "s_active": 180,
+            "s_security": 184,
+            "s_xattr": 192,
+            "s_cop": 200,
+            "s_master_keys": 208,
+            "s_vop": 216,
+            "s_encoding": 224,
+            "s_encoding_flags": 232,
+            "s_roots": 240,
+            "s_mounts": 248,
+            "s_bdev": 264,
+            "s_bdi": 272,
+            "s_mtd": 280,
+            "s_instances": 288,
+            "s_quota_types": 304,
+            "s_dquot": 312,
+            "s_writers": 648,
+            "s_fs_info": 968,
+            "s_time_gran": 976,
+            "s_time_min": 984,
+            "s_time_max": 992,
+            "s_fsnotify_mask": 1000,
+            "s_fsnotify_marks": 1008,
+            "s_id": 1016,
+            "s_uuid": 1048,
+            "s_max_links": 1064,
+            "s_mode": 1068,
+            "s_vfs_rename_mutex": 1072,
+            "s_subtype": 1120,
+            "s_d_op": 1128,
+            "cleancache_poolid": 1136,
+            "s_shrink": 1144,
+            "s_remove_count": 1208,
+            "s_fsnotify_connectors": 1216,
+            "s_readonly_remount": 1224,
+            "s_wb_err": 1228,
+            "s_dio_done_wq": 1232,
+            "s_pins": 1240,
+            "s_user_ns": 1248,
+            "s_dentry_lru": 1256,
+            "s_inode_lru": 1304,
+            "rcu": 1352,
+            "destroy_work": 1368,
+            "s_sync_lock": 1416,
+            "s_stack_depth": 1464,
+            "s_inode_list_lock": 1472,
+            "s_inodes": 1480,
+            "s_inode_wblist_lock": 1496,
+            "s_inodes_wb": 1504
+          },
+          "dentry": {
+            "sizeof": 208,
+            "d_flags": 0,
+            "d_seq": 4,
+            "d_hash": 8,
+            "d_parent": 24,
+            "d_name": 32,
+            "d_inode": 48,
+            "d_iname": 56,
+            "d_lockref": 88,
+            "d_op": 96,
+            "d_sb": 104,
+            "d_time": 112,
+            "d_fsdata": 120,
+            "d_child": 144,
+            "d_subdirs": 160,
+            "d_u": 176,
+            "android_kabi_reserved1": 192,
+            "android_kabi_reserved2": 200
+          },
+          "dir_context": {
+            "sizeof": 16,
+            "actor": 0,
+            "pos": 8
+          },
+          "file_operations": {
+            "sizeof": 272,
+            "owner": 0,
+            "llseek": 8,
+            "read": 16,
+            "write": 24,
+            "read_iter": 32,
+            "write_iter": 40,
+            "iopoll": 48,
+            "iterate": 56,
+            "iterate_shared": 64,
+            "poll": 72,
+            "unlocked_ioctl": 80,
+            "compat_ioctl": 88,
+            "mmap": 96,
+            "mmap_supported_flags": 104,
+            "open": 112,
+            "flush": 120,
+            "release": 128,
+            "fsync": 136,
+            "fasync": 144,
+            "lock": 152,
+            "sendpage": 160,
+            "get_unmapped_area": 168,
+            "check_flags": 176,
+            "flock": 184,
+            "splice_write": 192,
+            "splice_read": 200,
+            "setlease": 208,
+            "fallocate": 216,
+            "show_fdinfo": 224,
+            "copy_file_range": 232,
+            "remap_file_range": 240,
+            "fadvise": 248,
+            "uring_cmd": 256,
+            "uring_cmd_iopoll": 264
+          },
+          "inode_operations": {
+            "sizeof": 192,
+            "lookup": 0,
+            "get_link": 8,
+            "permission": 16,
+            "get_acl": 24,
+            "readlink": 32,
+            "create": 40,
+            "link": 48,
+            "unlink": 56,
+            "symlink": 64,
+            "mkdir": 72,
+            "rmdir": 80,
+            "mknod": 88,
+            "rename": 96,
+            "setattr": 104,
+            "getattr": 112,
+            "listxattr": 120,
+            "fiemap": 128,
+            "update_time": 136,
+            "atomic_open": 144,
+            "tmpfile": 152,
+            "set_acl": 160,
+            "fileattr_set": 168,
+            "fileattr_get": 176
+          },
+          "super_operations": {
+            "sizeof": 200,
+            "alloc_inode": 0,
+            "destroy_inode": 8,
+            "free_inode": 16,
+            "dirty_inode": 24,
+            "write_inode": 32,
+            "drop_inode": 40,
+            "evict_inode": 48,
+            "put_super": 56,
+            "sync_fs": 64,
+            "freeze_super": 72,
+            "freeze_fs": 80,
+            "thaw_super": 88,
+            "unfreeze_fs": 96,
+            "statfs": 104,
+            "remount_fs": 112,
+            "umount_begin": 120,
+            "show_options": 128,
+            "show_devname": 136,
+            "show_path": 144,
+            "show_stats": 152,
+            "quota_read": 160,
+            "quota_write": 168,
+            "get_dquots": 176,
+            "nr_cached_objects": 184,
+            "free_cached_objects": 192
+          },
+          "dentry_operations": {
+            "sizeof": 192,
+            "d_revalidate": 0,
+            "d_weak_revalidate": 8,
+            "d_hash": 16,
+            "d_compare": 24,
+            "d_delete": 32,
+            "d_init": 40,
+            "d_release": 48,
+            "d_prune": 56,
+            "d_iput": 64,
+            "d_dname": 72,
+            "d_automount": 80,
+            "d_manage": 88,
+            "d_real": 96,
+            "d_canonical_path": 104,
+            "android_kabi_reserved1": 112,
+            "android_kabi_reserved2": 120,
+            "android_kabi_reserved3": 128,
+            "android_kabi_reserved4": 136
+          },
+          "key_type": {
+            "sizeof": 184,
+            "name": 0,
+            "def_datalen": 8,
+            "flags": 16,
+            "vet_description": 24,
+            "preparse": 32,
+            "free_preparse": 40,
+            "instantiate": 48,
+            "update": 56,
+            "match_preparse": 64,
+            "match_free": 72,
+            "revoke": 80,
+            "destroy": 88,
+            "describe": 96,
+            "read": 104,
+            "request_key": 112,
+            "lookup_restriction": 120,
+            "asym_query": 128,
+            "asym_eds_op": 136,
+            "asym_verify_signature": 144,
+            "android_kabi_reserved1": 152,
+            "android_kabi_reserved2": 160,
+            "link": 168,
+            "lock_class": 184
+          },
+          "key_preparsed_payload": {
+            "sizeof": 80,
+            "orig_description": 0,
+            "description": 8,
+            "payload": 16,
+            "data": 48,
+            "datalen": 56,
+            "quotalen": 64,
+            "expiry": 72
+          },
+          "mutex": {
+            "sizeof": 48,
+            "owner": 0,
+            "wait_lock": 8,
+            "osq": 12,
+            "wait_list": 16,
+            "android_oem_data1": 32
+          },
+          "kstat": {
+            "sizeof": 152,
+            "result_mask": 0,
+            "mode": 4,
+            "nlink": 8,
+            "blksize": 12,
+            "attributes": 16,
+            "attributes_mask": 24,
+            "ino": 32,
+            "dev": 40,
+            "rdev": 44,
+            "uid": 48,
+            "gid": 52,
+            "size": 56,
+            "atime": 64,
+            "mtime": 80,
+            "ctime": 96,
+            "btime": 112,
+            "blocks": 128,
+            "mnt_id": 136,
+            "dio_mem_align": 144,
+            "dio_offset_align": 148
+          },
+          "mnt_idmap": {}
+        },
+        "common_prefix_comparison": {
+          "source": "Actual nm_structs.h offsetof compiled on 64-bit host; BTF target offsets separately decoded",
+          "match": {
+            "inode.i_mode": [
+              0,
+              0
+            ],
+            "inode.i_uid": [
+              4,
+              4
+            ],
+            "inode.i_gid": [
+              8,
+              8
+            ],
+            "inode.i_flags": [
+              12,
+              12
+            ],
+            "dentry.d_parent": [
+              24,
+              24
+            ],
+            "dentry.d_name": [
+              32,
+              32
+            ],
+            "dentry.d_inode": [
+              48,
+              48
+            ],
+            "super_block.s_dev": [
+              16,
+              16
+            ],
+            "super_block.s_blocksize_bits": [
+              20,
+              20
+            ],
+            "super_block.s_blocksize": [
+              24,
+              24
+            ],
+            "super_block.s_maxbytes": [
+              32,
+              32
+            ],
+            "super_block.s_type": [
+              40,
+              40
+            ],
+            "super_block.s_op": [
+              48,
+              48
+            ],
+            "file_operations.llseek": [
+              8,
+              8
+            ],
+            "file_operations.read": [
+              16,
+              16
+            ],
+            "file_operations.write": [
+              24,
+              24
+            ],
+            "file_operations.read_iter": [
+              32,
+              32
+            ],
+            "file_operations.write_iter": [
+              40,
+              40
+            ]
+          },
+          "mismatch": {},
+          "relations": {
+            "file.f_path+16=f_inode": true,
+            "file.f_inode+8=f_op": true,
+            "file.f_flags+4=f_mode": true,
+            "inode.size+8=atime": true,
+            "inode.size+24=mtime": true,
+            "inode.size+40=ctime": true
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android15-6.6",
+      "image_sha256": "1c613d579069091b153ed786b57c2a51ee5bfa09b2ec350b1cc9092a556c5ef1",
+      "kernel_sha256": "1c613d579069091b153ed786b57c2a51ee5bfa09b2ec350b1cc9092a556c5ef1",
+      "release": "6.6.77-android15-8-g7731aa7880d9-ab13240798-4k",
+      "symbols": 108492,
+      "symbol_cache_sha256": "921666fa741d1ada466d857a2b6b47645a16ce642e0b8e1c08ce9a9a267b1ac3",
+      "symbol_source": "local/zram-kernel-compat-20261011-01/kernel_android15-6.6/symbols.json",
+      "source_binding": "Existing Developer extraction: current kernel SHA matches extraction receipt",
+      "functions": {
+        "__mutex_init": [
+          "__mutex_init"
+        ],
+        "__rcu_read_lock": [
+          "__rcu_read_lock"
+        ],
+        "__rcu_read_unlock": [
+          "__rcu_read_unlock"
+        ],
+        "_raw_spin_lock": [
+          "_raw_spin_lock"
+        ],
+        "_raw_spin_unlock": [
+          "_raw_spin_unlock"
+        ],
+        "call_rcu": [
+          "call_rcu"
+        ],
+        "capable": [
+          "capable"
+        ],
+        "clear_inode": [
+          "clear_inode"
+        ],
+        "d_drop": [
+          "d_drop"
+        ],
+        "d_hash_and_lookup": [
+          "d_hash_and_lookup"
+        ],
+        "d_splice_alias": [
+          "d_splice_alias"
+        ],
+        "dentry_open": [
+          "dentry_open"
+        ],
+        "dget_parent": [
+          "dget_parent"
+        ],
+        "dput": [
+          "dput"
+        ],
+        "fput": [
+          "fput"
+        ],
+        "full_name_hash": [
+          "full_name_hash"
+        ],
+        "generic_file_llseek": [
+          "generic_file_llseek"
+        ],
+        "generic_file_readonly_mmap": [
+          "generic_file_readonly_mmap"
+        ],
+        "generic_fillattr": [
+          "generic_fillattr"
+        ],
+        "iget5_locked": [
+          "iget5_locked"
+        ],
+        "inode_permission2": [],
+        "iterate_dir": [
+          "iterate_dir"
+        ],
+        "kern_path": [
+          "kern_path"
+        ],
+        "kfree": [
+          "kfree"
+        ],
+        "memdup_user": [
+          "memdup_user"
+        ],
+        "mutex_lock": [
+          "mutex_lock"
+        ],
+        "mutex_unlock": [
+          "mutex_unlock"
+        ],
+        "new_inode": [
+          "new_inode"
+        ],
+        "path_put": [
+          "path_put"
+        ],
+        "register_key_type": [
+          "register_key_type"
+        ],
+        "set_nlink": [
+          "set_nlink"
+        ],
+        "shrink_dcache_parent": [
+          "shrink_dcache_parent"
+        ],
+        "synchronize_rcu": [
+          "synchronize_rcu"
+        ],
+        "truncate_inode_pages_final": [
+          "truncate_inode_pages_final"
+        ],
+        "unlock_new_inode": [
+          "unlock_new_inode"
+        ],
+        "vfree": [
+          "vfree"
+        ],
+        "vfs_getattr_nosec": [
+          "vfs_getattr_nosec"
+        ],
+        "vfs_llseek": [
+          "vfs_llseek"
+        ],
+        "vfs_path_lookup": [
+          "vfs_path_lookup"
+        ],
+        "vfs_setpos": [
+          "vfs_setpos"
+        ],
+        "vzalloc": [
+          "vzalloc"
+        ]
+      },
+      "missing": [
+        "inode_permission2"
+      ],
+      "btf_queries": {
+        "bpf_get_btf_vmlinux": [
+          "bpf_get_btf_vmlinux"
+        ],
+        "btf_find_by_name_kind": [
+          "btf_find_by_name_kind"
+        ],
+        "btf_type_by_id": [
+          "btf_type_by_id"
+        ],
+        "btf_name_by_offset": [
+          "btf_name_by_offset"
+        ],
+        "btf_resolve_size": [
+          "btf_resolve_size"
+        ]
+      },
+      "config": {
+        "CONFIG_KEYS": "y",
+        "CONFIG_KALLSYMS_ALL": "y",
+        "CONFIG_DEBUG_INFO_BTF": "y",
+        "CONFIG_PREEMPT_RCU": "y",
+        "CONFIG_DEBUG_LOCK_ALLOC": "n",
+        "CONFIG_LOCKDEP": "not recorded",
+        "CONFIG_CFI_CLANG": "y",
+        "CONFIG_CFI": "not recorded",
+        "CONFIG_CFI_PERMISSIVE": "n",
+        "CONFIG_SHADOW_CALL_STACK": "y"
+      },
+      "btf": {
+        "path": "local/zram-kernel-compat-20261011-01/kernel_android15-6.6/target.btf",
+        "sha256": "89f3dc77b9cdb38da050525dae3c46fcbc84f74aabbea5e0717a8022b2bd8f2f",
+        "offset": 23935556,
+        "types": 139097,
+        "functions": {
+          "inode_permission2": null,
+          "inode_permission": "int(mnt_idmap*,inode*,int)",
+          "vfs_path_lookup": "int(dentry*,vfsmount*,char*,unsigned int,path*)",
+          "generic_fillattr": "void(mnt_idmap*,unsigned int,inode*,kstat*)",
+          "vfs_getattr_nosec": "int(path*,kstat*,unsigned int,unsigned int)",
+          "full_name_hash": "unsigned int(void*,char*,unsigned int)",
+          "__rcu_read_lock": "void()",
+          "__rcu_read_unlock": "void()",
+          "_raw_spin_lock": "void(raw_spinlock*)",
+          "_raw_spin_unlock": "void(raw_spinlock*)",
+          "__mutex_init": "void(mutex*,char*,lock_class_key*)",
+          "mutex_lock": "void(mutex*)",
+          "mutex_unlock": "void(mutex*)"
+        },
+        "callbacks": {
+          "dir_context.actor": "_Bool(dir_context*,char*,int,long long,unsigned long long,unsigned int)*",
+          "inode_operations.getattr": "int(mnt_idmap*,path*,kstat*,unsigned int,unsigned int)*",
+          "inode_operations.permission": "int(mnt_idmap*,inode*,int)*",
+          "file_operations.splice_read": "long(file*,long long*,pipe_inode_info*,unsigned long,unsigned int)*",
+          "file_operations.read_iter": "long(kiocb*,iov_iter*)*",
+          "file_operations.iterate_shared": "int(file*,dir_context*)*",
+          "dentry_operations.d_revalidate": "int(dentry*,unsigned int)*",
+          "key_type.preparse": "int(key_preparsed_payload*)*",
+          "key_type.instantiate": "int(key*,key_preparsed_payload*)*"
+        },
+        "layouts": {
+          "inode": {
+            "sizeof": 704,
+            "i_mode": 0,
+            "i_opflags": 2,
+            "i_uid": 4,
+            "i_gid": 8,
+            "i_flags": 12,
+            "i_acl": 16,
+            "i_default_acl": 24,
+            "i_op": 32,
+            "i_sb": 40,
+            "i_mapping": 48,
+            "i_security": 56,
+            "i_ino": 64,
+            "i_rdev": 76,
+            "i_size": 80,
+            "i_atime": 88,
+            "i_mtime": 104,
+            "__i_ctime": 120,
+            "i_lock": 136,
+            "i_bytes": 140,
+            "i_blkbits": 142,
+            "i_write_hint": 143,
+            "i_blocks": 144,
+            "i_state": 152,
+            "i_rwsem": 160,
+            "dirtied_when": 224,
+            "dirtied_time_when": 232,
+            "i_hash": 240,
+            "i_io_list": 256,
+            "i_wb": 272,
+            "i_wb_frn_winner": 280,
+            "i_wb_frn_avg_time": 284,
+            "i_wb_frn_history": 286,
+            "i_lru": 288,
+            "i_sb_list": 304,
+            "i_wb_list": 320,
+            "i_version": 352,
+            "i_sequence": 360,
+            "i_count": 368,
+            "i_dio_count": 372,
+            "i_writecount": 376,
+            "i_readcount": 380,
+            "i_flctx": 392,
+            "i_data": 400,
+            "i_devices": 640,
+            "i_generation": 664,
+            "i_fsnotify_mask": 668,
+            "i_fsnotify_marks": 672,
+            "i_crypt_info": 680,
+            "i_verity_info": 688,
+            "i_private": 696
+          },
+          "file": {
+            "sizeof": 264,
+            "f_lock": 16,
+            "f_mode": 20,
+            "f_count": 24,
+            "f_pos_lock": 32,
+            "f_pos": 80,
+            "f_flags": 88,
+            "f_owner": 96,
+            "f_cred": 128,
+            "f_ra": 136,
+            "f_path": 168,
+            "f_inode": 184,
+            "f_op": 192,
+            "f_version": 200,
+            "f_security": 208,
+            "private_data": 216,
+            "f_ep": 224,
+            "f_mapping": 232,
+            "f_wb_err": 240,
+            "f_sb_err": 244,
+            "android_kabi_reserved1": 248,
+            "android_kabi_reserved2": 256
+          },
+          "super_block": {
+            "sizeof": 1536,
+            "s_list": 0,
+            "s_dev": 16,
+            "s_blocksize_bits": 20,
+            "s_blocksize": 24,
+            "s_maxbytes": 32,
+            "s_type": 40,
+            "s_op": 48,
+            "dq_op": 56,
+            "s_qcop": 64,
+            "s_export_op": 72,
+            "s_flags": 80,
+            "s_iflags": 88,
+            "s_magic": 96,
+            "s_root": 104,
+            "s_umount": 112,
+            "s_count": 176,
+            "s_active": 180,
+            "s_security": 184,
+            "s_xattr": 192,
+            "s_cop": 200,
+            "s_master_keys": 208,
+            "s_vop": 216,
+            "s_encoding": 224,
+            "s_encoding_flags": 232,
+            "s_roots": 240,
+            "s_mounts": 248,
+            "s_bdev": 264,
+            "s_bdi": 272,
+            "s_mtd": 280,
+            "s_instances": 288,
+            "s_quota_types": 304,
+            "s_dquot": 312,
+            "s_writers": 648,
+            "s_fs_info": 968,
+            "s_time_gran": 976,
+            "s_time_min": 984,
+            "s_time_max": 992,
+            "s_fsnotify_mask": 1000,
+            "s_fsnotify_marks": 1008,
+            "s_id": 1016,
+            "s_uuid": 1048,
+            "s_max_links": 1064,
+            "s_vfs_rename_mutex": 1072,
+            "s_subtype": 1120,
+            "s_d_op": 1128,
+            "cleancache_poolid": 1136,
+            "s_shrink": 1144,
+            "s_remove_count": 1208,
+            "s_fsnotify_connectors": 1216,
+            "s_readonly_remount": 1224,
+            "s_wb_err": 1228,
+            "s_dio_done_wq": 1232,
+            "s_pins": 1240,
+            "s_user_ns": 1248,
+            "s_dentry_lru": 1256,
+            "s_inode_lru": 1304,
+            "rcu": 1352,
+            "destroy_work": 1368,
+            "s_sync_lock": 1416,
+            "s_stack_depth": 1464,
+            "s_inode_list_lock": 1472,
+            "s_inodes": 1480,
+            "s_inode_wblist_lock": 1496,
+            "s_inodes_wb": 1504
+          },
+          "dentry": {
+            "sizeof": 208,
+            "d_flags": 0,
+            "d_seq": 4,
+            "d_hash": 8,
+            "d_parent": 24,
+            "d_name": 32,
+            "d_inode": 48,
+            "d_iname": 56,
+            "d_lockref": 88,
+            "d_op": 96,
+            "d_sb": 104,
+            "d_time": 112,
+            "d_fsdata": 120,
+            "d_child": 144,
+            "d_subdirs": 160,
+            "d_u": 176,
+            "android_kabi_reserved1": 192,
+            "android_kabi_reserved2": 200
+          },
+          "dir_context": {
+            "sizeof": 16,
+            "actor": 0,
+            "pos": 8
+          },
+          "file_operations": {
+            "sizeof": 264,
+            "owner": 0,
+            "llseek": 8,
+            "read": 16,
+            "write": 24,
+            "read_iter": 32,
+            "write_iter": 40,
+            "iopoll": 48,
+            "iterate_shared": 56,
+            "poll": 64,
+            "unlocked_ioctl": 72,
+            "compat_ioctl": 80,
+            "mmap": 88,
+            "mmap_supported_flags": 96,
+            "open": 104,
+            "flush": 112,
+            "release": 120,
+            "fsync": 128,
+            "fasync": 136,
+            "lock": 144,
+            "get_unmapped_area": 152,
+            "check_flags": 160,
+            "flock": 168,
+            "splice_write": 176,
+            "splice_read": 184,
+            "splice_eof": 192,
+            "setlease": 200,
+            "fallocate": 208,
+            "show_fdinfo": 216,
+            "copy_file_range": 224,
+            "remap_file_range": 232,
+            "fadvise": 240,
+            "uring_cmd": 248,
+            "uring_cmd_iopoll": 256
+          },
+          "inode_operations": {
+            "sizeof": 256,
+            "lookup": 0,
+            "get_link": 8,
+            "permission": 16,
+            "get_inode_acl": 24,
+            "readlink": 32,
+            "create": 40,
+            "link": 48,
+            "unlink": 56,
+            "symlink": 64,
+            "mkdir": 72,
+            "rmdir": 80,
+            "mknod": 88,
+            "rename": 96,
+            "setattr": 104,
+            "getattr": 112,
+            "listxattr": 120,
+            "fiemap": 128,
+            "update_time": 136,
+            "atomic_open": 144,
+            "tmpfile": 152,
+            "get_acl": 160,
+            "set_acl": 168,
+            "fileattr_set": 176,
+            "fileattr_get": 184,
+            "get_offset_ctx": 192
+          },
+          "super_operations": {
+            "sizeof": 208,
+            "alloc_inode": 0,
+            "destroy_inode": 8,
+            "free_inode": 16,
+            "dirty_inode": 24,
+            "write_inode": 32,
+            "drop_inode": 40,
+            "evict_inode": 48,
+            "put_super": 56,
+            "sync_fs": 64,
+            "freeze_super": 72,
+            "freeze_fs": 80,
+            "thaw_super": 88,
+            "unfreeze_fs": 96,
+            "statfs": 104,
+            "remount_fs": 112,
+            "umount_begin": 120,
+            "show_options": 128,
+            "show_devname": 136,
+            "show_path": 144,
+            "show_stats": 152,
+            "quota_read": 160,
+            "quota_write": 168,
+            "get_dquots": 176,
+            "nr_cached_objects": 184,
+            "free_cached_objects": 192,
+            "shutdown": 200
+          },
+          "dentry_operations": {
+            "sizeof": 192,
+            "d_revalidate": 0,
+            "d_weak_revalidate": 8,
+            "d_hash": 16,
+            "d_compare": 24,
+            "d_delete": 32,
+            "d_init": 40,
+            "d_release": 48,
+            "d_prune": 56,
+            "d_iput": 64,
+            "d_dname": 72,
+            "d_automount": 80,
+            "d_manage": 88,
+            "d_real": 96,
+            "d_canonical_path": 104,
+            "android_kabi_reserved1": 112,
+            "android_kabi_reserved2": 120,
+            "android_kabi_reserved3": 128,
+            "android_kabi_reserved4": 136
+          },
+          "key_type": {
+            "sizeof": 184,
+            "name": 0,
+            "def_datalen": 8,
+            "flags": 16,
+            "vet_description": 24,
+            "preparse": 32,
+            "free_preparse": 40,
+            "instantiate": 48,
+            "update": 56,
+            "match_preparse": 64,
+            "match_free": 72,
+            "revoke": 80,
+            "destroy": 88,
+            "describe": 96,
+            "read": 104,
+            "request_key": 112,
+            "lookup_restriction": 120,
+            "asym_query": 128,
+            "asym_eds_op": 136,
+            "asym_verify_signature": 144,
+            "android_kabi_reserved1": 152,
+            "android_kabi_reserved2": 160,
+            "link": 168,
+            "lock_class": 184
+          },
+          "key_preparsed_payload": {
+            "sizeof": 80,
+            "orig_description": 0,
+            "description": 8,
+            "payload": 16,
+            "data": 48,
+            "datalen": 56,
+            "quotalen": 64,
+            "expiry": 72
+          },
+          "mutex": {
+            "sizeof": 48,
+            "owner": 0,
+            "wait_lock": 8,
+            "osq": 12,
+            "wait_list": 16,
+            "android_oem_data1": 32
+          },
+          "kstat": {
+            "sizeof": 160,
+            "result_mask": 0,
+            "mode": 4,
+            "nlink": 8,
+            "blksize": 12,
+            "attributes": 16,
+            "attributes_mask": 24,
+            "ino": 32,
+            "dev": 40,
+            "rdev": 44,
+            "uid": 48,
+            "gid": 52,
+            "size": 56,
+            "atime": 64,
+            "mtime": 80,
+            "ctime": 96,
+            "btime": 112,
+            "blocks": 128,
+            "mnt_id": 136,
+            "dio_mem_align": 144,
+            "dio_offset_align": 148,
+            "change_cookie": 152
+          },
+          "mnt_idmap": {
+            "sizeof": 152,
+            "uid_map": 0,
+            "gid_map": 72,
+            "count": 144
+          }
+        },
+        "common_prefix_comparison": {
+          "source": "Actual nm_structs.h offsetof compiled on 64-bit host; BTF target offsets separately decoded",
+          "match": {
+            "inode.i_mode": [
+              0,
+              0
+            ],
+            "inode.i_uid": [
+              4,
+              4
+            ],
+            "inode.i_gid": [
+              8,
+              8
+            ],
+            "inode.i_flags": [
+              12,
+              12
+            ],
+            "dentry.d_parent": [
+              24,
+              24
+            ],
+            "dentry.d_name": [
+              32,
+              32
+            ],
+            "dentry.d_inode": [
+              48,
+              48
+            ],
+            "super_block.s_dev": [
+              16,
+              16
+            ],
+            "super_block.s_blocksize_bits": [
+              20,
+              20
+            ],
+            "super_block.s_blocksize": [
+              24,
+              24
+            ],
+            "super_block.s_maxbytes": [
+              32,
+              32
+            ],
+            "super_block.s_type": [
+              40,
+              40
+            ],
+            "super_block.s_op": [
+              48,
+              48
+            ],
+            "file_operations.llseek": [
+              8,
+              8
+            ],
+            "file_operations.read": [
+              16,
+              16
+            ],
+            "file_operations.write": [
+              24,
+              24
+            ],
+            "file_operations.read_iter": [
+              32,
+              32
+            ],
+            "file_operations.write_iter": [
+              40,
+              40
+            ]
+          },
+          "mismatch": {},
+          "relations": {
+            "file.f_path+16=f_inode": true,
+            "file.f_inode+8=f_op": true,
+            "file.f_flags+4=f_mode": false,
+            "inode.size+8=atime": true,
+            "inode.size+24=mtime": true,
+            "inode.size+40=ctime": true
+          }
+        }
+      }
+    },
+    {
+      "image": "kernel_android16-6.12",
+      "image_sha256": "8ad7edca7e73173b784aefcb17dfce94d2645d5048fe5451379b4aa1b796c848",
+      "kernel_sha256": "8ad7edca7e73173b784aefcb17dfce94d2645d5048fe5451379b4aa1b796c848",
+      "release": "6.12.81-android16-6-g08dd7534bf44-ab16287118-4k",
+      "symbols": 133002,
+      "symbol_cache_sha256": "ebb527e95ac7709115a453bfa3320595f1f10b19b6c09c0f286d8192949f56ee",
+      "symbol_source": "local/zram-kernel-compat-20261011-01/kernel_android16-6.12/symbols.json",
+      "source_binding": "Existing Developer extraction: current kernel SHA matches extraction receipt",
+      "functions": {
+        "__mutex_init": [
+          "__mutex_init.cold",
+          "__mutex_init"
+        ],
+        "__rcu_read_lock": [
+          "__rcu_read_lock"
+        ],
+        "__rcu_read_unlock": [
+          "__rcu_read_unlock.cold",
+          "__rcu_read_unlock"
+        ],
+        "_raw_spin_lock": [
+          "_raw_spin_lock"
+        ],
+        "_raw_spin_unlock": [
+          "_raw_spin_unlock"
+        ],
+        "call_rcu": [
+          "call_rcu"
+        ],
+        "capable": [
+          "capable"
+        ],
+        "clear_inode": [
+          "clear_inode.cold",
+          "clear_inode"
+        ],
+        "d_drop": [
+          "d_drop"
+        ],
+        "d_hash_and_lookup": [
+          "d_hash_and_lookup.cold",
+          "d_hash_and_lookup"
+        ],
+        "d_splice_alias": [
+          "d_splice_alias.cold",
+          "d_splice_alias"
+        ],
+        "dentry_open": [
+          "dentry_open"
+        ],
+        "dget_parent": [
+          "dget_parent.cold",
+          "dget_parent"
+        ],
+        "dput": [
+          "dput.cold",
+          "dput"
+        ],
+        "fput": [
+          "fput"
+        ],
+        "full_name_hash": [
+          "full_name_hash"
+        ],
+        "generic_file_llseek": [
+          "generic_file_llseek"
+        ],
+        "generic_file_readonly_mmap": [
+          "generic_file_readonly_mmap"
+        ],
+        "generic_fillattr": [
+          "generic_fillattr.cold",
+          "generic_fillattr"
+        ],
+        "iget5_locked": [
+          "iget5_locked"
+        ],
+        "inode_permission2": [],
+        "iterate_dir": [
+          "iterate_dir"
+        ],
+        "kern_path": [
+          "kern_path.cold",
+          "kern_path"
+        ],
+        "kfree": [
+          "kfree.cold",
+          "kfree"
+        ],
+        "memdup_user": [
+          "memdup_user"
+        ],
+        "mutex_lock": [
+          "mutex_lock"
+        ],
+        "mutex_unlock": [
+          "mutex_unlock"
+        ],
+        "new_inode": [
+          "new_inode.cold",
+          "new_inode"
+        ],
+        "path_put": [
+          "path_put"
+        ],
+        "register_key_type": [
+          "register_key_type"
+        ],
+        "set_nlink": [
+          "set_nlink.cold",
+          "set_nlink"
+        ],
+        "shrink_dcache_parent": [
+          "shrink_dcache_parent"
+        ],
+        "synchronize_rcu": [
+          "synchronize_rcu"
+        ],
+        "truncate_inode_pages_final": [
+          "truncate_inode_pages_final.cold",
+          "truncate_inode_pages_final"
+        ],
+        "unlock_new_inode": [
+          "unlock_new_inode"
+        ],
+        "vfree": [
+          "vfree.cold",
+          "vfree"
+        ],
+        "vfs_getattr_nosec": [
+          "vfs_getattr_nosec.cold",
+          "vfs_getattr_nosec"
+        ],
+        "vfs_llseek": [
+          "vfs_llseek"
+        ],
+        "vfs_path_lookup": [
+          "vfs_path_lookup"
+        ],
+        "vfs_setpos": [
+          "vfs_setpos"
+        ],
+        "vzalloc": []
+      },
+      "missing": [
+        "inode_permission2",
+        "vzalloc"
+      ],
+      "btf_queries": {
+        "bpf_get_btf_vmlinux": [
+          "bpf_get_btf_vmlinux"
+        ],
+        "btf_find_by_name_kind": [
+          "btf_find_by_name_kind"
+        ],
+        "btf_type_by_id": [
+          "btf_type_by_id"
+        ],
+        "btf_name_by_offset": [
+          "btf_name_by_offset"
+        ],
+        "btf_resolve_size": [
+          "btf_resolve_size"
+        ]
+      },
+      "config": {
+        "CONFIG_KEYS": "y",
+        "CONFIG_KALLSYMS_ALL": "y",
+        "CONFIG_DEBUG_INFO_BTF": "y",
+        "CONFIG_PREEMPT_RCU": "y",
+        "CONFIG_DEBUG_LOCK_ALLOC": "n",
+        "CONFIG_LOCKDEP": "not recorded",
+        "CONFIG_CFI_CLANG": "y",
+        "CONFIG_CFI": "not recorded",
+        "CONFIG_CFI_PERMISSIVE": "n",
+        "CONFIG_SHADOW_CALL_STACK": "y"
+      },
+      "btf": {
+        "path": "local/zram-kernel-compat-20261011-01/kernel_android16-6.12/target.btf",
+        "sha256": "33b4a63a48754fc4164ff95ac6190e352ba8b4323a90b430af78f1b6336a107d",
+        "offset": 27982292,
+        "types": 168768,
+        "functions": {
+          "inode_permission2": null,
+          "inode_permission": "int(mnt_idmap*,inode*,int)",
+          "vfs_path_lookup": "int(dentry*,vfsmount*,char*,unsigned int,path*)",
+          "generic_fillattr": "void(mnt_idmap*,unsigned int,inode*,kstat*)",
+          "vfs_getattr_nosec": "int(path*,kstat*,unsigned int,unsigned int)",
+          "full_name_hash": "unsigned int(void*,char*,unsigned int)",
+          "__rcu_read_lock": "void()",
+          "__rcu_read_unlock": "void()",
+          "_raw_spin_lock": "void(raw_spinlock*)",
+          "_raw_spin_unlock": "void(raw_spinlock*)",
+          "__mutex_init": "void(mutex*,char*,lock_class_key*)",
+          "mutex_lock": "void(mutex*)",
+          "mutex_unlock": "void(mutex*)"
+        },
+        "callbacks": {
+          "dir_context.actor": "_Bool(dir_context*,char*,int,long long,unsigned long long,unsigned int)*",
+          "inode_operations.getattr": "int(mnt_idmap*,path*,kstat*,unsigned int,unsigned int)*",
+          "inode_operations.permission": "int(mnt_idmap*,inode*,int)*",
+          "file_operations.splice_read": "long(file*,long long*,pipe_inode_info*,unsigned long,unsigned int)*",
+          "file_operations.read_iter": "long(kiocb*,iov_iter*)*",
+          "file_operations.iterate_shared": "int(file*,dir_context*)*",
+          "dentry_operations.d_revalidate": "int(dentry*,unsigned int)*",
+          "key_type.preparse": "int(key_preparsed_payload*)*",
+          "key_type.instantiate": "int(key*,key_preparsed_payload*)*"
+        },
+        "layouts": {
+          "inode": {
+            "sizeof": 704,
+            "i_mode": 0,
+            "i_opflags": 2,
+            "i_uid": 4,
+            "i_gid": 8,
+            "i_flags": 12,
+            "i_acl": 16,
+            "i_default_acl": 24,
+            "i_op": 32,
+            "i_sb": 40,
+            "i_mapping": 48,
+            "i_security": 56,
+            "i_ino": 64,
+            "i_rdev": 76,
+            "i_size": 80,
+            "i_atime_sec": 88,
+            "i_mtime_sec": 96,
+            "i_ctime_sec": 104,
+            "i_atime_nsec": 112,
+            "i_mtime_nsec": 116,
+            "i_ctime_nsec": 120,
+            "i_generation": 124,
+            "i_lock": 128,
+            "i_bytes": 132,
+            "i_blkbits": 134,
+            "i_write_hint": 135,
+            "i_blocks": 136,
+            "i_state": 144,
+            "i_rwsem": 152,
+            "dirtied_when": 216,
+            "dirtied_time_when": 224,
+            "i_hash": 232,
+            "i_io_list": 248,
+            "i_wb": 264,
+            "i_wb_frn_winner": 272,
+            "i_wb_frn_avg_time": 276,
+            "i_wb_frn_history": 278,
+            "i_lru": 280,
+            "i_sb_list": 296,
+            "i_wb_list": 312,
+            "i_version": 344,
+            "i_sequence": 352,
+            "i_count": 360,
+            "i_dio_count": 364,
+            "i_writecount": 368,
+            "i_readcount": 372,
+            "i_flctx": 384,
+            "i_data": 392,
+            "i_devices": 640,
+            "i_fsnotify_mask": 664,
+            "i_fsnotify_marks": 672,
+            "i_crypt_info": 680,
+            "i_verity_info": 688,
+            "i_private": 696
+          },
+          "file": {
+            "sizeof": 216,
+            "f_count": 0,
+            "f_lock": 8,
+            "f_mode": 12,
+            "f_op": 16,
+            "f_mapping": 24,
+            "private_data": 32,
+            "f_inode": 40,
+            "f_flags": 48,
+            "f_iocb_flags": 52,
+            "f_cred": 56,
+            "f_path": 64,
+            "f_pos": 128,
+            "f_security": 136,
+            "f_owner": 144,
+            "f_wb_err": 152,
+            "f_sb_err": 156,
+            "f_ep": 160,
+            "__kabi_reserved1": 200,
+            "__kabi_reserved2": 208
+          },
+          "super_block": {
+            "sizeof": 1536,
+            "s_list": 0,
+            "s_dev": 16,
+            "s_blocksize_bits": 20,
+            "s_blocksize": 24,
+            "s_maxbytes": 32,
+            "s_type": 40,
+            "s_op": 48,
+            "dq_op": 56,
+            "s_qcop": 64,
+            "s_export_op": 72,
+            "s_flags": 80,
+            "s_iflags": 88,
+            "s_magic": 96,
+            "s_root": 104,
+            "s_umount": 112,
+            "s_count": 176,
+            "s_active": 180,
+            "s_security": 184,
+            "s_xattr": 192,
+            "s_cop": 200,
+            "s_master_keys": 208,
+            "s_vop": 216,
+            "s_encoding": 224,
+            "s_encoding_flags": 232,
+            "s_roots": 240,
+            "s_mounts": 248,
+            "s_bdev": 264,
+            "s_bdev_file": 272,
+            "s_bdi": 280,
+            "s_mtd": 288,
+            "s_instances": 296,
+            "s_quota_types": 312,
+            "s_dquot": 320,
+            "s_writers": 656,
+            "s_fs_info": 984,
+            "s_time_gran": 992,
+            "s_time_min": 1000,
+            "s_time_max": 1008,
+            "s_fsnotify_mask": 1016,
+            "s_fsnotify_info": 1024,
+            "s_id": 1032,
+            "s_uuid": 1064,
+            "s_uuid_len": 1080,
+            "s_sysfs_name": 1081,
+            "s_max_links": 1120,
+            "s_vfs_rename_mutex": 1128,
+            "s_subtype": 1176,
+            "s_d_op": 1184,
+            "cleancache_poolid": 1192,
+            "s_shrink": 1200,
+            "s_remove_count": 1208,
+            "s_readonly_remount": 1216,
+            "s_wb_err": 1220,
+            "s_dio_done_wq": 1224,
+            "s_pins": 1232,
+            "s_user_ns": 1240,
+            "s_dentry_lru": 1248,
+            "s_inode_lru": 1296,
+            "rcu": 1344,
+            "destroy_work": 1360,
+            "s_sync_lock": 1392,
+            "s_stack_depth": 1440,
+            "s_inode_list_lock": 1472,
+            "s_inodes": 1480,
+            "s_inode_wblist_lock": 1496,
+            "s_inodes_wb": 1504
+          },
+          "dentry": {
+            "sizeof": 208,
+            "d_flags": 0,
+            "d_seq": 4,
+            "d_hash": 8,
+            "d_parent": 24,
+            "d_name": 32,
+            "d_inode": 48,
+            "d_iname": 56,
+            "d_op": 96,
+            "d_sb": 104,
+            "d_time": 112,
+            "d_fsdata": 120,
+            "d_lockref": 128,
+            "d_sib": 152,
+            "d_children": 168,
+            "d_u": 176,
+            "__kabi_reserved1": 192,
+            "__kabi_reserved2": 200
+          },
+          "dir_context": {
+            "sizeof": 16,
+            "actor": 0,
+            "pos": 8
+          },
+          "file_operations": {
+            "sizeof": 264,
+            "owner": 0,
+            "fop_flags": 8,
+            "llseek": 16,
+            "read": 24,
+            "write": 32,
+            "read_iter": 40,
+            "write_iter": 48,
+            "iopoll": 56,
+            "iterate_shared": 64,
+            "poll": 72,
+            "unlocked_ioctl": 80,
+            "compat_ioctl": 88,
+            "mmap": 96,
+            "open": 104,
+            "flush": 112,
+            "release": 120,
+            "fsync": 128,
+            "fasync": 136,
+            "lock": 144,
+            "get_unmapped_area": 152,
+            "check_flags": 160,
+            "flock": 168,
+            "splice_write": 176,
+            "splice_read": 184,
+            "splice_eof": 192,
+            "setlease": 200,
+            "fallocate": 208,
+            "show_fdinfo": 216,
+            "copy_file_range": 224,
+            "remap_file_range": 232,
+            "fadvise": 240,
+            "uring_cmd": 248,
+            "uring_cmd_iopoll": 256
+          },
+          "inode_operations": {
+            "sizeof": 256,
+            "lookup": 0,
+            "get_link": 8,
+            "permission": 16,
+            "get_inode_acl": 24,
+            "readlink": 32,
+            "create": 40,
+            "link": 48,
+            "unlink": 56,
+            "symlink": 64,
+            "mkdir": 72,
+            "rmdir": 80,
+            "mknod": 88,
+            "rename": 96,
+            "setattr": 104,
+            "getattr": 112,
+            "listxattr": 120,
+            "fiemap": 128,
+            "update_time": 136,
+            "atomic_open": 144,
+            "tmpfile": 152,
+            "get_acl": 160,
+            "set_acl": 168,
+            "fileattr_set": 176,
+            "fileattr_get": 184,
+            "get_offset_ctx": 192
+          },
+          "super_operations": {
+            "sizeof": 208,
+            "alloc_inode": 0,
+            "destroy_inode": 8,
+            "free_inode": 16,
+            "dirty_inode": 24,
+            "write_inode": 32,
+            "drop_inode": 40,
+            "evict_inode": 48,
+            "put_super": 56,
+            "sync_fs": 64,
+            "freeze_super": 72,
+            "freeze_fs": 80,
+            "thaw_super": 88,
+            "unfreeze_fs": 96,
+            "statfs": 104,
+            "remount_fs": 112,
+            "umount_begin": 120,
+            "show_options": 128,
+            "show_devname": 136,
+            "show_path": 144,
+            "show_stats": 152,
+            "quota_read": 160,
+            "quota_write": 168,
+            "get_dquots": 176,
+            "nr_cached_objects": 184,
+            "free_cached_objects": 192,
+            "shutdown": 200
+          },
+          "dentry_operations": {
+            "sizeof": 192,
+            "d_revalidate": 0,
+            "d_weak_revalidate": 8,
+            "d_hash": 16,
+            "d_compare": 24,
+            "d_delete": 32,
+            "d_init": 40,
+            "d_release": 48,
+            "d_prune": 56,
+            "d_iput": 64,
+            "d_dname": 72,
+            "d_automount": 80,
+            "d_manage": 88,
+            "d_real": 96,
+            "d_canonical_path": 104,
+            "__kabi_reserved1": 112,
+            "__kabi_reserved2": 120,
+            "__kabi_reserved3": 128,
+            "__kabi_reserved4": 136
+          },
+          "key_type": {
+            "sizeof": 184,
+            "name": 0,
+            "def_datalen": 8,
+            "flags": 16,
+            "vet_description": 24,
+            "preparse": 32,
+            "free_preparse": 40,
+            "instantiate": 48,
+            "update": 56,
+            "match_preparse": 64,
+            "match_free": 72,
+            "revoke": 80,
+            "destroy": 88,
+            "describe": 96,
+            "read": 104,
+            "request_key": 112,
+            "lookup_restriction": 120,
+            "asym_query": 128,
+            "asym_eds_op": 136,
+            "asym_verify_signature": 144,
+            "__kabi_reserved1": 152,
+            "__kabi_reserved2": 160,
+            "link": 168,
+            "lock_class": 184
+          },
+          "key_preparsed_payload": {
+            "sizeof": 80,
+            "orig_description": 0,
+            "description": 8,
+            "payload": 16,
+            "data": 48,
+            "datalen": 56,
+            "quotalen": 64,
+            "expiry": 72
+          },
+          "mutex": {
+            "sizeof": 48,
+            "owner": 0,
+            "wait_lock": 8,
+            "osq": 12,
+            "wait_list": 16,
+            "android_oem_data1": 32
+          },
+          "kstat": {
+            "sizeof": 184,
+            "result_mask": 0,
+            "mode": 4,
+            "nlink": 8,
+            "blksize": 12,
+            "attributes": 16,
+            "attributes_mask": 24,
+            "ino": 32,
+            "dev": 40,
+            "rdev": 44,
+            "uid": 48,
+            "gid": 52,
+            "size": 56,
+            "atime": 64,
+            "mtime": 80,
+            "ctime": 96,
+            "btime": 112,
+            "blocks": 128,
+            "mnt_id": 136,
+            "dio_mem_align": 144,
+            "dio_offset_align": 148,
+            "change_cookie": 152,
+            "subvol": 160,
+            "atomic_write_unit_min": 168,
+            "atomic_write_unit_max": 172,
+            "atomic_write_segments_max": 176
+          },
+          "mnt_idmap": {
+            "sizeof": 136,
+            "uid_map": 0,
+            "gid_map": 64,
+            "count": 128
+          }
+        },
+        "common_prefix_comparison": {
+          "source": "Actual nm_structs.h offsetof compiled on 64-bit host; BTF target offsets separately decoded",
+          "match": {
+            "inode.i_mode": [
+              0,
+              0
+            ],
+            "inode.i_uid": [
+              4,
+              4
+            ],
+            "inode.i_gid": [
+              8,
+              8
+            ],
+            "inode.i_flags": [
+              12,
+              12
+            ],
+            "dentry.d_parent": [
+              24,
+              24
+            ],
+            "dentry.d_name": [
+              32,
+              32
+            ],
+            "dentry.d_inode": [
+              48,
+              48
+            ],
+            "super_block.s_dev": [
+              16,
+              16
+            ],
+            "super_block.s_blocksize_bits": [
+              20,
+              20
+            ],
+            "super_block.s_blocksize": [
+              24,
+              24
+            ],
+            "super_block.s_maxbytes": [
+              32,
+              32
+            ],
+            "super_block.s_type": [
+              40,
+              40
+            ],
+            "super_block.s_op": [
+              48,
+              48
+            ]
+          },
+          "mismatch": {
+            "file_operations.llseek": [
+              8,
+              16
+            ],
+            "file_operations.read": [
+              16,
+              24
+            ],
+            "file_operations.write": [
+              24,
+              32
+            ],
+            "file_operations.read_iter": [
+              32,
+              40
+            ],
+            "file_operations.write_iter": [
+              40,
+              48
+            ]
+          },
+          "relations": {
+            "file.f_path+16=f_inode": false,
+            "file.f_inode+8=f_op": false,
+            "file.f_flags+4=f_mode": false,
+            "inode.size+8=atime": false,
+            "inode.size+24=mtime": false,
+            "inode.size+40=ctime": false
+          }
+        }
+      },
+      "allocator_alternatives": [
+        "vzalloc_noprof",
+        "__vmalloc_noprof",
+        "vzalloc_node_noprof"
+      ]
+    },
+    {
+      "image": "kernel_mi10-4.19",
+      "image_sha256": "cedd94d2e9a740075d0cc9853705ebe695a43c63502a62660c30aba018ed6823",
+      "kernel_sha256": "cedd94d2e9a740075d0cc9853705ebe695a43c63502a62660c30aba018ed6823",
+      "release": "4.19.157-perf-g8e1dce01cadc",
+      "symbols": 139786,
+      "symbol_cache_sha256": "58d0dd441161288a874983b068f6c70c371d3ddf1981eb8f65f59e3e0ffd890a",
+      "symbol_source": "local/zram-kernel-compat-20261011-01/kernel_mi10-4.19/symbols.json",
+      "source_binding": "Existing Developer extraction: current kernel SHA matches extraction receipt",
+      "functions": {
+        "__mutex_init": [
+          "__mutex_init"
+        ],
+        "__rcu_read_lock": [
+          "__rcu_read_lock"
+        ],
+        "__rcu_read_unlock": [
+          "__rcu_read_unlock"
+        ],
+        "_raw_spin_lock": [
+          "_raw_spin_lock"
+        ],
+        "_raw_spin_unlock": [
+          "_raw_spin_unlock"
+        ],
+        "call_rcu": [
+          "call_rcu"
+        ],
+        "capable": [
+          "capable"
+        ],
+        "clear_inode": [
+          "clear_inode"
+        ],
+        "d_drop": [
+          "d_drop"
+        ],
+        "d_hash_and_lookup": [
+          "d_hash_and_lookup"
+        ],
+        "d_splice_alias": [
+          "d_splice_alias"
+        ],
+        "dentry_open": [
+          "dentry_open"
+        ],
+        "dget_parent": [
+          "dget_parent"
+        ],
+        "dput": [
+          "dput"
+        ],
+        "fput": [
+          "fput"
+        ],
+        "full_name_hash": [
+          "full_name_hash"
+        ],
+        "generic_file_llseek": [
+          "generic_file_llseek"
+        ],
+        "generic_file_readonly_mmap": [
+          "generic_file_readonly_mmap"
+        ],
+        "generic_fillattr": [
+          "generic_fillattr"
+        ],
+        "iget5_locked": [
+          "iget5_locked"
+        ],
+        "inode_permission2": [
+          "inode_permission2"
+        ],
+        "iterate_dir": [
+          "iterate_dir"
+        ],
+        "kern_path": [
+          "kern_path"
+        ],
+        "kfree": [
+          "kfree"
+        ],
+        "memdup_user": [
+          "memdup_user"
+        ],
+        "mutex_lock": [
+          "mutex_lock"
+        ],
+        "mutex_unlock": [
+          "mutex_unlock"
+        ],
+        "new_inode": [
+          "new_inode"
+        ],
+        "path_put": [
+          "path_put"
+        ],
+        "register_key_type": [
+          "register_key_type"
+        ],
+        "set_nlink": [
+          "set_nlink"
+        ],
+        "shrink_dcache_parent": [
+          "shrink_dcache_parent"
+        ],
+        "synchronize_rcu": [
+          "synchronize_rcu"
+        ],
+        "truncate_inode_pages_final": [
+          "truncate_inode_pages_final"
+        ],
+        "unlock_new_inode": [
+          "unlock_new_inode"
+        ],
+        "vfree": [
+          "vfree"
+        ],
+        "vfs_getattr_nosec": [
+          "vfs_getattr_nosec"
+        ],
+        "vfs_llseek": [
+          "vfs_llseek"
+        ],
+        "vfs_path_lookup": [
+          "vfs_path_lookup"
+        ],
+        "vfs_setpos": [
+          "vfs_setpos"
+        ],
+        "vzalloc": [
+          "vzalloc"
+        ]
+      },
+      "missing": [],
+      "btf_queries": {
+        "bpf_get_btf_vmlinux": [],
+        "btf_find_by_name_kind": [],
+        "btf_type_by_id": [],
+        "btf_name_by_offset": [],
+        "btf_resolve_size": []
+      },
+      "config": {
+        "CONFIG_KEYS": "y",
+        "CONFIG_KALLSYMS_ALL": "y",
+        "CONFIG_DEBUG_INFO_BTF": "not recorded",
+        "CONFIG_PREEMPT_RCU": "y",
+        "CONFIG_DEBUG_LOCK_ALLOC": "n",
+        "CONFIG_LOCKDEP": "not recorded",
+        "CONFIG_CFI_CLANG": "not recorded",
+        "CONFIG_CFI": "not recorded",
+        "CONFIG_CFI_PERMISSIVE": "not recorded",
+        "CONFIG_SHADOW_CALL_STACK": "n"
+      },
+      "btf": null
+    },
+    {
+      "image": "kernel_mi11-5.4",
+      "image_sha256": "4211656a1250a81bdbc9d3710c18bcbca7e90834bab57b639f9dbcacc4ea50c8",
+      "kernel_sha256": "4211656a1250a81bdbc9d3710c18bcbca7e90834bab57b639f9dbcacc4ea50c8",
+      "release": "5.4.274-qgki-g76ac0b265f44",
+      "symbols": 172911,
+      "symbol_cache_sha256": "a19e83304ebca14b08b7e755fd755e1fb2ad54212649941551faa91c79c1bc0d",
+      "symbol_source": "local/zram-kernel-compat-20261011-01/kernel_mi11-5.4/symbols.json",
+      "source_binding": "Existing Developer extraction: current kernel SHA matches extraction receipt",
+      "functions": {
+        "__mutex_init": [
+          "__mutex_init",
+          "__mutex_init.cfi_jt"
+        ],
+        "__rcu_read_lock": [
+          "__rcu_read_lock",
+          "__rcu_read_lock.cfi_jt"
+        ],
+        "__rcu_read_unlock": [
+          "__rcu_read_unlock",
+          "__rcu_read_unlock.cfi_jt"
+        ],
+        "_raw_spin_lock": [
+          "_raw_spin_lock",
+          "_raw_spin_lock.cfi_jt"
+        ],
+        "_raw_spin_unlock": [
+          "_raw_spin_unlock",
+          "_raw_spin_unlock.cfi_jt"
+        ],
+        "call_rcu": [
+          "call_rcu",
+          "call_rcu.cfi_jt"
+        ],
+        "capable": [
+          "capable",
+          "capable.cfi_jt"
+        ],
+        "clear_inode": [
+          "clear_inode",
+          "clear_inode.cfi_jt"
+        ],
+        "d_drop": [
+          "d_drop",
+          "d_drop.cfi_jt"
+        ],
+        "d_hash_and_lookup": [
+          "d_hash_and_lookup",
+          "d_hash_and_lookup.cfi_jt"
+        ],
+        "d_splice_alias": [
+          "d_splice_alias",
+          "d_splice_alias.cfi_jt"
+        ],
+        "dentry_open": [
+          "dentry_open",
+          "dentry_open.cfi_jt"
+        ],
+        "dget_parent": [
+          "dget_parent",
+          "dget_parent.cfi_jt"
+        ],
+        "dput": [
+          "dput",
+          "dput.cfi_jt"
+        ],
+        "fput": [
+          "fput",
+          "fput.cfi_jt"
+        ],
+        "full_name_hash": [
+          "full_name_hash",
+          "full_name_hash.cfi_jt"
+        ],
+        "generic_file_llseek": [
+          "generic_file_llseek",
+          "generic_file_llseek.cfi_jt"
+        ],
+        "generic_file_readonly_mmap": [
+          "generic_file_readonly_mmap",
+          "generic_file_readonly_mmap.cfi_jt"
+        ],
+        "generic_fillattr": [
+          "generic_fillattr",
+          "generic_fillattr.cfi_jt"
+        ],
+        "iget5_locked": [
+          "iget5_locked",
+          "iget5_locked.cfi_jt"
+        ],
+        "inode_permission2": [],
+        "iterate_dir": [
+          "iterate_dir",
+          "iterate_dir.cfi_jt"
+        ],
+        "kern_path": [
+          "kern_path",
+          "kern_path.cfi_jt"
+        ],
+        "kfree": [
+          "kfree",
+          "kfree.cfi_jt"
+        ],
+        "memdup_user": [
+          "memdup_user",
+          "memdup_user.cfi_jt"
+        ],
+        "mutex_lock": [
+          "mutex_lock",
+          "mutex_lock.cfi_jt"
+        ],
+        "mutex_unlock": [
+          "mutex_unlock",
+          "mutex_unlock.cfi_jt"
+        ],
+        "new_inode": [
+          "new_inode",
+          "new_inode.cfi_jt"
+        ],
+        "path_put": [
+          "path_put",
+          "path_put.cfi_jt"
+        ],
+        "register_key_type": [
+          "register_key_type",
+          "register_key_type.cfi_jt"
+        ],
+        "set_nlink": [
+          "set_nlink",
+          "set_nlink.cfi_jt"
+        ],
+        "shrink_dcache_parent": [
+          "shrink_dcache_parent",
+          "shrink_dcache_parent.cfi_jt"
+        ],
+        "synchronize_rcu": [
+          "synchronize_rcu",
+          "synchronize_rcu.cfi_jt"
+        ],
+        "truncate_inode_pages_final": [
+          "truncate_inode_pages_final",
+          "truncate_inode_pages_final.cfi_jt"
+        ],
+        "unlock_new_inode": [
+          "unlock_new_inode",
+          "unlock_new_inode.cfi_jt"
+        ],
+        "vfree": [
+          "vfree",
+          "vfree.cfi_jt"
+        ],
+        "vfs_getattr_nosec": [
+          "vfs_getattr_nosec",
+          "vfs_getattr_nosec.cfi_jt"
+        ],
+        "vfs_llseek": [
+          "vfs_llseek",
+          "vfs_llseek.cfi_jt"
+        ],
+        "vfs_path_lookup": [
+          "vfs_path_lookup",
+          "vfs_path_lookup.cfi_jt"
+        ],
+        "vfs_setpos": [
+          "vfs_setpos",
+          "vfs_setpos.cfi_jt"
+        ],
+        "vzalloc": [
+          "vzalloc",
+          "vzalloc.cfi_jt"
+        ]
+      },
+      "missing": [
+        "inode_permission2"
+      ],
+      "btf_queries": {
+        "bpf_get_btf_vmlinux": [],
+        "btf_find_by_name_kind": [],
+        "btf_type_by_id": [
+          "btf_type_by_id"
+        ],
+        "btf_name_by_offset": [
+          "btf_name_by_offset"
+        ],
+        "btf_resolve_size": []
+      },
+      "config": {
+        "CONFIG_KEYS": "y",
+        "CONFIG_KALLSYMS_ALL": "y",
+        "CONFIG_DEBUG_INFO_BTF": "n",
+        "CONFIG_PREEMPT_RCU": "y",
+        "CONFIG_DEBUG_LOCK_ALLOC": "n",
+        "CONFIG_LOCKDEP": "not recorded",
+        "CONFIG_CFI_CLANG": "y",
+        "CONFIG_CFI": "not recorded",
+        "CONFIG_CFI_PERMISSIVE": "n",
+        "CONFIG_SHADOW_CALL_STACK": "y"
+      },
+      "btf": null
+    },
+    {
+      "image": "kernel_mi6-4.4",
+      "image_sha256": "cd92912fc52a9f422625eaf2db98937a407644b70b2cf5149f6df7eb1f17b930",
+      "kernel_sha256": "cd92912fc52a9f422625eaf2db98937a407644b70b2cf5149f6df7eb1f17b930",
+      "release": "4.4.153-perf+",
+      "symbols": 156863,
+      "symbol_cache_sha256": "fd26144f7b5d1921bbc733f05ea8dd5cd049aa99ada75cb3230df15fb042cd5d",
+      "symbol_source": "local/zram-kernel-compat-20261011-01/kernel_mi6-4.4/symbols.json",
+      "source_binding": "Existing Developer extraction: current kernel SHA matches extraction receipt",
+      "functions": {
+        "__mutex_init": [
+          "__mutex_init"
+        ],
+        "__rcu_read_lock": [
+          "__rcu_read_lock"
+        ],
+        "__rcu_read_unlock": [
+          "__rcu_read_unlock"
+        ],
+        "_raw_spin_lock": [
+          "_raw_spin_lock"
+        ],
+        "_raw_spin_unlock": [
+          "_raw_spin_unlock"
+        ],
+        "call_rcu": [
+          "call_rcu"
+        ],
+        "capable": [
+          "capable"
+        ],
+        "clear_inode": [
+          "clear_inode"
+        ],
+        "d_drop": [
+          "d_drop"
+        ],
+        "d_hash_and_lookup": [
+          "d_hash_and_lookup"
+        ],
+        "d_splice_alias": [
+          "d_splice_alias"
+        ],
+        "dentry_open": [
+          "dentry_open"
+        ],
+        "dget_parent": [
+          "dget_parent"
+        ],
+        "dput": [
+          "dput"
+        ],
+        "fput": [
+          "fput"
+        ],
+        "full_name_hash": [
+          "full_name_hash"
+        ],
+        "generic_file_llseek": [
+          "generic_file_llseek"
+        ],
+        "generic_file_readonly_mmap": [
+          "generic_file_readonly_mmap"
+        ],
+        "generic_fillattr": [
+          "generic_fillattr"
+        ],
+        "iget5_locked": [
+          "iget5_locked"
+        ],
+        "inode_permission2": [
+          "inode_permission2"
+        ],
+        "iterate_dir": [
+          "iterate_dir"
+        ],
+        "kern_path": [
+          "kern_path"
+        ],
+        "kfree": [
+          "kfree"
+        ],
+        "memdup_user": [
+          "memdup_user"
+        ],
+        "mutex_lock": [
+          "mutex_lock"
+        ],
+        "mutex_unlock": [
+          "mutex_unlock"
+        ],
+        "new_inode": [
+          "new_inode"
+        ],
+        "path_put": [
+          "path_put"
+        ],
+        "register_key_type": [
+          "register_key_type"
+        ],
+        "set_nlink": [
+          "set_nlink"
+        ],
+        "shrink_dcache_parent": [
+          "shrink_dcache_parent"
+        ],
+        "synchronize_rcu": [
+          "synchronize_rcu"
+        ],
+        "truncate_inode_pages_final": [
+          "truncate_inode_pages_final"
+        ],
+        "unlock_new_inode": [
+          "unlock_new_inode"
+        ],
+        "vfree": [
+          "vfree"
+        ],
+        "vfs_getattr_nosec": [
+          "vfs_getattr_nosec"
+        ],
+        "vfs_llseek": [
+          "vfs_llseek"
+        ],
+        "vfs_path_lookup": [
+          "vfs_path_lookup"
+        ],
+        "vfs_setpos": [
+          "vfs_setpos"
+        ],
+        "vzalloc": [
+          "vzalloc"
+        ]
+      },
+      "missing": [],
+      "btf_queries": {
+        "bpf_get_btf_vmlinux": [],
+        "btf_find_by_name_kind": [],
+        "btf_type_by_id": [],
+        "btf_name_by_offset": [],
+        "btf_resolve_size": []
+      },
+      "config": {
+        "CONFIG_KEYS": "y",
+        "CONFIG_KALLSYMS_ALL": "y",
+        "CONFIG_DEBUG_INFO_BTF": "not recorded",
+        "CONFIG_PREEMPT_RCU": "y",
+        "CONFIG_DEBUG_LOCK_ALLOC": "n",
+        "CONFIG_LOCKDEP": "not recorded",
+        "CONFIG_CFI_CLANG": "not recorded",
+        "CONFIG_CFI": "not recorded",
+        "CONFIG_CFI_PERMISSIVE": "not recorded",
+        "CONFIG_SHADOW_CALL_STACK": "not recorded"
+      },
+      "btf": null
+    },
+    {
+      "image": "kernel_mi8-4.9",
+      "image_sha256": "93d2c9ffd6b893bf86728f82db3174f3edff0d18f92977cb49dfedd7f2fd8b64",
+      "kernel_sha256": "93d2c9ffd6b893bf86728f82db3174f3edff0d18f92977cb49dfedd7f2fd8b64",
+      "release": "4.9.186-perf-g10af704",
+      "symbols": 162946,
+      "symbol_cache_sha256": "753677f15b1aa408330711cb609fa58539d8f16a3da4aa8554bf0856f6b139ca",
+      "symbol_source": "local/zram-kernel-compat-20261011-01/kernel_mi8-4.9/symbols.json",
+      "source_binding": "Existing Developer extraction: current kernel SHA matches extraction receipt",
+      "functions": {
+        "__mutex_init": [
+          "__mutex_init"
+        ],
+        "__rcu_read_lock": [
+          "__rcu_read_lock"
+        ],
+        "__rcu_read_unlock": [
+          "__rcu_read_unlock"
+        ],
+        "_raw_spin_lock": [
+          "_raw_spin_lock"
+        ],
+        "_raw_spin_unlock": [
+          "_raw_spin_unlock"
+        ],
+        "call_rcu": [
+          "call_rcu"
+        ],
+        "capable": [
+          "capable"
+        ],
+        "clear_inode": [
+          "clear_inode"
+        ],
+        "d_drop": [
+          "d_drop"
+        ],
+        "d_hash_and_lookup": [
+          "d_hash_and_lookup"
+        ],
+        "d_splice_alias": [
+          "d_splice_alias"
+        ],
+        "dentry_open": [
+          "dentry_open"
+        ],
+        "dget_parent": [
+          "dget_parent"
+        ],
+        "dput": [
+          "dput"
+        ],
+        "fput": [
+          "fput"
+        ],
+        "full_name_hash": [
+          "full_name_hash"
+        ],
+        "generic_file_llseek": [
+          "generic_file_llseek"
+        ],
+        "generic_file_readonly_mmap": [
+          "generic_file_readonly_mmap"
+        ],
+        "generic_fillattr": [
+          "generic_fillattr"
+        ],
+        "iget5_locked": [
+          "iget5_locked"
+        ],
+        "inode_permission2": [
+          "inode_permission2"
+        ],
+        "iterate_dir": [
+          "iterate_dir"
+        ],
+        "kern_path": [
+          "kern_path"
+        ],
+        "kfree": [
+          "kfree"
+        ],
+        "memdup_user": [
+          "memdup_user"
+        ],
+        "mutex_lock": [
+          "mutex_lock"
+        ],
+        "mutex_unlock": [
+          "mutex_unlock"
+        ],
+        "new_inode": [
+          "new_inode"
+        ],
+        "path_put": [
+          "path_put"
+        ],
+        "register_key_type": [
+          "register_key_type"
+        ],
+        "set_nlink": [
+          "set_nlink"
+        ],
+        "shrink_dcache_parent": [
+          "shrink_dcache_parent"
+        ],
+        "synchronize_rcu": [
+          "synchronize_rcu"
+        ],
+        "truncate_inode_pages_final": [
+          "truncate_inode_pages_final"
+        ],
+        "unlock_new_inode": [
+          "unlock_new_inode"
+        ],
+        "vfree": [
+          "vfree"
+        ],
+        "vfs_getattr_nosec": [
+          "vfs_getattr_nosec"
+        ],
+        "vfs_llseek": [
+          "vfs_llseek"
+        ],
+        "vfs_path_lookup": [
+          "vfs_path_lookup"
+        ],
+        "vfs_setpos": [
+          "vfs_setpos"
+        ],
+        "vzalloc": [
+          "vzalloc"
+        ]
+      },
+      "missing": [],
+      "btf_queries": {
+        "bpf_get_btf_vmlinux": [],
+        "btf_find_by_name_kind": [],
+        "btf_type_by_id": [],
+        "btf_name_by_offset": [],
+        "btf_resolve_size": []
+      },
+      "config": {
+        "CONFIG_KEYS": "y",
+        "CONFIG_KALLSYMS_ALL": "y",
+        "CONFIG_DEBUG_INFO_BTF": "not recorded",
+        "CONFIG_PREEMPT_RCU": "y",
+        "CONFIG_DEBUG_LOCK_ALLOC": "n",
+        "CONFIG_LOCKDEP": "not recorded",
+        "CONFIG_CFI_CLANG": "not recorded",
+        "CONFIG_CFI": "not recorded",
+        "CONFIG_CFI_PERMISSIVE": "not recorded",
+        "CONFIG_SHADOW_CALL_STACK": "not recorded"
+      },
+      "btf": null
+    },
+    {
+      "image": "kernel_mi9-4.14",
+      "image_sha256": "229bdf7bfbc2c74a4e2fcb553bb10635624bc4d5b42a9b476d00319f2aa879fb",
+      "kernel_sha256": "229bdf7bfbc2c74a4e2fcb553bb10635624bc4d5b42a9b476d00319f2aa879fb",
+      "release": "4.14.180-perf-gb24d113",
+      "symbols": 136583,
+      "symbol_cache_sha256": "1e17f7128e76b64999ffe2ff79113b82997b7af2a0d80c61c8452b1bbf74f4b8",
+      "symbol_source": "local/zram-kernel-compat-20261011-01/kernel_mi9-4.14/symbols.json",
+      "source_binding": "Existing Developer extraction: current kernel SHA matches extraction receipt",
+      "functions": {
+        "__mutex_init": [
+          "__mutex_init"
+        ],
+        "__rcu_read_lock": [
+          "__rcu_read_lock"
+        ],
+        "__rcu_read_unlock": [
+          "__rcu_read_unlock"
+        ],
+        "_raw_spin_lock": [
+          "_raw_spin_lock"
+        ],
+        "_raw_spin_unlock": [
+          "_raw_spin_unlock"
+        ],
+        "call_rcu": [
+          "call_rcu"
+        ],
+        "capable": [
+          "capable"
+        ],
+        "clear_inode": [
+          "clear_inode"
+        ],
+        "d_drop": [
+          "d_drop"
+        ],
+        "d_hash_and_lookup": [
+          "d_hash_and_lookup"
+        ],
+        "d_splice_alias": [
+          "d_splice_alias"
+        ],
+        "dentry_open": [
+          "dentry_open"
+        ],
+        "dget_parent": [
+          "dget_parent"
+        ],
+        "dput": [
+          "dput"
+        ],
+        "fput": [
+          "fput"
+        ],
+        "full_name_hash": [
+          "full_name_hash"
+        ],
+        "generic_file_llseek": [
+          "generic_file_llseek"
+        ],
+        "generic_file_readonly_mmap": [
+          "generic_file_readonly_mmap"
+        ],
+        "generic_fillattr": [
+          "generic_fillattr"
+        ],
+        "iget5_locked": [
+          "iget5_locked"
+        ],
+        "inode_permission2": [
+          "inode_permission2"
+        ],
+        "iterate_dir": [
+          "iterate_dir"
+        ],
+        "kern_path": [
+          "kern_path"
+        ],
+        "kfree": [
+          "kfree"
+        ],
+        "memdup_user": [
+          "memdup_user"
+        ],
+        "mutex_lock": [
+          "mutex_lock"
+        ],
+        "mutex_unlock": [
+          "mutex_unlock"
+        ],
+        "new_inode": [
+          "new_inode"
+        ],
+        "path_put": [
+          "path_put"
+        ],
+        "register_key_type": [
+          "register_key_type"
+        ],
+        "set_nlink": [
+          "set_nlink"
+        ],
+        "shrink_dcache_parent": [
+          "shrink_dcache_parent"
+        ],
+        "synchronize_rcu": [
+          "synchronize_rcu"
+        ],
+        "truncate_inode_pages_final": [
+          "truncate_inode_pages_final"
+        ],
+        "unlock_new_inode": [
+          "unlock_new_inode"
+        ],
+        "vfree": [
+          "vfree"
+        ],
+        "vfs_getattr_nosec": [
+          "vfs_getattr_nosec"
+        ],
+        "vfs_llseek": [
+          "vfs_llseek"
+        ],
+        "vfs_path_lookup": [
+          "vfs_path_lookup"
+        ],
+        "vfs_setpos": [
+          "vfs_setpos"
+        ],
+        "vzalloc": [
+          "vzalloc"
+        ]
+      },
+      "missing": [],
+      "btf_queries": {
+        "bpf_get_btf_vmlinux": [],
+        "btf_find_by_name_kind": [],
+        "btf_type_by_id": [],
+        "btf_name_by_offset": [],
+        "btf_resolve_size": []
+      },
+      "config": {
+        "CONFIG_KEYS": "y",
+        "CONFIG_KALLSYMS_ALL": "y",
+        "CONFIG_DEBUG_INFO_BTF": "not recorded",
+        "CONFIG_PREEMPT_RCU": "y",
+        "CONFIG_DEBUG_LOCK_ALLOC": "n",
+        "CONFIG_LOCKDEP": "not recorded",
+        "CONFIG_CFI_CLANG": "not recorded",
+        "CONFIG_CFI": "not recorded",
+        "CONFIG_CFI_PERMISSIVE": "not recorded",
+        "CONFIG_SHADOW_CALL_STACK": "n"
+      },
+      "btf": null
+    }
+  ],
+  "survey_tool_sha256": "2d9cc337a894a01efa186e6266b5d5d094ed48a226d747f76d295c09f0070937",
+  "prefix_fixture_sha256": "7a45832f513701452a77a43cc72014c3edf017a77dcaad165b7cd90231d29774",
+  "production_source_commit": "c5c49e98164e0129e29b4bd3ba05c8affcd0b352"
+}

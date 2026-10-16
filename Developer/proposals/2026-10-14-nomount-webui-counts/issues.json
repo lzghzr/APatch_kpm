@@ -1,0 +1,28 @@
+{
+  "module": "nomount",
+  "source_commit": "349b684b6eb6bd550992f381102e28dc1a16bc2b",
+  "append_issues": [
+    {
+      "id": "DEV-037",
+      "class": "product",
+      "severity": "低",
+      "owner": "Developer",
+      "status": "fixed(待复核)",
+      "title": "ZIP路径末尾斜杠使WebUI模块计数为零",
+      "evidence": "用户反馈四个模块实际注入但计数零；既有42条规则来源含modules//，原版首页/模块列表/卡片刷新在回放中均计数零；启动脚本读取MODULE_DIR后未去末尾斜杠。",
+      "impact": "已加载模块的首页计数、列表状态和卡片刷新显示不准确；现有文件规则仍可生效。",
+      "suggestion": "规范启动根目录，并在WebUI解析入口归一化已有规则来源路径，保留原版计数逻辑。",
+      "closure": "Auditor复核生成副本与归档ZIP差异，Tester绑定新ZIP实例验证实际四模块首页、列表及卡片刷新计数和安装/启动流程，由独立于Developer的角色复核关闭。",
+      "frequency": "双斜杠来源的模块重复出现",
+      "confidence": "代码和既有来源重放确认；新ZIP实际WebView待复核",
+      "found_in_build": "nomount-zip-0.5.1+gd59432122045.ndk26.3.11579264#2",
+      "found_source_commit": "cfb971d195d997808b68567b8ffc61a4dcd32b90",
+      "found_sha256": "3c101a96ddb42b6ca1ce33d9d2f17270f918704bcfdf19ee4da64b066c0490e8",
+      "fixed_in_commit": "349b684b6eb6bd550992f381102e28dc1a16bc2b",
+      "fixed_instance_id": "nomount-zip-0.5.1+g98115e4047c4.ndk26.3.11579264#1",
+      "fixed_sha256": "39b6af17471629345c0291e821a81de216154599649be3bdba6740c8cdd1fec1",
+      "closed_by": null,
+      "reviews": []
+    }
+  ]
+}

@@ -221,11 +221,13 @@
         "removal_trigger": "KernelPatch 恢复/支持 4.4 内核兼容后删除该转接路径",
         "record": "docs/records/2026-10-11-kp-4.4-known-defect.md"
       }
-    ]
+    ],
+    "artifact_naming": "产物展示名与文件前缀采用模块显示名（如 `NoMount`），并与内嵌注册名精确一致；同一构建的产物名大小写冲突被拒（`artifact_gate.py`）；**历史归档**仍按冻结源码的精确注册名核对（大小写不敏感仅适用于非归档的发现阶段，见 tools/identity.py）；低版本兼容派生件命名规则见 AGENTS.md。"
   },
   "verification_levels": [
     "静态",
     "离线",
     "真机"
-  ]
+  ],
+  "updated_at": "2026-10-14T18:11:57Z"
 }

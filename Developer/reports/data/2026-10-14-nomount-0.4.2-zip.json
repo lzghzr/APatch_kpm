@@ -1,0 +1,118 @@
+{
+  "module": "nomount",
+  "version": "0.4.2",
+  "kind": "companion-zip-handoff",
+  "handoff_by": "Developer",
+  "handoff_at": "2026-10-14T09:12:53.569127+00:00",
+  "manifest": {
+    "module": "nomount",
+    "kind": "companion-zip",
+    "version": "0.4.2",
+    "source_commit": "39c7e474b86464dd6defd3bbe5677c4ce493d278",
+    "build_id": "nomount-zip-0.4.2+g68443b1fb5d4.ndk26.3.11579264",
+    "instance_id": "nomount-zip-0.4.2+g68443b1fb5d4.ndk26.3.11579264#1",
+    "upstream_commit": "7046c7ad3ee0bf4ae66e80f6b93b1e30db0cb4e3",
+    "source_dirty": false,
+    "input_unchanged": true,
+    "source_fingerprint_sha256": "68443b1fb5d41ed4e211dd862eb19bf21b43db359a4102c9b2c16ac8db010a3f",
+    "inputs": {
+      "nomount/module/NOTICE.md": "7461b02c61d3bb5dbf93d49f03e455a139d52a388867be62fda508f84c4fd0c2",
+      "nomount/module/README.md": "eb58465ed476370c81b17d0184fdc6a089b139d2dc15e161ad5185e43048239f",
+      "nomount/module/boot-completed.sh": "05757ae28aa68fee9c5a0655050b86285dfba89bc36f253c8d5037d57719b9dc",
+      "nomount/module/common.sh": "c4806204688a189125423147aa612b4fbb09a4636cc7ce3df634a34d2c297f45",
+      "nomount/module/customize.sh": "b7944d51f2d53bc81b8188c9afa4fc1917c720ef7957a1fc9a31b0cd2a2295a8",
+      "nomount/module/metamount.sh": "947e469fe2f278a3117e38b75b7cfa7b5a356513bcd8bdecb5fb1dae1c460c5b",
+      "nomount/module/module.prop": "0d4b8eaa823d079bf29ca3e9d3cbb06368dea7a1eaf0875d9e3cae44a0e817eb",
+      "nomount/module/post-fs-data.sh": "062827cc3cbdb97ff39b2c8f360a74261c316e8f0a5dabbb19946f7c8fea80e6",
+      "nomount/module/uninstall.sh": "63e8e956eccff721ddfd8d7c40ee930587623775ae268e33a7398bc4523a474d",
+      "nomount/tools/build_nm.sh": "ff75bc209eb1dc91ab50e80eeb4024ccc8058afe0607f5e13b2dd8b84dcbaaf5",
+      "nomount/tools/build_zip.py": "613777e3eba3d249d50752901bdefcb18a06cf254165ddf7c9d948cb4fc152c0",
+      "nomount/nomount/LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "nomount/nomount/module/metainstall.sh": "ceb9ab2e45cb7325be8ec0ffe4d821ce82d0e00829bf99417939241b4a21b12a",
+      "nomount/nomount/module/rule-paths.sh": "e731b64b9bbdf6da6c28296688b1830a16be200b5fd914b6d1e382495dd8f6ce",
+      "nomount/nomount/module/webroot/index.html": "12dc8372372c9a702eddb97b559b9c4b309ed5254acb680127f980c3f360dc26",
+      "nomount/nomount/module/webroot/index.js": "bdceffc1c02d79b144f7f22d75f9ea834ae18ecc141389ea950646811032d190",
+      "nomount/nomount/module/webroot/locales/ar-dz.json": "cbcb1f788e8bbc3960d576f7fd07f3fd0ab20026b7e6a4c51c73b5c9714d4c58",
+      "nomount/nomount/module/webroot/locales/ar.json": "bf35bd42349f17f6e4e4c3de66eb5b77c0601e6b2954433acdf07614b394a1d0",
+      "nomount/nomount/module/webroot/locales/bn.json": "831d470bad4f5dc0896f4e70f6389cd0922386045a410e1e07656c22820c429a",
+      "nomount/nomount/module/webroot/locales/de.json": "0d4a8d58415ab96436015a45e41a6dba2d89ec44b6b554ca0a252078076804ab",
+      "nomount/nomount/module/webroot/locales/en.json": "9fa4013e203bc7c8024e47c6cd74952724b9d925e2fbf645f0efc1ab11c8ae4e",
+      "nomount/nomount/module/webroot/locales/es.json": "3603bf8ca786781f091db0dbd0374847ad931d95a1e16c560b362869a70c6460",
+      "nomount/nomount/module/webroot/locales/id.json": "174a8ed42891df8d7065b761032e160565eb943b14f9f6d840f6971d7e3c8886",
+      "nomount/nomount/module/webroot/locales/ja.json": "9eabbe93f5cb91cbf1d07df4d9f775aee2b9d93ed7434d3c069b4253f04aafd8",
+      "nomount/nomount/module/webroot/locales/pl.json": "19e3c4d236eaf2bc7535cbe1280a06e83db6d79e98f0998134eae6239e0abe52",
+      "nomount/nomount/module/webroot/locales/ru.json": "4d0b362e03ed9ca9906c445618da964877a1468a397473f73f725fb85c57b4a7",
+      "nomount/nomount/module/webroot/locales/tr.json": "9e2884d153b84b24af3f1cdaab224016bcc982dfaefedcf738df27fadeae3f43",
+      "nomount/nomount/module/webroot/locales/vi.json": "94eef32c1f9186b615cf0db7283f46a3f4e624b877cc205189186e5f50eee48d",
+      "nomount/nomount/module/webroot/locales/zh.json": "9f3520cc6aa193017dbc172188d0e4c24896754bea423862b927983db4f6401e",
+      "nomount/nomount/module/webroot/styles.css": "eb1b6808d2a8c0cf5daff8d2908e510ce9c1da889addf7da3aeaa3d56ea2f529",
+      "nomount/nomount/userspace/src/nm.c": "b5aa6e46bb675b3d594a16c5002a67c5cedfe6442f0c36d603efbc79d6e9c721",
+      "nomount/nomount/userspace/src/nm.h": "4c2771b41a43a8049d2230b69a0c064fdd46fdf8c4bf4816c69b3956eaff5f1d"
+    },
+    "recipe": {
+      "toolchain": "ndk26.3.11579264",
+      "tools_sha256": {
+        "clang": "a66818d000192ef221cb5b611bdc17d8d06ecf964942b08cf8f0d2f2080090db",
+        "ld.lld": "5dbc9072f627d20fe0a168933c35e20bed4e64d9f705e37c06434d7b7a4766e9"
+      },
+      "host_tag": "darwin-x86_64",
+      "command": [
+        "sh",
+        "build-nm.sh",
+        "nm"
+      ],
+      "script_sha256": "ff75bc209eb1dc91ab50e80eeb4024ccc8058afe0607f5e13b2dd8b84dcbaaf5"
+    },
+    "protocol": {
+      "transport": "keyring",
+      "payload_size": 4096,
+      "read_probes": [
+        "version",
+        "uid block_isolated"
+      ]
+    },
+    "entries": {
+      "LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "NOTICE.md": "7461b02c61d3bb5dbf93d49f03e455a139d52a388867be62fda508f84c4fd0c2",
+      "README.md": "eb58465ed476370c81b17d0184fdc6a089b139d2dc15e161ad5185e43048239f",
+      "bin/nm": "34d83382549780d411507393e306423df6b9ee6c493a97eb86567dd82837db83",
+      "boot-completed.sh": "05757ae28aa68fee9c5a0655050b86285dfba89bc36f253c8d5037d57719b9dc",
+      "common.sh": "c4806204688a189125423147aa612b4fbb09a4636cc7ce3df634a34d2c297f45",
+      "customize.sh": "b7944d51f2d53bc81b8188c9afa4fc1917c720ef7957a1fc9a31b0cd2a2295a8",
+      "metainstall.sh": "ceb9ab2e45cb7325be8ec0ffe4d821ce82d0e00829bf99417939241b4a21b12a",
+      "metamount.sh": "947e469fe2f278a3117e38b75b7cfa7b5a356513bcd8bdecb5fb1dae1c460c5b",
+      "module.prop": "0d4b8eaa823d079bf29ca3e9d3cbb06368dea7a1eaf0875d9e3cae44a0e817eb",
+      "post-fs-data.sh": "062827cc3cbdb97ff39b2c8f360a74261c316e8f0a5dabbb19946f7c8fea80e6",
+      "rule-paths.sh": "e731b64b9bbdf6da6c28296688b1830a16be200b5fd914b6d1e382495dd8f6ce",
+      "sources/build-nm.sh": "ff75bc209eb1dc91ab50e80eeb4024ccc8058afe0607f5e13b2dd8b84dcbaaf5",
+      "sources/nm.c": "b5aa6e46bb675b3d594a16c5002a67c5cedfe6442f0c36d603efbc79d6e9c721",
+      "sources/nm.h": "4c2771b41a43a8049d2230b69a0c064fdd46fdf8c4bf4816c69b3956eaff5f1d",
+      "uninstall.sh": "63e8e956eccff721ddfd8d7c40ee930587623775ae268e33a7398bc4523a474d",
+      "webroot/index.html": "12dc8372372c9a702eddb97b559b9c4b309ed5254acb680127f980c3f360dc26",
+      "webroot/index.js": "9079f70b26246ac066401e877822924d5483f41b1358fe178190fe54fb632982",
+      "webroot/locales/ar-dz.json": "ead806327f6c8d78b702dc417f37ada2711231410a19e9445bee5a273b6840e5",
+      "webroot/locales/ar.json": "0f125767aaf6c466dc4df13cb1de26439e61eabec6f76504b1a2ffe4c9097427",
+      "webroot/locales/bn.json": "2e9905f8db075db9012ec41abe3ba9e1d3bbfbf0969c365dd730001873919bd9",
+      "webroot/locales/de.json": "22089d70b1cdee1fc24b8c200fe975774e21eac8a5607b4ae7f8fd8eae9736d9",
+      "webroot/locales/en.json": "1fac3c82928fe2d8a1cff20589720b618a6c30c013a698b1f0aeee3f0466c06d",
+      "webroot/locales/es.json": "d05b200698994fd1f2eac6c059518a7032a054df5ad0431754c352439236e756",
+      "webroot/locales/id.json": "75e2d4f19d390bff992c66ce8fc05a939daa6c61ca3762409440fbf040825a83",
+      "webroot/locales/ja.json": "c754a53a5b27b6e5148a96501a857844ea89aecf42206c29229d327e022acf99",
+      "webroot/locales/pl.json": "02fe5a5f321d30ff7894fda7ebadf602e52c4bbdc16f8c253912883a493bf017",
+      "webroot/locales/ru.json": "8984df85d412f41d17645f00cdd00f0e150a4fc07ae4cb41b89386a0a21e1903",
+      "webroot/locales/tr.json": "c6f74ad8f468d7f94c3dcfb0bfc72848ba545457178bb89e47c3a3f165ab9ccb",
+      "webroot/locales/vi.json": "88c406526da9f3f3d41813b37b2b45718293c765626f7712f4f595d2cf3ba228",
+      "webroot/locales/zh.json": "a5f9290a8aa95920ee8a232b65363acbf3149d58368947112b8440bce8dda845",
+      "webroot/styles.css": "eb1b6808d2a8c0cf5daff8d2908e510ce9c1da889addf7da3aeaa3d56ea2f529"
+    },
+    "artifacts": [
+      {
+        "name": "nomount-kpm.zip",
+        "path": "artifacts/companion/nomount/nomount-zip-0.4.2+g68443b1fb5d4.ndk26.3.11579264#1/nomount-kpm.zip",
+        "sha256": "9798982ea8d114c6faed4e322882cc2ba2735ac7ec0522c1c65c3024a337138a",
+        "size": 79475
+      }
+    ],
+    "scope": "Developer reproducible ZIP; device installation and boot not tested"
+  }
+}

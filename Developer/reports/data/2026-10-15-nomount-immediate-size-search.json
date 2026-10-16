@@ -1,0 +1,596 @@
+{
+  "scope": "Developer offline candidate search; numeric occurrences are not type-size evidence",
+  "implementation_source_commit": "2014db6b2bc2456707e399de3607b9f8e0e62bfb",
+  "targets": [
+    {
+      "image": "kernel_img/boot_los23.2.img",
+      "image_sha256": "199658639f7389153ee8a7efe00154f0892e272ddc872728ea326e3e1ce2383b",
+      "kernel_sha256": "299f7e2580c54684c3b825bea57f1b16c53055f485ebd2b937593ac57ff9b0d2",
+      "source_reference": {
+        "url": "https://github.com/LineageOS/android_kernel_sony_sm8250/tree/7fc8455b2fa84be76364c2457e6503b867ceb12a",
+        "commit": "7fc8455b2fa84be76364c2457e6503b867ceb12a",
+        "relationship": "version-marked source"
+      },
+      "counts": {
+        "core_numeric_occurrences": 19901,
+        "init_numeric_occurrences": 304,
+        "core_memory_candidates": 1701,
+        "core_direct_argument_candidates": 263,
+        "source_files_scanned": 54012,
+        "source_definitions_found": 240,
+        "source_definitions_unresolved": 1
+      },
+      "core_range": [
+        4096,
+        30932992
+      ],
+      "init_range": [
+        49807360,
+        50375488
+      ],
+      "examples": [
+        {
+          "offset": 9337420,
+          "instruction": 1384129794,
+          "function": "tty_default_fops",
+          "function_offset": 9337400,
+          "relative_word": 5,
+          "kind": "movz",
+          "value": 296,
+          "rd": 2,
+          "rn": null,
+          "sf": 0,
+          "next_call": {
+            "distance_words": 1,
+            "offset": 9337424,
+            "target_offset": 62080,
+            "target": "__memcpy",
+            "tail": false
+          },
+          "object": "file_operations",
+          "interpretation": "known complete-copy/zero control",
+          "window_offset": 9337412,
+          "window_words": [
+            "f00119c1",
+            "913aa021",
+            "52802502",
+            "97dc9e0c",
+            "a8c17bfd",
+            "f85f8e5e",
+            "d65f03c0",
+            "b001c508",
+            "f940d508",
+            "b4000168",
+            "f800865e"
+          ],
+          "source_definitions": [
+            {
+              "path": "drivers/tty/tty_io.c",
+              "line": 3267
+            }
+          ]
+        },
+        {
+          "offset": 4945940,
+          "instruction": 1384128770,
+          "function": "address_space_init_once",
+          "function_offset": 4945920,
+          "relative_word": 5,
+          "kind": "movz",
+          "value": 264,
+          "rd": 2,
+          "rn": null,
+          "sf": 0,
+          "next_call": {
+            "distance_words": 2,
+            "offset": 4945948,
+            "target_offset": 62848,
+            "target": "__memset",
+            "tail": false
+          },
+          "object": "address_space",
+          "interpretation": "known complete-zero control",
+          "window_offset": 4945932,
+          "window_words": [
+            "910003fd",
+            "2a1f03e1",
+            "52802102",
+            "aa0003f3",
+            "97ed5f59",
+            "52800428",
+            "d0011b81",
+            "910ee421",
+            "9001a342",
+            "911db042",
+            "9100c260"
+          ],
+          "source_definitions": [
+            {
+              "path": "fs/inode.c",
+              "line": 372
+            }
+          ]
+        },
+        {
+          "offset": 5463456,
+          "instruction": 1384128514,
+          "function": "proc_pid_limits",
+          "function_offset": 5463372,
+          "relative_word": 21,
+          "kind": "movz",
+          "value": 256,
+          "rd": 2,
+          "rn": null,
+          "sf": 0,
+          "next_call": {
+            "distance_words": 3,
+            "offset": 5463468,
+            "target_offset": 62080,
+            "target": "__memcpy",
+            "tail": false
+          },
+          "object": "rlimit[RLIM_NLIMITS]",
+          "interpretation": "different object type",
+          "window_offset": 5463448,
+          "window_words": [
+            "f9444a88",
+            "910043e0",
+            "52802002",
+            "910043f7",
+            "910aa101",
+            "97eb6535",
+            "f9444e88",
+            "f94007e1",
+            "91202100",
+            "945c1246",
+            "d0012e21"
+          ],
+          "source_definitions": [
+            {
+              "path": "fs/proc/base.c",
+              "line": 591
+            }
+          ]
+        },
+        {
+          "offset": 6415436,
+          "instruction": 1384129794,
+          "function": "full_proxy_open",
+          "function_offset": 6415332,
+          "relative_word": 26,
+          "kind": "movz",
+          "value": 296,
+          "rd": 2,
+          "rn": null,
+          "sf": 0,
+          "next_call": {
+            "distance_words": 3,
+            "offset": 6415448,
+            "target_offset": 4636268,
+            "target": "kmem_cache_alloc_trace",
+            "tail": false
+          },
+          "object": "file_operations",
+          "interpretation": "additional complete allocation witness",
+          "window_offset": 6415428,
+          "window_words": [
+            "d0014168",
+            "52901801",
+            "52802502",
+            "f9448100",
+            "72a00c01",
+            "97f93685",
+            "aa0003f5",
+            "b4000700",
+            "b000b268",
+            "9114b108",
+            "f9003ea8"
+          ],
+          "source_definitions": [
+            {
+              "path": "fs/debugfs/file.c",
+              "line": 264
+            }
+          ]
+        },
+        {
+          "offset": 4842112,
+          "instruction": 1384124674,
+          "function": "alloc_pipe_info",
+          "function_offset": 4842044,
+          "relative_word": 17,
+          "kind": "movz",
+          "value": 136,
+          "rd": 2,
+          "rn": null,
+          "sf": 0,
+          "next_call": {
+            "distance_words": 1,
+            "offset": 4842116,
+            "target_offset": 4636268,
+            "target": "kmem_cache_alloc_trace",
+            "tail": false
+          },
+          "object": "pipe_inode_info",
+          "interpretation": "different object type",
+          "window_offset": 4842104,
+          "window_words": [
+            "f9447d20",
+            "72a00e01",
+            "52801102",
+            "97ff36fa",
+            "b40009a0",
+            "53107ea8",
+            "aa0003f4",
+            "35000088",
+            "52800300",
+            "97f6d69b",
+            "36000060"
+          ],
+          "source_definitions": [
+            {
+              "path": "fs/pipe.c",
+              "line": 655
+            }
+          ]
+        },
+        {
+          "offset": 6925760,
+          "instruction": 1384126466,
+          "function": "erofs_fill_super",
+          "function_offset": 6925684,
+          "relative_word": 19,
+          "kind": "movz",
+          "value": 192,
+          "rd": 2,
+          "rn": null,
+          "sf": 0,
+          "next_call": {
+            "distance_words": 3,
+            "offset": 6925772,
+            "target_offset": 4636268,
+            "target": "kmem_cache_alloc_trace",
+            "tail": false
+          },
+          "object": "erofs_sb_info",
+          "interpretation": "different object type",
+          "window_offset": 6925752,
+          "window_words": [
+            "d0013d88",
+            "52901801",
+            "52801802",
+            "f9447d00",
+            "72a00c01",
+            "97f74428",
+            "b4002ec0",
+            "f9407e68",
+            "f9022a60",
+            "aa0003f5",
+            "aa1f03e1"
+          ],
+          "source_definitions": [
+            {
+              "path": "fs/erofs/super.c",
+              "line": 532
+            }
+          ]
+        },
+        {
+          "offset": 5027608,
+          "instruction": 2432958728,
+          "function": "make_empty_dir_inode",
+          "function_offset": 5027524,
+          "relative_word": 21,
+          "kind": "add",
+          "value": 256,
+          "rd": 8,
+          "rn": 8,
+          "sf": 1,
+          "next_call": null,
+          "object": null,
+          "interpretation": "ADRP/ADD address page offset, not a length",
+          "window_offset": 5027600,
+          "window_words": [
+            "79000668",
+            "f0013828",
+            "91040108",
+            "f9004a7f",
+            "f900ba68",
+            "f9400bf3",
+            "a8c27bfd",
+            "f85f8e5e",
+            "d65f03c0",
+            "f940b808",
+            "f0013829"
+          ],
+          "source_definitions": []
+        }
+      ],
+      "remaining_fields": [
+        "inode_ops_size",
+        "super_ops_size",
+        "dentry_ops_size",
+        "key_type_size"
+      ]
+    },
+    {
+      "image": "kernel_img/B2N-416G_boot.img",
+      "image_sha256": "ea919143cb1f057f3d35d726294166d5186f376e9751941b83940e75d48a288c",
+      "kernel_sha256": "7633fbac5ce30b726a1acdbf57f730aa847a9510984a25bc23f9ddcdb0956e1c",
+      "source_reference": {
+        "url": "https://github.com/nokia-dev/android_kernel_nokia_sdm660/tree/67c3e103decafc3ff8a361c39f079a0dfce2a23c",
+        "commit": "67c3e103decafc3ff8a361c39f079a0dfce2a23c",
+        "relationship": "semantic reference 4.4.196 for image 4.4.192"
+      },
+      "counts": {
+        "core_numeric_occurrences": 14894,
+        "init_numeric_occurrences": 330,
+        "core_memory_candidates": 609,
+        "core_direct_argument_candidates": 563,
+        "source_files_scanned": 43024,
+        "source_definitions_found": 374,
+        "source_definitions_unresolved": 27
+      },
+      "core_range": [
+        2048,
+        16252928
+      ],
+      "init_range": [
+        24641536,
+        25081304
+      ],
+      "examples": [
+        {
+          "offset": 5301268,
+          "instruction": 3531610882,
+          "function": "tty_default_fops",
+          "function_offset": 5301260,
+          "relative_word": 2,
+          "kind": "movz",
+          "value": 216,
+          "rd": 2,
+          "rn": null,
+          "sf": 1,
+          "next_call": {
+            "distance_words": 4,
+            "offset": 5301284,
+            "target_offset": 3057984,
+            "target": "__memset",
+            "tail": false
+          },
+          "object": "file_operations",
+          "interpretation": "known complete-copy/zero control",
+          "window_offset": 5301260,
+          "window_words": [
+            "a9be7bfd",
+            "52800001",
+            "d2801b02",
+            "910003fd",
+            "f9000bf3",
+            "aa0003f3",
+            "97f77147",
+            "f0ffe1e0",
+            "91215000",
+            "f9000660",
+            "b0ffffe0"
+          ],
+          "source_definitions": [
+            {
+              "path": "drivers/tty/tty_io.c",
+              "line": 3581
+            }
+          ]
+        },
+        {
+          "offset": 1468520,
+          "instruction": 3531608834,
+          "function": "address_space_init_once",
+          "function_offset": 1468512,
+          "relative_word": 2,
+          "kind": "movz",
+          "value": 152,
+          "rd": 2,
+          "rn": null,
+          "sf": 1,
+          "next_call": {
+            "distance_words": 4,
+            "offset": 1468536,
+            "target_offset": 3057984,
+            "target": "__memset",
+            "tail": false
+          },
+          "object": "address_space",
+          "interpretation": "known complete-zero control",
+          "window_offset": 1468512,
+          "window_words": [
+            "a9be7bfd",
+            "52800001",
+            "d2801302",
+            "910003fd",
+            "f9000bf3",
+            "aa0003f3",
+            "94061032",
+            "52800400",
+            "f0010a42",
+            "72a04100",
+            "90009b21"
+          ],
+          "source_definitions": [
+            {
+              "path": "fs/inode.c",
+              "line": 344
+            }
+          ]
+        },
+        {
+          "offset": 1804656,
+          "instruction": 3531612162,
+          "function": "proc_pid_limits",
+          "function_offset": 1804564,
+          "relative_word": 23,
+          "kind": "movz",
+          "value": 256,
+          "rd": 2,
+          "rn": null,
+          "sf": 1,
+          "next_call": {
+            "distance_words": 6,
+            "offset": 1804680,
+            "target_offset": 3057216,
+            "target": "__memcpy",
+            "tail": false
+          },
+          "object": "rlimit[RLIM_NLIMITS]",
+          "interpretation": "different object type",
+          "window_offset": 1804648,
+          "window_words": [
+            "f943f6a1",
+            "910163b8",
+            "d2802002",
+            "aa1803e0",
+            "910a6021",
+            "900098b9",
+            "900098ba",
+            "d0009857",
+            "9404c72e",
+            "d2800013",
+            "f943faa0"
+          ],
+          "source_definitions": [
+            {
+              "path": "fs/proc/base.c",
+              "line": 634
+            }
+          ]
+        },
+        {
+          "offset": 2609612,
+          "instruction": 3531612162,
+          "function": "inode_doinit_with_dentry",
+          "function_offset": 2609344,
+          "relative_word": 67,
+          "kind": "movz",
+          "value": 256,
+          "rd": 2,
+          "rn": null,
+          "sf": 1,
+          "next_call": {
+            "distance_words": 2,
+            "offset": 2609620,
+            "target_offset": 1321620,
+            "target": "kmem_cache_alloc_trace",
+            "tail": false
+          },
+          "object": "SELinux context bytes: INITCONTEXTLEN + 1",
+          "interpretation": "different object type",
+          "window_offset": 2609604,
+          "window_words": [
+            "52800801",
+            "72a04801",
+            "d2802002",
+            "f944d400",
+            "97fb1630",
+            "aa0003f8",
+            "b4000460",
+            "3903fc1f",
+            "9000933c",
+            "913d379c",
+            "aa1503e0"
+          ],
+          "source_definitions": [
+            {
+              "path": "security/selinux/hooks.c",
+              "line": 1295
+            }
+          ]
+        },
+        {
+          "offset": 6047032,
+          "instruction": 2969804866,
+          "function": "loop_set_status64",
+          "function_offset": 6046984,
+          "relative_word": 12,
+          "kind": "adds",
+          "value": 232,
+          "rd": 2,
+          "rn": 2,
+          "sf": 1,
+          "next_call": null,
+          "object": "loop_info64",
+          "interpretation": "different object type",
+          "window_offset": 6047024,
+          "window_words": [
+            "f9400443",
+            "aa0103e2",
+            "b103a042",
+            "fa433042",
+            "9a9f87e4",
+            "b4000144",
+            "d2801d02",
+            "97f495fd",
+            "128001a1",
+            "b5000140",
+            "910083a1"
+          ],
+          "source_definitions": [
+            {
+              "path": "drivers/block/loop.c",
+              "line": 1310
+            }
+          ]
+        },
+        {
+          "offset": 1479584,
+          "instruction": 2432827392,
+          "function": "is_bad_inode",
+          "function_offset": 1479576,
+          "relative_word": 2,
+          "kind": "add",
+          "value": 128,
+          "rd": 0,
+          "rn": 0,
+          "sf": 1,
+          "next_call": null,
+          "object": null,
+          "interpretation": "ADRP/ADD address page offset, not a length",
+          "window_offset": 1479576,
+          "window_words": [
+            "f9401001",
+            "b0007180",
+            "91020000",
+            "eb00003f",
+            "1a9f17e0",
+            "d65f03c0",
+            "a9be7bfd",
+            "910003fd",
+            "a90153f3",
+            "aa0003f3",
+            "f9407401"
+          ],
+          "source_definitions": []
+        }
+      ],
+      "remaining_fields": [
+        "inode_ops_size",
+        "super_ops_size",
+        "dentry_ops_size",
+        "key_type_size"
+      ]
+    }
+  ],
+  "search_boundaries": [
+    "MOVZ, logical ORR from ZR, ADD/SUB immediates and scalar literal loads of the six reference sizes",
+    "Core and init text were searched separately; init code can be reclaimed and is not automatically a runtime anchor",
+    "The next-call heuristic examines only the first direct B/BL within 16 words, without full register liveness or control-flow proof",
+    "Does not exhaustively recover inline copies, scaled element counts, MOVK expressions, helper chains or endpoint differences",
+    "Source definition matching uses C text patterns; unmatched definitions remain unresolved",
+    "B2N source is a nearby semantic reference, not proof of matching layout"
+  ],
+  "result": "Known controls reproduced and one additional file_operations allocation witness found; no new accepted evidence for the four remaining complete sizes",
+  "scripts": {
+    "scan_immediates.py": "5a6c5e9f64eac690db0997d3fca29f528e99b8b7462ad86181a3a8a1724ae942",
+    "scan_init.py": "42e722e35caa109ffaa36371b8fdca82071e4e48ab4b97ad26ee72cc0eb5131b",
+    "loops.py": "f13363c423eef6d44deefe725aed6b8a4f34a40c75b19ac33c75fb2f34f4de43",
+    "source_candidates_02.py": "7e336d9334464def72ba4d8aa016091f0341d4948231fe552056965b25cf3c01"
+  }
+}

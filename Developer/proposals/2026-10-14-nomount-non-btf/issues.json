@@ -1,0 +1,54 @@
+{
+  "module": "nomount",
+  "kind": "issue-proposal",
+  "proposed_by": "Developer",
+  "analysis_commit": "d3da1117da53c5d886d7667bc56d342e893cadd3",
+  "identity": {
+    "source_commit": "e9ab619ea75e7fd611c28dcc0328dbb99ebf1dfb",
+    "instance_id": "nomount-2.1.1-20261014+gba09058a01e9.r72c71e2f.kpb51197a.ndk26.3.11579264#1",
+    "artifact_sha256": "d78b11a936b7781909118a66bdc104cee2925b5db8d6288c9137e08d1e7f41c0"
+  },
+  "report": "Developer/reports/2026-10-14-nomount-non-btf-assessment.md",
+  "issues": [
+    {
+      "status": "open",
+      "found_in_build": "nomount-2.1.1-20261014+gba09058a01e9.r72c71e2f.kpb51197a.ndk26.3.11579264#1",
+      "source_commit": "e9ab619ea75e7fd611c28dcc0328dbb99ebf1dfb",
+      "artifact_sha256": "d78b11a936b7781909118a66bdc104cee2925b5db8d6288c9137e08d1e7f41c0",
+      "fixed_in_commit": null,
+      "closed_by": null,
+      "reviews": [],
+      "id": "DEV-039",
+      "class": "product",
+      "severity": "中",
+      "owner": "Developer",
+      "title": "无 BTF 动态初始化的后续布局及 ABI 降级未补齐",
+      "evidence": "nomount/nm_inode_entry.c:35-52在calculate_offsets之后直接调用calculate_btf_rule_prefixes；nomount/nm_operations.c:18-24、nm_offsets.c:694-712和后续ABI准备仍要求BTF。绑定发布件4.19日志基础布局成功后返回-61。",
+      "impact": "现有动态件无法在无BTF目标完整加载；只补control仍不能满足维护者请求。",
+      "suggestion": "按实际初始化链取得必要布局和ABI；分配容量与原生表复制范围分别处理，缺证据继续拒绝加载。",
+      "closure": "Developer交接新冻结候选及4.4动态legacy派生件；Auditor独立复核推导和复制范围；Tester验证4.19非BTF动态及4.4动态派生件后，由独立角色复核关闭。",
+      "frequency": "绑定4.19无BTF初始化路径确定触发；其他目标待验证",
+      "confidence": "源码路径与绑定实机日志支持；非新增实机测试"
+    },
+    {
+      "status": "open",
+      "found_in_build": "nomount-2.1.1-20261014+gba09058a01e9.r72c71e2f.kpb51197a.ndk26.3.11579264#1",
+      "source_commit": "e9ab619ea75e7fd611c28dcc0328dbb99ebf1dfb",
+      "artifact_sha256": "d78b11a936b7781909118a66bdc104cee2925b5db8d6288c9137e08d1e7f41c0",
+      "fixed_in_commit": null,
+      "closed_by": null,
+      "reviews": [],
+      "id": "DEV-040",
+      "class": "record",
+      "severity": "中低",
+      "owner": "Tester",
+      "title": "发布轮动态失败分析将首个 BTF 缺口定位为 control",
+      "evidence": "Tester/reports/runs/2026-10-14-nomount-2.1.1-20261014-live#1.md将-61归因calculate_btf_control_layout；nm_control_entry.c:16-20要求backing成功，而nm_inode_entry.c:35-41首先调用calculate_btf_rule_prefixes。日志未标注具体失败阶段。",
+      "impact": "维护者据此把修复范围限制为control，遗漏更早和后续的初始化缺口。",
+      "suggestion": "Tester在原报告后追加源码路径定位更正，保留原日志和启动事实；维护者同步更正开发请求的事实与范围。",
+      "closure": "Tester追加更正并冻结；Developer核对实际准备顺序作一次独立确认，维护者同步登记。",
+      "frequency": "绑定报告及据其生成的请求各一处",
+      "confidence": "源码路径支持；保留原始实机事实"
+    }
+  ]
+}

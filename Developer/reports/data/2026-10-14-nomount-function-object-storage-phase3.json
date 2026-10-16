@@ -1,0 +1,939 @@
+{
+  "scope": "Developer frozen exploration; complete base stage and partial inode storage; no complete initialization or device result",
+  "source_commit": "012f607fe5d5c3e630cccb0d99f15d2ded60ef71",
+  "build_checks": [
+    {
+      "identity": {
+        "build_id": "nomount-2.1.1-20261014+g4e73d7400044.rdf8f5ea6.kpb51197a.ndk26.3.11579264",
+        "instance_id": "nomount-2.1.1-20261014+g4e73d7400044.rdf8f5ea6.kpb51197a.ndk26.3.11579264#1",
+        "kind": "exploration",
+        "profile": "exploration",
+        "problems": [],
+        "notes": [
+          "探索记录（kind=exploration）：只核验产物与记录完整性，不按候选/交付标准判定",
+          "源码核验通过（提交 blob 140 个）"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      },
+      "artifact": {
+        "name": "NoMount_2.1.1-20261014.kpm",
+        "sha256": "c802b79b3e65b17a06aba12e090321ca71642e4299e868151c0e1426f01684ad",
+        "size": 167416,
+        "embedded": {
+          "name": "NoMount",
+          "version": "2.1.1-20261014",
+          "license": "GPL v2",
+          "author": "maxsteeel, Codex",
+          "description": "NoMount: read-only file and directory views, resident until reboot",
+          "offset_mode": "dynamic",
+          "lifetime": "reboot"
+        },
+        "path": "artifacts/nomount-2.1.1-20261014+g4e73d7400044.rdf8f5ea6.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014.kpm"
+      },
+      "elf_and_table": "PASS"
+    },
+    {
+      "identity": {
+        "build_id": "nomount-2.1.1-20261014_baselines+g4e73d7400044.r7aa60b6f.kpb51197a.ndk26.3.11579264",
+        "instance_id": "nomount-2.1.1-20261014_baselines+g4e73d7400044.r7aa60b6f.kpb51197a.ndk26.3.11579264#1",
+        "kind": "exploration",
+        "profile": "exploration",
+        "problems": [],
+        "notes": [
+          "探索记录（kind=exploration）：只核验产物与记录完整性，不按候选/交付标准判定",
+          "源码核验通过（提交 blob 140 个）"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      },
+      "artifact": {
+        "name": "NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "76e220cd0c7a6c2f5002d5f26148483baa06ccccad61f4838060159b7f2adac2",
+        "size": 111968,
+        "embedded": {
+          "name": "NoMount",
+          "version": "2.1.1-20261014",
+          "license": "GPL v2",
+          "author": "maxsteeel, Codex",
+          "description": "NoMount: read-only file and directory views, resident until reboot",
+          "offset_mode": "static",
+          "lifetime": "reboot"
+        },
+        "path": "artifacts/nomount-2.1.1-20261014_baselines+g4e73d7400044.r7aa60b6f.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm"
+      },
+      "elf_and_table": "PASS"
+    }
+  ],
+  "selfchecks": {
+    "sony-frozen-01": {
+      "scope": "Developer real target windows/table with relocated addresses; BTF routing fixture, no native calls or complete init proof; base object stage executes with fresh fields",
+      "image_sha256": "199658639f7389153ee8a7efe00154f0892e272ddc872728ea326e3e1ce2383b",
+      "kernel_sha256": "299f7e2580c54684c3b825bea57f1b16c53055f485ebd2b937593ac57ff9b0d2",
+      "reference_sha256": "f29f8326256af0256c4ce37e6fac8a3f54a3116a3a35e7da7ce013735612c925",
+      "symbol_sha256": "d450f6ed8b84ea52c677b8160b593cb24496db1d5f5ff52dc8c3972a732881d8",
+      "sources": {
+        "nomount/nm_offsets.c": "68fa66c76d6f9437a99610b248816c6d0f02be2d2a2d3111fa9db7fc481e5108",
+        "nomount/nm_structs.h": "0a8599bf92b99d121c5c1eb87f06cfc8eea4d34536081337b90bf0e786b5cf79",
+        "kpm_utils.h": "323c6286740cd574ab6dc91988ce7ff363d5465ac5eae4dbfbbe0221a564c3e8",
+        "nomount/tools/test_function_object_storage.py": "26ba1ff5e3acc6484011615525e770936a844ac0be17c470b067754f7f159804"
+      },
+      "evidence": {
+        "full_name_hash": {
+          "offset": 4852320,
+          "words": [
+            872415746,
+            1394438216,
+            2854159337,
+            4181721130,
+            1895833666,
+            1409286563
+          ],
+          "sha256": "72246b62752c0563114f62e7c223c5ad2351d078a84b1731b9ebe1b8935788b2"
+        },
+        "dentry_open": {
+          "offset": 4777456,
+          "words": [
+            4181721096,
+            3019899848,
+            4160783966,
+            2847833085,
+            2835435508
+          ],
+          "sha256": "d638845648ce205e46073745572b6e85398de46d917045b1fdb9df5709ccf6d0"
+        },
+        "vfs_open": {
+          "offset": 4777400,
+          "words": [
+            4160783966,
+            2847898621,
+            2432697341,
+            2839553034,
+            2852193256,
+            2854159330,
+            2835424298,
+            4181722121,
+            2852652000,
+            4181727521
+          ],
+          "sha256": "717db6a414587add4dd7c4a0b6747c732de744d5be99455c6231f9ce670441a4"
+        },
+        "tty_default_fops": {
+          "offset": 9337400,
+          "words": [
+            4160783966,
+            2847898621,
+            2432697341,
+            4026603969,
+            2436538401,
+            1384129794,
+            2547817996
+          ],
+          "sha256": "84329183649b4b90b42543d53d32fb814fcf103c3acad95953d47c51ca25302f"
+        },
+        "simple_open": {
+          "offset": 5021820,
+          "words": [
+            4181811208,
+            3019898952,
+            4177552424,
+            706675680
+          ],
+          "sha256": "1e1076acc66353e1cf6460805ff4ebd81efb9a9ed03af170de2a2176b9c0c261"
+        },
+        "noop_llseek": {
+          "offset": 4780300,
+          "words": [
+            4181734400,
+            3596551104
+          ],
+          "sha256": "f637e07b3820a82a5634a0174c92391b8ec5194fafa5b124fa3a73d3007ae512"
+        },
+        "nonseekable_open": {
+          "offset": 4779680,
+          "words": [
+            3107996712,
+            706675680,
+            303788296,
+            3103802408,
+            3596551104
+          ],
+          "sha256": "623b6e9423931f4fc11dde1b69178d876bbc199f59f3462d7e71e11f0412e702"
+        },
+        "file_ns_capable": {
+          "offset": 2440568,
+          "words": [
+            1895866463,
+            1409286530,
+            4160783966,
+            2847898621,
+            2432697341,
+            4181739520,
+            706675683,
+            2484170250,
+            1895825439,
+            446633952,
+            2831252477,
+            4167011934
+          ],
+          "sha256": "41830e637ce582a4c3de2ea8b17849d5abc698c89a8573b8e41822f8925855d0"
+        },
+        "vfs_llseek": {
+          "offset": 4780544,
+          "words": [
+            960565257,
+            2415967816,
+            2434498824,
+            907018409,
+            4181726217,
+            4181722409,
+            4043309375,
+            2592669960,
+            4160783966,
+            3506488319,
+            2835512317,
+            2432730109,
+            2415967817,
+            2434486569,
+            3406364937,
+            2479425833
+          ],
+          "sha256": "7e443dadfe473ff1e95fe780b13d330f348033d9cfcc3925d13cee2ca8f01973"
+        },
+        "generic_file_mmap": {
+          "offset": 4194496,
+          "words": [
+            4181751816,
+            4181736712,
+            4181722376,
+            3019899496,
+            960563208,
+            923795848,
+            4160783966,
+            2847833085
+          ],
+          "sha256": "f97b65f512aa9666ff472091af2d6d4fb02ab0687fb469fad01b07fc6db6fd00"
+        },
+        "iterate_dir": {
+          "offset": 4903092,
+          "words": [
+            4160783966,
+            2847702013,
+            2835439608,
+            2835503094,
+            2835566580,
+            2432697341,
+            2839683094,
+            2852127731,
+            2852193268,
+            4181728535,
+            3019899191,
+            2853372896
+          ],
+          "sha256": "6090cd05cf0e729651d302fd00a1dcb4dd99a4be449ccc98f267e05de4f87e7b"
+        },
+        "generic_fillattr": {
+          "offset": 4822432,
+          "words": [
+            4181726216,
+            3107983624,
+            3103795240,
+            4181729288,
+            4177530920,
+            2034237448,
+            2030045224,
+            3107997704,
+            3103787048,
+            3107980296,
+            3103797288,
+            3107981320,
+            3103798312,
+            3107998728,
+            3103796264,
+            4181731336,
+            4177533992,
+            2839912457,
+            2835619881,
+            2839977993,
+            2835685417,
+            2840043529,
+            2835750953,
+            1384120361,
+            960641032,
+            449323304,
+            1384153129,
+            3103788072,
+            4181739528,
+            4177543208,
+            4181726216,
+            2034278664,
+            1778975007,
+            1409286272,
+            3107979304,
+            303724808
+          ],
+          "sha256": "d4e3f94e765e3c24e08b8c4b29cde4956695d44519920f7139b078c8fd3040fd"
+        },
+        "set_nlink": {
+          "offset": 4945608,
+          "words": [
+            3107997704,
+            872415585,
+            889192712,
+            4181726216,
+            2433974536,
+            335544336,
+            335544335,
+            1384120361
+          ],
+          "sha256": "598889a16640148f701077825ec3d2bee5a34dfcd198d6d7d3f25afda74f27c3"
+        },
+        "inc_nlink": {
+          "offset": 4945760,
+          "words": [
+            4160783966,
+            3506471935,
+            2835446781,
+            2432713725,
+            3107997704,
+            872415496,
+            3107997704,
+            2839641085,
+            285213960,
+            3103803400,
+            2432730111,
+            4167011934,
+            3596551104,
+            960652296,
+            907018536,
+            4181726216
+          ],
+          "sha256": "cd8bc9e23ed81340bb4d9d2358d0bd5e21bc448799d7feb7dc59c5063287f55e"
+        },
+        "d_set_d_op": {
+          "offset": 4931304,
+          "words": [
+            4181733384,
+            3036677512,
+            3107979272,
+            1384186345,
+            1923121161,
+            1778975007,
+            1409287457,
+            4177539073,
+            3019900033,
+            4181723176,
+            3019899016,
+            3107979272,
+            838861064,
+            3103784968,
+            4181724200,
+            3019899016
+          ],
+          "sha256": "671bbfea6fedddd48940841aca78cab097698d9aa05f9581f092d79e438e849a"
+        },
+        "address_space_init_once": {
+          "offset": 4945920,
+          "words": [
+            4160783966,
+            2847833085,
+            4177529843,
+            2432697341,
+            706675681,
+            1384128770,
+            2852127731,
+            2548916057
+          ],
+          "sha256": "10dbf99ba0ba0291bbd43cd51c0664f1d3fa3cb8dcb3bf53799f075839aad9e7"
+        },
+        "inode_init_always": {
+          "offset": 4944232,
+          "words": [
+            4160783966,
+            2847833085,
+            2835435508,
+            2432697341,
+            4177531936,
+            1384120360,
+            2852193267,
+            960516105,
+            3103788095,
+            2433089588,
+            2416026434,
+            2434629698,
+            956446761,
+            3489741001,
+            2433941801,
+            4177570879,
+            3103875112,
+            4177530921,
+            3489741001,
+            2434203945,
+            4177573929
+          ],
+          "sha256": "7da1c9cb12f36f6a438cab1e525c4a3284535a35d66f2039452bec7532dbbf1f"
+        },
+        "fop_open": {
+          "slot": 104,
+          "pointer_offset": 29799388,
+          "function_offset": 5147988,
+          "entry_word": 396490334,
+          "direct": false
+        },
+        "fop_release": {
+          "slot": 120,
+          "pointer_offset": 29799392,
+          "function_offset": 5148140,
+          "entry_word": 396490371,
+          "direct": false
+        },
+        "fop_mmap": {
+          "slot": 88,
+          "pointer_offset": 29748856,
+          "function_offset": 4194496,
+          "entry_word": 396264594,
+          "direct": false
+        },
+        "fop_splice_read": {
+          "slot": 192,
+          "pointer_offset": 29749112,
+          "function_offset": 5071220,
+          "entry_word": 396483711,
+          "direct": false
+        }
+      },
+      "table_sha256": "30ce78737b6004f4c7d70fa59fa17fc0947912ba08cf255353620c70a93b9d6a",
+      "derived": {
+        "inode_private": 704,
+        "file_private": 200,
+        "file_position": 104,
+        "file_flags": 64,
+        "file_cred": 144,
+        "file_ops_size": 296,
+        "fop_open": 104,
+        "fop_release": 120,
+        "fop_mmap": 88,
+        "fop_splice_read": 192,
+        "name_hash_args": 3,
+        "file_inode_ops": 32,
+        "file_mapping": 240,
+        "inode_superblock": 40,
+        "inode_number": 64,
+        "inode_nlink": 72,
+        "inode_size": 80,
+        "dentry_ops": 96,
+        "kstat_inode_first": 0,
+        "inode_file_ops": 368,
+        "inode_data": 384,
+        "inode_data_size": 264,
+        "inode_blocks": 144
+      },
+      "result": "PASS: base objects, inode storage, rule hash, file callbacks and refusal boundaries"
+    },
+    "b2n-frozen-01": {
+      "scope": "Developer real target windows/table with relocated addresses; BTF routing fixture, no native calls or complete init proof; base object stage executes with fresh fields",
+      "image_sha256": "ea919143cb1f057f3d35d726294166d5186f376e9751941b83940e75d48a288c",
+      "kernel_sha256": "7633fbac5ce30b726a1acdbf57f730aa847a9510984a25bc23f9ddcdb0956e1c",
+      "reference_sha256": "ce3a31a0d2604d6003bedd96862eb17f22af9d45aa3684d70a5c9bf5691ae95e",
+      "symbol_sha256": "56c2e67243fe5049b0aeab39edfee13f90e75edc3d81b2ce913495e15a971c7e",
+      "sources": {
+        "nomount/nm_offsets.c": "68fa66c76d6f9437a99610b248816c6d0f02be2d2a2d3111fa9db7fc481e5108",
+        "nomount/nm_structs.h": "0a8599bf92b99d121c5c1eb87f06cfc8eea4d34536081337b90bf0e786b5cf79",
+        "kpm_utils.h": "323c6286740cd574ab6dc91988ce7ff363d5465ac5eae4dbfbbe0221a564c3e8",
+        "nomount/tools/test_function_object_storage.py": "26ba1ff5e3acc6484011615525e770936a844ac0be17c470b067754f7f159804"
+      },
+      "evidence": {
+        "full_name_hash": {
+          "offset": 1406012,
+          "words": [
+            3531603970,
+            1895832639,
+            4181721091,
+            1409286377,
+            2332164194,
+            1895833633
+          ],
+          "sha256": "9916c429f23fae9a458d3fe7575761c834832d23ddc5b2ff8b9ce5e78af50ab6"
+        },
+        "dentry_open": {
+          "offset": 1364680,
+          "words": [
+            2847702013,
+            2432697341,
+            2835436531,
+            4177531893,
+            4181721091
+          ],
+          "sha256": "bd14034c62518248b238479c8e5132803deb38428d88800e63fa47f3a563fc58"
+        },
+        "vfs_open": {
+          "offset": 1364560,
+          "words": [
+            2847767549,
+            2852258787,
+            2432697341,
+            2835436531,
+            2852127732,
+            2852193267,
+            4181722112,
+            3107995684,
+            4181727233,
+            3019899297
+          ],
+          "sha256": "b16c03692d7b87ab1cd4fb31b3f1bfc5b3b0053270b7fe0eeb89faf4bea08ba3"
+        },
+        "tty_default_fops": {
+          "offset": 5301260,
+          "words": [
+            2847833085,
+            1384120321,
+            3531610882,
+            2432697341,
+            4177529843,
+            2852127731,
+            2549576007
+          ],
+          "sha256": "02552f98d0d5817b10cda6feca6c32ebac706ca6f6cc5758728728b304712524"
+        },
+        "simple_open": {
+          "offset": 1518408,
+          "words": [
+            4181789696,
+            3019898944,
+            4177553440,
+            1384120320
+          ],
+          "sha256": "daf13b85de39a31542aa7f3fcf484be310464663639792fbc392effcbc49ed09"
+        },
+        "noop_llseek": {
+          "offset": 1366092,
+          "words": [
+            4181735424,
+            3596551104
+          ],
+          "sha256": "36cc23bb70bc1c1b59cc307e6204dbafdeee922c2168929d194e21890ad85195"
+        },
+        "nonseekable_open": {
+          "offset": 1358652,
+          "words": [
+            3107996704,
+            303788032,
+            3103802400,
+            1384120320,
+            3596551104
+          ],
+          "sha256": "6b9be05e3574aaa2ec55f2614e8f9d83d12dbad899aa4f7cac13365c6cfd4bcb"
+        },
+        "file_ns_capable": {
+          "offset": 184788,
+          "words": [
+            2847898621,
+            1895863391,
+            2432697341,
+            1409286409,
+            4026601921,
+            962842656,
+            889192768,
+            3558932480,
+            1384120354,
+            958648354,
+            335544327,
+            4181740544
+          ],
+          "sha256": "49902a108330ebeb70beb0df100f6a45c295068f78d06378e11e86a8fdb3f28f"
+        },
+        "vfs_llseek": {
+          "offset": 1366108,
+          "words": [
+            2847898621,
+            2432697341,
+            3107996675,
+            907018371,
+            4181726211,
+            4181722211,
+            3036676195,
+            2415919107,
+            2434879587,
+            3594453088,
+            2831252477,
+            3596551104,
+            3531603973,
+            3531603971,
+            3942711423,
+            1409286560
+          ],
+          "sha256": "e430fd3bd5fd7ebf4bb58a03d01afd4419fa4545ace83cdce423f51567ba0b65"
+        },
+        "generic_file_mmap": {
+          "offset": 1040512,
+          "words": [
+            2847833085,
+            2432697341,
+            4177529843,
+            4181752834,
+            4181734466,
+            4181722179,
+            310378722,
+            3019899203
+          ],
+          "sha256": "b74b8ed40af9aeef88eb63eb2a5c0759992ec457c5087e59dce95a6f152ea522"
+        },
+        "iterate_dir": {
+          "offset": 1440416,
+          "words": [
+            2847702013,
+            2432697341,
+            2835436531,
+            2835504117,
+            2835571703,
+            2852127731,
+            310379124,
+            4181726210,
+            4181725206,
+            4181727298,
+            3019900514,
+            2852193269
+          ],
+          "sha256": "85198ccb92230aa61e99b007d09032dd8d7135d776e7e8aa62a72d562c9d4ce2"
+        },
+        "generic_fillattr": {
+          "offset": 1387440,
+          "words": [
+            4181726210,
+            2432786435,
+            3107983426,
+            3103787042,
+            4181729282,
+            4177526818,
+            2034237442,
+            2030049314,
+            3107997698,
+            3103789090,
+            3107980290,
+            3103790114,
+            3107981314,
+            3103791138,
+            3107998722,
+            3103792162,
+            4181731330,
+            4177530914,
+            2432737314,
+            2839549028,
+            2432802819,
+            2835354692,
+            2432753698,
+            2839549028,
+            2432819203,
+            2835354692,
+            2432770082,
+            2839549028,
+            2835354692,
+            1384120354,
+            3108016131,
+            448995394,
+            4177538082,
+            4181740544,
+            4177539104,
+            3596551104
+          ],
+          "sha256": "7b4f5a5bce1dfdcef5e4e93415a55f35d5d1b8f635e7c45088632daafeb5dbb5"
+        },
+        "set_nlink": {
+          "offset": 1471284,
+          "words": [
+            2847898621,
+            2852127714,
+            2432697341,
+            889192545,
+            2550136817,
+            335544331,
+            3107997696,
+            889192704
+          ],
+          "sha256": "07686253dcb3dacb753367838421f1adfe6fbd536b3f1aae6ad05a4e8bab1a98"
+        },
+        "inc_nlink": {
+          "offset": 1467468,
+          "words": [
+            3107997697,
+            889192801,
+            4181741569,
+            927989825,
+            3558932480,
+            4181726209,
+            2434007073,
+            4185915441,
+            3361700898,
+            3506439234,
+            3355671586,
+            905969571,
+            3107997697,
+            285213729,
+            3103803393,
+            3596551104
+          ],
+          "sha256": "325720adf770c7849675ef00e070c3b21dcbdae27f7fe6d553586bcb4383b7f1"
+        },
+        "d_set_d_op": {
+          "offset": 1450104,
+          "words": [
+            4181733378,
+            3019899106,
+            3489728546,
+            963110979,
+            889192579,
+            3558932480,
+            1384120355,
+            958916675,
+            3107979266,
+            1384186339,
+            1923170307,
+            1778581599,
+            1409286400,
+            3489728547,
+            2435311715,
+            960496740
+          ],
+          "sha256": "550702fe5a759027bf35d4c921228be4f4a41f4ddde833a202e8310a583edb76"
+        },
+        "address_space_init_once": {
+          "offset": 1468512,
+          "words": [
+            2847833085,
+            1384120321,
+            3531608834,
+            2432697341,
+            4177529843,
+            2852127731,
+            2483425330,
+            1384121344
+          ],
+          "sha256": "fb780b4c3777919b4bd19b981e9c596a56aa2e447633cb1ab956584838ca3b97"
+        },
+        "inode_init_always": {
+          "offset": 1467632,
+          "words": [
+            2847702013,
+            2432697341,
+            2835436531,
+            2835504117,
+            4177533943,
+            4026560917,
+            4177531936,
+            4026600023,
+            2433155831,
+            2436612789,
+            960516096,
+            2852193267,
+            3103821856,
+            1384120352,
+            3103864864,
+            2433048630,
+            3103803424,
+            2852193248,
+            3103788095,
+            4177530935,
+            4177568821
+          ],
+          "sha256": "4c96adfb6028ad1557e7370c49c54d14bb065baf9761c6f816183e6f2287bc9b"
+        },
+        "fop_open": {
+          "slot": 88,
+          "pointer_offset": 1596920,
+          "function_offset": 1596920,
+          "entry_word": 2847767549,
+          "direct": true
+        },
+        "fop_release": {
+          "slot": 104,
+          "pointer_offset": 1597516,
+          "function_offset": 1597516,
+          "entry_word": 2847898621,
+          "direct": true
+        },
+        "fop_mmap": {
+          "slot": 80,
+          "pointer_offset": 1040512,
+          "function_offset": 1040512,
+          "entry_word": 2847833085,
+          "direct": true
+        },
+        "fop_splice_read": {
+          "slot": 184,
+          "pointer_offset": 1557752,
+          "function_offset": 1557752,
+          "entry_word": 2847767549,
+          "direct": true
+        }
+      },
+      "table_sha256": "8dcc406b2e498bc89764479c6d512af13d21b591615d5535e99b47e8cb8225ee",
+      "derived": {
+        "inode_private": 536,
+        "file_private": 208,
+        "file_position": 112,
+        "file_flags": 64,
+        "file_cred": 152,
+        "file_ops_size": 216,
+        "fop_open": 88,
+        "fop_release": 104,
+        "fop_mmap": 80,
+        "fop_splice_read": 184,
+        "name_hash_args": 2,
+        "file_inode_ops": 32,
+        "file_mapping": 248,
+        "inode_superblock": 40,
+        "inode_number": 64,
+        "inode_nlink": 72,
+        "inode_size": 80,
+        "dentry_ops": 96,
+        "kstat_inode_first": 1,
+        "inode_file_ops": 328,
+        "inode_data": 344,
+        "inode_data_size": 152,
+        "inode_blocks": 152
+      },
+      "result": "PASS: base objects, inode storage, rule hash, file callbacks and refusal boundaries"
+    }
+  },
+  "source_size_search": {
+    "sony": {
+      "archive_url": "https://codeload.github.com/LineageOS/android_kernel_sony_sm8250/tar.gz/7fc8455b2fa84be76364c2457e6503b867ceb12a",
+      "source_commit": "7fc8455b2fa84be76364c2457e6503b867ceb12a",
+      "scanned_C_header_files": 54012,
+      "retained_type_files": 471,
+      "retention": "literal type-name lexical filter; not proof of absence of all possible expressions",
+      "array": {
+        "path": "fs/isofs/inode.c",
+        "sha256": "b5418edbd1d7b65cd602d4271a68b69d472abea4420134015c800e01bfbf9c40",
+        "size": 42241
+      },
+      "ISO9660_FS": "not enabled in image config"
+    },
+    "b2n": {
+      "archive_url": "https://codeload.github.com/nokia-dev/android_kernel_nokia_sdm660/tar.gz/67c3e103decafc3ff8a361c39f079a0dfce2a23c",
+      "source_commit": "67c3e103decafc3ff8a361c39f079a0dfce2a23c",
+      "scanned_C_header_files": 43024,
+      "retained_type_files": 393,
+      "retention": "literal type-name lexical filter; not proof of absence of all possible expressions",
+      "array": {
+        "path": "fs/isofs/inode.c",
+        "sha256": "62ba81a79b811b19a7de996e83dbca0e5edbcf7a66c203de2371204a7cfa8bb4",
+        "size": 39714
+      },
+      "ISO9660_FS": "not enabled in image config"
+    }
+  },
+  "base_oracle": {
+    "scope": "Developer 真实入口执行 + 合成 BTF；不证明 native VFS 回调、并发或实机行为",
+    "image_sha256": "199658639f7389153ee8a7efe00154f0892e272ddc872728ea326e3e1ce2383b",
+    "kernel_sha256": "299f7e2580c54684c3b825bea57f1b16c53055f485ebd2b937593ac57ff9b0d2",
+    "reference_sha256": "dd8631136835ded9fda25f9cc655f32d360acf1d6c24f900ad0aa2ae758443d8",
+    "symbols_sha256": "d450f6ed8b84ea52c677b8160b593cb24496db1d5f5ff52dc8c3972a732881d8",
+    "entries": {
+      "vfs_llseek": {
+        "offset": 4780544,
+        "words": 16,
+        "sha256": "7e443dadfe473ff1e95fe780b13d330f348033d9cfcc3925d13cee2ca8f01973"
+      },
+      "generic_file_mmap": {
+        "offset": 4194496,
+        "words": 8,
+        "sha256": "f97b65f512aa9666ff472091af2d6d4fb02ab0687fb469fad01b07fc6db6fd00"
+      },
+      "iterate_dir": {
+        "offset": 4903092,
+        "words": 12,
+        "sha256": "6090cd05cf0e729651d302fd00a1dcb4dd99a4be449ccc98f267e05de4f87e7b"
+      },
+      "generic_fillattr": {
+        "offset": 4822432,
+        "words": 32,
+        "sha256": "83edec37ed292f3c9fd4b7317e96fb06e35ef420ba8c788500b550c982b1c031"
+      },
+      "set_nlink": {
+        "offset": 4945608,
+        "words": 8,
+        "sha256": "598889a16640148f701077825ec3d2bee5a34dfcd198d6d7d3f25afda74f27c3"
+      },
+      "inc_nlink": {
+        "offset": 4945760,
+        "words": 16,
+        "sha256": "cd8bc9e23ed81340bb4d9d2358d0bd5e21bc448799d7feb7dc59c5063287f55e"
+      },
+      "d_set_d_op": {
+        "offset": 4931304,
+        "words": 16,
+        "sha256": "671bbfea6fedddd48940841aca78cab097698d9aa05f9581f092d79e438e849a"
+      }
+    },
+    "stdout": "PASS: target entry offsets, storage/accessors, conflicts and synthetic BTF dispatch\n",
+    "sources": {
+      "local/nomount-non-btf-20261014-04/test_layout_api-02.py": "a8f31e66c505de3d346155b1bb3837ad208534c07d25d1c823f04720d61e7484",
+      "nomount/nm_structs.h": "0a8599bf92b99d121c5c1eb87f06cfc8eea4d34536081337b90bf0e786b5cf79",
+      "nomount/nm_offsets.c": "68fa66c76d6f9437a99610b248816c6d0f02be2d2a2d3111fa9db7fc481e5108",
+      "nomount/nm_btf.c": "154c95f71418211bbf28a0de1b40e4c1c5a8387d08bd854ffab265b4da360315",
+      "kpm_utils.h": "323c6286740cd574ab6dc91988ce7ff363d5465ac5eae4dbfbbe0221a564c3e8",
+      "re_kernel/tools/test_btf.py": "7b62bc2b61ec3fee1d9f119f4442e958f8576ce44bc888c5202c856e232c3b9f"
+    }
+  },
+  "private_fixture_adaptations": {
+    "base_tool_sha256": "f5af6d8e5231531ae15141f4abc5a4e12ad55216f4a20b9ff7a2d18c2a423e0c",
+    "base_adapted_sha256": "a8f31e66c505de3d346155b1bb3837ad208534c07d25d1c823f04720d61e7484",
+    "base_changes": "root resolver, two log macros and suffix lookup API alias only; assertions unchanged",
+    "btf_tool_sha256": "7dd7db4171f033d18afd43232dc0035d3d5a3650d71daffa1e7b2160bdf00610",
+    "btf_adapted_sha256": "4220e0ab7baf5f38949a22a1299024d05524259b6eb75d1e1d568757b940ea19",
+    "btf_changes": "root resolver and unavailable output arguments only; assertions unchanged",
+    "btf_offsets": {
+      "offsets": {
+        "file_inode_ops": 32,
+        "file_mapping": 232,
+        "inode_superblock": 40,
+        "inode_number": 64,
+        "inode_nlink": 72,
+        "inode_size": 80,
+        "dentry_ops": 96,
+        "file_ops_size": 288,
+        "inode_ops_size": 256,
+        "super_ops_size": 232,
+        "dentry_ops_size": 192,
+        "key_type_size": 184,
+        "inode_private": 728,
+        "file_private": 216,
+        "file_position": 120,
+        "file_flags": 64,
+        "file_cred": 160,
+        "fop_open": 112,
+        "fop_release": 128,
+        "fop_mmap": 96,
+        "fop_splice_read": 200,
+        "inode_file_ops": 384,
+        "inode_data": 400,
+        "inode_data_size": 272,
+        "inode_hash": 240,
+        "inode_blocks": 144,
+        "iop_getattr": 112,
+        "sop_drop_inode": 40,
+        "sop_evict_inode": 48,
+        "dentry_lock": 88,
+        "fop_iterate": 56,
+        "fop_iterate_shared": 64,
+        "dop_init": 40,
+        "dop_release": 48,
+        "mutex_size": 48,
+        "mutex_no_lockdep": 1,
+        "key_callbacks": 32,
+        "key_preparse_data": 48,
+        "getattr_callback_args": 5,
+        "getattr_function_args": 4,
+        "kstat_inode_first": 0,
+        "name_hash_args": 3,
+        "permission_abi": 2,
+        "fillattr_abi": 3,
+        "getattr_context_kind": 1,
+        "dir_actor_abi": 0
+      }
+    }
+  },
+  "static_matches_previous": true,
+  "existing_tool_files_unchanged": 47
+}

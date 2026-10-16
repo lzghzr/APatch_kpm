@@ -1,0 +1,105 @@
+{
+  "source_commit": "349b684b6eb6bd550992f381102e28dc1a16bc2b",
+  "zip_instance_id": "nomount-zip-0.5.1+g98115e4047c4.ndk26.3.11579264#1",
+  "zip_sha256": "39b6af17471629345c0291e821a81de216154599649be3bdba6740c8cdd1fec1",
+  "zip_changed_entries": [
+    "NOTICE.md",
+    "metamount.sh",
+    "webroot/index.js"
+  ],
+  "ui_parser_and_built_js_equal": true,
+  "javascript_syntax": "PASS",
+  "kpm_source_commit": "cfb971d195d997808b68567b8ffc61a4dcd32b90",
+  "native_c_h_makefile_unchanged": 34,
+  "frozen_oracle_scripts_unchanged": 36,
+  "existing_kpm_artifacts_unchanged": [
+    {
+      "name": "nomount_0.5.1.kpm",
+      "sha256": "4676fe436e4cdf0e405ff158d80d983b35fd79fc6c0d5ae63f196017adf0725b",
+      "size": 152936,
+      "embedded": {
+        "name": "nomount",
+        "version": "0.5.1",
+        "license": "GPL v2",
+        "author": "maxsteeel, Codex",
+        "description": "NoMount: read-only file and directory views, resident until reboot",
+        "offset_mode": "dynamic",
+        "lifetime": "reboot"
+      },
+      "path": "artifacts/nomount-0.5.1+g17d96f6cff64.r512871f4.kpb51197a.ndk26.3.11579264/nomount_0.5.1.kpm"
+    },
+    {
+      "name": "nomount_0.5.1_baselines.kpm",
+      "sha256": "1062ee65515eeed841a423cdab68f7c20de233861266a7f88eb59ccfa628fea8",
+      "size": 111928,
+      "embedded": {
+        "name": "nomount",
+        "version": "0.5.1",
+        "license": "GPL v2",
+        "author": "maxsteeel, Codex",
+        "description": "NoMount: read-only file and directory views, resident until reboot",
+        "offset_mode": "static",
+        "lifetime": "reboot"
+      },
+      "path": "artifacts/nomount-0.5.1_baselines+g17d96f6cff64.rf55be15b.kpb51197a.ndk26.3.11579264/nomount_0.5.1_baselines.kpm"
+    },
+    {
+      "name": "nomount_0.5.1_baselines_debug.kpm",
+      "sha256": "d73f812c952e439f7f8dd81234442f367bde7399356e848cf40d1ef46eaf8401",
+      "size": 111936,
+      "embedded": {
+        "name": "nomount",
+        "version": "0.5.1_d",
+        "license": "GPL v2",
+        "author": "maxsteeel, Codex",
+        "description": "NoMount: read-only file and directory views, resident until reboot",
+        "offset_mode": "static",
+        "lifetime": "reboot"
+      },
+      "path": "artifacts/nomount-0.5.1_baselines_debug+g17d96f6cff64.r5f96b882.kpb51197a.ndk26.3.11579264/nomount_0.5.1_baselines_debug.kpm"
+    },
+    {
+      "name": "nomount_0.5.1_debug.kpm",
+      "sha256": "9f0f91cb32d7a237f25a8abc1465c31ff57f70283e04fe60614135efbceeb03e",
+      "size": 152936,
+      "embedded": {
+        "name": "nomount",
+        "version": "0.5.1_d",
+        "license": "GPL v2",
+        "author": "maxsteeel, Codex",
+        "description": "NoMount: read-only file and directory views, resident until reboot",
+        "offset_mode": "dynamic",
+        "lifetime": "reboot"
+      },
+      "path": "artifacts/nomount-0.5.1_debug+g17d96f6cff64.r0b80f597.kpb51197a.ndk26.3.11579264/nomount_0.5.1_debug.kpm"
+    }
+  ],
+  "webui_contracts": {
+    "cases": [
+      "original three UI entries reproduce zero for four modules",
+      "original UI recognizes clean paths",
+      "revised home, module list and card refresh recognize four modules",
+      "self, other sources and absent paths preserve four-module count",
+      "empty list stays zero",
+      "one module and repeated separators",
+      "malformed JSON remains an error",
+      "previously collected rule paths reproduce zero",
+      "previously collected rule paths replay as four modules"
+    ],
+    "result": "PASS",
+    "scope": "Developer Node VM executes production WebUI; relocated shell/API fixtures; not live Android WebView proof",
+    "trailing_module_dir": "PASS",
+    "original_zip_cases": 15,
+    "sources": {
+      "nomount/tools/build_zip.py": "f7f9db8fff2c9353b82ce3c23a0422c86d611860570fdfac7c1d4e1ddc491667",
+      "nomount/tools/test_webui_counts.py": "871b80ae78a4b27fe250bae2acfdae2415a3430388e4c0dfd4d6022807fc0332",
+      "nomount/module/metamount.sh": "a2a9246ff9edc43422610ef641d8d85638c05ae98ff857ca395e3c90f7e2ca95"
+    },
+    "previously_collected_replay": {
+      "sha256": "588cda7af0d582cd78ea2b04555c89dcefc9824695d6e4d6e66922c1936d6038",
+      "rules": 42,
+      "modules": 4
+    }
+  },
+  "scope": "Developer reproducible ZIP and Node/shell fixtures; no new live WebView or kernel conclusion"
+}

@@ -1,0 +1,24 @@
+{
+  "module": "nomount",
+  "source_commit": "6b870aa8bcfdc4523709bf7baa9d377fcb3744fa",
+  "append_issues": [
+    {
+      "id": "DEV-038",
+      "class": "process",
+      "severity": "低",
+      "owner": "维护者",
+      "status": "open",
+      "title": "CI选择摘要误将嵌套子模块的父模块排除",
+      "evidence": "tools/check_repository.py 的 submodule_paths() 将 .gitmodules path 截到首个目录，check_ci_markers() 因而排除 nomount 和 zram_zstd；实际 build-kpm.yml 按顶层 Makefile/archive 遍历，两者均会被选入。本轮常规摘要列出13个模块，实际规则选择15个。",
+      "impact": "门禁中的CI选择摘要不完整，不能证明实际工作流选择与检查范围一致；本轮构建变体配套补丁仍须由维护者采纳。",
+      "suggestion": "摘要只排除真实的顶层子模块路径，保留包含嵌套子模块的父项目；补顶层/嵌套路径正反例。",
+      "closure": "维护者修复并提供顶层及嵌套子模块夹具，Developer或Auditor独立复核摘要与实际工作流选择一致后关闭。",
+      "frequency": "父目录内包含冻结子模块时稳定出现",
+      "confidence": "冻结工具和实际工作流代码确认",
+      "found_source_commit": "6b870aa8bcfdc4523709bf7baa9d377fcb3744fa",
+      "tool_sha256": "6567ed8eadebeec8ab2dfe9a23765e5a60f150914cf36066b9bf67f57e19c812",
+      "closed_by": null,
+      "reviews": []
+    }
+  ]
+}

@@ -1,0 +1,1746 @@
+{
+  "contracts": {
+    "scope": "Developer host contract migration, requires Auditor review; not runtime acceptance",
+    "results": [
+      {
+        "abi": "int",
+        "oracle_sha256": "681a320ac5551b61bc22b02ed0824ac8143cfcf5f5d0c8e8d7331d1eb0223000",
+        "original_assertions": 693,
+        "unchanged_assertions": 673,
+        "assertion_migration": [
+          {
+            "index": 38,
+            "old": "assert(!nm_materialize_file(parent,(void*)1234,rule,42) && rule->refs==2 && created);",
+            "new": "assert(!nm_materialize_file(parent,(void*)1234,rule,42) && rule->refs==1 && created);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 44,
+            "old": "assert(rule->refs==1 && !path_puts);",
+            "new": "assert(binding_freed_rules==freed_before+1 && path_puts==1);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 45,
+            "old": "assert(path_puts==1 && pending_rcu && truncates==1 && clears==1);",
+            "new": "assert(path_puts==2 && pending_rcu && truncates==1 && clears==1);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 126,
+            "old": "assert(super==(void*)&sb && hash==(unsigned long)((struct nm_inode_info*)data)->rule && !rcu_depth && !hash_depth);",
+            "new": "assert(super==(void*)&sb && hash==(unsigned long)((struct nm_inode_info*)data)->dir_node && !rcu_depth && !hash_depth);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 164,
+            "old": "assert(first&&rule->refs==2&&child_node->refs==2&&unlock_calls==new_before+1&&set_calls==new_before+1);",
+            "new": "assert(first&&rule->refs==1&&child_node->refs==2&&unlock_calls==new_before+1&&set_calls==new_before+1);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 169,
+            "old": "assert(cached_directory==first&&directory_refs==2&&rule->refs==2&&child_node->refs==2&&set_calls==new_before+1&&unlock_calls==new_before+1);",
+            "new": "assert(cached_directory==first&&directory_refs==2&&rule->refs==1&&child_node->refs==2&&set_calls==new_before+1&&unlock_calls==new_before+1);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 193,
+            "old": "assert(PTR_ERR(nm_directory_lookup(parent,(void*)nested_dentry,0))==-ELOOP&&directory_refs==before&&rule->refs==2&&child_node->refs==2);",
+            "new": "assert(PTR_ERR(nm_directory_lookup(parent,(void*)nested_dentry,0))==-ELOOP&&directory_refs==before&&rule->refs==1&&child_node->refs==2);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 199,
+            "old": "assert(rule->refs==1&&!nm_dentry_revalidate((void*)virtual_dentry,0));",
+            "new": "assert(binding_freed_rules==retired_before+1&&!nm_dentry_revalidate((void*)virtual_dentry,0));",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 362,
+            "old": "assert(!rcu_depth&&!spin_depth&&!hash_depth&&hash==(uintptr_t)((struct nm_inode_info*)data)->rule);",
+            "new": "assert(!rcu_depth&&!spin_depth&&!hash_depth&&hash==(uintptr_t)((struct nm_inode_info*)data)->dir_node);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 365,
+            "old": "assert(info&&info->rule&&info->dir_node);",
+            "new": "assert(info&&info->initialized&&info->dir_node);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 399,
+            "old": "assert(root_inode&&nm_is_directory_inode(root_inode)&&!nm_directory_proxy(nm_inode_ops(root_inode))&&root_rule->refs==2);",
+            "new": "assert(root_inode&&nm_is_directory_inode(root_inode)&&!nm_directory_proxy(nm_inode_ops(root_inode))&&root_rule->refs==1);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 416,
+            "old": "assert(first_info->rule->published&&first_info->rule->refs==1&&first_info->rule->r_path.dentry==source_file_dentry);",
+            "new": "assert(first_info->initialized&&first_info->flags==0&&first_info->r_path.dentry==source_file_dentry);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 418,
+            "old": "assert(((struct nm_inode_info*)nm_inode_private(replacement_file))->rule->r_path.dentry==source_new_dentry&&first_info->rule->r_path.dentry==source_file_dentry);",
+            "new": "assert(((struct nm_inode_info*)nm_inode_private(replacement_file))->r_path.dentry==source_new_dentry&&first_info->r_path.dentry==source_file_dentry);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 451,
+            "old": "assert(info&&info->rule->r_path.dentry==tree_dentry[source_index]&&info->dir_node==node);",
+            "new": "assert(info&&info->r_path.dentry==tree_dentry[source_index]&&info->dir_node==node);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 470,
+            "old": "assert(!nm_backing_open_permission(&((struct nm_inode_info*)nm_inode_private(deep_a))->rule->r_path)&&tree_reads==1);",
+            "new": "assert(!nm_backing_open_permission(&((struct nm_inode_info*)nm_inode_private(deep_a))->r_path)&&tree_reads==1);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 476,
+            "old": "assert(pure&&!((struct nm_inode_info*)nm_inode_private(pure))->rule->r_path.dentry);",
+            "new": "assert(pure&&!((struct nm_inode_info*)nm_inode_private(pure))->r_path.dentry);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 485,
+            "old": "assert(((struct nm_inode_info*)nm_inode_private(injected))->rule->r_path.dentry==tree_dentry[6]);",
+            "new": "assert(((struct nm_inode_info*)nm_inode_private(injected))->r_path.dentry==tree_dentry[6]);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 486,
+            "old": "assert(((struct nm_inode_info*)nm_inode_private(nm_dentry_inode(view_dentry[12])))->rule->r_path.dentry==tree_dentry[7]);",
+            "new": "assert(((struct nm_inode_info*)nm_inode_private(nm_dentry_inode(view_dentry[12])))->r_path.dentry==tree_dentry[7]);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 571,
+            "old": "assert(((struct nm_inode_info*)nm_inode_private(sub))->rule->r_path.dentry==tree_dentry[1]);",
+            "new": "assert(((struct nm_inode_info*)nm_inode_private(sub))->r_path.dentry==tree_dentry[1]);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 572,
+            "old": "assert(deep&&((struct nm_inode_info*)nm_inode_private(deep))->rule->r_path.dentry==tree_dentry[2]);",
+            "new": "assert(deep&&((struct nm_inode_info*)nm_inode_private(deep))->r_path.dentry==tree_dentry[2]);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          }
+        ],
+        "generated_sha256": "41f7f250e1754bac0a613ff36432b6c0b07d28fa947f7452754563e56cff2c89",
+        "stdout": "inode materialization, full super table preservation, error cleanup and backing lifetime: PASS\nnative-parent lookup, UID cache validation, enumeration, cookies and proxy cleanup: PASS\nvirtual-directory inode reuse, child lookup, dot entries, UID visibility and retirement: PASS\ntopology publication, 15 fresh-parent and 18 cached-parent allocation failures, pruning and live-inode retirement: PASS\nbacking path ownership, native errors, merged enumeration, dot identity, UID and seek: PASS\nbacked inode cache, source permission, recursive lookup, cache refresh and path retirement: PASS\nmanaged backing subtrees, UID sources, search ACL, refresh, 17 allocation failures and retirement: PASS\nkeyring transport, command batches, mutex contracts, paging and rule replay: PASS\nexplicit ABI rejection, pair hash, native pair getattr, mount callbacks and kstat byte boundaries: PASS\nmount/plain permissions, complete subtree preparation, namespace selection, errors and typed getattr: PASS\npre/post/runtime events, dependency/BTF/registration errors, allocation cleanup, status and resident exit: PASS\nsmall-child collision and 2/3 transition, zero full hash for tiny lookup; UID collision/delete/limits/failures: PASS\nprivate memory: slab zero/alignment/boundaries, fallback and total failure, process and RCU free pairing: PASS\nindependent inode binding: rule freed while inode alive, same-source cache reuse, owner changes and initialization, path/node cleanup: PASS\n"
+      },
+      {
+        "abi": "bool",
+        "oracle_sha256": "585a8287a2cd4b3f8c10095e4c82e1838f2d3c3b6b5957134bd22a749019c3d1",
+        "original_assertions": 693,
+        "unchanged_assertions": 673,
+        "assertion_migration": [
+          {
+            "index": 38,
+            "old": "assert(!nm_materialize_file(parent,(void*)1234,rule,42) && rule->refs==2 && created);",
+            "new": "assert(!nm_materialize_file(parent,(void*)1234,rule,42) && rule->refs==1 && created);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 44,
+            "old": "assert(rule->refs==1 && !path_puts);",
+            "new": "assert(binding_freed_rules==freed_before+1 && path_puts==1);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 45,
+            "old": "assert(path_puts==1 && pending_rcu && truncates==1 && clears==1);",
+            "new": "assert(path_puts==2 && pending_rcu && truncates==1 && clears==1);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 126,
+            "old": "assert(super==(void*)&sb && hash==(unsigned long)((struct nm_inode_info*)data)->rule && !rcu_depth && !hash_depth);",
+            "new": "assert(super==(void*)&sb && hash==(unsigned long)((struct nm_inode_info*)data)->dir_node && !rcu_depth && !hash_depth);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 164,
+            "old": "assert(first&&rule->refs==2&&child_node->refs==2&&unlock_calls==new_before+1&&set_calls==new_before+1);",
+            "new": "assert(first&&rule->refs==1&&child_node->refs==2&&unlock_calls==new_before+1&&set_calls==new_before+1);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 169,
+            "old": "assert(cached_directory==first&&directory_refs==2&&rule->refs==2&&child_node->refs==2&&set_calls==new_before+1&&unlock_calls==new_before+1);",
+            "new": "assert(cached_directory==first&&directory_refs==2&&rule->refs==1&&child_node->refs==2&&set_calls==new_before+1&&unlock_calls==new_before+1);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 193,
+            "old": "assert(PTR_ERR(nm_directory_lookup(parent,(void*)nested_dentry,0))==-ELOOP&&directory_refs==before&&rule->refs==2&&child_node->refs==2);",
+            "new": "assert(PTR_ERR(nm_directory_lookup(parent,(void*)nested_dentry,0))==-ELOOP&&directory_refs==before&&rule->refs==1&&child_node->refs==2);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 199,
+            "old": "assert(rule->refs==1&&!nm_dentry_revalidate((void*)virtual_dentry,0));",
+            "new": "assert(binding_freed_rules==retired_before+1&&!nm_dentry_revalidate((void*)virtual_dentry,0));",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 362,
+            "old": "assert(!rcu_depth&&!spin_depth&&!hash_depth&&hash==(uintptr_t)((struct nm_inode_info*)data)->rule);",
+            "new": "assert(!rcu_depth&&!spin_depth&&!hash_depth&&hash==(uintptr_t)((struct nm_inode_info*)data)->dir_node);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 365,
+            "old": "assert(info&&info->rule&&info->dir_node);",
+            "new": "assert(info&&info->initialized&&info->dir_node);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 399,
+            "old": "assert(root_inode&&nm_is_directory_inode(root_inode)&&!nm_directory_proxy(nm_inode_ops(root_inode))&&root_rule->refs==2);",
+            "new": "assert(root_inode&&nm_is_directory_inode(root_inode)&&!nm_directory_proxy(nm_inode_ops(root_inode))&&root_rule->refs==1);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 416,
+            "old": "assert(first_info->rule->published&&first_info->rule->refs==1&&first_info->rule->r_path.dentry==source_file_dentry);",
+            "new": "assert(first_info->initialized&&first_info->flags==0&&first_info->r_path.dentry==source_file_dentry);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 418,
+            "old": "assert(((struct nm_inode_info*)nm_inode_private(replacement_file))->rule->r_path.dentry==source_new_dentry&&first_info->rule->r_path.dentry==source_file_dentry);",
+            "new": "assert(((struct nm_inode_info*)nm_inode_private(replacement_file))->r_path.dentry==source_new_dentry&&first_info->r_path.dentry==source_file_dentry);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 451,
+            "old": "assert(info&&info->rule->r_path.dentry==tree_dentry[source_index]&&info->dir_node==node);",
+            "new": "assert(info&&info->r_path.dentry==tree_dentry[source_index]&&info->dir_node==node);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 470,
+            "old": "assert(!nm_backing_open_permission(&((struct nm_inode_info*)nm_inode_private(deep_a))->rule->r_path)&&tree_reads==1);",
+            "new": "assert(!nm_backing_open_permission(&((struct nm_inode_info*)nm_inode_private(deep_a))->r_path)&&tree_reads==1);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 476,
+            "old": "assert(pure&&!((struct nm_inode_info*)nm_inode_private(pure))->rule->r_path.dentry);",
+            "new": "assert(pure&&!((struct nm_inode_info*)nm_inode_private(pure))->r_path.dentry);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 485,
+            "old": "assert(((struct nm_inode_info*)nm_inode_private(injected))->rule->r_path.dentry==tree_dentry[6]);",
+            "new": "assert(((struct nm_inode_info*)nm_inode_private(injected))->r_path.dentry==tree_dentry[6]);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 486,
+            "old": "assert(((struct nm_inode_info*)nm_inode_private(nm_dentry_inode(view_dentry[12])))->rule->r_path.dentry==tree_dentry[7]);",
+            "new": "assert(((struct nm_inode_info*)nm_inode_private(nm_dentry_inode(view_dentry[12])))->r_path.dentry==tree_dentry[7]);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 571,
+            "old": "assert(((struct nm_inode_info*)nm_inode_private(sub))->rule->r_path.dentry==tree_dentry[1]);",
+            "new": "assert(((struct nm_inode_info*)nm_inode_private(sub))->r_path.dentry==tree_dentry[1]);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          },
+          {
+            "index": 572,
+            "old": "assert(deep&&((struct nm_inode_info*)nm_inode_private(deep))->rule->r_path.dentry==tree_dentry[2]);",
+            "new": "assert(deep&&((struct nm_inode_info*)nm_inode_private(deep))->r_path.dentry==tree_dentry[2]);",
+            "reason": "inode binding owns independent path/node; private-field/hash and rule-refcount contract migration"
+          }
+        ],
+        "generated_sha256": "2b8c3e569cf8a7e99aba4da018b350041583dbacfc66ab28a343cc18e8636ae6",
+        "stdout": "inode materialization, full super table preservation, error cleanup and backing lifetime: PASS\nnative-parent lookup, UID cache validation, enumeration, cookies and proxy cleanup: PASS\nvirtual-directory inode reuse, child lookup, dot entries, UID visibility and retirement: PASS\ntopology publication, 15 fresh-parent and 18 cached-parent allocation failures, pruning and live-inode retirement: PASS\nbacking path ownership, native errors, merged enumeration, dot identity, UID and seek: PASS\nbacked inode cache, source permission, recursive lookup, cache refresh and path retirement: PASS\nmanaged backing subtrees, UID sources, search ACL, refresh, 17 allocation failures and retirement: PASS\nkeyring transport, command batches, mutex contracts, paging and rule replay: PASS\nexplicit ABI rejection, pair hash, native pair getattr, mount callbacks and kstat byte boundaries: PASS\nmount/plain permissions, complete subtree preparation, namespace selection, errors and typed getattr: PASS\npre/post/runtime events, dependency/BTF/registration errors, allocation cleanup, status and resident exit: PASS\nsmall-child collision and 2/3 transition, zero full hash for tiny lookup; UID collision/delete/limits/failures: PASS\nprivate memory: slab zero/alignment/boundaries, fallback and total failure, process and RCU free pairing: PASS\nindependent inode binding: rule freed while inode alive, same-source cache reuse, owner changes and initialization, path/node cleanup: PASS\n"
+      }
+    ]
+  },
+  "native": {
+    "scope": "Developer dependency rejection and exact target symbol presence; not function ABI/runtime proof",
+    "required_missing_rejected": [
+      "__rcu_read_lock",
+      "__rcu_read_unlock",
+      "synchronize_rcu",
+      "call_rcu",
+      "kfree",
+      "__kmalloc",
+      "kvfree",
+      "is_vmalloc_addr",
+      "vfree_atomic",
+      "vzalloc",
+      "capable",
+      "memdup_user",
+      "vfs_setpos",
+      "iterate_dir"
+    ],
+    "targets": [
+      {
+        "target": "B2N-416G",
+        "symbols_input": "local/zram-kernel-compat-20261011-01/B2N-416G_boot.img/symbols.json",
+        "input_sha256": "26dfcea65420dd4b5cc4699fab34c428df7a3c22906e7b3a7ecb163899d7662c",
+        "addresses": {
+          "__kmalloc": [
+            "0x14263c"
+          ],
+          "kvfree": [
+            "0x118af4"
+          ],
+          "is_vmalloc_addr": [
+            "0x134b88"
+          ],
+          "vfree_atomic": [
+            "0x1370dc"
+          ],
+          "path_get": [
+            "0x1578c4"
+          ]
+        }
+      },
+      {
+        "target": "boot_los23.2",
+        "symbols_input": "local/nomount-port-20261012/inspection-02/symbols.json",
+        "input_sha256": "d450f6ed8b84ea52c677b8160b593cb24496db1d5f5ff52dc8c3972a732881d8",
+        "addresses": {
+          "__kmalloc": [
+            "0x46d800"
+          ],
+          "kvfree": [
+            "0x42b4b4"
+          ],
+          "is_vmalloc_addr": [
+            "0x4597fc"
+          ],
+          "vfree_atomic": [
+            "0x45b554"
+          ],
+          "path_get": [
+            "0x4a07a0"
+          ]
+        }
+      },
+      {
+        "target": "boot_67.2.A.3.178",
+        "symbols_input": "local/zram-kernel-compat-20261011-01/boot_67.2.A.3.178.img/symbols.json",
+        "input_sha256": "97a4f9a244f2f734f9c5e11ec404f1f5ae27063c21d0ec65554d51dd1d5e8843",
+        "addresses": {
+          "__kmalloc": [
+            "0x4f98c4"
+          ],
+          "kvfree": [
+            "0x462724"
+          ],
+          "is_vmalloc_addr": [
+            "0x4c0184"
+          ],
+          "vfree_atomic": [
+            "0x4c11bc"
+          ],
+          "path_get": [
+            "0x56d248"
+          ]
+        }
+      },
+      {
+        "target": "kernel_android13-5.10",
+        "symbols_input": "local/zram-kernel-compat-20261011-01/kernel_android13-5.10/symbols.json",
+        "input_sha256": "b6e2e742ddaceb4baf4356cdfca0c08e9447a4f4949921583842264d47a82d6a",
+        "addresses": {
+          "__kmalloc": [
+            "0x4d2d94"
+          ],
+          "kvfree": [
+            "0x4435f8"
+          ],
+          "is_vmalloc_addr": [
+            "0x49f1a0"
+          ],
+          "vfree_atomic": [
+            "0x49fd50"
+          ],
+          "path_get": [
+            "0x54a57c"
+          ]
+        }
+      },
+      {
+        "target": "kernel_android13-5.15",
+        "symbols_input": "local/zram-kernel-compat-20261011-01/kernel_android13-5.15/symbols.json",
+        "input_sha256": "20805e08e26219d0ffd87e1418f0c5f6fbe36e4a74014b66bb6dc12739ce37bb",
+        "addresses": {
+          "__kmalloc": [
+            "0x4fc5ac"
+          ],
+          "kvfree": [
+            "0x46555c"
+          ],
+          "is_vmalloc_addr": [
+            "0x4c2d7c"
+          ],
+          "vfree_atomic": [
+            "0x4c3e48"
+          ],
+          "path_get": [
+            "0x56fa50"
+          ]
+        }
+      },
+      {
+        "target": "kernel_android14-5.15",
+        "symbols_input": "local/zram-kernel-compat-20261011-01/kernel_android14-5.15/symbols.json",
+        "input_sha256": "db816cf1df42ba58b74c96e2e3cf986dc8230ba99b4f8113a42a5a2d4adea043",
+        "addresses": {
+          "__kmalloc": [
+            "0x4bbbd0"
+          ],
+          "kvfree": [
+            "0x430270"
+          ],
+          "is_vmalloc_addr": [
+            "0x4870ac"
+          ],
+          "vfree_atomic": [
+            "0x487e40"
+          ],
+          "path_get": [
+            "0x52aa08"
+          ]
+        }
+      },
+      {
+        "target": "kernel_android14-6.1",
+        "symbols_input": "local/zram-kernel-compat-20261011-01/kernel_android14-6.1/symbols.json",
+        "input_sha256": "047e738413ed5abd18bb18ae2ce457d2c4b1d6522a185cc4279c806054904672",
+        "addresses": {
+          "__kmalloc": [
+            "0x2fb670"
+          ],
+          "kvfree": [
+            "0x2eb550"
+          ],
+          "is_vmalloc_addr": [
+            "0x32c010"
+          ],
+          "vfree_atomic": [
+            "0x32e79c"
+          ],
+          "path_get": [
+            "0x3ad49c"
+          ]
+        }
+      }
+    ]
+  },
+  "native_btf": [
+    {
+      "target": "boot_67.2.A.3.178.img",
+      "input_sha256": "384f6f4915762a2d6e6a2686b590b951df29f8bb053dec2ae7ffe9e7d27af598",
+      "functions": {
+        "__kmalloc": {
+          "return_type": {
+            "kind": 2,
+            "pointee": {
+              "kind": 0,
+              "name": "void",
+              "size": 0
+            }
+          },
+          "args": [
+            {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8,
+              "encoding": 0
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "kvfree": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "is_vmalloc_addr": {
+          "return_type": {
+            "kind": 1,
+            "name": "_Bool",
+            "size": 1,
+            "encoding": 4
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "vfree_atomic": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "path_get": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "path",
+                "size": 16
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "target": "kernel_android13-5.10",
+      "input_sha256": "ac4c10349c2b2beb0ff41c02398979cb4238f292b56cd05bb14cb97551cfd65e",
+      "functions": {
+        "__kmalloc": {
+          "return_type": {
+            "kind": 2,
+            "pointee": {
+              "kind": 0,
+              "name": "void",
+              "size": 0
+            }
+          },
+          "args": [
+            {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8,
+              "encoding": 0
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "kvfree": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "is_vmalloc_addr": {
+          "return_type": {
+            "kind": 1,
+            "name": "_Bool",
+            "size": 1,
+            "encoding": 4
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "vfree_atomic": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "path_get": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "path",
+                "size": 16
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "target": "kernel_android13-5.15",
+      "input_sha256": "bbc21c0229bed03cd91c27bb69ddcb687be43ea6c2c90ac79ec0aae73cd022e7",
+      "functions": {
+        "__kmalloc": {
+          "return_type": {
+            "kind": 2,
+            "pointee": {
+              "kind": 0,
+              "name": "void",
+              "size": 0
+            }
+          },
+          "args": [
+            {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8,
+              "encoding": 0
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "kvfree": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "is_vmalloc_addr": {
+          "return_type": {
+            "kind": 1,
+            "name": "_Bool",
+            "size": 1,
+            "encoding": 4
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "vfree_atomic": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "path_get": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "path",
+                "size": 16
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "target": "kernel_android14-5.15",
+      "input_sha256": "cd92dc6f040011cded0a368c7578a4e891162eaafaa988e1d43a17aea027ed2d",
+      "functions": {
+        "__kmalloc": {
+          "return_type": {
+            "kind": 2,
+            "pointee": {
+              "kind": 0,
+              "name": "void",
+              "size": 0
+            }
+          },
+          "args": [
+            {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8,
+              "encoding": 0
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "kvfree": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "is_vmalloc_addr": {
+          "return_type": {
+            "kind": 1,
+            "name": "_Bool",
+            "size": 1,
+            "encoding": 4
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "vfree_atomic": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "path_get": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "path",
+                "size": 16
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "target": "kernel_android14-6.1",
+      "input_sha256": "a6d50a0423819928155e688e2b8b2cd8b5f7647fe87dc56677ca42abab2fe8df",
+      "functions": {
+        "__kmalloc": {
+          "return_type": {
+            "kind": 2,
+            "pointee": {
+              "kind": 0,
+              "name": "void",
+              "size": 0
+            }
+          },
+          "args": [
+            {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8,
+              "encoding": 0
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "kvfree": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "is_vmalloc_addr": {
+          "return_type": {
+            "kind": 1,
+            "name": "_Bool",
+            "size": 1,
+            "encoding": 4
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "vfree_atomic": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            }
+          ]
+        },
+        "path_get": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "path",
+                "size": 16
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "binary": [
+    {
+      "target": "boot_67.2.A.3.178.img",
+      "base_sha256": "fd5340662be4a36cb4bb63c86e33754d79a63aea23ac3fed3ae032e02eee3b9d",
+      "derived_sha256": "d908196e2d889888863196b04fe285b4ad3d012d35a5523868b43999ab8c0ca9",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android13-5.10",
+      "base_sha256": "fd5340662be4a36cb4bb63c86e33754d79a63aea23ac3fed3ae032e02eee3b9d",
+      "derived_sha256": "4ef07efea5fd0ebc846ca850d04e94aee96a5fe09cbd1d2bf7fe1ecc4079ab1f",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android13-5.15",
+      "base_sha256": "fd5340662be4a36cb4bb63c86e33754d79a63aea23ac3fed3ae032e02eee3b9d",
+      "derived_sha256": "d908196e2d889888863196b04fe285b4ad3d012d35a5523868b43999ab8c0ca9",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android14-5.15",
+      "base_sha256": "fd5340662be4a36cb4bb63c86e33754d79a63aea23ac3fed3ae032e02eee3b9d",
+      "derived_sha256": "d908196e2d889888863196b04fe285b4ad3d012d35a5523868b43999ab8c0ca9",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android14-6.1",
+      "base_sha256": "fd5340662be4a36cb4bb63c86e33754d79a63aea23ac3fed3ae032e02eee3b9d",
+      "derived_sha256": "69d90573946780f19a9c677734e66cf3af400976d48c644e5382f1530949124e",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "B2N-416G_boot.img",
+      "base_sha256": "fd5340662be4a36cb4bb63c86e33754d79a63aea23ac3fed3ae032e02eee3b9d",
+      "derived_sha256": "92365f7357f11c7f6f31d34e93eb3d54a8fefabff49bc483a859c3e4b55f0db3",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "boot_los23.2.img",
+      "base_sha256": "fd5340662be4a36cb4bb63c86e33754d79a63aea23ac3fed3ae032e02eee3b9d",
+      "derived_sha256": "45736efa6a271a2a80b61501473b732b8244793badba0f550c1c493991c8de46",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "boot_67.2.A.3.178.img",
+      "base_sha256": "3467637b554e70251bee65cbe3f92d1735c1cf9afbe58b245774d77bf2d67e32",
+      "derived_sha256": "5a129c2123ffc33351ce08e9a67077e15e939a183f06857d7943157db931999a",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android13-5.10",
+      "base_sha256": "3467637b554e70251bee65cbe3f92d1735c1cf9afbe58b245774d77bf2d67e32",
+      "derived_sha256": "f2e7cf5671fb38f2d939dcd240dc484387a85cd98376cfcc3994e7f5b8c4c484",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android13-5.15",
+      "base_sha256": "3467637b554e70251bee65cbe3f92d1735c1cf9afbe58b245774d77bf2d67e32",
+      "derived_sha256": "5a129c2123ffc33351ce08e9a67077e15e939a183f06857d7943157db931999a",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android14-5.15",
+      "base_sha256": "3467637b554e70251bee65cbe3f92d1735c1cf9afbe58b245774d77bf2d67e32",
+      "derived_sha256": "5a129c2123ffc33351ce08e9a67077e15e939a183f06857d7943157db931999a",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android14-6.1",
+      "base_sha256": "3467637b554e70251bee65cbe3f92d1735c1cf9afbe58b245774d77bf2d67e32",
+      "derived_sha256": "13f2d0e91fbc81a477c5949e23f5f97a900d456c851579c7170c332e26f8a69f",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "B2N-416G_boot.img",
+      "base_sha256": "3467637b554e70251bee65cbe3f92d1735c1cf9afbe58b245774d77bf2d67e32",
+      "derived_sha256": "f72b95f16a1bfb7af0c2ffbbbb349efdd7d396b35384795193b46fdc5f177e16",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "boot_los23.2.img",
+      "base_sha256": "3467637b554e70251bee65cbe3f92d1735c1cf9afbe58b245774d77bf2d67e32",
+      "derived_sha256": "3a2b1ead6f2753d86074b2b0250ede3a4b7092feb25ebf45c86472aaf8f16b59",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    }
+  ],
+  "verification": {
+    "scope": "Developer candidate fingerprints, real ELF/import/instruction and layout bytes; not independent audit or target runtime",
+    "source_commit": "773385757fcaaa6588e7946862e6784842c1901c",
+    "candidate_verification": [
+      {
+        "build_id": "nomount-0.5.0+g6e270f8a5698.r7ab13a25.kpb51197a.ndk26.3.11579264",
+        "instance_id": "nomount-0.5.0+g6e270f8a5698.r7ab13a25.kpb51197a.ndk26.3.11579264#1",
+        "kind": "candidate",
+        "profile": "candidate",
+        "problems": [],
+        "notes": [
+          "\u6e90\u7801\u6838\u9a8c\u901a\u8fc7\uff08\u63d0\u4ea4 blob 131 \u4e2a\uff09"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      },
+      {
+        "build_id": "nomount-0.5.0_baselines+g6e270f8a5698.r71a1a5a7.kpb51197a.ndk26.3.11579264",
+        "instance_id": "nomount-0.5.0_baselines+g6e270f8a5698.r71a1a5a7.kpb51197a.ndk26.3.11579264#1",
+        "kind": "candidate",
+        "profile": "candidate",
+        "problems": [],
+        "notes": [
+          "\u6e90\u7801\u6838\u9a8c\u901a\u8fc7\uff08\u63d0\u4ea4 blob 131 \u4e2a\uff09"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      },
+      {
+        "build_id": "nomount-0.5.0_baselines_debug+g6e270f8a5698.ree81fe8f.kpb51197a.ndk26.3.11579264",
+        "instance_id": "nomount-0.5.0_baselines_debug+g6e270f8a5698.ree81fe8f.kpb51197a.ndk26.3.11579264#1",
+        "kind": "candidate",
+        "profile": "candidate",
+        "problems": [],
+        "notes": [
+          "\u6e90\u7801\u6838\u9a8c\u901a\u8fc7\uff08\u63d0\u4ea4 blob 131 \u4e2a\uff09"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      },
+      {
+        "build_id": "nomount-0.5.0_debug+g6e270f8a5698.r44281ec1.kpb51197a.ndk26.3.11579264",
+        "instance_id": "nomount-0.5.0_debug+g6e270f8a5698.r44281ec1.kpb51197a.ndk26.3.11579264#1",
+        "kind": "candidate",
+        "profile": "candidate",
+        "problems": [],
+        "notes": [
+          "\u6e90\u7801\u6838\u9a8c\u901a\u8fc7\uff08\u63d0\u4ea4 blob 131 \u4e2a\uff09"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      }
+    ],
+    "artifacts": [
+      {
+        "artifact": {
+          "name": "nomount_0.5.0.kpm",
+          "sha256": "00fbddf01297ab2118dc734f09ac21d8036930cb50ed79632618485a21e00202",
+          "size": 150032,
+          "embedded": {
+            "name": "nomount",
+            "version": "0.5.0",
+            "license": "GPL v2",
+            "author": "maxsteeel, Codex",
+            "description": "NoMount: read-only file and directory views, resident until reboot",
+            "offset_mode": "dynamic",
+            "lifetime": "reboot"
+          },
+          "path": "artifacts/nomount-0.5.0+g6e270f8a5698.r7ab13a25.kpb51197a.ndk26.3.11579264/nomount_0.5.0.kpm"
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "kf_strncmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 17346,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "name": "nomount_0.5.0_baselines.kpm",
+          "sha256": "fd5340662be4a36cb4bb63c86e33754d79a63aea23ac3fed3ae032e02eee3b9d",
+          "size": 108992,
+          "embedded": {
+            "name": "nomount",
+            "version": "0.5.0",
+            "license": "GPL v2",
+            "author": "maxsteeel, Codex",
+            "description": "NoMount: read-only file and directory views, resident until reboot",
+            "offset_mode": "static",
+            "lifetime": "reboot"
+          },
+          "path": "artifacts/nomount-0.5.0_baselines+g6e270f8a5698.r71a1a5a7.kpb51197a.ndk26.3.11579264/nomount_0.5.0_baselines.kpm"
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "name": "nomount_0.5.0_baselines_debug.kpm",
+          "sha256": "3467637b554e70251bee65cbe3f92d1735c1cf9afbe58b245774d77bf2d67e32",
+          "size": 109000,
+          "embedded": {
+            "name": "nomount",
+            "version": "0.5.0_d",
+            "license": "GPL v2",
+            "author": "maxsteeel, Codex",
+            "description": "NoMount: read-only file and directory views, resident until reboot",
+            "offset_mode": "static",
+            "lifetime": "reboot"
+          },
+          "path": "artifacts/nomount-0.5.0_baselines_debug+g6e270f8a5698.ree81fe8f.kpb51197a.ndk26.3.11579264/nomount_0.5.0_baselines_debug.kpm"
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "name": "nomount_0.5.0_debug.kpm",
+          "sha256": "9c7c6125d440e9871a1b83e5f132aac615f4b1ec4c924d1e0fe6717f18b68289",
+          "size": 150032,
+          "embedded": {
+            "name": "nomount",
+            "version": "0.5.0_d",
+            "license": "GPL v2",
+            "author": "maxsteeel, Codex",
+            "description": "NoMount: read-only file and directory views, resident until reboot",
+            "offset_mode": "dynamic",
+            "lifetime": "reboot"
+          },
+          "path": "artifacts/nomount-0.5.0_debug+g6e270f8a5698.r44281ec1.kpb51197a.ndk26.3.11579264/nomount_0.5.0_debug.kpm"
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "kf_strncmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 17346,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/d908196e2d889888863196b04fe285b4ad3d012d35a5523868b43999ab8c0ca9/nomount_0.5.0_baselines.kpm",
+          "name": "nomount_0.5.0_baselines.kpm",
+          "sha256": "d908196e2d889888863196b04fe285b4ad3d012d35a5523868b43999ab8c0ca9",
+          "size": 108992
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/4ef07efea5fd0ebc846ca850d04e94aee96a5fe09cbd1d2bf7fe1ecc4079ab1f/nomount_0.5.0_baselines.kpm",
+          "name": "nomount_0.5.0_baselines.kpm",
+          "sha256": "4ef07efea5fd0ebc846ca850d04e94aee96a5fe09cbd1d2bf7fe1ecc4079ab1f",
+          "size": 108992
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/d908196e2d889888863196b04fe285b4ad3d012d35a5523868b43999ab8c0ca9/nomount_0.5.0_baselines.kpm",
+          "name": "nomount_0.5.0_baselines.kpm",
+          "sha256": "d908196e2d889888863196b04fe285b4ad3d012d35a5523868b43999ab8c0ca9",
+          "size": 108992
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/d908196e2d889888863196b04fe285b4ad3d012d35a5523868b43999ab8c0ca9/nomount_0.5.0_baselines.kpm",
+          "name": "nomount_0.5.0_baselines.kpm",
+          "sha256": "d908196e2d889888863196b04fe285b4ad3d012d35a5523868b43999ab8c0ca9",
+          "size": 108992
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/69d90573946780f19a9c677734e66cf3af400976d48c644e5382f1530949124e/nomount_0.5.0_baselines.kpm",
+          "name": "nomount_0.5.0_baselines.kpm",
+          "sha256": "69d90573946780f19a9c677734e66cf3af400976d48c644e5382f1530949124e",
+          "size": 108992
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/92365f7357f11c7f6f31d34e93eb3d54a8fefabff49bc483a859c3e4b55f0db3/nomount_0.5.0_baselines.kpm",
+          "name": "nomount_0.5.0_baselines.kpm",
+          "sha256": "92365f7357f11c7f6f31d34e93eb3d54a8fefabff49bc483a859c3e4b55f0db3",
+          "size": 108992
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/2e98c1503fc29da060ec6bbf583389926f94e1310f0e200594e49fdcce0784aa/nomount_0.5.0_baselines.kpm",
+          "name": "nomount_0.5.0_baselines.kpm",
+          "sha256": "2e98c1503fc29da060ec6bbf583389926f94e1310f0e200594e49fdcce0784aa",
+          "size": 120280
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10505,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/45736efa6a271a2a80b61501473b732b8244793badba0f550c1c493991c8de46/nomount_0.5.0_baselines.kpm",
+          "name": "nomount_0.5.0_baselines.kpm",
+          "sha256": "45736efa6a271a2a80b61501473b732b8244793badba0f550c1c493991c8de46",
+          "size": 108992
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/5a129c2123ffc33351ce08e9a67077e15e939a183f06857d7943157db931999a/nomount_0.5.0_baselines_debug.kpm",
+          "name": "nomount_0.5.0_baselines_debug.kpm",
+          "sha256": "5a129c2123ffc33351ce08e9a67077e15e939a183f06857d7943157db931999a",
+          "size": 109000
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/f2e7cf5671fb38f2d939dcd240dc484387a85cd98376cfcc3994e7f5b8c4c484/nomount_0.5.0_baselines_debug.kpm",
+          "name": "nomount_0.5.0_baselines_debug.kpm",
+          "sha256": "f2e7cf5671fb38f2d939dcd240dc484387a85cd98376cfcc3994e7f5b8c4c484",
+          "size": 109000
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/5a129c2123ffc33351ce08e9a67077e15e939a183f06857d7943157db931999a/nomount_0.5.0_baselines_debug.kpm",
+          "name": "nomount_0.5.0_baselines_debug.kpm",
+          "sha256": "5a129c2123ffc33351ce08e9a67077e15e939a183f06857d7943157db931999a",
+          "size": 109000
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/5a129c2123ffc33351ce08e9a67077e15e939a183f06857d7943157db931999a/nomount_0.5.0_baselines_debug.kpm",
+          "name": "nomount_0.5.0_baselines_debug.kpm",
+          "sha256": "5a129c2123ffc33351ce08e9a67077e15e939a183f06857d7943157db931999a",
+          "size": 109000
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/13f2d0e91fbc81a477c5949e23f5f97a900d456c851579c7170c332e26f8a69f/nomount_0.5.0_baselines_debug.kpm",
+          "name": "nomount_0.5.0_baselines_debug.kpm",
+          "sha256": "13f2d0e91fbc81a477c5949e23f5f97a900d456c851579c7170c332e26f8a69f",
+          "size": 109000
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/f72b95f16a1bfb7af0c2ffbbbb349efdd7d396b35384795193b46fdc5f177e16/nomount_0.5.0_baselines_debug.kpm",
+          "name": "nomount_0.5.0_baselines_debug.kpm",
+          "sha256": "f72b95f16a1bfb7af0c2ffbbbb349efdd7d396b35384795193b46fdc5f177e16",
+          "size": 109000
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/d3b1f85bbc54c581a2de6f2ebf997720a162284bbb1f2b0f6f732b63b0af6a9b/nomount_0.5.0_baselines_debug.kpm",
+          "name": "nomount_0.5.0_baselines_debug.kpm",
+          "sha256": "d3b1f85bbc54c581a2de6f2ebf997720a162284bbb1f2b0f6f732b63b0af6a9b",
+          "size": 120288
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10505,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/3a2b1ead6f2753d86074b2b0250ede3a4b7092feb25ebf45c86472aaf8f16b59/nomount_0.5.0_baselines_debug.kpm",
+          "name": "nomount_0.5.0_baselines_debug.kpm",
+          "sha256": "3a2b1ead6f2753d86074b2b0250ede3a4b7092feb25ebf45c86472aaf8f16b59",
+          "size": 109000
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10502,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      }
+    ],
+    "original_oracle_files_unchanged": 24
+  },
+  "zip_comparison": {
+    "base_sha256": "9798982ea8d114c6faed4e322882cc2ba2735ac7ec0522c1c65c3024a337138a",
+    "new_sha256": "b6271dde3dda3ff2e1edf1330add61add12d03457ee6aa4b4cc73a8ea44100e3",
+    "changed_entries": [
+      "module.prop"
+    ],
+    "identical_entries": 31
+  },
+  "native_btf_tool": {
+    "path": "local/nomount-binding-20261014-01/native_btf.py",
+    "sha256": "195eecaf6a4768e7424f185fce6b8af514f78e8cb44d9e96821d347b480408d8"
+  },
+  "assertions_total": {
+    "int": 735,
+    "bool": 735
+  }
+}

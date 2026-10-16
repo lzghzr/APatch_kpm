@@ -1,0 +1,371 @@
+{
+  "schema_version": 1,
+  "module": "nomount",
+  "kind": "final-evidence-index",
+  "role": "Auditor",
+  "request_commit": "8ad799851f4c8f4a2e3fc82df153cb7ad322d11b",
+  "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+  "commit_semantics": "sources.commit为实际读取原件Git blob的冻结快照；候选和派生字节的来源提交由candidate_identities绑定。归档产物不要求在Git内。 current_matches_git_blob及current_bytes_verified描述本次整理时的复算事实；后续追加登记不要求当前元数据永久保持该快照字节。",
+  "verification_scope": "本次整理时按请求冻结快照直接复算原件Git blob/当时文件SHA-256与长度、审计追加链、两个基础KPM和17条派生记录的13组唯一字节；原审计、宿主测试与设备测试均引用既有证据。",
+  "candidate_identities": [
+    {
+      "id": "C1",
+      "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+      "instance_id": "nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264#1",
+      "offset_mode": "dynamic",
+      "artifact": {
+        "path": "artifacts/nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014.kpm",
+        "sha256": "1ab36727b82cab1723da56f6f82273ff1fee57071836b8992f4e3d26ad40e1fa",
+        "size": 219984
+      },
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    },
+    {
+      "id": "C2",
+      "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+      "instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+      "offset_mode": "static",
+      "artifact": {
+        "path": "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+        "size": 115104
+      },
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    }
+  ],
+  "delta_prior_identity": {
+    "id": "P1",
+    "source_commit": "846f3d1bce5f7aa9c9f8d180e3c1b2f02b6d3e34",
+    "instance_id": "nomount-2.1.1-20261014+g526802555793.r3ac93780.kpb51197a.ndk26.3.11579264#1",
+    "artifact": {
+      "path": "artifacts/nomount-2.1.1-20261014+g526802555793.r3ac93780.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014.kpm",
+      "sha256": "7e21475004c69deafa8d32d3607ca5359b0df0907a212ba0bbc37772ea5200ae",
+      "size": 213528
+    },
+    "purpose": "只用于S09趟③的5.15动态Delta绑定来源",
+    "provenance_source": "S07",
+    "test_source": "S09"
+  },
+  "sources": [
+    {
+      "id": "S01",
+      "path": "docs/records/2026-10-16-nomount-final-report-request.md",
+      "commit": "8ad799851f4c8f4a2e3fc82df153cb7ad322d11b",
+      "git_blob_oid": "d75dfd09ee1da79255d3ab77b260dd099ff1c460",
+      "sha256": "6f394950f2e2f2e17dbedac07f88b4504ccc3933d12fc413cd285c8b84b7d080",
+      "size": 3075,
+      "role": "维护者",
+      "purpose": "本轮对象与范围",
+      "current_matches_git_blob": true
+    },
+    {
+      "id": "S02",
+      "path": "Auditor/reports/2026-10-15-nomount-tail-anchors-audit.md",
+      "commit": "8ad799851f4c8f4a2e3fc82df153cb7ad322d11b",
+      "git_blob_oid": "fd101604632d8fdc6c3c33ea26cfb154444c06da",
+      "sha256": "4340bdfd87c509c468304cbacd8f72a37cc15f8ab6e10134f3e9669161059f46",
+      "size": 20496,
+      "role": "Auditor",
+      "purpose": "原独立重编译、尾部锚点、静态结构裁定及最新§8更正",
+      "current_matches_git_blob": true,
+      "append_only_versions": [
+        {
+          "commit": "e1a7f169a8304adc36fdc0c9e5d652637350b184",
+          "size": 10534,
+          "sha256": "7034cff51cfa5fc8c6f4c0b3325ab6fb062c73bd4340e82bb4a853f70dc628e0",
+          "git_blob_oid": "d0d8c0c91217b33d2cb383dc9231391f3fab0162"
+        },
+        {
+          "commit": "d92898e65c51ad0f0629d153188e999e67fa92b4",
+          "size": 15833,
+          "sha256": "9ede5143c8e2c87ed3f322cc726b65394c9156f43d8e79d3deb4d191d3db3313",
+          "git_blob_oid": "f702417b16e73449365b3f4c06f6ceb70914f672",
+          "added_sha256": "c6c0e21ada2e42afe21d1038c8e81b368d202828e06546999577569cef7e7c14",
+          "added_size": 5299
+        },
+        {
+          "commit": "f9336cbe043d400bc2762fc84f5504257b561725",
+          "size": 20496,
+          "sha256": "4340bdfd87c509c468304cbacd8f72a37cc15f8ab6e10134f3e9669161059f46",
+          "git_blob_oid": "fd101604632d8fdc6c3c33ea26cfb154444c06da",
+          "added_sha256": "48fc1747cc36f6d7c263bfcbe69359d473d60a52f1a53b6c389be0afaa9beb70",
+          "added_size": 4663
+        }
+      ]
+    },
+    {
+      "id": "S03",
+      "path": "Auditor/reports/data/2026-10-15-nomount-tail-anchors-artifact-audit.json",
+      "commit": "8ad799851f4c8f4a2e3fc82df153cb7ad322d11b",
+      "git_blob_oid": "9e5e0195c6209f08ba37fb22d47ceae30fa069d4",
+      "sha256": "e0ef7eab770d45e8df48fd2e0db44bfaf226e19c891beff63ce2286fffb60045",
+      "size": 2615059,
+      "role": "Auditor",
+      "purpose": "原产物结构、导入符号、依赖语料及历史扫描提示",
+      "current_matches_git_blob": true
+    },
+    {
+      "id": "S04",
+      "path": "Auditor/reports/data/2026-10-15-nomount-tail-anchors-static-scan.json",
+      "commit": "8ad799851f4c8f4a2e3fc82df153cb7ad322d11b",
+      "git_blob_oid": "e77e22ff0b84b442217788751941817960353eb3",
+      "sha256": "e961dd762bd82c158a590923d46210566d8a8bbf4146179fe3b3f5c4b7331f35",
+      "size": 9552,
+      "role": "Auditor",
+      "purpose": "原38文件启发式扫描及25项命中",
+      "current_matches_git_blob": true
+    },
+    {
+      "id": "S05",
+      "path": "Developer/reports/responses/2026-10-16-DEV-043-044.md",
+      "commit": "8ad799851f4c8f4a2e3fc82df153cb7ad322d11b",
+      "git_blob_oid": "c3b882bca99aaeac1a972d047ad039537570b2af",
+      "sha256": "7f50bdd4dca90cec509f69c2864cd305e54ccae8f673a93d18657e4a9a0a9cdb",
+      "size": 4597,
+      "role": "Developer",
+      "purpose": "登记独立复核与DEV-044更正确认；读取旧回执",
+      "current_matches_git_blob": true
+    },
+    {
+      "id": "S06",
+      "path": "docs/records/2026-10-16-nomount-final-registration.md",
+      "commit": "8ad799851f4c8f4a2e3fc82df153cb7ad322d11b",
+      "git_blob_oid": "d65d3f35d9634a3602c9f72265ffef86c30f817c",
+      "sha256": "0e196bcc3f84dc0715eeec974354cb4ac59bc28944a23172e413137a9c26c679",
+      "size": 3621,
+      "role": "维护者",
+      "purpose": "DEV-044独立关闭、宿主复跑边界及DEV-043后续关闭",
+      "current_matches_git_blob": true
+    },
+    {
+      "id": "S07",
+      "path": "metadata/modules/nomount.json",
+      "commit": "8ad799851f4c8f4a2e3fc82df153cb7ad322d11b",
+      "git_blob_oid": "95c66cce52fa1aee6d9303f8cc59e00cc74ef83a",
+      "sha256": "467ec7812d681e7334997bfd2a746fcf041840f68a72d32ee6b9e4c726add835",
+      "size": 4689323,
+      "role": "维护者",
+      "purpose": "当前实例、派生、问题状态、RA-002范围及旧身份映射",
+      "current_matches_git_blob": true
+    },
+    {
+      "id": "S08",
+      "path": "Tester/reports/runs/2026-10-15-nomount-two-device-round-live#1.md",
+      "commit": "8ad799851f4c8f4a2e3fc82df153cb7ad322d11b",
+      "git_blob_oid": "9532ce6161bc422fdbb4756546c0c34daccdb743",
+      "sha256": "8d263b999f54d07348ab00a2328a2695962fe99bc0ecf1cf47efd29b23711bb0",
+      "size": 20280,
+      "role": "Tester",
+      "purpose": "两机四趟既有实测、静态抽样与TST-001/DEV-042闭环",
+      "current_matches_git_blob": true
+    },
+    {
+      "id": "S09",
+      "path": "Tester/reports/runs/2026-10-15-nomount-inode-storage-live#1.md",
+      "commit": "8ad799851f4c8f4a2e3fc82df153cb7ad322d11b",
+      "git_blob_oid": "fce41fb71000ab5ab932a687b0821af0df3abf89",
+      "sha256": "ea20b071a69bc4054d313f8edae3c9daf4aa98f2eb9af8955a9441a0858256b3",
+      "size": 19823,
+      "role": "Tester",
+      "purpose": "5.15动态Delta绑定的旧实测，限趟③",
+      "current_matches_git_blob": true
+    },
+    {
+      "id": "S10",
+      "path": "Developer/reports/data/2026-10-15-nomount-tail-anchors.json",
+      "commit": "8ad799851f4c8f4a2e3fc82df153cb7ad322d11b",
+      "git_blob_oid": "222f29610f2c16e595a824df488000dd3df52166",
+      "sha256": "450febffe41a972872bdd16d1f60d962d90ca8ea86c0cc6d685fe4dc97744005",
+      "size": 107522,
+      "role": "Developer",
+      "purpose": "13配置、锚点与宿主自检数据；实现方来源",
+      "current_matches_git_blob": true
+    }
+  ],
+  "derived_artifacts": [
+    {
+      "base_identity": "C2",
+      "path": "artifacts/binary-port/nomount/94bafae7efafcabaaf20e7db119672c0e48d215513a0a5fb961a64c04547a581/NoMount_2.1.1-20261014_baselines.kpm",
+      "sha256": "94bafae7efafcabaaf20e7db119672c0e48d215513a0a5fb961a64c04547a581",
+      "size": 115104,
+      "targets": [
+        "B2N-416G_boot.img"
+      ],
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    },
+    {
+      "base_identity": "C2",
+      "path": "artifacts/binary-port/nomount/f4c1c21940a09a2c071b3071712d66d353fc0a40c21a26a1c4aec28ca975647b/NoMount_2.1.1-20261014_baselines.kpm",
+      "sha256": "f4c1c21940a09a2c071b3071712d66d353fc0a40c21a26a1c4aec28ca975647b",
+      "size": 115104,
+      "targets": [
+        "kernel_mi6-4.4"
+      ],
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    },
+    {
+      "base_identity": "C2",
+      "path": "artifacts/binary-port/nomount/4b6fe6266ace0918f5d294380eb9650df8673a429ea613844a8c9b834e92054e/NoMount_2.1.1-20261014_baselines.kpm",
+      "sha256": "4b6fe6266ace0918f5d294380eb9650df8673a429ea613844a8c9b834e92054e",
+      "size": 115104,
+      "targets": [
+        "boot_los23.2.img"
+      ],
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    },
+    {
+      "base_identity": "C2",
+      "path": "artifacts/binary-port/nomount/8d497f8fdf2ff2667498b350735f6ae117fa829144cc5f73f21d5595e50a299d/NoMount_2.1.1-20261014_baselines.kpm",
+      "sha256": "8d497f8fdf2ff2667498b350735f6ae117fa829144cc5f73f21d5595e50a299d",
+      "size": 115104,
+      "targets": [
+        "boot_67.2.A.3.178.img",
+        "kernel_android13-5.15",
+        "kernel_android14-5.15"
+      ],
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    },
+    {
+      "base_identity": "C2",
+      "path": "artifacts/binary-port/nomount/dfa3e6e99349d60fea428822583b9be8912714513fc12e2de81018a902384c29/NoMount_2.1.1-20261014_baselines.kpm",
+      "sha256": "dfa3e6e99349d60fea428822583b9be8912714513fc12e2de81018a902384c29",
+      "size": 115104,
+      "targets": [
+        "kernel_android13-5.10",
+        "kernel_android12-5.10"
+      ],
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    },
+    {
+      "base_identity": "C2",
+      "path": "artifacts/binary-port/nomount/b02dc587cb51726f40c17a03bf0b9d081908eba6922cadb1a7907044ca40a08a/NoMount_2.1.1-20261014_baselines.kpm",
+      "sha256": "b02dc587cb51726f40c17a03bf0b9d081908eba6922cadb1a7907044ca40a08a",
+      "size": 115104,
+      "targets": [
+        "kernel_android14-6.1"
+      ],
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    },
+    {
+      "base_identity": "C2",
+      "path": "artifacts/binary-port/nomount/781e053bda096c774cb9434c0fbf55605c6abc5705f256413421962236d57684/NoMount_2.1.1-20261014_baselines.kpm",
+      "sha256": "781e053bda096c774cb9434c0fbf55605c6abc5705f256413421962236d57684",
+      "size": 115104,
+      "targets": [
+        "kernel_mi8-4.9"
+      ],
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    },
+    {
+      "base_identity": "C2",
+      "path": "artifacts/binary-port/nomount/09a49a36faba1e25078785848d652a9e787543eb1762a75eb99e77b1591f0c38/NoMount_2.1.1-20261014_baselines.kpm",
+      "sha256": "09a49a36faba1e25078785848d652a9e787543eb1762a75eb99e77b1591f0c38",
+      "size": 115104,
+      "targets": [
+        "kernel_mi9-4.14"
+      ],
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    },
+    {
+      "base_identity": "C2",
+      "path": "artifacts/binary-port/nomount/a2b54956913b128f228509bb0c7d55155911d3d6ecc29cdd21a880ff67c12de9/NoMount_2.1.1-20261014_baselines.kpm",
+      "sha256": "a2b54956913b128f228509bb0c7d55155911d3d6ecc29cdd21a880ff67c12de9",
+      "size": 115104,
+      "targets": [
+        "kernel_mi10-4.19"
+      ],
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    },
+    {
+      "base_identity": "C2",
+      "path": "artifacts/binary-port/nomount/bc69619694faa8f30a783c394317f19fbfd4930f6a6810bb9481bd0bd7001431/NoMount_2.1.1-20261014_baselines.kpm",
+      "sha256": "bc69619694faa8f30a783c394317f19fbfd4930f6a6810bb9481bd0bd7001431",
+      "size": 115104,
+      "targets": [
+        "kernel_mi11-5.4"
+      ],
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    },
+    {
+      "base_identity": "C1",
+      "path": "artifacts/binary-port/nomount/06bd68500f2d6f9725038499a16bca1f54e88f1cde3c21f2dc95aa96f276d8ee/NoMount_2.1.1-20261014.kpm",
+      "sha256": "06bd68500f2d6f9725038499a16bca1f54e88f1cde3c21f2dc95aa96f276d8ee",
+      "size": 221728,
+      "targets": [
+        "B2N-416G_boot.img",
+        "kernel_mi6-4.4"
+      ],
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    },
+    {
+      "base_identity": "C2",
+      "path": "artifacts/binary-port/nomount/b12e2bc835a8a2ed9f60300fe27b0000a1f2b8ecdf57e2280f15b9f0a4af158b/NoMount_2.1.1-20261014_baselines.kpm",
+      "sha256": "b12e2bc835a8a2ed9f60300fe27b0000a1f2b8ecdf57e2280f15b9f0a4af158b",
+      "size": 126872,
+      "targets": [
+        "B2N-416G_boot.img"
+      ],
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    },
+    {
+      "base_identity": "C2",
+      "path": "artifacts/binary-port/nomount/b52a593b32c10b18febff305e7cef1e02a2240209ba327521eb3ea798b04ea54/NoMount_2.1.1-20261014_baselines.kpm",
+      "sha256": "b52a593b32c10b18febff305e7cef1e02a2240209ba327521eb3ea798b04ea54",
+      "size": 126872,
+      "targets": [
+        "kernel_mi6-4.4"
+      ],
+      "provenance_source": "S07",
+      "current_bytes_verified": true,
+      "git_blob_available": false
+    }
+  ],
+  "verification_counts": {
+    "source_files": 10,
+    "source_git_blob_matches": 10,
+    "audit_report_versions": 3,
+    "base_artifacts": 2,
+    "binary_port_records": 17,
+    "unique_derived_artifacts": 13
+  },
+  "historical_counts": {
+    "artifact_scan_registered_artifacts": 60,
+    "artifact_scan_review_findings": 742,
+    "static_scan_files": 38,
+    "static_scan_hits": 25,
+    "static_scan_patterns": {
+      "free_without_null": 3,
+      "sleep_in_callback": 13,
+      "unchecked_shift": 7,
+      "user_input_no_auth": 2
+    }
+  }
+}

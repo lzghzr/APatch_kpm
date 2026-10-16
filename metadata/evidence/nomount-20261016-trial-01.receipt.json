@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "reference": "metadata/evidence/nomount-20261016-trial-01.json",
+  "reference_sha256": "a42d7cd8c38d5b7d129b94f469f25f2d2941ec8e14cf9fcc6daf11d0f1a386b8",
+  "generator_commit": "6d538d4b44d8065c35d01c1f8cab4a95c3308f88",
+  "generator": {
+    "path": "tools/evidence_archive.py",
+    "sha256": "f6b5411b2957eee1a2b95097ac79981cbd5cf23eabb9c4eb7a81b22d9235784c"
+  },
+  "restored_versions": 405,
+  "restoration_matches": true,
+  "archive_cases_passed": 28,
+  "archive_cases_total": 28,
+  "public_hygiene_pattern_hits": 0,
+  "independent_review": "pending",
+  "trial_mode": "parallel-trial",
+  "repository_files_removed": 0,
+  "scope": "模式扫描不代替包内完整人工卫生审阅；commit/tree 是选中文件的路径证明，不是完整冻结源码仓库。"
+}

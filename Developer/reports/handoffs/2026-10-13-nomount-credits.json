@@ -1,0 +1,2510 @@
+{
+  "module": "nomount",
+  "version": "0.3.0",
+  "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+  "handoff_by": "Developer",
+  "handoff_at": "2026-10-14T05:19:16Z",
+  "note": "归档产物需随清单一起转移：artifacts/<instance_id>/（导入时会逐个核验哈希）",
+  "builds": [
+    {
+      "module": "nomount",
+      "version": "0.3.0",
+      "kind": "candidate",
+      "build_id": "nomount-0.3.0+g96ece746aa9f.rd0a227b7.kpb51197a.ndk26.3.11579264",
+      "variant": "base",
+      "recorded_at": "2026-10-14T05:19:16Z",
+      "source_commit": "bdb9748b164e8157b80d977e26d2fa9172bf87dc",
+      "source_dirty": false,
+      "source_tree_sha256": "96ece746aa9f7ced49aec6a2accbb96c3b5c23f893774d641b0f0d7f63c94e01",
+      "source_tree_blob_sha256": "96ece746aa9f7ced49aec6a2accbb96c3b5c23f893774d641b0f0d7f63c94e01",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": ".gitmodules",
+          "sha256": "ec7fcc1c1f58823260784a9aa205ae3d064f8dd917de613eee2a783b83606eec",
+          "blob_sha256": "ec7fcc1c1f58823260784a9aa205ae3d064f8dd917de613eee2a783b83606eec"
+        },
+        {
+          "path": "kpm_utils.h",
+          "sha256": "d3213062b52a3ff89051bf0655f86f6ea17b31002eb7c6288f139fd332b0929f",
+          "blob_sha256": "d3213062b52a3ff89051bf0655f86f6ea17b31002eb7c6288f139fd332b0929f"
+        },
+        {
+          "path": "nomount/Makefile",
+          "sha256": "2205b8fb077c151ef1d99bcdb990f32941c9c64f52c7a723e5fb2912efc9f022",
+          "blob_sha256": "2205b8fb077c151ef1d99bcdb990f32941c9c64f52c7a723e5fb2912efc9f022"
+        },
+        {
+          "path": "nomount/configs/B2N-416G-v3.json",
+          "sha256": "5a77fa4c23850f705573159074b7925bd1df8ba291ed41a1822a931290761f9a",
+          "blob_sha256": "5a77fa4c23850f705573159074b7925bd1df8ba291ed41a1822a931290761f9a"
+        },
+        {
+          "path": "nomount/configs/B2N-416G.json",
+          "sha256": "92964902c839e3168df1a311f3a0550a04d5cabc03d0aa0493ec13dc86d6e391",
+          "blob_sha256": "92964902c839e3168df1a311f3a0550a04d5cabc03d0aa0493ec13dc86d6e391"
+        },
+        {
+          "path": "nomount/configs/boot_67.2.A.3.178.json",
+          "sha256": "d22bf5a1ff2f51a88966ef90557a0ca0f96cd501be487d247784233f82fa9f17",
+          "blob_sha256": "d22bf5a1ff2f51a88966ef90557a0ca0f96cd501be487d247784233f82fa9f17"
+        },
+        {
+          "path": "nomount/configs/boot_los23.2-v2.json",
+          "sha256": "e51a45a3e6fdbd98d1c573d2d27734aaef7d2b5b386f0bffd2bc3ab85b5e7080",
+          "blob_sha256": "e51a45a3e6fdbd98d1c573d2d27734aaef7d2b5b386f0bffd2bc3ab85b5e7080"
+        },
+        {
+          "path": "nomount/configs/boot_los23.2-v3.json",
+          "sha256": "0e92c1feef6c49ca023ac2369c92b788442ca98d0f4b1572bcf2b285567c7ed6",
+          "blob_sha256": "0e92c1feef6c49ca023ac2369c92b788442ca98d0f4b1572bcf2b285567c7ed6"
+        },
+        {
+          "path": "nomount/configs/boot_los23.2.json",
+          "sha256": "f9ef23f3892d65d8b149c80e699035af8d4e2386ef06d7a4e3eb0c127348825e",
+          "blob_sha256": "f9ef23f3892d65d8b149c80e699035af8d4e2386ef06d7a4e3eb0c127348825e"
+        },
+        {
+          "path": "nomount/configs/kernel_android13-5.10.json",
+          "sha256": "37ce8b90fbd2762b4985e197e2e159a8f76dd3e34533ff4f11d0c2e339a0b640",
+          "blob_sha256": "37ce8b90fbd2762b4985e197e2e159a8f76dd3e34533ff4f11d0c2e339a0b640"
+        },
+        {
+          "path": "nomount/configs/kernel_android13-5.15.json",
+          "sha256": "8711a57354d8cdba440844fa71ffdd9d80594ca4d7e35abb6107ab4ba03bc1c5",
+          "blob_sha256": "8711a57354d8cdba440844fa71ffdd9d80594ca4d7e35abb6107ab4ba03bc1c5"
+        },
+        {
+          "path": "nomount/configs/kernel_android14-5.15.json",
+          "sha256": "bd3327ef6cd17341675a77e65e8745283aab126c0c93dc74b2803de0b51aa52b",
+          "blob_sha256": "bd3327ef6cd17341675a77e65e8745283aab126c0c93dc74b2803de0b51aa52b"
+        },
+        {
+          "path": "nomount/module/boot-completed.sh",
+          "sha256": "05757ae28aa68fee9c5a0655050b86285dfba89bc36f253c8d5037d57719b9dc",
+          "blob_sha256": "05757ae28aa68fee9c5a0655050b86285dfba89bc36f253c8d5037d57719b9dc"
+        },
+        {
+          "path": "nomount/module/common.sh",
+          "sha256": "c4806204688a189125423147aa612b4fbb09a4636cc7ce3df634a34d2c297f45",
+          "blob_sha256": "c4806204688a189125423147aa612b4fbb09a4636cc7ce3df634a34d2c297f45"
+        },
+        {
+          "path": "nomount/module/customize.sh",
+          "sha256": "b7944d51f2d53bc81b8188c9afa4fc1917c720ef7957a1fc9a31b0cd2a2295a8",
+          "blob_sha256": "b7944d51f2d53bc81b8188c9afa4fc1917c720ef7957a1fc9a31b0cd2a2295a8"
+        },
+        {
+          "path": "nomount/module/metamount.sh",
+          "sha256": "947e469fe2f278a3117e38b75b7cfa7b5a356513bcd8bdecb5fb1dae1c460c5b",
+          "blob_sha256": "947e469fe2f278a3117e38b75b7cfa7b5a356513bcd8bdecb5fb1dae1c460c5b"
+        },
+        {
+          "path": "nomount/module/post-fs-data.sh",
+          "sha256": "062827cc3cbdb97ff39b2c8f360a74261c316e8f0a5dabbb19946f7c8fea80e6",
+          "blob_sha256": "062827cc3cbdb97ff39b2c8f360a74261c316e8f0a5dabbb19946f7c8fea80e6"
+        },
+        {
+          "path": "nomount/module/uninstall.sh",
+          "sha256": "63e8e956eccff721ddfd8d7c40ee930587623775ae268e33a7398bc4523a474d",
+          "blob_sha256": "63e8e956eccff721ddfd8d7c40ee930587623775ae268e33a7398bc4523a474d"
+        },
+        {
+          "path": "nomount/nm_backing_directory.c",
+          "sha256": "181f47877e9b4037f75ca64aa8371cbff7968a1624466904123d9d8f4e777c89",
+          "blob_sha256": "181f47877e9b4037f75ca64aa8371cbff7968a1624466904123d9d8f4e777c89"
+        },
+        {
+          "path": "nomount/nm_backing_entry.c",
+          "sha256": "665a1e1266cfcd56cd840a39ace270e131131c62b3792455ed095e98e6e96291",
+          "blob_sha256": "665a1e1266cfcd56cd840a39ace270e131131c62b3792455ed095e98e6e96291"
+        },
+        {
+          "path": "nomount/nm_backing_inode.c",
+          "sha256": "5b059740f8ce13d655c6ea2e2fe8a2c2cb4dcdcfa88503912c5bfcaa4569ecb0",
+          "blob_sha256": "5b059740f8ce13d655c6ea2e2fe8a2c2cb4dcdcfa88503912c5bfcaa4569ecb0"
+        },
+        {
+          "path": "nomount/nm_backing_subtree.c",
+          "sha256": "4f4ffe7b0f72e5cdf4e0237a572955732c6a2a728323b17d9a69b1679ceb8192",
+          "blob_sha256": "4f4ffe7b0f72e5cdf4e0237a572955732c6a2a728323b17d9a69b1679ceb8192"
+        },
+        {
+          "path": "nomount/nm_btf.c",
+          "sha256": "d226dcb08804deea284e9b157ecf9ee373c0ba6dbcb5656eefabc716824d8e88",
+          "blob_sha256": "d226dcb08804deea284e9b157ecf9ee373c0ba6dbcb5656eefabc716824d8e88"
+        },
+        {
+          "path": "nomount/nm_control.c",
+          "sha256": "5207f8b35bc57a94169d487dce0c8aba8c4a7c760a57711e8f29bbd18d8654c8",
+          "blob_sha256": "5207f8b35bc57a94169d487dce0c8aba8c4a7c760a57711e8f29bbd18d8654c8"
+        },
+        {
+          "path": "nomount/nm_control_entry.c",
+          "sha256": "b4873ab193e447cbc346f9dfd8ee07ecd6c7bc8626279a0437a1c211c15c9d0f",
+          "blob_sha256": "b4873ab193e447cbc346f9dfd8ee07ecd6c7bc8626279a0437a1c211c15c9d0f"
+        },
+        {
+          "path": "nomount/nm_control_key.c",
+          "sha256": "9cd04064228561bde36c0f45ca6115926138e895a9fea274e665eb4b2869b9ef",
+          "blob_sha256": "9cd04064228561bde36c0f45ca6115926138e895a9fea274e665eb4b2869b9ef"
+        },
+        {
+          "path": "nomount/nm_control_lock.c",
+          "sha256": "5f2e7ed8e259c48131ac99ca7172dd4127dc1351c611d6876d85db2acfe0786e",
+          "blob_sha256": "5f2e7ed8e259c48131ac99ca7172dd4127dc1351c611d6876d85db2acfe0786e"
+        },
+        {
+          "path": "nomount/nm_current.c",
+          "sha256": "1bc59c27eaa77cc4f712d3d63a0a66e5edf9d631506267a51574173961b3b191",
+          "blob_sha256": "1bc59c27eaa77cc4f712d3d63a0a66e5edf9d631506267a51574173961b3b191"
+        },
+        {
+          "path": "nomount/nm_directory.c",
+          "sha256": "553f3530b0204d6cfdb8de05795ae891a5d7952bc0383748baaf15a9e4396e23",
+          "blob_sha256": "553f3530b0204d6cfdb8de05795ae891a5d7952bc0383748baaf15a9e4396e23"
+        },
+        {
+          "path": "nomount/nm_directory_entry.c",
+          "sha256": "1f6593f16abc9364fe1e556da587693fd291fc8e299e89ab94bef6f2cba6e01e",
+          "blob_sha256": "1f6593f16abc9364fe1e556da587693fd291fc8e299e89ab94bef6f2cba6e01e"
+        },
+        {
+          "path": "nomount/nm_directory_nodes.c",
+          "sha256": "fbdb315e5858391c44b3046927c50842a442f2a7b27bf1a45a67e80f8abc5e7b",
+          "blob_sha256": "fbdb315e5858391c44b3046927c50842a442f2a7b27bf1a45a67e80f8abc5e7b"
+        },
+        {
+          "path": "nomount/nm_file.c",
+          "sha256": "7bc5239ff26c4296984307b09e266ca7963b360830551311e39f998ff5485028",
+          "blob_sha256": "7bc5239ff26c4296984307b09e266ca7963b360830551311e39f998ff5485028"
+        },
+        {
+          "path": "nomount/nm_file_entry.c",
+          "sha256": "1194ad7f48558cf9788533560051744c44e74c904e5335d4e4be86db2b1c78c8",
+          "blob_sha256": "1194ad7f48558cf9788533560051744c44e74c904e5335d4e4be86db2b1c78c8"
+        },
+        {
+          "path": "nomount/nm_inode.c",
+          "sha256": "fb47156dc809c7e5c5ba051d874e27a65ee82a9d9548171be633d84164cce638",
+          "blob_sha256": "fb47156dc809c7e5c5ba051d874e27a65ee82a9d9548171be633d84164cce638"
+        },
+        {
+          "path": "nomount/nm_inode_entry.c",
+          "sha256": "111c512a3427eba071593b22001f019c96bd50356fe52ac35a0b5b718a811257",
+          "blob_sha256": "111c512a3427eba071593b22001f019c96bd50356fe52ac35a0b5b718a811257"
+        },
+        {
+          "path": "nomount/nm_layout.c",
+          "sha256": "1efae16e581969e47807a9062c970829a23ad8d61278c721a5419b1e6e2610f9",
+          "blob_sha256": "1efae16e581969e47807a9062c970829a23ad8d61278c721a5419b1e6e2610f9"
+        },
+        {
+          "path": "nomount/nm_native.c",
+          "sha256": "7b6ec516bc701645019be6f8e1e778d0e9d8f40eca855716a9c14edeb24a99d9",
+          "blob_sha256": "7b6ec516bc701645019be6f8e1e778d0e9d8f40eca855716a9c14edeb24a99d9"
+        },
+        {
+          "path": "nomount/nm_native_entry.c",
+          "sha256": "efe57a565df1179f3142706801074920ed94102d9b445907abeef8e40272cf0b",
+          "blob_sha256": "efe57a565df1179f3142706801074920ed94102d9b445907abeef8e40272cf0b"
+        },
+        {
+          "path": "nomount/nm_offsets.c",
+          "sha256": "5c5cc5617d097f5a49ebeb7ec4ddf0798428dbd9f1a607f84592ca399434ae8d",
+          "blob_sha256": "5c5cc5617d097f5a49ebeb7ec4ddf0798428dbd9f1a607f84592ca399434ae8d"
+        },
+        {
+          "path": "nomount/nm_operations.c",
+          "sha256": "941be9581bdabd7ed703dcf046cb36bc8f9f425f0ac095d46ba1c04fb93d3e96",
+          "blob_sha256": "941be9581bdabd7ed703dcf046cb36bc8f9f425f0ac095d46ba1c04fb93d3e96"
+        },
+        {
+          "path": "nomount/nm_protocol.h",
+          "sha256": "d51f96dc8a86fdf276576002b82d4ca96c6289366823196e615c82d35e204b0a",
+          "blob_sha256": "d51f96dc8a86fdf276576002b82d4ca96c6289366823196e615c82d35e204b0a"
+        },
+        {
+          "path": "nomount/nm_rules.c",
+          "sha256": "5c8f19884f7eeeea172ed167672c77aef7d372ac1a8494266c4ed7575f695337",
+          "blob_sha256": "5c8f19884f7eeeea172ed167672c77aef7d372ac1a8494266c4ed7575f695337"
+        },
+        {
+          "path": "nomount/nm_rules.h",
+          "sha256": "a76e0b4919b6b3a0e6a17c7ada711eb3981cc19018e04d1b4f69efbec6469008",
+          "blob_sha256": "a76e0b4919b6b3a0e6a17c7ada711eb3981cc19018e04d1b4f69efbec6469008"
+        },
+        {
+          "path": "nomount/nm_rules_entry.c",
+          "sha256": "91154d0c9f19b460f47e962e257ca52505bd1a64da92bd155d323fd79a6bbece",
+          "blob_sha256": "91154d0c9f19b460f47e962e257ca52505bd1a64da92bd155d323fd79a6bbece"
+        },
+        {
+          "path": "nomount/nm_structs.h",
+          "sha256": "d3a07efe2994f4881f982b6fdde644d87d5e2d1498ee98b3ef14a60dfe2ff9c9",
+          "blob_sha256": "d3a07efe2994f4881f982b6fdde644d87d5e2d1498ee98b3ef14a60dfe2ff9c9"
+        },
+        {
+          "path": "nomount/nm_topology.c",
+          "sha256": "612597a08c12ed6001d80b08077077e57545d016a2bc9ce2371e6294e192bd0b",
+          "blob_sha256": "612597a08c12ed6001d80b08077077e57545d016a2bc9ce2371e6294e192bd0b"
+        },
+        {
+          "path": "nomount/nm_topology_entry.c",
+          "sha256": "fd1da41075e92b63160bb2921945c9bd97b4d66e380989941f7b78c3979fbf5d",
+          "blob_sha256": "fd1da41075e92b63160bb2921945c9bd97b4d66e380989941f7b78c3979fbf5d"
+        },
+        {
+          "path": "nomount/nm_virtual_directory.c",
+          "sha256": "5c25fb4f0bbd21256e5726734dbb754839fee304150ca344569c54a41e5069ae",
+          "blob_sha256": "5c25fb4f0bbd21256e5726734dbb754839fee304150ca344569c54a41e5069ae"
+        },
+        {
+          "path": "nomount/nomount.c",
+          "sha256": "1c571d8cf196b61d130cd40d5b88a0a0687a52c8055458e101c41a23b19a2957",
+          "blob_sha256": "1c571d8cf196b61d130cd40d5b88a0a0687a52c8055458e101c41a23b19a2957"
+        },
+        {
+          "path": "nomount/nomount/.github/scripts/telegram_upload.py",
+          "sha256": "b77559835dfa86d379620e660f14422aa657f69cad9dc4ea54f555fad54b3aa9",
+          "blob_sha256": "b77559835dfa86d379620e660f14422aa657f69cad9dc4ea54f555fad54b3aa9"
+        },
+        {
+          "path": "nomount/nomount/.github/workflows/build-lkm.yml",
+          "sha256": "00e61d0bb93f44cf468d7e210868ad509be21b3aed6563e6afd2dcf6d87d854c",
+          "blob_sha256": "00e61d0bb93f44cf468d7e210868ad509be21b3aed6563e6afd2dcf6d87d854c"
+        },
+        {
+          "path": "nomount/nomount/.github/workflows/build.yml",
+          "sha256": "f325acf3813002e9737f8224132e9562e45eb69f6269a771a8b1d516c0297b7d",
+          "blob_sha256": "f325acf3813002e9737f8224132e9562e45eb69f6269a771a8b1d516c0297b7d"
+        },
+        {
+          "path": "nomount/nomount/kernel/setup.sh",
+          "sha256": "d87fa9eec2b5b886a1d77f3cc28b04d4e8b466dcbe5408764f14663387ab3838",
+          "blob_sha256": "d87fa9eec2b5b886a1d77f3cc28b04d4e8b466dcbe5408764f14663387ab3838"
+        },
+        {
+          "path": "nomount/nomount/kernel/src/Makefile",
+          "sha256": "8a7c52484958b4f4532405e799e01beb76ea06739243eb423e9c25da6cef73af",
+          "blob_sha256": "8a7c52484958b4f4532405e799e01beb76ea06739243eb423e9c25da6cef73af"
+        },
+        {
+          "path": "nomount/nomount/kernel/src/nomount.c",
+          "sha256": "37aa0bfc6da1591033d6a05a72b413eddf36f914332f0120a6b2350826ae513d",
+          "blob_sha256": "37aa0bfc6da1591033d6a05a72b413eddf36f914332f0120a6b2350826ae513d"
+        },
+        {
+          "path": "nomount/nomount/kernel/src/nomount.h",
+          "sha256": "733f43352b28d24fe9b08a6623fa37ace2583dd1dfe8592fc45053bc91555616",
+          "blob_sha256": "733f43352b28d24fe9b08a6623fa37ace2583dd1dfe8592fc45053bc91555616"
+        },
+        {
+          "path": "nomount/nomount/module/boot-completed.sh",
+          "sha256": "7597eaf9ad208e1579a94e6bb2f21109d511e969ea23451ffa7061445402fa17",
+          "blob_sha256": "7597eaf9ad208e1579a94e6bb2f21109d511e969ea23451ffa7061445402fa17"
+        },
+        {
+          "path": "nomount/nomount/module/customize.sh",
+          "sha256": "2a5788d5fbcb8f9db9d1a4722b3457481912f56f8b0f42ad26352518208f652e",
+          "blob_sha256": "2a5788d5fbcb8f9db9d1a4722b3457481912f56f8b0f42ad26352518208f652e"
+        },
+        {
+          "path": "nomount/nomount/module/metainstall.sh",
+          "sha256": "ceb9ab2e45cb7325be8ec0ffe4d821ce82d0e00829bf99417939241b4a21b12a",
+          "blob_sha256": "ceb9ab2e45cb7325be8ec0ffe4d821ce82d0e00829bf99417939241b4a21b12a"
+        },
+        {
+          "path": "nomount/nomount/module/metamount.sh",
+          "sha256": "63fc3efab75cb77b9277d0bf744488ea00c7c47a062826bc74fdc07ef9879a69",
+          "blob_sha256": "63fc3efab75cb77b9277d0bf744488ea00c7c47a062826bc74fdc07ef9879a69"
+        },
+        {
+          "path": "nomount/nomount/module/post-fs-data.sh",
+          "sha256": "449903a8df09237c8e793fb4fb4a4aa25a3a8bf8b22f31e568282cca3a546a23",
+          "blob_sha256": "449903a8df09237c8e793fb4fb4a4aa25a3a8bf8b22f31e568282cca3a546a23"
+        },
+        {
+          "path": "nomount/nomount/module/rule-paths.sh",
+          "sha256": "e731b64b9bbdf6da6c28296688b1830a16be200b5fd914b6d1e382495dd8f6ce",
+          "blob_sha256": "e731b64b9bbdf6da6c28296688b1830a16be200b5fd914b6d1e382495dd8f6ce"
+        },
+        {
+          "path": "nomount/nomount/module/service.sh",
+          "sha256": "2e615955f82153d0466010e6976bd964f3b8eefe45d1baf07d07f5ab05bf4e39",
+          "blob_sha256": "2e615955f82153d0466010e6976bd964f3b8eefe45d1baf07d07f5ab05bf4e39"
+        },
+        {
+          "path": "nomount/nomount/module/uninstall.sh",
+          "sha256": "e1685116b59e98ce964663b0354f754f1d97a54516eb0af6b7ce65174b2db7b4",
+          "blob_sha256": "e1685116b59e98ce964663b0354f754f1d97a54516eb0af6b7ce65174b2db7b4"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ar-dz.json",
+          "sha256": "f25f14667116eb64fc7455b1a9473213aa49466130b765927a8780cf51abf5a3",
+          "blob_sha256": "f25f14667116eb64fc7455b1a9473213aa49466130b765927a8780cf51abf5a3"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ar.json",
+          "sha256": "ab30a7a76e1e218e2c89a15f585e2843a66d96ceab862bd8c6a00ae5eb2d7ca1",
+          "blob_sha256": "ab30a7a76e1e218e2c89a15f585e2843a66d96ceab862bd8c6a00ae5eb2d7ca1"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/bn.json",
+          "sha256": "d1c2123c1432ffbeb4c72c1b15582a74ce02b23baeeec9095012304f7ef4eae8",
+          "blob_sha256": "d1c2123c1432ffbeb4c72c1b15582a74ce02b23baeeec9095012304f7ef4eae8"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/en.json",
+          "sha256": "756c2b565ac755a59faf6d394b67c015f547792debb0e612c2a53fde6a63325d",
+          "blob_sha256": "756c2b565ac755a59faf6d394b67c015f547792debb0e612c2a53fde6a63325d"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/es.json",
+          "sha256": "18142e334a2a98f5cfbea1c56f92e9ed4c50b494b91f334e300e146b9ecaa793",
+          "blob_sha256": "18142e334a2a98f5cfbea1c56f92e9ed4c50b494b91f334e300e146b9ecaa793"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/id.json",
+          "sha256": "79885e688443798feee15e3b59686a8ab694f5754c0c6f673b20e09ab5fe1103",
+          "blob_sha256": "79885e688443798feee15e3b59686a8ab694f5754c0c6f673b20e09ab5fe1103"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ja.json",
+          "sha256": "f04b467b3fabda8016c08f93ab512eac55a9a91ae54bfa245fa866b5e3c724c8",
+          "blob_sha256": "f04b467b3fabda8016c08f93ab512eac55a9a91ae54bfa245fa866b5e3c724c8"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/pl.json",
+          "sha256": "14f15aa5fc119824a730a68ddc3fafceb211d0f59fae1edf8df9e2f3c23dcb11",
+          "blob_sha256": "14f15aa5fc119824a730a68ddc3fafceb211d0f59fae1edf8df9e2f3c23dcb11"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ru.json",
+          "sha256": "b8df6292195f4440efeefd4a3dc9ee140fca9ee05a484eabdf717a6bdf318456",
+          "blob_sha256": "b8df6292195f4440efeefd4a3dc9ee140fca9ee05a484eabdf717a6bdf318456"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/tr.json",
+          "sha256": "58ce8a73779366979c8267953114d0959d7b8ccaf35f2aa0ffeb4a0c46529a36",
+          "blob_sha256": "58ce8a73779366979c8267953114d0959d7b8ccaf35f2aa0ffeb4a0c46529a36"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/vi.json",
+          "sha256": "3ec737f97d96309307dffdf832361efded039ca262b3d6da9f4102711a118ba2",
+          "blob_sha256": "3ec737f97d96309307dffdf832361efded039ca262b3d6da9f4102711a118ba2"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/zh.json",
+          "sha256": "965907cb3de4c16a8c0e77d42bb6d804f75063feb1babe459d07ef35799099fc",
+          "blob_sha256": "965907cb3de4c16a8c0e77d42bb6d804f75063feb1babe459d07ef35799099fc"
+        },
+        {
+          "path": "nomount/nomount/userspace/src/nm.c",
+          "sha256": "b37e7d3dc415234d05dcde66255e5db6b78da910fb59910d17b588537c9a240d",
+          "blob_sha256": "b37e7d3dc415234d05dcde66255e5db6b78da910fb59910d17b588537c9a240d"
+        },
+        {
+          "path": "nomount/nomount/userspace/src/nm.h",
+          "sha256": "142f2b2193db020e0c497bd96e2553b010c49494364f042eb46727adc80e5d6c",
+          "blob_sha256": "142f2b2193db020e0c497bd96e2553b010c49494364f042eb46727adc80e5d6c"
+        },
+        {
+          "path": "nomount/tools/build_nm.sh",
+          "sha256": "ff75bc209eb1dc91ab50e80eeb4024ccc8058afe0607f5e13b2dd8b84dcbaaf5",
+          "blob_sha256": "ff75bc209eb1dc91ab50e80eeb4024ccc8058afe0607f5e13b2dd8b84dcbaaf5"
+        },
+        {
+          "path": "nomount/tools/build_zip.py",
+          "sha256": "613777e3eba3d249d50752901bdefcb18a06cf254165ddf7c9d948cb4fc152c0",
+          "blob_sha256": "613777e3eba3d249d50752901bdefcb18a06cf254165ddf7c9d948cb4fc152c0"
+        },
+        {
+          "path": "nomount/tools/check_target_calls.py",
+          "sha256": "b98c5a406b4672208847c3f68adfffbcb5dd92e9039841057ddea38e08969d19",
+          "blob_sha256": "b98c5a406b4672208847c3f68adfffbcb5dd92e9039841057ddea38e08969d19"
+        },
+        {
+          "path": "nomount/tools/compare_structs.py",
+          "sha256": "0149638aa9114e0df753605ce59e2288e61786677a067bbe7f71cb17bf8e0159",
+          "blob_sha256": "0149638aa9114e0df753605ce59e2288e61786677a067bbe7f71cb17bf8e0159"
+        },
+        {
+          "path": "nomount/tools/inspect_target.py",
+          "sha256": "53a3f0d73ed6f451bbfd0663983241554b4feb18c014c5c02daa2effdde3d0f4",
+          "blob_sha256": "53a3f0d73ed6f451bbfd0663983241554b4feb18c014c5c02daa2effdde3d0f4"
+        },
+        {
+          "path": "nomount/tools/test_backing_directory.py",
+          "sha256": "b976e53d4dd65a62c3cda3444f6640d6b7743dc658b0d6cdbf66e5126cbe693b",
+          "blob_sha256": "b976e53d4dd65a62c3cda3444f6640d6b7743dc658b0d6cdbf66e5126cbe693b"
+        },
+        {
+          "path": "nomount/tools/test_backing_directory_layout.py",
+          "sha256": "2fa09b63b6520210575597294efc047b8f88edebb11d96f6eb869e11e8ab6f20",
+          "blob_sha256": "2fa09b63b6520210575597294efc047b8f88edebb11d96f6eb869e11e8ab6f20"
+        },
+        {
+          "path": "nomount/tools/test_backing_inode.py",
+          "sha256": "0c5278826869d9c76c839760dd8114bcf2ee01bbc089899d700d492286f32ca9",
+          "blob_sha256": "0c5278826869d9c76c839760dd8114bcf2ee01bbc089899d700d492286f32ca9"
+        },
+        {
+          "path": "nomount/tools/test_backing_inode_layout.py",
+          "sha256": "d71832fa5647fbebdff7ca3d8499435fe6c67e7ddb9a05ff0855f2916dd89afc",
+          "blob_sha256": "d71832fa5647fbebdff7ca3d8499435fe6c67e7ddb9a05ff0855f2916dd89afc"
+        },
+        {
+          "path": "nomount/tools/test_backing_subtree.py",
+          "sha256": "fdf5646a5361427da48ad239fe9519d073b1c78c5db4e5177b0ba476322fc636",
+          "blob_sha256": "fdf5646a5361427da48ad239fe9519d073b1c78c5db4e5177b0ba476322fc636"
+        },
+        {
+          "path": "nomount/tools/test_call_abis.py",
+          "sha256": "6d6e4ba5bf250ad5442e08e3c1bcec59831d90171910d272bc0bff993b20a1ef",
+          "blob_sha256": "6d6e4ba5bf250ad5442e08e3c1bcec59831d90171910d272bc0bff993b20a1ef"
+        },
+        {
+          "path": "nomount/tools/test_control.py",
+          "sha256": "db88c53f647bceec4e0337158e486172fb8a62374d515cc3d7c23e9da244854b",
+          "blob_sha256": "db88c53f647bceec4e0337158e486172fb8a62374d515cc3d7c23e9da244854b"
+        },
+        {
+          "path": "nomount/tools/test_control_layout.py",
+          "sha256": "be150f8dfb338e43d381e0c92c25250238cc83241c5b5aab6cab38c86e80108d",
+          "blob_sha256": "be150f8dfb338e43d381e0c92c25250238cc83241c5b5aab6cab38c86e80108d"
+        },
+        {
+          "path": "nomount/tools/test_directory.py",
+          "sha256": "6fc61ebca92dd138c1a188faaec0c2aa9c8cc584f393728aae1e8c0641aa21e8",
+          "blob_sha256": "6fc61ebca92dd138c1a188faaec0c2aa9c8cc584f393728aae1e8c0641aa21e8"
+        },
+        {
+          "path": "nomount/tools/test_directory_layout.py",
+          "sha256": "2bc72e9348a9f713bc0fa2666088929fbc319c96442b454b2728834becd64ff9",
+          "blob_sha256": "2bc72e9348a9f713bc0fa2666088929fbc319c96442b454b2728834becd64ff9"
+        },
+        {
+          "path": "nomount/tools/test_file.py",
+          "sha256": "86721f3213cfb792add846c9c31ddef5245c44f0ac7d84e4ace66bf0fe443f9b",
+          "blob_sha256": "86721f3213cfb792add846c9c31ddef5245c44f0ac7d84e4ace66bf0fe443f9b"
+        },
+        {
+          "path": "nomount/tools/test_file_layout.py",
+          "sha256": "b42123c896a330a90a151d8598507eac50fdb1277e91bf1e1816c4a78c06d54c",
+          "blob_sha256": "b42123c896a330a90a151d8598507eac50fdb1277e91bf1e1816c4a78c06d54c"
+        },
+        {
+          "path": "nomount/tools/test_inode.py",
+          "sha256": "9d81d278fdca22d231ce93d73ad396c0e840d4808170232ee4b14dd0b10d17d8",
+          "blob_sha256": "9d81d278fdca22d231ce93d73ad396c0e840d4808170232ee4b14dd0b10d17d8"
+        },
+        {
+          "path": "nomount/tools/test_inode_layout.py",
+          "sha256": "f493fd30946f76f5a1ba224b44ab7f3a29c4a75428551ab41802264bf29944d3",
+          "blob_sha256": "f493fd30946f76f5a1ba224b44ab7f3a29c4a75428551ab41802264bf29944d3"
+        },
+        {
+          "path": "nomount/tools/test_inspect_target.py",
+          "sha256": "cf330ddb86754489e1e615cf0296e220b276b9694e31aa8ff32e646e18750216",
+          "blob_sha256": "cf330ddb86754489e1e615cf0296e220b276b9694e31aa8ff32e646e18750216"
+        },
+        {
+          "path": "nomount/tools/test_kpm.py",
+          "sha256": "a424faa647972950e5d50d9833baab1b396e1527830fde6c7eff0dcf7d3a1ad3",
+          "blob_sha256": "a424faa647972950e5d50d9833baab1b396e1527830fde6c7eff0dcf7d3a1ad3"
+        },
+        {
+          "path": "nomount/tools/test_layout.py",
+          "sha256": "f5af6d8e5231531ae15141f4abc5a4e12ad55216f4a20b9ff7a2d18c2a423e0c",
+          "blob_sha256": "f5af6d8e5231531ae15141f4abc5a4e12ad55216f4a20b9ff7a2d18c2a423e0c"
+        },
+        {
+          "path": "nomount/tools/test_load_events.py",
+          "sha256": "683334568ff3ea392edb945576187b473ac2007fc7c1693313fd73cebf06a230",
+          "blob_sha256": "683334568ff3ea392edb945576187b473ac2007fc7c1693313fd73cebf06a230"
+        },
+        {
+          "path": "nomount/tools/test_mount_abis.py",
+          "sha256": "7fada16a0e10c68759392b69c8fe5581f129552754c16cd71c956e43920ac1a2",
+          "blob_sha256": "7fada16a0e10c68759392b69c8fe5581f129552754c16cd71c956e43920ac1a2"
+        },
+        {
+          "path": "nomount/tools/test_native.py",
+          "sha256": "e1f84c2bcd4a8ca95fd37a5dfaa33b28672fc54be380a24cc9f0558a09b462f0",
+          "blob_sha256": "e1f84c2bcd4a8ca95fd37a5dfaa33b28672fc54be380a24cc9f0558a09b462f0"
+        },
+        {
+          "path": "nomount/tools/test_rule_layout.py",
+          "sha256": "97484e8534d87bc4a02f776a759ccfd376d53196acd8e7848439eafcffa65049",
+          "blob_sha256": "97484e8534d87bc4a02f776a759ccfd376d53196acd8e7848439eafcffa65049"
+        },
+        {
+          "path": "nomount/tools/test_rules.py",
+          "sha256": "51182e51219e3807caad221a4adddd9e69a2f7e05ecb1dc895e05bac0fc174fb",
+          "blob_sha256": "51182e51219e3807caad221a4adddd9e69a2f7e05ecb1dc895e05bac0fc174fb"
+        },
+        {
+          "path": "nomount/tools/test_target_layout.py",
+          "sha256": "7dd7db4171f033d18afd43232dc0035d3d5a3650d71daffa1e7b2160bdf00610",
+          "blob_sha256": "7dd7db4171f033d18afd43232dc0035d3d5a3650d71daffa1e7b2160bdf00610"
+        },
+        {
+          "path": "nomount/tools/test_topology.py",
+          "sha256": "e046f294b9252e27c9e1056e55f0223dc5a9a7dcfcab00fdf0e9e664a0f0dd60",
+          "blob_sha256": "e046f294b9252e27c9e1056e55f0223dc5a9a7dcfcab00fdf0e9e664a0f0dd60"
+        },
+        {
+          "path": "nomount/tools/test_topology_layout.py",
+          "sha256": "01bc20547c26a7f87f75d26ebe79fc4883075974637941150e4b4d12f8cd0ee2",
+          "blob_sha256": "01bc20547c26a7f87f75d26ebe79fc4883075974637941150e4b4d12f8cd0ee2"
+        },
+        {
+          "path": "nomount/tools/test_virtual_directory.py",
+          "sha256": "da0ce1419d6fc9dedf87adb8bbfc71489d5499a3930f1af110ed494faad97249",
+          "blob_sha256": "da0ce1419d6fc9dedf87adb8bbfc71489d5499a3930f1af110ed494faad97249"
+        },
+        {
+          "path": "nomount/tools/test_virtual_directory_layout.py",
+          "sha256": "c57681e511e5f079ab6b0c12124cc2edf54b39577fcf99d0980603dca22e9bed",
+          "blob_sha256": "c57681e511e5f079ab6b0c12124cc2edf54b39577fcf99d0980603dca22e9bed"
+        },
+        {
+          "path": "nomount/tools/test_zip_module.py",
+          "sha256": "759d8ff46237198b498bbe5bee513d50fa8ea645cf75477cc47829e70729f9d5",
+          "blob_sha256": "759d8ff46237198b498bbe5bee513d50fa8ea645cf75477cc47829e70729f9d5"
+        },
+        {
+          "path": "patch_offsets.py",
+          "sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033",
+          "blob_sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "8742e38cd6c41299ffeab357d39d3c92b2da5145761e5e3a276d76afeec604ca",
+          "blob_sha256": "8742e38cd6c41299ffeab357d39d3c92b2da5145761e5e3a276d76afeec604ca"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "d0a227b74aa68a4704fbeaeb4a816321b7a852dbed12a833987ff8e89cea1d27",
+      "recipe": {
+        "captured": true,
+        "command": "make -C nomount all debug",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "e5aafa6e961b47858e6683150bd4f5e8b83edeabcece279aa559cc9b2e4aa4fb",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin   -DMYKPM_VERSION=\\\"0.3.0\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -DCONFIG_KPM_BASELINES -DMYKPM_VERSION=\\\"0.3.0\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0_baselines.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -DCONFIG_DEBUG -DMYKPM_VERSION=\\\"0.3.0_d\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0_debug.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -DCONFIG_KPM_BASELINES -DCONFIG_DEBUG -DMYKPM_VERSION=\\\"0.3.0_d\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0_baselines_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "bdb9748b164e8157b80d977e26d2fa9172bf87dc",
+        "source_tree_sha256": "96ece746aa9f7ced49aec6a2accbb96c3b5c23f893774d641b0f0d7f63c94e01",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "e5aafa6e961b47858e6683150bd4f5e8b83edeabcece279aa559cc9b2e4aa4fb",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "nomount_0.3.0.kpm",
+          "sha256": "aac6d4e47f788c8b78a1cb93861f091528fdd4585baf692245e41a8b0a49b964",
+          "size": 140584,
+          "embedded": {
+            "name": "nomount",
+            "version": "0.3.0",
+            "license": "GPL v2",
+            "author": "maxsteeel, Codex",
+            "description": "NoMount: read-only file and directory views, resident until reboot",
+            "offset_mode": "dynamic",
+            "lifetime": "reboot"
+          },
+          "path": "artifacts/nomount-0.3.0+g96ece746aa9f.rd0a227b7.kpb51197a.ndk26.3.11579264/nomount_0.3.0.kpm"
+        }
+      ],
+      "instance_id": "nomount-0.3.0+g96ece746aa9f.rd0a227b7.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "nomount",
+      "version": "0.3.0",
+      "kind": "candidate",
+      "build_id": "nomount-0.3.0_baselines+g96ece746aa9f.r62f2beb9.kpb51197a.ndk26.3.11579264",
+      "variant": "baselines",
+      "recorded_at": "2026-10-14T05:19:16Z",
+      "source_commit": "bdb9748b164e8157b80d977e26d2fa9172bf87dc",
+      "source_dirty": false,
+      "source_tree_sha256": "96ece746aa9f7ced49aec6a2accbb96c3b5c23f893774d641b0f0d7f63c94e01",
+      "source_tree_blob_sha256": "96ece746aa9f7ced49aec6a2accbb96c3b5c23f893774d641b0f0d7f63c94e01",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": ".gitmodules",
+          "sha256": "ec7fcc1c1f58823260784a9aa205ae3d064f8dd917de613eee2a783b83606eec",
+          "blob_sha256": "ec7fcc1c1f58823260784a9aa205ae3d064f8dd917de613eee2a783b83606eec"
+        },
+        {
+          "path": "kpm_utils.h",
+          "sha256": "d3213062b52a3ff89051bf0655f86f6ea17b31002eb7c6288f139fd332b0929f",
+          "blob_sha256": "d3213062b52a3ff89051bf0655f86f6ea17b31002eb7c6288f139fd332b0929f"
+        },
+        {
+          "path": "nomount/Makefile",
+          "sha256": "2205b8fb077c151ef1d99bcdb990f32941c9c64f52c7a723e5fb2912efc9f022",
+          "blob_sha256": "2205b8fb077c151ef1d99bcdb990f32941c9c64f52c7a723e5fb2912efc9f022"
+        },
+        {
+          "path": "nomount/configs/B2N-416G-v3.json",
+          "sha256": "5a77fa4c23850f705573159074b7925bd1df8ba291ed41a1822a931290761f9a",
+          "blob_sha256": "5a77fa4c23850f705573159074b7925bd1df8ba291ed41a1822a931290761f9a"
+        },
+        {
+          "path": "nomount/configs/B2N-416G.json",
+          "sha256": "92964902c839e3168df1a311f3a0550a04d5cabc03d0aa0493ec13dc86d6e391",
+          "blob_sha256": "92964902c839e3168df1a311f3a0550a04d5cabc03d0aa0493ec13dc86d6e391"
+        },
+        {
+          "path": "nomount/configs/boot_67.2.A.3.178.json",
+          "sha256": "d22bf5a1ff2f51a88966ef90557a0ca0f96cd501be487d247784233f82fa9f17",
+          "blob_sha256": "d22bf5a1ff2f51a88966ef90557a0ca0f96cd501be487d247784233f82fa9f17"
+        },
+        {
+          "path": "nomount/configs/boot_los23.2-v2.json",
+          "sha256": "e51a45a3e6fdbd98d1c573d2d27734aaef7d2b5b386f0bffd2bc3ab85b5e7080",
+          "blob_sha256": "e51a45a3e6fdbd98d1c573d2d27734aaef7d2b5b386f0bffd2bc3ab85b5e7080"
+        },
+        {
+          "path": "nomount/configs/boot_los23.2-v3.json",
+          "sha256": "0e92c1feef6c49ca023ac2369c92b788442ca98d0f4b1572bcf2b285567c7ed6",
+          "blob_sha256": "0e92c1feef6c49ca023ac2369c92b788442ca98d0f4b1572bcf2b285567c7ed6"
+        },
+        {
+          "path": "nomount/configs/boot_los23.2.json",
+          "sha256": "f9ef23f3892d65d8b149c80e699035af8d4e2386ef06d7a4e3eb0c127348825e",
+          "blob_sha256": "f9ef23f3892d65d8b149c80e699035af8d4e2386ef06d7a4e3eb0c127348825e"
+        },
+        {
+          "path": "nomount/configs/kernel_android13-5.10.json",
+          "sha256": "37ce8b90fbd2762b4985e197e2e159a8f76dd3e34533ff4f11d0c2e339a0b640",
+          "blob_sha256": "37ce8b90fbd2762b4985e197e2e159a8f76dd3e34533ff4f11d0c2e339a0b640"
+        },
+        {
+          "path": "nomount/configs/kernel_android13-5.15.json",
+          "sha256": "8711a57354d8cdba440844fa71ffdd9d80594ca4d7e35abb6107ab4ba03bc1c5",
+          "blob_sha256": "8711a57354d8cdba440844fa71ffdd9d80594ca4d7e35abb6107ab4ba03bc1c5"
+        },
+        {
+          "path": "nomount/configs/kernel_android14-5.15.json",
+          "sha256": "bd3327ef6cd17341675a77e65e8745283aab126c0c93dc74b2803de0b51aa52b",
+          "blob_sha256": "bd3327ef6cd17341675a77e65e8745283aab126c0c93dc74b2803de0b51aa52b"
+        },
+        {
+          "path": "nomount/module/boot-completed.sh",
+          "sha256": "05757ae28aa68fee9c5a0655050b86285dfba89bc36f253c8d5037d57719b9dc",
+          "blob_sha256": "05757ae28aa68fee9c5a0655050b86285dfba89bc36f253c8d5037d57719b9dc"
+        },
+        {
+          "path": "nomount/module/common.sh",
+          "sha256": "c4806204688a189125423147aa612b4fbb09a4636cc7ce3df634a34d2c297f45",
+          "blob_sha256": "c4806204688a189125423147aa612b4fbb09a4636cc7ce3df634a34d2c297f45"
+        },
+        {
+          "path": "nomount/module/customize.sh",
+          "sha256": "b7944d51f2d53bc81b8188c9afa4fc1917c720ef7957a1fc9a31b0cd2a2295a8",
+          "blob_sha256": "b7944d51f2d53bc81b8188c9afa4fc1917c720ef7957a1fc9a31b0cd2a2295a8"
+        },
+        {
+          "path": "nomount/module/metamount.sh",
+          "sha256": "947e469fe2f278a3117e38b75b7cfa7b5a356513bcd8bdecb5fb1dae1c460c5b",
+          "blob_sha256": "947e469fe2f278a3117e38b75b7cfa7b5a356513bcd8bdecb5fb1dae1c460c5b"
+        },
+        {
+          "path": "nomount/module/post-fs-data.sh",
+          "sha256": "062827cc3cbdb97ff39b2c8f360a74261c316e8f0a5dabbb19946f7c8fea80e6",
+          "blob_sha256": "062827cc3cbdb97ff39b2c8f360a74261c316e8f0a5dabbb19946f7c8fea80e6"
+        },
+        {
+          "path": "nomount/module/uninstall.sh",
+          "sha256": "63e8e956eccff721ddfd8d7c40ee930587623775ae268e33a7398bc4523a474d",
+          "blob_sha256": "63e8e956eccff721ddfd8d7c40ee930587623775ae268e33a7398bc4523a474d"
+        },
+        {
+          "path": "nomount/nm_backing_directory.c",
+          "sha256": "181f47877e9b4037f75ca64aa8371cbff7968a1624466904123d9d8f4e777c89",
+          "blob_sha256": "181f47877e9b4037f75ca64aa8371cbff7968a1624466904123d9d8f4e777c89"
+        },
+        {
+          "path": "nomount/nm_backing_entry.c",
+          "sha256": "665a1e1266cfcd56cd840a39ace270e131131c62b3792455ed095e98e6e96291",
+          "blob_sha256": "665a1e1266cfcd56cd840a39ace270e131131c62b3792455ed095e98e6e96291"
+        },
+        {
+          "path": "nomount/nm_backing_inode.c",
+          "sha256": "5b059740f8ce13d655c6ea2e2fe8a2c2cb4dcdcfa88503912c5bfcaa4569ecb0",
+          "blob_sha256": "5b059740f8ce13d655c6ea2e2fe8a2c2cb4dcdcfa88503912c5bfcaa4569ecb0"
+        },
+        {
+          "path": "nomount/nm_backing_subtree.c",
+          "sha256": "4f4ffe7b0f72e5cdf4e0237a572955732c6a2a728323b17d9a69b1679ceb8192",
+          "blob_sha256": "4f4ffe7b0f72e5cdf4e0237a572955732c6a2a728323b17d9a69b1679ceb8192"
+        },
+        {
+          "path": "nomount/nm_btf.c",
+          "sha256": "d226dcb08804deea284e9b157ecf9ee373c0ba6dbcb5656eefabc716824d8e88",
+          "blob_sha256": "d226dcb08804deea284e9b157ecf9ee373c0ba6dbcb5656eefabc716824d8e88"
+        },
+        {
+          "path": "nomount/nm_control.c",
+          "sha256": "5207f8b35bc57a94169d487dce0c8aba8c4a7c760a57711e8f29bbd18d8654c8",
+          "blob_sha256": "5207f8b35bc57a94169d487dce0c8aba8c4a7c760a57711e8f29bbd18d8654c8"
+        },
+        {
+          "path": "nomount/nm_control_entry.c",
+          "sha256": "b4873ab193e447cbc346f9dfd8ee07ecd6c7bc8626279a0437a1c211c15c9d0f",
+          "blob_sha256": "b4873ab193e447cbc346f9dfd8ee07ecd6c7bc8626279a0437a1c211c15c9d0f"
+        },
+        {
+          "path": "nomount/nm_control_key.c",
+          "sha256": "9cd04064228561bde36c0f45ca6115926138e895a9fea274e665eb4b2869b9ef",
+          "blob_sha256": "9cd04064228561bde36c0f45ca6115926138e895a9fea274e665eb4b2869b9ef"
+        },
+        {
+          "path": "nomount/nm_control_lock.c",
+          "sha256": "5f2e7ed8e259c48131ac99ca7172dd4127dc1351c611d6876d85db2acfe0786e",
+          "blob_sha256": "5f2e7ed8e259c48131ac99ca7172dd4127dc1351c611d6876d85db2acfe0786e"
+        },
+        {
+          "path": "nomount/nm_current.c",
+          "sha256": "1bc59c27eaa77cc4f712d3d63a0a66e5edf9d631506267a51574173961b3b191",
+          "blob_sha256": "1bc59c27eaa77cc4f712d3d63a0a66e5edf9d631506267a51574173961b3b191"
+        },
+        {
+          "path": "nomount/nm_directory.c",
+          "sha256": "553f3530b0204d6cfdb8de05795ae891a5d7952bc0383748baaf15a9e4396e23",
+          "blob_sha256": "553f3530b0204d6cfdb8de05795ae891a5d7952bc0383748baaf15a9e4396e23"
+        },
+        {
+          "path": "nomount/nm_directory_entry.c",
+          "sha256": "1f6593f16abc9364fe1e556da587693fd291fc8e299e89ab94bef6f2cba6e01e",
+          "blob_sha256": "1f6593f16abc9364fe1e556da587693fd291fc8e299e89ab94bef6f2cba6e01e"
+        },
+        {
+          "path": "nomount/nm_directory_nodes.c",
+          "sha256": "fbdb315e5858391c44b3046927c50842a442f2a7b27bf1a45a67e80f8abc5e7b",
+          "blob_sha256": "fbdb315e5858391c44b3046927c50842a442f2a7b27bf1a45a67e80f8abc5e7b"
+        },
+        {
+          "path": "nomount/nm_file.c",
+          "sha256": "7bc5239ff26c4296984307b09e266ca7963b360830551311e39f998ff5485028",
+          "blob_sha256": "7bc5239ff26c4296984307b09e266ca7963b360830551311e39f998ff5485028"
+        },
+        {
+          "path": "nomount/nm_file_entry.c",
+          "sha256": "1194ad7f48558cf9788533560051744c44e74c904e5335d4e4be86db2b1c78c8",
+          "blob_sha256": "1194ad7f48558cf9788533560051744c44e74c904e5335d4e4be86db2b1c78c8"
+        },
+        {
+          "path": "nomount/nm_inode.c",
+          "sha256": "fb47156dc809c7e5c5ba051d874e27a65ee82a9d9548171be633d84164cce638",
+          "blob_sha256": "fb47156dc809c7e5c5ba051d874e27a65ee82a9d9548171be633d84164cce638"
+        },
+        {
+          "path": "nomount/nm_inode_entry.c",
+          "sha256": "111c512a3427eba071593b22001f019c96bd50356fe52ac35a0b5b718a811257",
+          "blob_sha256": "111c512a3427eba071593b22001f019c96bd50356fe52ac35a0b5b718a811257"
+        },
+        {
+          "path": "nomount/nm_layout.c",
+          "sha256": "1efae16e581969e47807a9062c970829a23ad8d61278c721a5419b1e6e2610f9",
+          "blob_sha256": "1efae16e581969e47807a9062c970829a23ad8d61278c721a5419b1e6e2610f9"
+        },
+        {
+          "path": "nomount/nm_native.c",
+          "sha256": "7b6ec516bc701645019be6f8e1e778d0e9d8f40eca855716a9c14edeb24a99d9",
+          "blob_sha256": "7b6ec516bc701645019be6f8e1e778d0e9d8f40eca855716a9c14edeb24a99d9"
+        },
+        {
+          "path": "nomount/nm_native_entry.c",
+          "sha256": "efe57a565df1179f3142706801074920ed94102d9b445907abeef8e40272cf0b",
+          "blob_sha256": "efe57a565df1179f3142706801074920ed94102d9b445907abeef8e40272cf0b"
+        },
+        {
+          "path": "nomount/nm_offsets.c",
+          "sha256": "5c5cc5617d097f5a49ebeb7ec4ddf0798428dbd9f1a607f84592ca399434ae8d",
+          "blob_sha256": "5c5cc5617d097f5a49ebeb7ec4ddf0798428dbd9f1a607f84592ca399434ae8d"
+        },
+        {
+          "path": "nomount/nm_operations.c",
+          "sha256": "941be9581bdabd7ed703dcf046cb36bc8f9f425f0ac095d46ba1c04fb93d3e96",
+          "blob_sha256": "941be9581bdabd7ed703dcf046cb36bc8f9f425f0ac095d46ba1c04fb93d3e96"
+        },
+        {
+          "path": "nomount/nm_protocol.h",
+          "sha256": "d51f96dc8a86fdf276576002b82d4ca96c6289366823196e615c82d35e204b0a",
+          "blob_sha256": "d51f96dc8a86fdf276576002b82d4ca96c6289366823196e615c82d35e204b0a"
+        },
+        {
+          "path": "nomount/nm_rules.c",
+          "sha256": "5c8f19884f7eeeea172ed167672c77aef7d372ac1a8494266c4ed7575f695337",
+          "blob_sha256": "5c8f19884f7eeeea172ed167672c77aef7d372ac1a8494266c4ed7575f695337"
+        },
+        {
+          "path": "nomount/nm_rules.h",
+          "sha256": "a76e0b4919b6b3a0e6a17c7ada711eb3981cc19018e04d1b4f69efbec6469008",
+          "blob_sha256": "a76e0b4919b6b3a0e6a17c7ada711eb3981cc19018e04d1b4f69efbec6469008"
+        },
+        {
+          "path": "nomount/nm_rules_entry.c",
+          "sha256": "91154d0c9f19b460f47e962e257ca52505bd1a64da92bd155d323fd79a6bbece",
+          "blob_sha256": "91154d0c9f19b460f47e962e257ca52505bd1a64da92bd155d323fd79a6bbece"
+        },
+        {
+          "path": "nomount/nm_structs.h",
+          "sha256": "d3a07efe2994f4881f982b6fdde644d87d5e2d1498ee98b3ef14a60dfe2ff9c9",
+          "blob_sha256": "d3a07efe2994f4881f982b6fdde644d87d5e2d1498ee98b3ef14a60dfe2ff9c9"
+        },
+        {
+          "path": "nomount/nm_topology.c",
+          "sha256": "612597a08c12ed6001d80b08077077e57545d016a2bc9ce2371e6294e192bd0b",
+          "blob_sha256": "612597a08c12ed6001d80b08077077e57545d016a2bc9ce2371e6294e192bd0b"
+        },
+        {
+          "path": "nomount/nm_topology_entry.c",
+          "sha256": "fd1da41075e92b63160bb2921945c9bd97b4d66e380989941f7b78c3979fbf5d",
+          "blob_sha256": "fd1da41075e92b63160bb2921945c9bd97b4d66e380989941f7b78c3979fbf5d"
+        },
+        {
+          "path": "nomount/nm_virtual_directory.c",
+          "sha256": "5c25fb4f0bbd21256e5726734dbb754839fee304150ca344569c54a41e5069ae",
+          "blob_sha256": "5c25fb4f0bbd21256e5726734dbb754839fee304150ca344569c54a41e5069ae"
+        },
+        {
+          "path": "nomount/nomount.c",
+          "sha256": "1c571d8cf196b61d130cd40d5b88a0a0687a52c8055458e101c41a23b19a2957",
+          "blob_sha256": "1c571d8cf196b61d130cd40d5b88a0a0687a52c8055458e101c41a23b19a2957"
+        },
+        {
+          "path": "nomount/nomount/.github/scripts/telegram_upload.py",
+          "sha256": "b77559835dfa86d379620e660f14422aa657f69cad9dc4ea54f555fad54b3aa9",
+          "blob_sha256": "b77559835dfa86d379620e660f14422aa657f69cad9dc4ea54f555fad54b3aa9"
+        },
+        {
+          "path": "nomount/nomount/.github/workflows/build-lkm.yml",
+          "sha256": "00e61d0bb93f44cf468d7e210868ad509be21b3aed6563e6afd2dcf6d87d854c",
+          "blob_sha256": "00e61d0bb93f44cf468d7e210868ad509be21b3aed6563e6afd2dcf6d87d854c"
+        },
+        {
+          "path": "nomount/nomount/.github/workflows/build.yml",
+          "sha256": "f325acf3813002e9737f8224132e9562e45eb69f6269a771a8b1d516c0297b7d",
+          "blob_sha256": "f325acf3813002e9737f8224132e9562e45eb69f6269a771a8b1d516c0297b7d"
+        },
+        {
+          "path": "nomount/nomount/kernel/setup.sh",
+          "sha256": "d87fa9eec2b5b886a1d77f3cc28b04d4e8b466dcbe5408764f14663387ab3838",
+          "blob_sha256": "d87fa9eec2b5b886a1d77f3cc28b04d4e8b466dcbe5408764f14663387ab3838"
+        },
+        {
+          "path": "nomount/nomount/kernel/src/Makefile",
+          "sha256": "8a7c52484958b4f4532405e799e01beb76ea06739243eb423e9c25da6cef73af",
+          "blob_sha256": "8a7c52484958b4f4532405e799e01beb76ea06739243eb423e9c25da6cef73af"
+        },
+        {
+          "path": "nomount/nomount/kernel/src/nomount.c",
+          "sha256": "37aa0bfc6da1591033d6a05a72b413eddf36f914332f0120a6b2350826ae513d",
+          "blob_sha256": "37aa0bfc6da1591033d6a05a72b413eddf36f914332f0120a6b2350826ae513d"
+        },
+        {
+          "path": "nomount/nomount/kernel/src/nomount.h",
+          "sha256": "733f43352b28d24fe9b08a6623fa37ace2583dd1dfe8592fc45053bc91555616",
+          "blob_sha256": "733f43352b28d24fe9b08a6623fa37ace2583dd1dfe8592fc45053bc91555616"
+        },
+        {
+          "path": "nomount/nomount/module/boot-completed.sh",
+          "sha256": "7597eaf9ad208e1579a94e6bb2f21109d511e969ea23451ffa7061445402fa17",
+          "blob_sha256": "7597eaf9ad208e1579a94e6bb2f21109d511e969ea23451ffa7061445402fa17"
+        },
+        {
+          "path": "nomount/nomount/module/customize.sh",
+          "sha256": "2a5788d5fbcb8f9db9d1a4722b3457481912f56f8b0f42ad26352518208f652e",
+          "blob_sha256": "2a5788d5fbcb8f9db9d1a4722b3457481912f56f8b0f42ad26352518208f652e"
+        },
+        {
+          "path": "nomount/nomount/module/metainstall.sh",
+          "sha256": "ceb9ab2e45cb7325be8ec0ffe4d821ce82d0e00829bf99417939241b4a21b12a",
+          "blob_sha256": "ceb9ab2e45cb7325be8ec0ffe4d821ce82d0e00829bf99417939241b4a21b12a"
+        },
+        {
+          "path": "nomount/nomount/module/metamount.sh",
+          "sha256": "63fc3efab75cb77b9277d0bf744488ea00c7c47a062826bc74fdc07ef9879a69",
+          "blob_sha256": "63fc3efab75cb77b9277d0bf744488ea00c7c47a062826bc74fdc07ef9879a69"
+        },
+        {
+          "path": "nomount/nomount/module/post-fs-data.sh",
+          "sha256": "449903a8df09237c8e793fb4fb4a4aa25a3a8bf8b22f31e568282cca3a546a23",
+          "blob_sha256": "449903a8df09237c8e793fb4fb4a4aa25a3a8bf8b22f31e568282cca3a546a23"
+        },
+        {
+          "path": "nomount/nomount/module/rule-paths.sh",
+          "sha256": "e731b64b9bbdf6da6c28296688b1830a16be200b5fd914b6d1e382495dd8f6ce",
+          "blob_sha256": "e731b64b9bbdf6da6c28296688b1830a16be200b5fd914b6d1e382495dd8f6ce"
+        },
+        {
+          "path": "nomount/nomount/module/service.sh",
+          "sha256": "2e615955f82153d0466010e6976bd964f3b8eefe45d1baf07d07f5ab05bf4e39",
+          "blob_sha256": "2e615955f82153d0466010e6976bd964f3b8eefe45d1baf07d07f5ab05bf4e39"
+        },
+        {
+          "path": "nomount/nomount/module/uninstall.sh",
+          "sha256": "e1685116b59e98ce964663b0354f754f1d97a54516eb0af6b7ce65174b2db7b4",
+          "blob_sha256": "e1685116b59e98ce964663b0354f754f1d97a54516eb0af6b7ce65174b2db7b4"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ar-dz.json",
+          "sha256": "f25f14667116eb64fc7455b1a9473213aa49466130b765927a8780cf51abf5a3",
+          "blob_sha256": "f25f14667116eb64fc7455b1a9473213aa49466130b765927a8780cf51abf5a3"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ar.json",
+          "sha256": "ab30a7a76e1e218e2c89a15f585e2843a66d96ceab862bd8c6a00ae5eb2d7ca1",
+          "blob_sha256": "ab30a7a76e1e218e2c89a15f585e2843a66d96ceab862bd8c6a00ae5eb2d7ca1"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/bn.json",
+          "sha256": "d1c2123c1432ffbeb4c72c1b15582a74ce02b23baeeec9095012304f7ef4eae8",
+          "blob_sha256": "d1c2123c1432ffbeb4c72c1b15582a74ce02b23baeeec9095012304f7ef4eae8"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/en.json",
+          "sha256": "756c2b565ac755a59faf6d394b67c015f547792debb0e612c2a53fde6a63325d",
+          "blob_sha256": "756c2b565ac755a59faf6d394b67c015f547792debb0e612c2a53fde6a63325d"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/es.json",
+          "sha256": "18142e334a2a98f5cfbea1c56f92e9ed4c50b494b91f334e300e146b9ecaa793",
+          "blob_sha256": "18142e334a2a98f5cfbea1c56f92e9ed4c50b494b91f334e300e146b9ecaa793"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/id.json",
+          "sha256": "79885e688443798feee15e3b59686a8ab694f5754c0c6f673b20e09ab5fe1103",
+          "blob_sha256": "79885e688443798feee15e3b59686a8ab694f5754c0c6f673b20e09ab5fe1103"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ja.json",
+          "sha256": "f04b467b3fabda8016c08f93ab512eac55a9a91ae54bfa245fa866b5e3c724c8",
+          "blob_sha256": "f04b467b3fabda8016c08f93ab512eac55a9a91ae54bfa245fa866b5e3c724c8"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/pl.json",
+          "sha256": "14f15aa5fc119824a730a68ddc3fafceb211d0f59fae1edf8df9e2f3c23dcb11",
+          "blob_sha256": "14f15aa5fc119824a730a68ddc3fafceb211d0f59fae1edf8df9e2f3c23dcb11"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ru.json",
+          "sha256": "b8df6292195f4440efeefd4a3dc9ee140fca9ee05a484eabdf717a6bdf318456",
+          "blob_sha256": "b8df6292195f4440efeefd4a3dc9ee140fca9ee05a484eabdf717a6bdf318456"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/tr.json",
+          "sha256": "58ce8a73779366979c8267953114d0959d7b8ccaf35f2aa0ffeb4a0c46529a36",
+          "blob_sha256": "58ce8a73779366979c8267953114d0959d7b8ccaf35f2aa0ffeb4a0c46529a36"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/vi.json",
+          "sha256": "3ec737f97d96309307dffdf832361efded039ca262b3d6da9f4102711a118ba2",
+          "blob_sha256": "3ec737f97d96309307dffdf832361efded039ca262b3d6da9f4102711a118ba2"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/zh.json",
+          "sha256": "965907cb3de4c16a8c0e77d42bb6d804f75063feb1babe459d07ef35799099fc",
+          "blob_sha256": "965907cb3de4c16a8c0e77d42bb6d804f75063feb1babe459d07ef35799099fc"
+        },
+        {
+          "path": "nomount/nomount/userspace/src/nm.c",
+          "sha256": "b37e7d3dc415234d05dcde66255e5db6b78da910fb59910d17b588537c9a240d",
+          "blob_sha256": "b37e7d3dc415234d05dcde66255e5db6b78da910fb59910d17b588537c9a240d"
+        },
+        {
+          "path": "nomount/nomount/userspace/src/nm.h",
+          "sha256": "142f2b2193db020e0c497bd96e2553b010c49494364f042eb46727adc80e5d6c",
+          "blob_sha256": "142f2b2193db020e0c497bd96e2553b010c49494364f042eb46727adc80e5d6c"
+        },
+        {
+          "path": "nomount/tools/build_nm.sh",
+          "sha256": "ff75bc209eb1dc91ab50e80eeb4024ccc8058afe0607f5e13b2dd8b84dcbaaf5",
+          "blob_sha256": "ff75bc209eb1dc91ab50e80eeb4024ccc8058afe0607f5e13b2dd8b84dcbaaf5"
+        },
+        {
+          "path": "nomount/tools/build_zip.py",
+          "sha256": "613777e3eba3d249d50752901bdefcb18a06cf254165ddf7c9d948cb4fc152c0",
+          "blob_sha256": "613777e3eba3d249d50752901bdefcb18a06cf254165ddf7c9d948cb4fc152c0"
+        },
+        {
+          "path": "nomount/tools/check_target_calls.py",
+          "sha256": "b98c5a406b4672208847c3f68adfffbcb5dd92e9039841057ddea38e08969d19",
+          "blob_sha256": "b98c5a406b4672208847c3f68adfffbcb5dd92e9039841057ddea38e08969d19"
+        },
+        {
+          "path": "nomount/tools/compare_structs.py",
+          "sha256": "0149638aa9114e0df753605ce59e2288e61786677a067bbe7f71cb17bf8e0159",
+          "blob_sha256": "0149638aa9114e0df753605ce59e2288e61786677a067bbe7f71cb17bf8e0159"
+        },
+        {
+          "path": "nomount/tools/inspect_target.py",
+          "sha256": "53a3f0d73ed6f451bbfd0663983241554b4feb18c014c5c02daa2effdde3d0f4",
+          "blob_sha256": "53a3f0d73ed6f451bbfd0663983241554b4feb18c014c5c02daa2effdde3d0f4"
+        },
+        {
+          "path": "nomount/tools/test_backing_directory.py",
+          "sha256": "b976e53d4dd65a62c3cda3444f6640d6b7743dc658b0d6cdbf66e5126cbe693b",
+          "blob_sha256": "b976e53d4dd65a62c3cda3444f6640d6b7743dc658b0d6cdbf66e5126cbe693b"
+        },
+        {
+          "path": "nomount/tools/test_backing_directory_layout.py",
+          "sha256": "2fa09b63b6520210575597294efc047b8f88edebb11d96f6eb869e11e8ab6f20",
+          "blob_sha256": "2fa09b63b6520210575597294efc047b8f88edebb11d96f6eb869e11e8ab6f20"
+        },
+        {
+          "path": "nomount/tools/test_backing_inode.py",
+          "sha256": "0c5278826869d9c76c839760dd8114bcf2ee01bbc089899d700d492286f32ca9",
+          "blob_sha256": "0c5278826869d9c76c839760dd8114bcf2ee01bbc089899d700d492286f32ca9"
+        },
+        {
+          "path": "nomount/tools/test_backing_inode_layout.py",
+          "sha256": "d71832fa5647fbebdff7ca3d8499435fe6c67e7ddb9a05ff0855f2916dd89afc",
+          "blob_sha256": "d71832fa5647fbebdff7ca3d8499435fe6c67e7ddb9a05ff0855f2916dd89afc"
+        },
+        {
+          "path": "nomount/tools/test_backing_subtree.py",
+          "sha256": "fdf5646a5361427da48ad239fe9519d073b1c78c5db4e5177b0ba476322fc636",
+          "blob_sha256": "fdf5646a5361427da48ad239fe9519d073b1c78c5db4e5177b0ba476322fc636"
+        },
+        {
+          "path": "nomount/tools/test_call_abis.py",
+          "sha256": "6d6e4ba5bf250ad5442e08e3c1bcec59831d90171910d272bc0bff993b20a1ef",
+          "blob_sha256": "6d6e4ba5bf250ad5442e08e3c1bcec59831d90171910d272bc0bff993b20a1ef"
+        },
+        {
+          "path": "nomount/tools/test_control.py",
+          "sha256": "db88c53f647bceec4e0337158e486172fb8a62374d515cc3d7c23e9da244854b",
+          "blob_sha256": "db88c53f647bceec4e0337158e486172fb8a62374d515cc3d7c23e9da244854b"
+        },
+        {
+          "path": "nomount/tools/test_control_layout.py",
+          "sha256": "be150f8dfb338e43d381e0c92c25250238cc83241c5b5aab6cab38c86e80108d",
+          "blob_sha256": "be150f8dfb338e43d381e0c92c25250238cc83241c5b5aab6cab38c86e80108d"
+        },
+        {
+          "path": "nomount/tools/test_directory.py",
+          "sha256": "6fc61ebca92dd138c1a188faaec0c2aa9c8cc584f393728aae1e8c0641aa21e8",
+          "blob_sha256": "6fc61ebca92dd138c1a188faaec0c2aa9c8cc584f393728aae1e8c0641aa21e8"
+        },
+        {
+          "path": "nomount/tools/test_directory_layout.py",
+          "sha256": "2bc72e9348a9f713bc0fa2666088929fbc319c96442b454b2728834becd64ff9",
+          "blob_sha256": "2bc72e9348a9f713bc0fa2666088929fbc319c96442b454b2728834becd64ff9"
+        },
+        {
+          "path": "nomount/tools/test_file.py",
+          "sha256": "86721f3213cfb792add846c9c31ddef5245c44f0ac7d84e4ace66bf0fe443f9b",
+          "blob_sha256": "86721f3213cfb792add846c9c31ddef5245c44f0ac7d84e4ace66bf0fe443f9b"
+        },
+        {
+          "path": "nomount/tools/test_file_layout.py",
+          "sha256": "b42123c896a330a90a151d8598507eac50fdb1277e91bf1e1816c4a78c06d54c",
+          "blob_sha256": "b42123c896a330a90a151d8598507eac50fdb1277e91bf1e1816c4a78c06d54c"
+        },
+        {
+          "path": "nomount/tools/test_inode.py",
+          "sha256": "9d81d278fdca22d231ce93d73ad396c0e840d4808170232ee4b14dd0b10d17d8",
+          "blob_sha256": "9d81d278fdca22d231ce93d73ad396c0e840d4808170232ee4b14dd0b10d17d8"
+        },
+        {
+          "path": "nomount/tools/test_inode_layout.py",
+          "sha256": "f493fd30946f76f5a1ba224b44ab7f3a29c4a75428551ab41802264bf29944d3",
+          "blob_sha256": "f493fd30946f76f5a1ba224b44ab7f3a29c4a75428551ab41802264bf29944d3"
+        },
+        {
+          "path": "nomount/tools/test_inspect_target.py",
+          "sha256": "cf330ddb86754489e1e615cf0296e220b276b9694e31aa8ff32e646e18750216",
+          "blob_sha256": "cf330ddb86754489e1e615cf0296e220b276b9694e31aa8ff32e646e18750216"
+        },
+        {
+          "path": "nomount/tools/test_kpm.py",
+          "sha256": "a424faa647972950e5d50d9833baab1b396e1527830fde6c7eff0dcf7d3a1ad3",
+          "blob_sha256": "a424faa647972950e5d50d9833baab1b396e1527830fde6c7eff0dcf7d3a1ad3"
+        },
+        {
+          "path": "nomount/tools/test_layout.py",
+          "sha256": "f5af6d8e5231531ae15141f4abc5a4e12ad55216f4a20b9ff7a2d18c2a423e0c",
+          "blob_sha256": "f5af6d8e5231531ae15141f4abc5a4e12ad55216f4a20b9ff7a2d18c2a423e0c"
+        },
+        {
+          "path": "nomount/tools/test_load_events.py",
+          "sha256": "683334568ff3ea392edb945576187b473ac2007fc7c1693313fd73cebf06a230",
+          "blob_sha256": "683334568ff3ea392edb945576187b473ac2007fc7c1693313fd73cebf06a230"
+        },
+        {
+          "path": "nomount/tools/test_mount_abis.py",
+          "sha256": "7fada16a0e10c68759392b69c8fe5581f129552754c16cd71c956e43920ac1a2",
+          "blob_sha256": "7fada16a0e10c68759392b69c8fe5581f129552754c16cd71c956e43920ac1a2"
+        },
+        {
+          "path": "nomount/tools/test_native.py",
+          "sha256": "e1f84c2bcd4a8ca95fd37a5dfaa33b28672fc54be380a24cc9f0558a09b462f0",
+          "blob_sha256": "e1f84c2bcd4a8ca95fd37a5dfaa33b28672fc54be380a24cc9f0558a09b462f0"
+        },
+        {
+          "path": "nomount/tools/test_rule_layout.py",
+          "sha256": "97484e8534d87bc4a02f776a759ccfd376d53196acd8e7848439eafcffa65049",
+          "blob_sha256": "97484e8534d87bc4a02f776a759ccfd376d53196acd8e7848439eafcffa65049"
+        },
+        {
+          "path": "nomount/tools/test_rules.py",
+          "sha256": "51182e51219e3807caad221a4adddd9e69a2f7e05ecb1dc895e05bac0fc174fb",
+          "blob_sha256": "51182e51219e3807caad221a4adddd9e69a2f7e05ecb1dc895e05bac0fc174fb"
+        },
+        {
+          "path": "nomount/tools/test_target_layout.py",
+          "sha256": "7dd7db4171f033d18afd43232dc0035d3d5a3650d71daffa1e7b2160bdf00610",
+          "blob_sha256": "7dd7db4171f033d18afd43232dc0035d3d5a3650d71daffa1e7b2160bdf00610"
+        },
+        {
+          "path": "nomount/tools/test_topology.py",
+          "sha256": "e046f294b9252e27c9e1056e55f0223dc5a9a7dcfcab00fdf0e9e664a0f0dd60",
+          "blob_sha256": "e046f294b9252e27c9e1056e55f0223dc5a9a7dcfcab00fdf0e9e664a0f0dd60"
+        },
+        {
+          "path": "nomount/tools/test_topology_layout.py",
+          "sha256": "01bc20547c26a7f87f75d26ebe79fc4883075974637941150e4b4d12f8cd0ee2",
+          "blob_sha256": "01bc20547c26a7f87f75d26ebe79fc4883075974637941150e4b4d12f8cd0ee2"
+        },
+        {
+          "path": "nomount/tools/test_virtual_directory.py",
+          "sha256": "da0ce1419d6fc9dedf87adb8bbfc71489d5499a3930f1af110ed494faad97249",
+          "blob_sha256": "da0ce1419d6fc9dedf87adb8bbfc71489d5499a3930f1af110ed494faad97249"
+        },
+        {
+          "path": "nomount/tools/test_virtual_directory_layout.py",
+          "sha256": "c57681e511e5f079ab6b0c12124cc2edf54b39577fcf99d0980603dca22e9bed",
+          "blob_sha256": "c57681e511e5f079ab6b0c12124cc2edf54b39577fcf99d0980603dca22e9bed"
+        },
+        {
+          "path": "nomount/tools/test_zip_module.py",
+          "sha256": "759d8ff46237198b498bbe5bee513d50fa8ea645cf75477cc47829e70729f9d5",
+          "blob_sha256": "759d8ff46237198b498bbe5bee513d50fa8ea645cf75477cc47829e70729f9d5"
+        },
+        {
+          "path": "patch_offsets.py",
+          "sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033",
+          "blob_sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "8742e38cd6c41299ffeab357d39d3c92b2da5145761e5e3a276d76afeec604ca",
+          "blob_sha256": "8742e38cd6c41299ffeab357d39d3c92b2da5145761e5e3a276d76afeec604ca"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "62f2beb9c86cfee29a4ffade12ea2cd0c8288d7f857dd39e204485d5a2cc5248",
+      "recipe": {
+        "captured": true,
+        "command": "make -C nomount all debug",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "e5aafa6e961b47858e6683150bd4f5e8b83edeabcece279aa559cc9b2e4aa4fb",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin   -DMYKPM_VERSION=\\\"0.3.0\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -DCONFIG_KPM_BASELINES -DMYKPM_VERSION=\\\"0.3.0\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0_baselines.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -DCONFIG_DEBUG -DMYKPM_VERSION=\\\"0.3.0_d\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0_debug.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -DCONFIG_KPM_BASELINES -DCONFIG_DEBUG -DMYKPM_VERSION=\\\"0.3.0_d\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0_baselines_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "bdb9748b164e8157b80d977e26d2fa9172bf87dc",
+        "source_tree_sha256": "96ece746aa9f7ced49aec6a2accbb96c3b5c23f893774d641b0f0d7f63c94e01",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "e5aafa6e961b47858e6683150bd4f5e8b83edeabcece279aa559cc9b2e4aa4fb",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "nomount_0.3.0_baselines.kpm",
+          "sha256": "e894e19378aa371e9baa02571f155e1281426d4faa9ef003ba1f44a373d0a6ac",
+          "size": 98848,
+          "embedded": {
+            "name": "nomount",
+            "version": "0.3.0",
+            "license": "GPL v2",
+            "author": "maxsteeel, Codex",
+            "description": "NoMount: read-only file and directory views, resident until reboot",
+            "offset_mode": "static",
+            "lifetime": "reboot"
+          },
+          "path": "artifacts/nomount-0.3.0_baselines+g96ece746aa9f.r62f2beb9.kpb51197a.ndk26.3.11579264/nomount_0.3.0_baselines.kpm"
+        }
+      ],
+      "instance_id": "nomount-0.3.0_baselines+g96ece746aa9f.r62f2beb9.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "nomount",
+      "version": "0.3.0",
+      "kind": "candidate",
+      "build_id": "nomount-0.3.0_baselines_debug+g96ece746aa9f.r8e9f08d8.kpb51197a.ndk26.3.11579264",
+      "variant": "baselines_debug",
+      "recorded_at": "2026-10-14T05:19:16Z",
+      "source_commit": "bdb9748b164e8157b80d977e26d2fa9172bf87dc",
+      "source_dirty": false,
+      "source_tree_sha256": "96ece746aa9f7ced49aec6a2accbb96c3b5c23f893774d641b0f0d7f63c94e01",
+      "source_tree_blob_sha256": "96ece746aa9f7ced49aec6a2accbb96c3b5c23f893774d641b0f0d7f63c94e01",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": ".gitmodules",
+          "sha256": "ec7fcc1c1f58823260784a9aa205ae3d064f8dd917de613eee2a783b83606eec",
+          "blob_sha256": "ec7fcc1c1f58823260784a9aa205ae3d064f8dd917de613eee2a783b83606eec"
+        },
+        {
+          "path": "kpm_utils.h",
+          "sha256": "d3213062b52a3ff89051bf0655f86f6ea17b31002eb7c6288f139fd332b0929f",
+          "blob_sha256": "d3213062b52a3ff89051bf0655f86f6ea17b31002eb7c6288f139fd332b0929f"
+        },
+        {
+          "path": "nomount/Makefile",
+          "sha256": "2205b8fb077c151ef1d99bcdb990f32941c9c64f52c7a723e5fb2912efc9f022",
+          "blob_sha256": "2205b8fb077c151ef1d99bcdb990f32941c9c64f52c7a723e5fb2912efc9f022"
+        },
+        {
+          "path": "nomount/configs/B2N-416G-v3.json",
+          "sha256": "5a77fa4c23850f705573159074b7925bd1df8ba291ed41a1822a931290761f9a",
+          "blob_sha256": "5a77fa4c23850f705573159074b7925bd1df8ba291ed41a1822a931290761f9a"
+        },
+        {
+          "path": "nomount/configs/B2N-416G.json",
+          "sha256": "92964902c839e3168df1a311f3a0550a04d5cabc03d0aa0493ec13dc86d6e391",
+          "blob_sha256": "92964902c839e3168df1a311f3a0550a04d5cabc03d0aa0493ec13dc86d6e391"
+        },
+        {
+          "path": "nomount/configs/boot_67.2.A.3.178.json",
+          "sha256": "d22bf5a1ff2f51a88966ef90557a0ca0f96cd501be487d247784233f82fa9f17",
+          "blob_sha256": "d22bf5a1ff2f51a88966ef90557a0ca0f96cd501be487d247784233f82fa9f17"
+        },
+        {
+          "path": "nomount/configs/boot_los23.2-v2.json",
+          "sha256": "e51a45a3e6fdbd98d1c573d2d27734aaef7d2b5b386f0bffd2bc3ab85b5e7080",
+          "blob_sha256": "e51a45a3e6fdbd98d1c573d2d27734aaef7d2b5b386f0bffd2bc3ab85b5e7080"
+        },
+        {
+          "path": "nomount/configs/boot_los23.2-v3.json",
+          "sha256": "0e92c1feef6c49ca023ac2369c92b788442ca98d0f4b1572bcf2b285567c7ed6",
+          "blob_sha256": "0e92c1feef6c49ca023ac2369c92b788442ca98d0f4b1572bcf2b285567c7ed6"
+        },
+        {
+          "path": "nomount/configs/boot_los23.2.json",
+          "sha256": "f9ef23f3892d65d8b149c80e699035af8d4e2386ef06d7a4e3eb0c127348825e",
+          "blob_sha256": "f9ef23f3892d65d8b149c80e699035af8d4e2386ef06d7a4e3eb0c127348825e"
+        },
+        {
+          "path": "nomount/configs/kernel_android13-5.10.json",
+          "sha256": "37ce8b90fbd2762b4985e197e2e159a8f76dd3e34533ff4f11d0c2e339a0b640",
+          "blob_sha256": "37ce8b90fbd2762b4985e197e2e159a8f76dd3e34533ff4f11d0c2e339a0b640"
+        },
+        {
+          "path": "nomount/configs/kernel_android13-5.15.json",
+          "sha256": "8711a57354d8cdba440844fa71ffdd9d80594ca4d7e35abb6107ab4ba03bc1c5",
+          "blob_sha256": "8711a57354d8cdba440844fa71ffdd9d80594ca4d7e35abb6107ab4ba03bc1c5"
+        },
+        {
+          "path": "nomount/configs/kernel_android14-5.15.json",
+          "sha256": "bd3327ef6cd17341675a77e65e8745283aab126c0c93dc74b2803de0b51aa52b",
+          "blob_sha256": "bd3327ef6cd17341675a77e65e8745283aab126c0c93dc74b2803de0b51aa52b"
+        },
+        {
+          "path": "nomount/module/boot-completed.sh",
+          "sha256": "05757ae28aa68fee9c5a0655050b86285dfba89bc36f253c8d5037d57719b9dc",
+          "blob_sha256": "05757ae28aa68fee9c5a0655050b86285dfba89bc36f253c8d5037d57719b9dc"
+        },
+        {
+          "path": "nomount/module/common.sh",
+          "sha256": "c4806204688a189125423147aa612b4fbb09a4636cc7ce3df634a34d2c297f45",
+          "blob_sha256": "c4806204688a189125423147aa612b4fbb09a4636cc7ce3df634a34d2c297f45"
+        },
+        {
+          "path": "nomount/module/customize.sh",
+          "sha256": "b7944d51f2d53bc81b8188c9afa4fc1917c720ef7957a1fc9a31b0cd2a2295a8",
+          "blob_sha256": "b7944d51f2d53bc81b8188c9afa4fc1917c720ef7957a1fc9a31b0cd2a2295a8"
+        },
+        {
+          "path": "nomount/module/metamount.sh",
+          "sha256": "947e469fe2f278a3117e38b75b7cfa7b5a356513bcd8bdecb5fb1dae1c460c5b",
+          "blob_sha256": "947e469fe2f278a3117e38b75b7cfa7b5a356513bcd8bdecb5fb1dae1c460c5b"
+        },
+        {
+          "path": "nomount/module/post-fs-data.sh",
+          "sha256": "062827cc3cbdb97ff39b2c8f360a74261c316e8f0a5dabbb19946f7c8fea80e6",
+          "blob_sha256": "062827cc3cbdb97ff39b2c8f360a74261c316e8f0a5dabbb19946f7c8fea80e6"
+        },
+        {
+          "path": "nomount/module/uninstall.sh",
+          "sha256": "63e8e956eccff721ddfd8d7c40ee930587623775ae268e33a7398bc4523a474d",
+          "blob_sha256": "63e8e956eccff721ddfd8d7c40ee930587623775ae268e33a7398bc4523a474d"
+        },
+        {
+          "path": "nomount/nm_backing_directory.c",
+          "sha256": "181f47877e9b4037f75ca64aa8371cbff7968a1624466904123d9d8f4e777c89",
+          "blob_sha256": "181f47877e9b4037f75ca64aa8371cbff7968a1624466904123d9d8f4e777c89"
+        },
+        {
+          "path": "nomount/nm_backing_entry.c",
+          "sha256": "665a1e1266cfcd56cd840a39ace270e131131c62b3792455ed095e98e6e96291",
+          "blob_sha256": "665a1e1266cfcd56cd840a39ace270e131131c62b3792455ed095e98e6e96291"
+        },
+        {
+          "path": "nomount/nm_backing_inode.c",
+          "sha256": "5b059740f8ce13d655c6ea2e2fe8a2c2cb4dcdcfa88503912c5bfcaa4569ecb0",
+          "blob_sha256": "5b059740f8ce13d655c6ea2e2fe8a2c2cb4dcdcfa88503912c5bfcaa4569ecb0"
+        },
+        {
+          "path": "nomount/nm_backing_subtree.c",
+          "sha256": "4f4ffe7b0f72e5cdf4e0237a572955732c6a2a728323b17d9a69b1679ceb8192",
+          "blob_sha256": "4f4ffe7b0f72e5cdf4e0237a572955732c6a2a728323b17d9a69b1679ceb8192"
+        },
+        {
+          "path": "nomount/nm_btf.c",
+          "sha256": "d226dcb08804deea284e9b157ecf9ee373c0ba6dbcb5656eefabc716824d8e88",
+          "blob_sha256": "d226dcb08804deea284e9b157ecf9ee373c0ba6dbcb5656eefabc716824d8e88"
+        },
+        {
+          "path": "nomount/nm_control.c",
+          "sha256": "5207f8b35bc57a94169d487dce0c8aba8c4a7c760a57711e8f29bbd18d8654c8",
+          "blob_sha256": "5207f8b35bc57a94169d487dce0c8aba8c4a7c760a57711e8f29bbd18d8654c8"
+        },
+        {
+          "path": "nomount/nm_control_entry.c",
+          "sha256": "b4873ab193e447cbc346f9dfd8ee07ecd6c7bc8626279a0437a1c211c15c9d0f",
+          "blob_sha256": "b4873ab193e447cbc346f9dfd8ee07ecd6c7bc8626279a0437a1c211c15c9d0f"
+        },
+        {
+          "path": "nomount/nm_control_key.c",
+          "sha256": "9cd04064228561bde36c0f45ca6115926138e895a9fea274e665eb4b2869b9ef",
+          "blob_sha256": "9cd04064228561bde36c0f45ca6115926138e895a9fea274e665eb4b2869b9ef"
+        },
+        {
+          "path": "nomount/nm_control_lock.c",
+          "sha256": "5f2e7ed8e259c48131ac99ca7172dd4127dc1351c611d6876d85db2acfe0786e",
+          "blob_sha256": "5f2e7ed8e259c48131ac99ca7172dd4127dc1351c611d6876d85db2acfe0786e"
+        },
+        {
+          "path": "nomount/nm_current.c",
+          "sha256": "1bc59c27eaa77cc4f712d3d63a0a66e5edf9d631506267a51574173961b3b191",
+          "blob_sha256": "1bc59c27eaa77cc4f712d3d63a0a66e5edf9d631506267a51574173961b3b191"
+        },
+        {
+          "path": "nomount/nm_directory.c",
+          "sha256": "553f3530b0204d6cfdb8de05795ae891a5d7952bc0383748baaf15a9e4396e23",
+          "blob_sha256": "553f3530b0204d6cfdb8de05795ae891a5d7952bc0383748baaf15a9e4396e23"
+        },
+        {
+          "path": "nomount/nm_directory_entry.c",
+          "sha256": "1f6593f16abc9364fe1e556da587693fd291fc8e299e89ab94bef6f2cba6e01e",
+          "blob_sha256": "1f6593f16abc9364fe1e556da587693fd291fc8e299e89ab94bef6f2cba6e01e"
+        },
+        {
+          "path": "nomount/nm_directory_nodes.c",
+          "sha256": "fbdb315e5858391c44b3046927c50842a442f2a7b27bf1a45a67e80f8abc5e7b",
+          "blob_sha256": "fbdb315e5858391c44b3046927c50842a442f2a7b27bf1a45a67e80f8abc5e7b"
+        },
+        {
+          "path": "nomount/nm_file.c",
+          "sha256": "7bc5239ff26c4296984307b09e266ca7963b360830551311e39f998ff5485028",
+          "blob_sha256": "7bc5239ff26c4296984307b09e266ca7963b360830551311e39f998ff5485028"
+        },
+        {
+          "path": "nomount/nm_file_entry.c",
+          "sha256": "1194ad7f48558cf9788533560051744c44e74c904e5335d4e4be86db2b1c78c8",
+          "blob_sha256": "1194ad7f48558cf9788533560051744c44e74c904e5335d4e4be86db2b1c78c8"
+        },
+        {
+          "path": "nomount/nm_inode.c",
+          "sha256": "fb47156dc809c7e5c5ba051d874e27a65ee82a9d9548171be633d84164cce638",
+          "blob_sha256": "fb47156dc809c7e5c5ba051d874e27a65ee82a9d9548171be633d84164cce638"
+        },
+        {
+          "path": "nomount/nm_inode_entry.c",
+          "sha256": "111c512a3427eba071593b22001f019c96bd50356fe52ac35a0b5b718a811257",
+          "blob_sha256": "111c512a3427eba071593b22001f019c96bd50356fe52ac35a0b5b718a811257"
+        },
+        {
+          "path": "nomount/nm_layout.c",
+          "sha256": "1efae16e581969e47807a9062c970829a23ad8d61278c721a5419b1e6e2610f9",
+          "blob_sha256": "1efae16e581969e47807a9062c970829a23ad8d61278c721a5419b1e6e2610f9"
+        },
+        {
+          "path": "nomount/nm_native.c",
+          "sha256": "7b6ec516bc701645019be6f8e1e778d0e9d8f40eca855716a9c14edeb24a99d9",
+          "blob_sha256": "7b6ec516bc701645019be6f8e1e778d0e9d8f40eca855716a9c14edeb24a99d9"
+        },
+        {
+          "path": "nomount/nm_native_entry.c",
+          "sha256": "efe57a565df1179f3142706801074920ed94102d9b445907abeef8e40272cf0b",
+          "blob_sha256": "efe57a565df1179f3142706801074920ed94102d9b445907abeef8e40272cf0b"
+        },
+        {
+          "path": "nomount/nm_offsets.c",
+          "sha256": "5c5cc5617d097f5a49ebeb7ec4ddf0798428dbd9f1a607f84592ca399434ae8d",
+          "blob_sha256": "5c5cc5617d097f5a49ebeb7ec4ddf0798428dbd9f1a607f84592ca399434ae8d"
+        },
+        {
+          "path": "nomount/nm_operations.c",
+          "sha256": "941be9581bdabd7ed703dcf046cb36bc8f9f425f0ac095d46ba1c04fb93d3e96",
+          "blob_sha256": "941be9581bdabd7ed703dcf046cb36bc8f9f425f0ac095d46ba1c04fb93d3e96"
+        },
+        {
+          "path": "nomount/nm_protocol.h",
+          "sha256": "d51f96dc8a86fdf276576002b82d4ca96c6289366823196e615c82d35e204b0a",
+          "blob_sha256": "d51f96dc8a86fdf276576002b82d4ca96c6289366823196e615c82d35e204b0a"
+        },
+        {
+          "path": "nomount/nm_rules.c",
+          "sha256": "5c8f19884f7eeeea172ed167672c77aef7d372ac1a8494266c4ed7575f695337",
+          "blob_sha256": "5c8f19884f7eeeea172ed167672c77aef7d372ac1a8494266c4ed7575f695337"
+        },
+        {
+          "path": "nomount/nm_rules.h",
+          "sha256": "a76e0b4919b6b3a0e6a17c7ada711eb3981cc19018e04d1b4f69efbec6469008",
+          "blob_sha256": "a76e0b4919b6b3a0e6a17c7ada711eb3981cc19018e04d1b4f69efbec6469008"
+        },
+        {
+          "path": "nomount/nm_rules_entry.c",
+          "sha256": "91154d0c9f19b460f47e962e257ca52505bd1a64da92bd155d323fd79a6bbece",
+          "blob_sha256": "91154d0c9f19b460f47e962e257ca52505bd1a64da92bd155d323fd79a6bbece"
+        },
+        {
+          "path": "nomount/nm_structs.h",
+          "sha256": "d3a07efe2994f4881f982b6fdde644d87d5e2d1498ee98b3ef14a60dfe2ff9c9",
+          "blob_sha256": "d3a07efe2994f4881f982b6fdde644d87d5e2d1498ee98b3ef14a60dfe2ff9c9"
+        },
+        {
+          "path": "nomount/nm_topology.c",
+          "sha256": "612597a08c12ed6001d80b08077077e57545d016a2bc9ce2371e6294e192bd0b",
+          "blob_sha256": "612597a08c12ed6001d80b08077077e57545d016a2bc9ce2371e6294e192bd0b"
+        },
+        {
+          "path": "nomount/nm_topology_entry.c",
+          "sha256": "fd1da41075e92b63160bb2921945c9bd97b4d66e380989941f7b78c3979fbf5d",
+          "blob_sha256": "fd1da41075e92b63160bb2921945c9bd97b4d66e380989941f7b78c3979fbf5d"
+        },
+        {
+          "path": "nomount/nm_virtual_directory.c",
+          "sha256": "5c25fb4f0bbd21256e5726734dbb754839fee304150ca344569c54a41e5069ae",
+          "blob_sha256": "5c25fb4f0bbd21256e5726734dbb754839fee304150ca344569c54a41e5069ae"
+        },
+        {
+          "path": "nomount/nomount.c",
+          "sha256": "1c571d8cf196b61d130cd40d5b88a0a0687a52c8055458e101c41a23b19a2957",
+          "blob_sha256": "1c571d8cf196b61d130cd40d5b88a0a0687a52c8055458e101c41a23b19a2957"
+        },
+        {
+          "path": "nomount/nomount/.github/scripts/telegram_upload.py",
+          "sha256": "b77559835dfa86d379620e660f14422aa657f69cad9dc4ea54f555fad54b3aa9",
+          "blob_sha256": "b77559835dfa86d379620e660f14422aa657f69cad9dc4ea54f555fad54b3aa9"
+        },
+        {
+          "path": "nomount/nomount/.github/workflows/build-lkm.yml",
+          "sha256": "00e61d0bb93f44cf468d7e210868ad509be21b3aed6563e6afd2dcf6d87d854c",
+          "blob_sha256": "00e61d0bb93f44cf468d7e210868ad509be21b3aed6563e6afd2dcf6d87d854c"
+        },
+        {
+          "path": "nomount/nomount/.github/workflows/build.yml",
+          "sha256": "f325acf3813002e9737f8224132e9562e45eb69f6269a771a8b1d516c0297b7d",
+          "blob_sha256": "f325acf3813002e9737f8224132e9562e45eb69f6269a771a8b1d516c0297b7d"
+        },
+        {
+          "path": "nomount/nomount/kernel/setup.sh",
+          "sha256": "d87fa9eec2b5b886a1d77f3cc28b04d4e8b466dcbe5408764f14663387ab3838",
+          "blob_sha256": "d87fa9eec2b5b886a1d77f3cc28b04d4e8b466dcbe5408764f14663387ab3838"
+        },
+        {
+          "path": "nomount/nomount/kernel/src/Makefile",
+          "sha256": "8a7c52484958b4f4532405e799e01beb76ea06739243eb423e9c25da6cef73af",
+          "blob_sha256": "8a7c52484958b4f4532405e799e01beb76ea06739243eb423e9c25da6cef73af"
+        },
+        {
+          "path": "nomount/nomount/kernel/src/nomount.c",
+          "sha256": "37aa0bfc6da1591033d6a05a72b413eddf36f914332f0120a6b2350826ae513d",
+          "blob_sha256": "37aa0bfc6da1591033d6a05a72b413eddf36f914332f0120a6b2350826ae513d"
+        },
+        {
+          "path": "nomount/nomount/kernel/src/nomount.h",
+          "sha256": "733f43352b28d24fe9b08a6623fa37ace2583dd1dfe8592fc45053bc91555616",
+          "blob_sha256": "733f43352b28d24fe9b08a6623fa37ace2583dd1dfe8592fc45053bc91555616"
+        },
+        {
+          "path": "nomount/nomount/module/boot-completed.sh",
+          "sha256": "7597eaf9ad208e1579a94e6bb2f21109d511e969ea23451ffa7061445402fa17",
+          "blob_sha256": "7597eaf9ad208e1579a94e6bb2f21109d511e969ea23451ffa7061445402fa17"
+        },
+        {
+          "path": "nomount/nomount/module/customize.sh",
+          "sha256": "2a5788d5fbcb8f9db9d1a4722b3457481912f56f8b0f42ad26352518208f652e",
+          "blob_sha256": "2a5788d5fbcb8f9db9d1a4722b3457481912f56f8b0f42ad26352518208f652e"
+        },
+        {
+          "path": "nomount/nomount/module/metainstall.sh",
+          "sha256": "ceb9ab2e45cb7325be8ec0ffe4d821ce82d0e00829bf99417939241b4a21b12a",
+          "blob_sha256": "ceb9ab2e45cb7325be8ec0ffe4d821ce82d0e00829bf99417939241b4a21b12a"
+        },
+        {
+          "path": "nomount/nomount/module/metamount.sh",
+          "sha256": "63fc3efab75cb77b9277d0bf744488ea00c7c47a062826bc74fdc07ef9879a69",
+          "blob_sha256": "63fc3efab75cb77b9277d0bf744488ea00c7c47a062826bc74fdc07ef9879a69"
+        },
+        {
+          "path": "nomount/nomount/module/post-fs-data.sh",
+          "sha256": "449903a8df09237c8e793fb4fb4a4aa25a3a8bf8b22f31e568282cca3a546a23",
+          "blob_sha256": "449903a8df09237c8e793fb4fb4a4aa25a3a8bf8b22f31e568282cca3a546a23"
+        },
+        {
+          "path": "nomount/nomount/module/rule-paths.sh",
+          "sha256": "e731b64b9bbdf6da6c28296688b1830a16be200b5fd914b6d1e382495dd8f6ce",
+          "blob_sha256": "e731b64b9bbdf6da6c28296688b1830a16be200b5fd914b6d1e382495dd8f6ce"
+        },
+        {
+          "path": "nomount/nomount/module/service.sh",
+          "sha256": "2e615955f82153d0466010e6976bd964f3b8eefe45d1baf07d07f5ab05bf4e39",
+          "blob_sha256": "2e615955f82153d0466010e6976bd964f3b8eefe45d1baf07d07f5ab05bf4e39"
+        },
+        {
+          "path": "nomount/nomount/module/uninstall.sh",
+          "sha256": "e1685116b59e98ce964663b0354f754f1d97a54516eb0af6b7ce65174b2db7b4",
+          "blob_sha256": "e1685116b59e98ce964663b0354f754f1d97a54516eb0af6b7ce65174b2db7b4"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ar-dz.json",
+          "sha256": "f25f14667116eb64fc7455b1a9473213aa49466130b765927a8780cf51abf5a3",
+          "blob_sha256": "f25f14667116eb64fc7455b1a9473213aa49466130b765927a8780cf51abf5a3"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ar.json",
+          "sha256": "ab30a7a76e1e218e2c89a15f585e2843a66d96ceab862bd8c6a00ae5eb2d7ca1",
+          "blob_sha256": "ab30a7a76e1e218e2c89a15f585e2843a66d96ceab862bd8c6a00ae5eb2d7ca1"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/bn.json",
+          "sha256": "d1c2123c1432ffbeb4c72c1b15582a74ce02b23baeeec9095012304f7ef4eae8",
+          "blob_sha256": "d1c2123c1432ffbeb4c72c1b15582a74ce02b23baeeec9095012304f7ef4eae8"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/en.json",
+          "sha256": "756c2b565ac755a59faf6d394b67c015f547792debb0e612c2a53fde6a63325d",
+          "blob_sha256": "756c2b565ac755a59faf6d394b67c015f547792debb0e612c2a53fde6a63325d"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/es.json",
+          "sha256": "18142e334a2a98f5cfbea1c56f92e9ed4c50b494b91f334e300e146b9ecaa793",
+          "blob_sha256": "18142e334a2a98f5cfbea1c56f92e9ed4c50b494b91f334e300e146b9ecaa793"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/id.json",
+          "sha256": "79885e688443798feee15e3b59686a8ab694f5754c0c6f673b20e09ab5fe1103",
+          "blob_sha256": "79885e688443798feee15e3b59686a8ab694f5754c0c6f673b20e09ab5fe1103"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ja.json",
+          "sha256": "f04b467b3fabda8016c08f93ab512eac55a9a91ae54bfa245fa866b5e3c724c8",
+          "blob_sha256": "f04b467b3fabda8016c08f93ab512eac55a9a91ae54bfa245fa866b5e3c724c8"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/pl.json",
+          "sha256": "14f15aa5fc119824a730a68ddc3fafceb211d0f59fae1edf8df9e2f3c23dcb11",
+          "blob_sha256": "14f15aa5fc119824a730a68ddc3fafceb211d0f59fae1edf8df9e2f3c23dcb11"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ru.json",
+          "sha256": "b8df6292195f4440efeefd4a3dc9ee140fca9ee05a484eabdf717a6bdf318456",
+          "blob_sha256": "b8df6292195f4440efeefd4a3dc9ee140fca9ee05a484eabdf717a6bdf318456"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/tr.json",
+          "sha256": "58ce8a73779366979c8267953114d0959d7b8ccaf35f2aa0ffeb4a0c46529a36",
+          "blob_sha256": "58ce8a73779366979c8267953114d0959d7b8ccaf35f2aa0ffeb4a0c46529a36"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/vi.json",
+          "sha256": "3ec737f97d96309307dffdf832361efded039ca262b3d6da9f4102711a118ba2",
+          "blob_sha256": "3ec737f97d96309307dffdf832361efded039ca262b3d6da9f4102711a118ba2"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/zh.json",
+          "sha256": "965907cb3de4c16a8c0e77d42bb6d804f75063feb1babe459d07ef35799099fc",
+          "blob_sha256": "965907cb3de4c16a8c0e77d42bb6d804f75063feb1babe459d07ef35799099fc"
+        },
+        {
+          "path": "nomount/nomount/userspace/src/nm.c",
+          "sha256": "b37e7d3dc415234d05dcde66255e5db6b78da910fb59910d17b588537c9a240d",
+          "blob_sha256": "b37e7d3dc415234d05dcde66255e5db6b78da910fb59910d17b588537c9a240d"
+        },
+        {
+          "path": "nomount/nomount/userspace/src/nm.h",
+          "sha256": "142f2b2193db020e0c497bd96e2553b010c49494364f042eb46727adc80e5d6c",
+          "blob_sha256": "142f2b2193db020e0c497bd96e2553b010c49494364f042eb46727adc80e5d6c"
+        },
+        {
+          "path": "nomount/tools/build_nm.sh",
+          "sha256": "ff75bc209eb1dc91ab50e80eeb4024ccc8058afe0607f5e13b2dd8b84dcbaaf5",
+          "blob_sha256": "ff75bc209eb1dc91ab50e80eeb4024ccc8058afe0607f5e13b2dd8b84dcbaaf5"
+        },
+        {
+          "path": "nomount/tools/build_zip.py",
+          "sha256": "613777e3eba3d249d50752901bdefcb18a06cf254165ddf7c9d948cb4fc152c0",
+          "blob_sha256": "613777e3eba3d249d50752901bdefcb18a06cf254165ddf7c9d948cb4fc152c0"
+        },
+        {
+          "path": "nomount/tools/check_target_calls.py",
+          "sha256": "b98c5a406b4672208847c3f68adfffbcb5dd92e9039841057ddea38e08969d19",
+          "blob_sha256": "b98c5a406b4672208847c3f68adfffbcb5dd92e9039841057ddea38e08969d19"
+        },
+        {
+          "path": "nomount/tools/compare_structs.py",
+          "sha256": "0149638aa9114e0df753605ce59e2288e61786677a067bbe7f71cb17bf8e0159",
+          "blob_sha256": "0149638aa9114e0df753605ce59e2288e61786677a067bbe7f71cb17bf8e0159"
+        },
+        {
+          "path": "nomount/tools/inspect_target.py",
+          "sha256": "53a3f0d73ed6f451bbfd0663983241554b4feb18c014c5c02daa2effdde3d0f4",
+          "blob_sha256": "53a3f0d73ed6f451bbfd0663983241554b4feb18c014c5c02daa2effdde3d0f4"
+        },
+        {
+          "path": "nomount/tools/test_backing_directory.py",
+          "sha256": "b976e53d4dd65a62c3cda3444f6640d6b7743dc658b0d6cdbf66e5126cbe693b",
+          "blob_sha256": "b976e53d4dd65a62c3cda3444f6640d6b7743dc658b0d6cdbf66e5126cbe693b"
+        },
+        {
+          "path": "nomount/tools/test_backing_directory_layout.py",
+          "sha256": "2fa09b63b6520210575597294efc047b8f88edebb11d96f6eb869e11e8ab6f20",
+          "blob_sha256": "2fa09b63b6520210575597294efc047b8f88edebb11d96f6eb869e11e8ab6f20"
+        },
+        {
+          "path": "nomount/tools/test_backing_inode.py",
+          "sha256": "0c5278826869d9c76c839760dd8114bcf2ee01bbc089899d700d492286f32ca9",
+          "blob_sha256": "0c5278826869d9c76c839760dd8114bcf2ee01bbc089899d700d492286f32ca9"
+        },
+        {
+          "path": "nomount/tools/test_backing_inode_layout.py",
+          "sha256": "d71832fa5647fbebdff7ca3d8499435fe6c67e7ddb9a05ff0855f2916dd89afc",
+          "blob_sha256": "d71832fa5647fbebdff7ca3d8499435fe6c67e7ddb9a05ff0855f2916dd89afc"
+        },
+        {
+          "path": "nomount/tools/test_backing_subtree.py",
+          "sha256": "fdf5646a5361427da48ad239fe9519d073b1c78c5db4e5177b0ba476322fc636",
+          "blob_sha256": "fdf5646a5361427da48ad239fe9519d073b1c78c5db4e5177b0ba476322fc636"
+        },
+        {
+          "path": "nomount/tools/test_call_abis.py",
+          "sha256": "6d6e4ba5bf250ad5442e08e3c1bcec59831d90171910d272bc0bff993b20a1ef",
+          "blob_sha256": "6d6e4ba5bf250ad5442e08e3c1bcec59831d90171910d272bc0bff993b20a1ef"
+        },
+        {
+          "path": "nomount/tools/test_control.py",
+          "sha256": "db88c53f647bceec4e0337158e486172fb8a62374d515cc3d7c23e9da244854b",
+          "blob_sha256": "db88c53f647bceec4e0337158e486172fb8a62374d515cc3d7c23e9da244854b"
+        },
+        {
+          "path": "nomount/tools/test_control_layout.py",
+          "sha256": "be150f8dfb338e43d381e0c92c25250238cc83241c5b5aab6cab38c86e80108d",
+          "blob_sha256": "be150f8dfb338e43d381e0c92c25250238cc83241c5b5aab6cab38c86e80108d"
+        },
+        {
+          "path": "nomount/tools/test_directory.py",
+          "sha256": "6fc61ebca92dd138c1a188faaec0c2aa9c8cc584f393728aae1e8c0641aa21e8",
+          "blob_sha256": "6fc61ebca92dd138c1a188faaec0c2aa9c8cc584f393728aae1e8c0641aa21e8"
+        },
+        {
+          "path": "nomount/tools/test_directory_layout.py",
+          "sha256": "2bc72e9348a9f713bc0fa2666088929fbc319c96442b454b2728834becd64ff9",
+          "blob_sha256": "2bc72e9348a9f713bc0fa2666088929fbc319c96442b454b2728834becd64ff9"
+        },
+        {
+          "path": "nomount/tools/test_file.py",
+          "sha256": "86721f3213cfb792add846c9c31ddef5245c44f0ac7d84e4ace66bf0fe443f9b",
+          "blob_sha256": "86721f3213cfb792add846c9c31ddef5245c44f0ac7d84e4ace66bf0fe443f9b"
+        },
+        {
+          "path": "nomount/tools/test_file_layout.py",
+          "sha256": "b42123c896a330a90a151d8598507eac50fdb1277e91bf1e1816c4a78c06d54c",
+          "blob_sha256": "b42123c896a330a90a151d8598507eac50fdb1277e91bf1e1816c4a78c06d54c"
+        },
+        {
+          "path": "nomount/tools/test_inode.py",
+          "sha256": "9d81d278fdca22d231ce93d73ad396c0e840d4808170232ee4b14dd0b10d17d8",
+          "blob_sha256": "9d81d278fdca22d231ce93d73ad396c0e840d4808170232ee4b14dd0b10d17d8"
+        },
+        {
+          "path": "nomount/tools/test_inode_layout.py",
+          "sha256": "f493fd30946f76f5a1ba224b44ab7f3a29c4a75428551ab41802264bf29944d3",
+          "blob_sha256": "f493fd30946f76f5a1ba224b44ab7f3a29c4a75428551ab41802264bf29944d3"
+        },
+        {
+          "path": "nomount/tools/test_inspect_target.py",
+          "sha256": "cf330ddb86754489e1e615cf0296e220b276b9694e31aa8ff32e646e18750216",
+          "blob_sha256": "cf330ddb86754489e1e615cf0296e220b276b9694e31aa8ff32e646e18750216"
+        },
+        {
+          "path": "nomount/tools/test_kpm.py",
+          "sha256": "a424faa647972950e5d50d9833baab1b396e1527830fde6c7eff0dcf7d3a1ad3",
+          "blob_sha256": "a424faa647972950e5d50d9833baab1b396e1527830fde6c7eff0dcf7d3a1ad3"
+        },
+        {
+          "path": "nomount/tools/test_layout.py",
+          "sha256": "f5af6d8e5231531ae15141f4abc5a4e12ad55216f4a20b9ff7a2d18c2a423e0c",
+          "blob_sha256": "f5af6d8e5231531ae15141f4abc5a4e12ad55216f4a20b9ff7a2d18c2a423e0c"
+        },
+        {
+          "path": "nomount/tools/test_load_events.py",
+          "sha256": "683334568ff3ea392edb945576187b473ac2007fc7c1693313fd73cebf06a230",
+          "blob_sha256": "683334568ff3ea392edb945576187b473ac2007fc7c1693313fd73cebf06a230"
+        },
+        {
+          "path": "nomount/tools/test_mount_abis.py",
+          "sha256": "7fada16a0e10c68759392b69c8fe5581f129552754c16cd71c956e43920ac1a2",
+          "blob_sha256": "7fada16a0e10c68759392b69c8fe5581f129552754c16cd71c956e43920ac1a2"
+        },
+        {
+          "path": "nomount/tools/test_native.py",
+          "sha256": "e1f84c2bcd4a8ca95fd37a5dfaa33b28672fc54be380a24cc9f0558a09b462f0",
+          "blob_sha256": "e1f84c2bcd4a8ca95fd37a5dfaa33b28672fc54be380a24cc9f0558a09b462f0"
+        },
+        {
+          "path": "nomount/tools/test_rule_layout.py",
+          "sha256": "97484e8534d87bc4a02f776a759ccfd376d53196acd8e7848439eafcffa65049",
+          "blob_sha256": "97484e8534d87bc4a02f776a759ccfd376d53196acd8e7848439eafcffa65049"
+        },
+        {
+          "path": "nomount/tools/test_rules.py",
+          "sha256": "51182e51219e3807caad221a4adddd9e69a2f7e05ecb1dc895e05bac0fc174fb",
+          "blob_sha256": "51182e51219e3807caad221a4adddd9e69a2f7e05ecb1dc895e05bac0fc174fb"
+        },
+        {
+          "path": "nomount/tools/test_target_layout.py",
+          "sha256": "7dd7db4171f033d18afd43232dc0035d3d5a3650d71daffa1e7b2160bdf00610",
+          "blob_sha256": "7dd7db4171f033d18afd43232dc0035d3d5a3650d71daffa1e7b2160bdf00610"
+        },
+        {
+          "path": "nomount/tools/test_topology.py",
+          "sha256": "e046f294b9252e27c9e1056e55f0223dc5a9a7dcfcab00fdf0e9e664a0f0dd60",
+          "blob_sha256": "e046f294b9252e27c9e1056e55f0223dc5a9a7dcfcab00fdf0e9e664a0f0dd60"
+        },
+        {
+          "path": "nomount/tools/test_topology_layout.py",
+          "sha256": "01bc20547c26a7f87f75d26ebe79fc4883075974637941150e4b4d12f8cd0ee2",
+          "blob_sha256": "01bc20547c26a7f87f75d26ebe79fc4883075974637941150e4b4d12f8cd0ee2"
+        },
+        {
+          "path": "nomount/tools/test_virtual_directory.py",
+          "sha256": "da0ce1419d6fc9dedf87adb8bbfc71489d5499a3930f1af110ed494faad97249",
+          "blob_sha256": "da0ce1419d6fc9dedf87adb8bbfc71489d5499a3930f1af110ed494faad97249"
+        },
+        {
+          "path": "nomount/tools/test_virtual_directory_layout.py",
+          "sha256": "c57681e511e5f079ab6b0c12124cc2edf54b39577fcf99d0980603dca22e9bed",
+          "blob_sha256": "c57681e511e5f079ab6b0c12124cc2edf54b39577fcf99d0980603dca22e9bed"
+        },
+        {
+          "path": "nomount/tools/test_zip_module.py",
+          "sha256": "759d8ff46237198b498bbe5bee513d50fa8ea645cf75477cc47829e70729f9d5",
+          "blob_sha256": "759d8ff46237198b498bbe5bee513d50fa8ea645cf75477cc47829e70729f9d5"
+        },
+        {
+          "path": "patch_offsets.py",
+          "sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033",
+          "blob_sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "8742e38cd6c41299ffeab357d39d3c92b2da5145761e5e3a276d76afeec604ca",
+          "blob_sha256": "8742e38cd6c41299ffeab357d39d3c92b2da5145761e5e3a276d76afeec604ca"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "8e9f08d86a16943fcd692b548fd18f137f9729c576b77c5adc1eadd84ca6d03c",
+      "recipe": {
+        "captured": true,
+        "command": "make -C nomount all debug",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "e5aafa6e961b47858e6683150bd4f5e8b83edeabcece279aa559cc9b2e4aa4fb",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin   -DMYKPM_VERSION=\\\"0.3.0\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -DCONFIG_KPM_BASELINES -DMYKPM_VERSION=\\\"0.3.0\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0_baselines.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -DCONFIG_DEBUG -DMYKPM_VERSION=\\\"0.3.0_d\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0_debug.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -DCONFIG_KPM_BASELINES -DCONFIG_DEBUG -DMYKPM_VERSION=\\\"0.3.0_d\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0_baselines_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "bdb9748b164e8157b80d977e26d2fa9172bf87dc",
+        "source_tree_sha256": "96ece746aa9f7ced49aec6a2accbb96c3b5c23f893774d641b0f0d7f63c94e01",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "e5aafa6e961b47858e6683150bd4f5e8b83edeabcece279aa559cc9b2e4aa4fb",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "nomount_0.3.0_baselines_debug.kpm",
+          "sha256": "9d64260cf29abbc58f80794737241f09445cccc8deae649d9d1e70680e7bd664",
+          "size": 98848,
+          "embedded": {
+            "name": "nomount",
+            "version": "0.3.0_d",
+            "license": "GPL v2",
+            "author": "maxsteeel, Codex",
+            "description": "NoMount: read-only file and directory views, resident until reboot",
+            "offset_mode": "static",
+            "lifetime": "reboot"
+          },
+          "path": "artifacts/nomount-0.3.0_baselines_debug+g96ece746aa9f.r8e9f08d8.kpb51197a.ndk26.3.11579264/nomount_0.3.0_baselines_debug.kpm"
+        }
+      ],
+      "instance_id": "nomount-0.3.0_baselines_debug+g96ece746aa9f.r8e9f08d8.kpb51197a.ndk26.3.11579264#1"
+    },
+    {
+      "module": "nomount",
+      "version": "0.3.0",
+      "kind": "candidate",
+      "build_id": "nomount-0.3.0_debug+g96ece746aa9f.r2a0d9e5d.kpb51197a.ndk26.3.11579264",
+      "variant": "debug",
+      "recorded_at": "2026-10-14T05:19:16Z",
+      "source_commit": "bdb9748b164e8157b80d977e26d2fa9172bf87dc",
+      "source_dirty": false,
+      "source_tree_sha256": "96ece746aa9f7ced49aec6a2accbb96c3b5c23f893774d641b0f0d7f63c94e01",
+      "source_tree_blob_sha256": "96ece746aa9f7ced49aec6a2accbb96c3b5c23f893774d641b0f0d7f63c94e01",
+      "source_blob_missing": [],
+      "sources": [
+        {
+          "path": ".gitmodules",
+          "sha256": "ec7fcc1c1f58823260784a9aa205ae3d064f8dd917de613eee2a783b83606eec",
+          "blob_sha256": "ec7fcc1c1f58823260784a9aa205ae3d064f8dd917de613eee2a783b83606eec"
+        },
+        {
+          "path": "kpm_utils.h",
+          "sha256": "d3213062b52a3ff89051bf0655f86f6ea17b31002eb7c6288f139fd332b0929f",
+          "blob_sha256": "d3213062b52a3ff89051bf0655f86f6ea17b31002eb7c6288f139fd332b0929f"
+        },
+        {
+          "path": "nomount/Makefile",
+          "sha256": "2205b8fb077c151ef1d99bcdb990f32941c9c64f52c7a723e5fb2912efc9f022",
+          "blob_sha256": "2205b8fb077c151ef1d99bcdb990f32941c9c64f52c7a723e5fb2912efc9f022"
+        },
+        {
+          "path": "nomount/configs/B2N-416G-v3.json",
+          "sha256": "5a77fa4c23850f705573159074b7925bd1df8ba291ed41a1822a931290761f9a",
+          "blob_sha256": "5a77fa4c23850f705573159074b7925bd1df8ba291ed41a1822a931290761f9a"
+        },
+        {
+          "path": "nomount/configs/B2N-416G.json",
+          "sha256": "92964902c839e3168df1a311f3a0550a04d5cabc03d0aa0493ec13dc86d6e391",
+          "blob_sha256": "92964902c839e3168df1a311f3a0550a04d5cabc03d0aa0493ec13dc86d6e391"
+        },
+        {
+          "path": "nomount/configs/boot_67.2.A.3.178.json",
+          "sha256": "d22bf5a1ff2f51a88966ef90557a0ca0f96cd501be487d247784233f82fa9f17",
+          "blob_sha256": "d22bf5a1ff2f51a88966ef90557a0ca0f96cd501be487d247784233f82fa9f17"
+        },
+        {
+          "path": "nomount/configs/boot_los23.2-v2.json",
+          "sha256": "e51a45a3e6fdbd98d1c573d2d27734aaef7d2b5b386f0bffd2bc3ab85b5e7080",
+          "blob_sha256": "e51a45a3e6fdbd98d1c573d2d27734aaef7d2b5b386f0bffd2bc3ab85b5e7080"
+        },
+        {
+          "path": "nomount/configs/boot_los23.2-v3.json",
+          "sha256": "0e92c1feef6c49ca023ac2369c92b788442ca98d0f4b1572bcf2b285567c7ed6",
+          "blob_sha256": "0e92c1feef6c49ca023ac2369c92b788442ca98d0f4b1572bcf2b285567c7ed6"
+        },
+        {
+          "path": "nomount/configs/boot_los23.2.json",
+          "sha256": "f9ef23f3892d65d8b149c80e699035af8d4e2386ef06d7a4e3eb0c127348825e",
+          "blob_sha256": "f9ef23f3892d65d8b149c80e699035af8d4e2386ef06d7a4e3eb0c127348825e"
+        },
+        {
+          "path": "nomount/configs/kernel_android13-5.10.json",
+          "sha256": "37ce8b90fbd2762b4985e197e2e159a8f76dd3e34533ff4f11d0c2e339a0b640",
+          "blob_sha256": "37ce8b90fbd2762b4985e197e2e159a8f76dd3e34533ff4f11d0c2e339a0b640"
+        },
+        {
+          "path": "nomount/configs/kernel_android13-5.15.json",
+          "sha256": "8711a57354d8cdba440844fa71ffdd9d80594ca4d7e35abb6107ab4ba03bc1c5",
+          "blob_sha256": "8711a57354d8cdba440844fa71ffdd9d80594ca4d7e35abb6107ab4ba03bc1c5"
+        },
+        {
+          "path": "nomount/configs/kernel_android14-5.15.json",
+          "sha256": "bd3327ef6cd17341675a77e65e8745283aab126c0c93dc74b2803de0b51aa52b",
+          "blob_sha256": "bd3327ef6cd17341675a77e65e8745283aab126c0c93dc74b2803de0b51aa52b"
+        },
+        {
+          "path": "nomount/module/boot-completed.sh",
+          "sha256": "05757ae28aa68fee9c5a0655050b86285dfba89bc36f253c8d5037d57719b9dc",
+          "blob_sha256": "05757ae28aa68fee9c5a0655050b86285dfba89bc36f253c8d5037d57719b9dc"
+        },
+        {
+          "path": "nomount/module/common.sh",
+          "sha256": "c4806204688a189125423147aa612b4fbb09a4636cc7ce3df634a34d2c297f45",
+          "blob_sha256": "c4806204688a189125423147aa612b4fbb09a4636cc7ce3df634a34d2c297f45"
+        },
+        {
+          "path": "nomount/module/customize.sh",
+          "sha256": "b7944d51f2d53bc81b8188c9afa4fc1917c720ef7957a1fc9a31b0cd2a2295a8",
+          "blob_sha256": "b7944d51f2d53bc81b8188c9afa4fc1917c720ef7957a1fc9a31b0cd2a2295a8"
+        },
+        {
+          "path": "nomount/module/metamount.sh",
+          "sha256": "947e469fe2f278a3117e38b75b7cfa7b5a356513bcd8bdecb5fb1dae1c460c5b",
+          "blob_sha256": "947e469fe2f278a3117e38b75b7cfa7b5a356513bcd8bdecb5fb1dae1c460c5b"
+        },
+        {
+          "path": "nomount/module/post-fs-data.sh",
+          "sha256": "062827cc3cbdb97ff39b2c8f360a74261c316e8f0a5dabbb19946f7c8fea80e6",
+          "blob_sha256": "062827cc3cbdb97ff39b2c8f360a74261c316e8f0a5dabbb19946f7c8fea80e6"
+        },
+        {
+          "path": "nomount/module/uninstall.sh",
+          "sha256": "63e8e956eccff721ddfd8d7c40ee930587623775ae268e33a7398bc4523a474d",
+          "blob_sha256": "63e8e956eccff721ddfd8d7c40ee930587623775ae268e33a7398bc4523a474d"
+        },
+        {
+          "path": "nomount/nm_backing_directory.c",
+          "sha256": "181f47877e9b4037f75ca64aa8371cbff7968a1624466904123d9d8f4e777c89",
+          "blob_sha256": "181f47877e9b4037f75ca64aa8371cbff7968a1624466904123d9d8f4e777c89"
+        },
+        {
+          "path": "nomount/nm_backing_entry.c",
+          "sha256": "665a1e1266cfcd56cd840a39ace270e131131c62b3792455ed095e98e6e96291",
+          "blob_sha256": "665a1e1266cfcd56cd840a39ace270e131131c62b3792455ed095e98e6e96291"
+        },
+        {
+          "path": "nomount/nm_backing_inode.c",
+          "sha256": "5b059740f8ce13d655c6ea2e2fe8a2c2cb4dcdcfa88503912c5bfcaa4569ecb0",
+          "blob_sha256": "5b059740f8ce13d655c6ea2e2fe8a2c2cb4dcdcfa88503912c5bfcaa4569ecb0"
+        },
+        {
+          "path": "nomount/nm_backing_subtree.c",
+          "sha256": "4f4ffe7b0f72e5cdf4e0237a572955732c6a2a728323b17d9a69b1679ceb8192",
+          "blob_sha256": "4f4ffe7b0f72e5cdf4e0237a572955732c6a2a728323b17d9a69b1679ceb8192"
+        },
+        {
+          "path": "nomount/nm_btf.c",
+          "sha256": "d226dcb08804deea284e9b157ecf9ee373c0ba6dbcb5656eefabc716824d8e88",
+          "blob_sha256": "d226dcb08804deea284e9b157ecf9ee373c0ba6dbcb5656eefabc716824d8e88"
+        },
+        {
+          "path": "nomount/nm_control.c",
+          "sha256": "5207f8b35bc57a94169d487dce0c8aba8c4a7c760a57711e8f29bbd18d8654c8",
+          "blob_sha256": "5207f8b35bc57a94169d487dce0c8aba8c4a7c760a57711e8f29bbd18d8654c8"
+        },
+        {
+          "path": "nomount/nm_control_entry.c",
+          "sha256": "b4873ab193e447cbc346f9dfd8ee07ecd6c7bc8626279a0437a1c211c15c9d0f",
+          "blob_sha256": "b4873ab193e447cbc346f9dfd8ee07ecd6c7bc8626279a0437a1c211c15c9d0f"
+        },
+        {
+          "path": "nomount/nm_control_key.c",
+          "sha256": "9cd04064228561bde36c0f45ca6115926138e895a9fea274e665eb4b2869b9ef",
+          "blob_sha256": "9cd04064228561bde36c0f45ca6115926138e895a9fea274e665eb4b2869b9ef"
+        },
+        {
+          "path": "nomount/nm_control_lock.c",
+          "sha256": "5f2e7ed8e259c48131ac99ca7172dd4127dc1351c611d6876d85db2acfe0786e",
+          "blob_sha256": "5f2e7ed8e259c48131ac99ca7172dd4127dc1351c611d6876d85db2acfe0786e"
+        },
+        {
+          "path": "nomount/nm_current.c",
+          "sha256": "1bc59c27eaa77cc4f712d3d63a0a66e5edf9d631506267a51574173961b3b191",
+          "blob_sha256": "1bc59c27eaa77cc4f712d3d63a0a66e5edf9d631506267a51574173961b3b191"
+        },
+        {
+          "path": "nomount/nm_directory.c",
+          "sha256": "553f3530b0204d6cfdb8de05795ae891a5d7952bc0383748baaf15a9e4396e23",
+          "blob_sha256": "553f3530b0204d6cfdb8de05795ae891a5d7952bc0383748baaf15a9e4396e23"
+        },
+        {
+          "path": "nomount/nm_directory_entry.c",
+          "sha256": "1f6593f16abc9364fe1e556da587693fd291fc8e299e89ab94bef6f2cba6e01e",
+          "blob_sha256": "1f6593f16abc9364fe1e556da587693fd291fc8e299e89ab94bef6f2cba6e01e"
+        },
+        {
+          "path": "nomount/nm_directory_nodes.c",
+          "sha256": "fbdb315e5858391c44b3046927c50842a442f2a7b27bf1a45a67e80f8abc5e7b",
+          "blob_sha256": "fbdb315e5858391c44b3046927c50842a442f2a7b27bf1a45a67e80f8abc5e7b"
+        },
+        {
+          "path": "nomount/nm_file.c",
+          "sha256": "7bc5239ff26c4296984307b09e266ca7963b360830551311e39f998ff5485028",
+          "blob_sha256": "7bc5239ff26c4296984307b09e266ca7963b360830551311e39f998ff5485028"
+        },
+        {
+          "path": "nomount/nm_file_entry.c",
+          "sha256": "1194ad7f48558cf9788533560051744c44e74c904e5335d4e4be86db2b1c78c8",
+          "blob_sha256": "1194ad7f48558cf9788533560051744c44e74c904e5335d4e4be86db2b1c78c8"
+        },
+        {
+          "path": "nomount/nm_inode.c",
+          "sha256": "fb47156dc809c7e5c5ba051d874e27a65ee82a9d9548171be633d84164cce638",
+          "blob_sha256": "fb47156dc809c7e5c5ba051d874e27a65ee82a9d9548171be633d84164cce638"
+        },
+        {
+          "path": "nomount/nm_inode_entry.c",
+          "sha256": "111c512a3427eba071593b22001f019c96bd50356fe52ac35a0b5b718a811257",
+          "blob_sha256": "111c512a3427eba071593b22001f019c96bd50356fe52ac35a0b5b718a811257"
+        },
+        {
+          "path": "nomount/nm_layout.c",
+          "sha256": "1efae16e581969e47807a9062c970829a23ad8d61278c721a5419b1e6e2610f9",
+          "blob_sha256": "1efae16e581969e47807a9062c970829a23ad8d61278c721a5419b1e6e2610f9"
+        },
+        {
+          "path": "nomount/nm_native.c",
+          "sha256": "7b6ec516bc701645019be6f8e1e778d0e9d8f40eca855716a9c14edeb24a99d9",
+          "blob_sha256": "7b6ec516bc701645019be6f8e1e778d0e9d8f40eca855716a9c14edeb24a99d9"
+        },
+        {
+          "path": "nomount/nm_native_entry.c",
+          "sha256": "efe57a565df1179f3142706801074920ed94102d9b445907abeef8e40272cf0b",
+          "blob_sha256": "efe57a565df1179f3142706801074920ed94102d9b445907abeef8e40272cf0b"
+        },
+        {
+          "path": "nomount/nm_offsets.c",
+          "sha256": "5c5cc5617d097f5a49ebeb7ec4ddf0798428dbd9f1a607f84592ca399434ae8d",
+          "blob_sha256": "5c5cc5617d097f5a49ebeb7ec4ddf0798428dbd9f1a607f84592ca399434ae8d"
+        },
+        {
+          "path": "nomount/nm_operations.c",
+          "sha256": "941be9581bdabd7ed703dcf046cb36bc8f9f425f0ac095d46ba1c04fb93d3e96",
+          "blob_sha256": "941be9581bdabd7ed703dcf046cb36bc8f9f425f0ac095d46ba1c04fb93d3e96"
+        },
+        {
+          "path": "nomount/nm_protocol.h",
+          "sha256": "d51f96dc8a86fdf276576002b82d4ca96c6289366823196e615c82d35e204b0a",
+          "blob_sha256": "d51f96dc8a86fdf276576002b82d4ca96c6289366823196e615c82d35e204b0a"
+        },
+        {
+          "path": "nomount/nm_rules.c",
+          "sha256": "5c8f19884f7eeeea172ed167672c77aef7d372ac1a8494266c4ed7575f695337",
+          "blob_sha256": "5c8f19884f7eeeea172ed167672c77aef7d372ac1a8494266c4ed7575f695337"
+        },
+        {
+          "path": "nomount/nm_rules.h",
+          "sha256": "a76e0b4919b6b3a0e6a17c7ada711eb3981cc19018e04d1b4f69efbec6469008",
+          "blob_sha256": "a76e0b4919b6b3a0e6a17c7ada711eb3981cc19018e04d1b4f69efbec6469008"
+        },
+        {
+          "path": "nomount/nm_rules_entry.c",
+          "sha256": "91154d0c9f19b460f47e962e257ca52505bd1a64da92bd155d323fd79a6bbece",
+          "blob_sha256": "91154d0c9f19b460f47e962e257ca52505bd1a64da92bd155d323fd79a6bbece"
+        },
+        {
+          "path": "nomount/nm_structs.h",
+          "sha256": "d3a07efe2994f4881f982b6fdde644d87d5e2d1498ee98b3ef14a60dfe2ff9c9",
+          "blob_sha256": "d3a07efe2994f4881f982b6fdde644d87d5e2d1498ee98b3ef14a60dfe2ff9c9"
+        },
+        {
+          "path": "nomount/nm_topology.c",
+          "sha256": "612597a08c12ed6001d80b08077077e57545d016a2bc9ce2371e6294e192bd0b",
+          "blob_sha256": "612597a08c12ed6001d80b08077077e57545d016a2bc9ce2371e6294e192bd0b"
+        },
+        {
+          "path": "nomount/nm_topology_entry.c",
+          "sha256": "fd1da41075e92b63160bb2921945c9bd97b4d66e380989941f7b78c3979fbf5d",
+          "blob_sha256": "fd1da41075e92b63160bb2921945c9bd97b4d66e380989941f7b78c3979fbf5d"
+        },
+        {
+          "path": "nomount/nm_virtual_directory.c",
+          "sha256": "5c25fb4f0bbd21256e5726734dbb754839fee304150ca344569c54a41e5069ae",
+          "blob_sha256": "5c25fb4f0bbd21256e5726734dbb754839fee304150ca344569c54a41e5069ae"
+        },
+        {
+          "path": "nomount/nomount.c",
+          "sha256": "1c571d8cf196b61d130cd40d5b88a0a0687a52c8055458e101c41a23b19a2957",
+          "blob_sha256": "1c571d8cf196b61d130cd40d5b88a0a0687a52c8055458e101c41a23b19a2957"
+        },
+        {
+          "path": "nomount/nomount/.github/scripts/telegram_upload.py",
+          "sha256": "b77559835dfa86d379620e660f14422aa657f69cad9dc4ea54f555fad54b3aa9",
+          "blob_sha256": "b77559835dfa86d379620e660f14422aa657f69cad9dc4ea54f555fad54b3aa9"
+        },
+        {
+          "path": "nomount/nomount/.github/workflows/build-lkm.yml",
+          "sha256": "00e61d0bb93f44cf468d7e210868ad509be21b3aed6563e6afd2dcf6d87d854c",
+          "blob_sha256": "00e61d0bb93f44cf468d7e210868ad509be21b3aed6563e6afd2dcf6d87d854c"
+        },
+        {
+          "path": "nomount/nomount/.github/workflows/build.yml",
+          "sha256": "f325acf3813002e9737f8224132e9562e45eb69f6269a771a8b1d516c0297b7d",
+          "blob_sha256": "f325acf3813002e9737f8224132e9562e45eb69f6269a771a8b1d516c0297b7d"
+        },
+        {
+          "path": "nomount/nomount/kernel/setup.sh",
+          "sha256": "d87fa9eec2b5b886a1d77f3cc28b04d4e8b466dcbe5408764f14663387ab3838",
+          "blob_sha256": "d87fa9eec2b5b886a1d77f3cc28b04d4e8b466dcbe5408764f14663387ab3838"
+        },
+        {
+          "path": "nomount/nomount/kernel/src/Makefile",
+          "sha256": "8a7c52484958b4f4532405e799e01beb76ea06739243eb423e9c25da6cef73af",
+          "blob_sha256": "8a7c52484958b4f4532405e799e01beb76ea06739243eb423e9c25da6cef73af"
+        },
+        {
+          "path": "nomount/nomount/kernel/src/nomount.c",
+          "sha256": "37aa0bfc6da1591033d6a05a72b413eddf36f914332f0120a6b2350826ae513d",
+          "blob_sha256": "37aa0bfc6da1591033d6a05a72b413eddf36f914332f0120a6b2350826ae513d"
+        },
+        {
+          "path": "nomount/nomount/kernel/src/nomount.h",
+          "sha256": "733f43352b28d24fe9b08a6623fa37ace2583dd1dfe8592fc45053bc91555616",
+          "blob_sha256": "733f43352b28d24fe9b08a6623fa37ace2583dd1dfe8592fc45053bc91555616"
+        },
+        {
+          "path": "nomount/nomount/module/boot-completed.sh",
+          "sha256": "7597eaf9ad208e1579a94e6bb2f21109d511e969ea23451ffa7061445402fa17",
+          "blob_sha256": "7597eaf9ad208e1579a94e6bb2f21109d511e969ea23451ffa7061445402fa17"
+        },
+        {
+          "path": "nomount/nomount/module/customize.sh",
+          "sha256": "2a5788d5fbcb8f9db9d1a4722b3457481912f56f8b0f42ad26352518208f652e",
+          "blob_sha256": "2a5788d5fbcb8f9db9d1a4722b3457481912f56f8b0f42ad26352518208f652e"
+        },
+        {
+          "path": "nomount/nomount/module/metainstall.sh",
+          "sha256": "ceb9ab2e45cb7325be8ec0ffe4d821ce82d0e00829bf99417939241b4a21b12a",
+          "blob_sha256": "ceb9ab2e45cb7325be8ec0ffe4d821ce82d0e00829bf99417939241b4a21b12a"
+        },
+        {
+          "path": "nomount/nomount/module/metamount.sh",
+          "sha256": "63fc3efab75cb77b9277d0bf744488ea00c7c47a062826bc74fdc07ef9879a69",
+          "blob_sha256": "63fc3efab75cb77b9277d0bf744488ea00c7c47a062826bc74fdc07ef9879a69"
+        },
+        {
+          "path": "nomount/nomount/module/post-fs-data.sh",
+          "sha256": "449903a8df09237c8e793fb4fb4a4aa25a3a8bf8b22f31e568282cca3a546a23",
+          "blob_sha256": "449903a8df09237c8e793fb4fb4a4aa25a3a8bf8b22f31e568282cca3a546a23"
+        },
+        {
+          "path": "nomount/nomount/module/rule-paths.sh",
+          "sha256": "e731b64b9bbdf6da6c28296688b1830a16be200b5fd914b6d1e382495dd8f6ce",
+          "blob_sha256": "e731b64b9bbdf6da6c28296688b1830a16be200b5fd914b6d1e382495dd8f6ce"
+        },
+        {
+          "path": "nomount/nomount/module/service.sh",
+          "sha256": "2e615955f82153d0466010e6976bd964f3b8eefe45d1baf07d07f5ab05bf4e39",
+          "blob_sha256": "2e615955f82153d0466010e6976bd964f3b8eefe45d1baf07d07f5ab05bf4e39"
+        },
+        {
+          "path": "nomount/nomount/module/uninstall.sh",
+          "sha256": "e1685116b59e98ce964663b0354f754f1d97a54516eb0af6b7ce65174b2db7b4",
+          "blob_sha256": "e1685116b59e98ce964663b0354f754f1d97a54516eb0af6b7ce65174b2db7b4"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ar-dz.json",
+          "sha256": "f25f14667116eb64fc7455b1a9473213aa49466130b765927a8780cf51abf5a3",
+          "blob_sha256": "f25f14667116eb64fc7455b1a9473213aa49466130b765927a8780cf51abf5a3"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ar.json",
+          "sha256": "ab30a7a76e1e218e2c89a15f585e2843a66d96ceab862bd8c6a00ae5eb2d7ca1",
+          "blob_sha256": "ab30a7a76e1e218e2c89a15f585e2843a66d96ceab862bd8c6a00ae5eb2d7ca1"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/bn.json",
+          "sha256": "d1c2123c1432ffbeb4c72c1b15582a74ce02b23baeeec9095012304f7ef4eae8",
+          "blob_sha256": "d1c2123c1432ffbeb4c72c1b15582a74ce02b23baeeec9095012304f7ef4eae8"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/en.json",
+          "sha256": "756c2b565ac755a59faf6d394b67c015f547792debb0e612c2a53fde6a63325d",
+          "blob_sha256": "756c2b565ac755a59faf6d394b67c015f547792debb0e612c2a53fde6a63325d"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/es.json",
+          "sha256": "18142e334a2a98f5cfbea1c56f92e9ed4c50b494b91f334e300e146b9ecaa793",
+          "blob_sha256": "18142e334a2a98f5cfbea1c56f92e9ed4c50b494b91f334e300e146b9ecaa793"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/id.json",
+          "sha256": "79885e688443798feee15e3b59686a8ab694f5754c0c6f673b20e09ab5fe1103",
+          "blob_sha256": "79885e688443798feee15e3b59686a8ab694f5754c0c6f673b20e09ab5fe1103"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ja.json",
+          "sha256": "f04b467b3fabda8016c08f93ab512eac55a9a91ae54bfa245fa866b5e3c724c8",
+          "blob_sha256": "f04b467b3fabda8016c08f93ab512eac55a9a91ae54bfa245fa866b5e3c724c8"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/pl.json",
+          "sha256": "14f15aa5fc119824a730a68ddc3fafceb211d0f59fae1edf8df9e2f3c23dcb11",
+          "blob_sha256": "14f15aa5fc119824a730a68ddc3fafceb211d0f59fae1edf8df9e2f3c23dcb11"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/ru.json",
+          "sha256": "b8df6292195f4440efeefd4a3dc9ee140fca9ee05a484eabdf717a6bdf318456",
+          "blob_sha256": "b8df6292195f4440efeefd4a3dc9ee140fca9ee05a484eabdf717a6bdf318456"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/tr.json",
+          "sha256": "58ce8a73779366979c8267953114d0959d7b8ccaf35f2aa0ffeb4a0c46529a36",
+          "blob_sha256": "58ce8a73779366979c8267953114d0959d7b8ccaf35f2aa0ffeb4a0c46529a36"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/vi.json",
+          "sha256": "3ec737f97d96309307dffdf832361efded039ca262b3d6da9f4102711a118ba2",
+          "blob_sha256": "3ec737f97d96309307dffdf832361efded039ca262b3d6da9f4102711a118ba2"
+        },
+        {
+          "path": "nomount/nomount/module/webroot/locales/zh.json",
+          "sha256": "965907cb3de4c16a8c0e77d42bb6d804f75063feb1babe459d07ef35799099fc",
+          "blob_sha256": "965907cb3de4c16a8c0e77d42bb6d804f75063feb1babe459d07ef35799099fc"
+        },
+        {
+          "path": "nomount/nomount/userspace/src/nm.c",
+          "sha256": "b37e7d3dc415234d05dcde66255e5db6b78da910fb59910d17b588537c9a240d",
+          "blob_sha256": "b37e7d3dc415234d05dcde66255e5db6b78da910fb59910d17b588537c9a240d"
+        },
+        {
+          "path": "nomount/nomount/userspace/src/nm.h",
+          "sha256": "142f2b2193db020e0c497bd96e2553b010c49494364f042eb46727adc80e5d6c",
+          "blob_sha256": "142f2b2193db020e0c497bd96e2553b010c49494364f042eb46727adc80e5d6c"
+        },
+        {
+          "path": "nomount/tools/build_nm.sh",
+          "sha256": "ff75bc209eb1dc91ab50e80eeb4024ccc8058afe0607f5e13b2dd8b84dcbaaf5",
+          "blob_sha256": "ff75bc209eb1dc91ab50e80eeb4024ccc8058afe0607f5e13b2dd8b84dcbaaf5"
+        },
+        {
+          "path": "nomount/tools/build_zip.py",
+          "sha256": "613777e3eba3d249d50752901bdefcb18a06cf254165ddf7c9d948cb4fc152c0",
+          "blob_sha256": "613777e3eba3d249d50752901bdefcb18a06cf254165ddf7c9d948cb4fc152c0"
+        },
+        {
+          "path": "nomount/tools/check_target_calls.py",
+          "sha256": "b98c5a406b4672208847c3f68adfffbcb5dd92e9039841057ddea38e08969d19",
+          "blob_sha256": "b98c5a406b4672208847c3f68adfffbcb5dd92e9039841057ddea38e08969d19"
+        },
+        {
+          "path": "nomount/tools/compare_structs.py",
+          "sha256": "0149638aa9114e0df753605ce59e2288e61786677a067bbe7f71cb17bf8e0159",
+          "blob_sha256": "0149638aa9114e0df753605ce59e2288e61786677a067bbe7f71cb17bf8e0159"
+        },
+        {
+          "path": "nomount/tools/inspect_target.py",
+          "sha256": "53a3f0d73ed6f451bbfd0663983241554b4feb18c014c5c02daa2effdde3d0f4",
+          "blob_sha256": "53a3f0d73ed6f451bbfd0663983241554b4feb18c014c5c02daa2effdde3d0f4"
+        },
+        {
+          "path": "nomount/tools/test_backing_directory.py",
+          "sha256": "b976e53d4dd65a62c3cda3444f6640d6b7743dc658b0d6cdbf66e5126cbe693b",
+          "blob_sha256": "b976e53d4dd65a62c3cda3444f6640d6b7743dc658b0d6cdbf66e5126cbe693b"
+        },
+        {
+          "path": "nomount/tools/test_backing_directory_layout.py",
+          "sha256": "2fa09b63b6520210575597294efc047b8f88edebb11d96f6eb869e11e8ab6f20",
+          "blob_sha256": "2fa09b63b6520210575597294efc047b8f88edebb11d96f6eb869e11e8ab6f20"
+        },
+        {
+          "path": "nomount/tools/test_backing_inode.py",
+          "sha256": "0c5278826869d9c76c839760dd8114bcf2ee01bbc089899d700d492286f32ca9",
+          "blob_sha256": "0c5278826869d9c76c839760dd8114bcf2ee01bbc089899d700d492286f32ca9"
+        },
+        {
+          "path": "nomount/tools/test_backing_inode_layout.py",
+          "sha256": "d71832fa5647fbebdff7ca3d8499435fe6c67e7ddb9a05ff0855f2916dd89afc",
+          "blob_sha256": "d71832fa5647fbebdff7ca3d8499435fe6c67e7ddb9a05ff0855f2916dd89afc"
+        },
+        {
+          "path": "nomount/tools/test_backing_subtree.py",
+          "sha256": "fdf5646a5361427da48ad239fe9519d073b1c78c5db4e5177b0ba476322fc636",
+          "blob_sha256": "fdf5646a5361427da48ad239fe9519d073b1c78c5db4e5177b0ba476322fc636"
+        },
+        {
+          "path": "nomount/tools/test_call_abis.py",
+          "sha256": "6d6e4ba5bf250ad5442e08e3c1bcec59831d90171910d272bc0bff993b20a1ef",
+          "blob_sha256": "6d6e4ba5bf250ad5442e08e3c1bcec59831d90171910d272bc0bff993b20a1ef"
+        },
+        {
+          "path": "nomount/tools/test_control.py",
+          "sha256": "db88c53f647bceec4e0337158e486172fb8a62374d515cc3d7c23e9da244854b",
+          "blob_sha256": "db88c53f647bceec4e0337158e486172fb8a62374d515cc3d7c23e9da244854b"
+        },
+        {
+          "path": "nomount/tools/test_control_layout.py",
+          "sha256": "be150f8dfb338e43d381e0c92c25250238cc83241c5b5aab6cab38c86e80108d",
+          "blob_sha256": "be150f8dfb338e43d381e0c92c25250238cc83241c5b5aab6cab38c86e80108d"
+        },
+        {
+          "path": "nomount/tools/test_directory.py",
+          "sha256": "6fc61ebca92dd138c1a188faaec0c2aa9c8cc584f393728aae1e8c0641aa21e8",
+          "blob_sha256": "6fc61ebca92dd138c1a188faaec0c2aa9c8cc584f393728aae1e8c0641aa21e8"
+        },
+        {
+          "path": "nomount/tools/test_directory_layout.py",
+          "sha256": "2bc72e9348a9f713bc0fa2666088929fbc319c96442b454b2728834becd64ff9",
+          "blob_sha256": "2bc72e9348a9f713bc0fa2666088929fbc319c96442b454b2728834becd64ff9"
+        },
+        {
+          "path": "nomount/tools/test_file.py",
+          "sha256": "86721f3213cfb792add846c9c31ddef5245c44f0ac7d84e4ace66bf0fe443f9b",
+          "blob_sha256": "86721f3213cfb792add846c9c31ddef5245c44f0ac7d84e4ace66bf0fe443f9b"
+        },
+        {
+          "path": "nomount/tools/test_file_layout.py",
+          "sha256": "b42123c896a330a90a151d8598507eac50fdb1277e91bf1e1816c4a78c06d54c",
+          "blob_sha256": "b42123c896a330a90a151d8598507eac50fdb1277e91bf1e1816c4a78c06d54c"
+        },
+        {
+          "path": "nomount/tools/test_inode.py",
+          "sha256": "9d81d278fdca22d231ce93d73ad396c0e840d4808170232ee4b14dd0b10d17d8",
+          "blob_sha256": "9d81d278fdca22d231ce93d73ad396c0e840d4808170232ee4b14dd0b10d17d8"
+        },
+        {
+          "path": "nomount/tools/test_inode_layout.py",
+          "sha256": "f493fd30946f76f5a1ba224b44ab7f3a29c4a75428551ab41802264bf29944d3",
+          "blob_sha256": "f493fd30946f76f5a1ba224b44ab7f3a29c4a75428551ab41802264bf29944d3"
+        },
+        {
+          "path": "nomount/tools/test_inspect_target.py",
+          "sha256": "cf330ddb86754489e1e615cf0296e220b276b9694e31aa8ff32e646e18750216",
+          "blob_sha256": "cf330ddb86754489e1e615cf0296e220b276b9694e31aa8ff32e646e18750216"
+        },
+        {
+          "path": "nomount/tools/test_kpm.py",
+          "sha256": "a424faa647972950e5d50d9833baab1b396e1527830fde6c7eff0dcf7d3a1ad3",
+          "blob_sha256": "a424faa647972950e5d50d9833baab1b396e1527830fde6c7eff0dcf7d3a1ad3"
+        },
+        {
+          "path": "nomount/tools/test_layout.py",
+          "sha256": "f5af6d8e5231531ae15141f4abc5a4e12ad55216f4a20b9ff7a2d18c2a423e0c",
+          "blob_sha256": "f5af6d8e5231531ae15141f4abc5a4e12ad55216f4a20b9ff7a2d18c2a423e0c"
+        },
+        {
+          "path": "nomount/tools/test_load_events.py",
+          "sha256": "683334568ff3ea392edb945576187b473ac2007fc7c1693313fd73cebf06a230",
+          "blob_sha256": "683334568ff3ea392edb945576187b473ac2007fc7c1693313fd73cebf06a230"
+        },
+        {
+          "path": "nomount/tools/test_mount_abis.py",
+          "sha256": "7fada16a0e10c68759392b69c8fe5581f129552754c16cd71c956e43920ac1a2",
+          "blob_sha256": "7fada16a0e10c68759392b69c8fe5581f129552754c16cd71c956e43920ac1a2"
+        },
+        {
+          "path": "nomount/tools/test_native.py",
+          "sha256": "e1f84c2bcd4a8ca95fd37a5dfaa33b28672fc54be380a24cc9f0558a09b462f0",
+          "blob_sha256": "e1f84c2bcd4a8ca95fd37a5dfaa33b28672fc54be380a24cc9f0558a09b462f0"
+        },
+        {
+          "path": "nomount/tools/test_rule_layout.py",
+          "sha256": "97484e8534d87bc4a02f776a759ccfd376d53196acd8e7848439eafcffa65049",
+          "blob_sha256": "97484e8534d87bc4a02f776a759ccfd376d53196acd8e7848439eafcffa65049"
+        },
+        {
+          "path": "nomount/tools/test_rules.py",
+          "sha256": "51182e51219e3807caad221a4adddd9e69a2f7e05ecb1dc895e05bac0fc174fb",
+          "blob_sha256": "51182e51219e3807caad221a4adddd9e69a2f7e05ecb1dc895e05bac0fc174fb"
+        },
+        {
+          "path": "nomount/tools/test_target_layout.py",
+          "sha256": "7dd7db4171f033d18afd43232dc0035d3d5a3650d71daffa1e7b2160bdf00610",
+          "blob_sha256": "7dd7db4171f033d18afd43232dc0035d3d5a3650d71daffa1e7b2160bdf00610"
+        },
+        {
+          "path": "nomount/tools/test_topology.py",
+          "sha256": "e046f294b9252e27c9e1056e55f0223dc5a9a7dcfcab00fdf0e9e664a0f0dd60",
+          "blob_sha256": "e046f294b9252e27c9e1056e55f0223dc5a9a7dcfcab00fdf0e9e664a0f0dd60"
+        },
+        {
+          "path": "nomount/tools/test_topology_layout.py",
+          "sha256": "01bc20547c26a7f87f75d26ebe79fc4883075974637941150e4b4d12f8cd0ee2",
+          "blob_sha256": "01bc20547c26a7f87f75d26ebe79fc4883075974637941150e4b4d12f8cd0ee2"
+        },
+        {
+          "path": "nomount/tools/test_virtual_directory.py",
+          "sha256": "da0ce1419d6fc9dedf87adb8bbfc71489d5499a3930f1af110ed494faad97249",
+          "blob_sha256": "da0ce1419d6fc9dedf87adb8bbfc71489d5499a3930f1af110ed494faad97249"
+        },
+        {
+          "path": "nomount/tools/test_virtual_directory_layout.py",
+          "sha256": "c57681e511e5f079ab6b0c12124cc2edf54b39577fcf99d0980603dca22e9bed",
+          "blob_sha256": "c57681e511e5f079ab6b0c12124cc2edf54b39577fcf99d0980603dca22e9bed"
+        },
+        {
+          "path": "nomount/tools/test_zip_module.py",
+          "sha256": "759d8ff46237198b498bbe5bee513d50fa8ea645cf75477cc47829e70729f9d5",
+          "blob_sha256": "759d8ff46237198b498bbe5bee513d50fa8ea645cf75477cc47829e70729f9d5"
+        },
+        {
+          "path": "patch_offsets.py",
+          "sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033",
+          "blob_sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033"
+        },
+        {
+          "path": "tools/build_candidate.py",
+          "sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031",
+          "blob_sha256": "f52823871f10470dafb30c3229e5b9ceaefb774c28ae226d664ac1702231d031"
+        },
+        {
+          "path": "tools/identity.py",
+          "sha256": "8742e38cd6c41299ffeab357d39d3c92b2da5145761e5e3a276d76afeec604ca",
+          "blob_sha256": "8742e38cd6c41299ffeab357d39d3c92b2da5145761e5e3a276d76afeec604ca"
+        }
+      ],
+      "toolchain": "ndk26.3.11579264",
+      "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+      "fingerprint_sha256": "2a0d9e5d4826f0b0acc0497daa7cb28c3ca127456614e6ee1458d1bf902ec98d",
+      "recipe": {
+        "captured": true,
+        "command": "make -C nomount all debug",
+        "dry_run_args": "-n -B（强制重算配方）",
+        "returncode": 0,
+        "dry_run_sha256": "e5aafa6e961b47858e6683150bd4f5e8b83edeabcece279aa559cc9b2e4aa4fb",
+        "cc": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang",
+        "compiler_sha256": "8562e1e0df487f8e31209188580102fed5becafa369c2dbe38ee224e2b35943e",
+        "excerpt": "<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin   -DMYKPM_VERSION=\\\"0.3.0\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -DCONFIG_KPM_BASELINES -DMYKPM_VERSION=\\\"0.3.0\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0_baselines.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -DCONFIG_DEBUG -DMYKPM_VERSION=\\\"0.3.0_d\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0_debug.kpm\n<home>/Library/Android/sdk/ndk/26.3.11579264/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android31-clang -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -mgeneral-regs-only -mno-outline-atomics -ffixed-x18 -fno-builtin  -DCONFIG_KPM_BASELINES -DCONFIG_DEBUG -DMYKPM_VERSION=\\\"0.3.0_d\\\" -I../KernelPatch/kernel/. -I../KernelPatch/kernel/include -I../KernelPatch/kernel/patch/include -I../KernelPatch/kernel/linux/include -I../KernelPatch/kernel/linux/arch/arm64/include -I../KernelPatch/kernel/linux/tools/arch/arm64/include nomount.c -r -o nomount_0.3.0_baselines_debug.kpm"
+      },
+      "recorded_by": "Developer",
+      "build_transaction": {
+        "source_commit": "bdb9748b164e8157b80d977e26d2fa9172bf87dc",
+        "source_tree_sha256": "96ece746aa9f7ced49aec6a2accbb96c3b5c23f893774d641b0f0d7f63c94e01",
+        "kernelpatch_commit": "b51197aaba8f2272dd8a3e30c85698a29aa928c9",
+        "recipe_sha256": "e5aafa6e961b47858e6683150bd4f5e8b83edeabcece279aa559cc9b2e4aa4fb",
+        "input_unchanged": true,
+        "returncode": 0
+      },
+      "artifacts": [
+        {
+          "name": "nomount_0.3.0_debug.kpm",
+          "sha256": "8922c734803ad58c8cf3eb28e4e5ffa5a9914cfef054f434c2c7869bda04bf8d",
+          "size": 140584,
+          "embedded": {
+            "name": "nomount",
+            "version": "0.3.0_d",
+            "license": "GPL v2",
+            "author": "maxsteeel, Codex",
+            "description": "NoMount: read-only file and directory views, resident until reboot",
+            "offset_mode": "dynamic",
+            "lifetime": "reboot"
+          },
+          "path": "artifacts/nomount-0.3.0_debug+g96ece746aa9f.r2a0d9e5d.kpb51197a.ndk26.3.11579264/nomount_0.3.0_debug.kpm"
+        }
+      ],
+      "instance_id": "nomount-0.3.0_debug+g96ece746aa9f.r2a0d9e5d.kpb51197a.ndk26.3.11579264#1"
+    }
+  ]
+}

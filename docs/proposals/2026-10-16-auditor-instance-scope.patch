@@ -1,0 +1,45 @@
+--- a/Auditor/tools/artifact_audit.py
++++ b/Auditor/tools/artifact_audit.py
+@@ -564,6 +564,7 @@
+     ap = argparse.ArgumentParser(description="KPM 产物独立审计")
+     ap.add_argument("--module", required=True)
+     ap.add_argument("--build-id", action="append", help="待审计的 Build ID（可重复指定）")
++    ap.add_argument("--instance-id", action="append", help="本轮完整实例，可重复指定；不指定时保留原范围")
+     ap.add_argument("--version", dest="target_version", help="待审计的构建版本（如 0.2.0）")
+     ap.add_argument("--manifest", help="交接清单或自定义登记表路径（若未导入 metadata/modules）")
+     ap.add_argument("--corpus", action="append",
+@@ -621,8 +622,12 @@
+     unregistered = [message for _, kind, message in scan_findings if kind == "unregistered_artifact"]
+ 
+     targets = []
++    selected_instances = set()
++    instance_filter = set(args.instance_id) if args.instance_id else None
+     build_filter = set(args.build_id) if args.build_id else None
+     for build in record.get("builds", []):
++        if instance_filter and build.get("instance_id") not in instance_filter:
++            continue
+         if build_filter and build.get("build_id") not in build_filter:
+             continue
+         if args.target_version and build.get("version") != args.target_version:
+@@ -631,6 +636,10 @@
+             path = os.path.join(REPO, art["path"])
+             if os.path.isfile(path):
+                 targets.append((build["build_id"], path))
++                selected_instances.add(build.get("instance_id"))
++    if instance_filter and instance_filter - selected_instances:
++        print("error: 所选实例未匹配在场产物: " + ", ".join(sorted(instance_filter - selected_instances)), file=sys.stderr)
++        return 2
+     if not targets and not scan_findings:
+         print("error: 没有可审计的产物（产物不在场？）", file=sys.stderr)
+         return 2
+@@ -651,6 +660,10 @@
+             "kpm_on_disk": scanned_paths,
+             "registered": sorted(registered),
+         },
++        "selection": {"instance_ids": sorted(instance_filter) if instance_filter else None,
++                      "build_ids": sorted(build_filter) if build_filter else None,
++                      "version": args.target_version,
++                      "audited_instances": sorted(selected_instances)},
+         "artifacts": [],
+         "findings": [],
+     }

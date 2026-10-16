@@ -1,0 +1,54 @@
+{
+  "scope": "Developer candidate identity and binary transformation checks; no runtime operation or independent audit",
+  "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+  "base_instance_id": "nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264#1",
+  "base_sha256": "1ab36727b82cab1723da56f6f82273ff1fee57071836b8992f4e3d26ad40e1fa",
+  "derived_sha256": "06bd68500f2d6f9725038499a16bca1f54e88f1cde3c21f2dc95aa96f276d8ee",
+  "candidate_verification": {
+    "build_id": "nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264",
+    "instance_id": "nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264#1",
+    "kind": "candidate",
+    "profile": "candidate",
+    "problems": [],
+    "notes": [
+      "源码核验通过（提交 blob 161 个）"
+    ],
+    "source_verified": true,
+    "artifacts_verified": 1
+  },
+  "regeneration_command": [
+    "python3",
+    "patch_offsets.py",
+    "legacy-kp",
+    "artifacts/nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014.kpm",
+    "--output",
+    "local/nomount-TST-001-current-legacy-20261015-01/NoMount_2.1.1-20261014.kpm"
+  ],
+  "archive_path": "artifacts/binary-port/nomount/06bd68500f2d6f9725038499a16bca1f54e88f1cde3c21f2dc95aa96f276d8ee/NoMount_2.1.1-20261014.kpm",
+  "fresh_output_matches_archived": true,
+  "compat_receipt_matches_archived": true,
+  "original_sections_and_relocations_unchanged": true,
+  "metadata_unchanged": true,
+  "adapter_hex": "10000090100240f900021fd6",
+  "pointer_call_model": "PASS",
+  "undefined_imports": [
+    "printk",
+    "kallsyms_lookup_name",
+    "kf_memset",
+    "kf_memcpy",
+    "task_struct_offset",
+    "cred_offset",
+    "kf_memchr",
+    "kf_memcmp",
+    "sp_el0_is_current",
+    "thread_info_in_task",
+    "sp_el0_is_thread_info",
+    "thread_size",
+    "task_in_thread_info_offset",
+    "kf_strcmp",
+    "compat_copy_to_user",
+    "kf_strncmp"
+  ],
+  "patch_tool_matches_frozen_source": true,
+  "already_registered": false
+}

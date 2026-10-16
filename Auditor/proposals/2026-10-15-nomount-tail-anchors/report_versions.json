@@ -1,0 +1,76 @@
+[
+  {
+    "path": "Auditor/reports/2026-10-15-nomount-tail-anchors-audit.md",
+    "sha256": "4340bdfd87c509c468304cbacd8f72a37cc15f8ab6e10134f3e9669161059f46",
+    "size": 20496,
+    "append_only_baseline": {
+      "sha256": "7034cff51cfa5fc8c6f4c0b3325ab6fb062c73bd4340e82bb4a853f70dc628e0",
+      "size": 10534,
+      "commit": "e1a7f169a8304adc36fdc0c9e5d652637350b184",
+      "kind": "archived",
+      "note": "Auditor 检查点提交的首次入库版本（nomount 尾部锚点与 TST-001 修复候选审计报告）"
+    },
+    "versions": [
+      {
+        "sha256": "7034cff51cfa5fc8c6f4c0b3325ab6fb062c73bd4340e82bb4a853f70dc628e0",
+        "size": 10534,
+        "commit": "e1a7f169a8304adc36fdc0c9e5d652637350b184"
+      },
+      {
+        "sha256": "9ede5143c8e2c87ed3f322cc726b65394c9156f43d8e79d3deb4d191d3db3313",
+        "size": 15833,
+        "added_sha256": "c6c0e21ada2e42afe21d1038c8e81b368d202828e06546999577569cef7e7c14",
+        "added_size": 5299,
+        "commit": "d92898e65c51ad0f0629d153188e999e67fa92b4",
+        "note": "Auditor 追加 5.15 动态 Delta 等价性与证据顺延绑定裁定（BTF 路径完全隔离与不可达性证明）"
+      },
+      {
+        "sha256": "4340bdfd87c509c468304cbacd8f72a37cc15f8ab6e10134f3e9669161059f46",
+        "size": 20496,
+        "added_sha256": "48fc1747cc36f6d7c263bfcbe69359d473d60a52f1a53b6c389be0afaa9beb70",
+        "added_size": 4663,
+        "commit": null,
+        "pending_commit": true,
+        "note": "Auditor 响应 DEV-044 追加对齐算术更正与 5.15 Delta 绑定有效性复核证明"
+      }
+    ]
+  },
+  {
+    "path": "Auditor/reports/data/2026-10-15-nomount-tail-anchors-artifact-audit.json",
+    "sha256": "e0ef7eab770d45e8df48fd2e0db44bfaf226e19c891beff63ce2286fffb60045",
+    "size": 2615059,
+    "append_only_baseline": {
+      "sha256": "e0ef7eab770d45e8df48fd2e0db44bfaf226e19c891beff63ce2286fffb60045",
+      "size": 2615059,
+      "commit": "e1a7f169a8304adc36fdc0c9e5d652637350b184",
+      "kind": "archived",
+      "note": "Auditor 检查点提交的首次入库版本（nomount 尾部锚点与 TST-001 修复候选产物审计数据）"
+    },
+    "versions": [
+      {
+        "sha256": "e0ef7eab770d45e8df48fd2e0db44bfaf226e19c891beff63ce2286fffb60045",
+        "size": 2615059,
+        "commit": "e1a7f169a8304adc36fdc0c9e5d652637350b184"
+      }
+    ]
+  },
+  {
+    "path": "Auditor/reports/data/2026-10-15-nomount-tail-anchors-static-scan.json",
+    "sha256": "e961dd762bd82c158a590923d46210566d8a8bbf4146179fe3b3f5c4b7331f35",
+    "size": 9552,
+    "append_only_baseline": {
+      "sha256": "e961dd762bd82c158a590923d46210566d8a8bbf4146179fe3b3f5c4b7331f35",
+      "size": 9552,
+      "commit": "e1a7f169a8304adc36fdc0c9e5d652637350b184",
+      "kind": "archived",
+      "note": "Auditor 检查点提交的首次入库版本（nomount 尾部锚点与 TST-001 修复候选静态扫描数据）"
+    },
+    "versions": [
+      {
+        "sha256": "e961dd762bd82c158a590923d46210566d8a8bbf4146179fe3b3f5c4b7331f35",
+        "size": 9552,
+        "commit": "e1a7f169a8304adc36fdc0c9e5d652637350b184"
+      }
+    ]
+  }
+]

@@ -4714,7 +4714,7 @@
   ],
   "acceptances": [],
   "deliveries": [],
-  "updated_at": "2026-10-11T00:48:02.785091+00:00",
+  "updated_at": "2026-10-14T18:13:23Z",
   "updated_by": "维护者",
   "maintainer_records": [
     {
@@ -4884,6 +4884,16 @@
       ],
       "verification": "按冻结提交复算输入、参数、构建事务与 KPM 哈希；candidate 档核验",
       "pending": "本轮新实例保留 candidate 状态；历史审计/实机结论按原实例引用，新实例待对应独立复核"
+    },
+    {
+      "at": "2026-10-14T18:13:23Z",
+      "by": "维护者",
+      "scope": "登记来源：由 re_kernel_static 更名而来。",
+      "record": "metadata/modules/re_kernel_static.json#renamed_to",
+      "verification": "与 re_kernel_static 的 renamed_to/superseded_by 互指一致。",
+      "pending": "无"
     }
-  ]
+  ],
+  "renamed_from": "re_kernel_static",
+  "rename_note": "由 `re_kernel_static` 更名而来（用户 2026-10-14 说明）；旧命名产物不保留，本模块自更名后独立登记构建与结论。"
 }

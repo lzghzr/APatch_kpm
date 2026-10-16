@@ -1,0 +1,24 @@
+{
+  "module": "nomount",
+  "source_commit": "bdb9748b164e8157b80d977e26d2fa9172bf87dc",
+  "append_issues": [
+    {
+      "id": "DEV-035",
+      "class": "product",
+      "severity": "中低",
+      "owner": "Developer",
+      "status": "fixed(待复核)",
+      "title": "配套ZIP缺少随包编译脚本与改动通知",
+      "evidence": "此前源码e1062d9bd016afd961bc974655cb7305f39d27e9的ZIP e432a00cd4c1793bf36d8d5e19d2d41e29d0a5ec3114e2a3520145a2a309f37d中虽有nm.c/nm.h和GPL3正文，却无CLI编译脚本及明确修改日期/范围说明。",
+      "impact": "公开发布前须完善对应源码的编译方法和改动通知；此处记录交付配套缺口，不认定已发生违规传播。",
+      "suggestion": "随ZIP提供build-nm.sh及NOTICE.md，保留上游署名和原许可证，明确KPM/ZIP许可边界。",
+      "closure": "Auditor独立复核bdb9748b164e8157b80d977e26d2fa9172bf87dc、ZIP nomount-zip-0.3.0+g647d561e3cad.ndk26.3.11579264#1及其31d2300b0af481f6c3bed1df5976bdb06d90451b3c33ee9d6e5f8bef1c1d5764，核对原许可证、修改通知、作者与源码，并用随包脚本重编译nm一致后，维护者登记关闭。",
+      "frequency": "高频",
+      "confidence": "已确认",
+      "found_in_build": "nomount-zip-0.3.0+g1f9ef71469bb.ndk26.3.11579264#1",
+      "fixed_in_commit": "bdb9748b164e8157b80d977e26d2fa9172bf87dc",
+      "closed_by": null,
+      "reviews": []
+    }
+  ]
+}

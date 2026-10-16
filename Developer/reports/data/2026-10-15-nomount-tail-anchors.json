@@ -1,0 +1,2789 @@
+{
+  "scope": "Developer target instructions plus declared post-anchor tails and alignment; not independent audit or native kernel execution",
+  "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+  "candidate": {
+    "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+    "candidate_checks": [
+      {
+        "build_id": "nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264",
+        "instance_id": "nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264#1",
+        "kind": "candidate",
+        "profile": "candidate",
+        "problems": [],
+        "notes": [
+          "源码核验通过（提交 blob 161 个）"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      },
+      {
+        "build_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264",
+        "instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "kind": "candidate",
+        "profile": "candidate",
+        "problems": [],
+        "notes": [
+          "源码核验通过（提交 blob 161 个）"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      }
+    ],
+    "artifacts": [
+      {
+        "path": "artifacts/nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014.kpm",
+        "info": {
+          "name": "NoMount",
+          "version": "2.1.1-20261014",
+          "license": "GPL v2",
+          "author": "maxsteeel, Codex",
+          "description": "NoMount: read-only file and directory views, resident until reboot",
+          "offset_mode": "dynamic",
+          "lifetime": "reboot"
+        },
+        "undefined_imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "kf_strncmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_verified": true,
+        "fp_simd_sve_instructions": []
+      },
+      {
+        "path": "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+        "info": {
+          "name": "NoMount",
+          "version": "2.1.1-20261014",
+          "license": "GPL v2",
+          "author": "maxsteeel, Codex",
+          "description": "NoMount: read-only file and directory views, resident until reboot",
+          "offset_mode": "static",
+          "lifetime": "reboot"
+        },
+        "undefined_imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_verified": true,
+        "fp_simd_sve_instructions": []
+      }
+    ],
+    "static_ports": [
+      {
+        "target": "B2N-416G_boot.img",
+        "config": "nomount/configs/B2N-416G-v4.json",
+        "config_sha256": "ce3a31a0d2604d6003bedd96862eb17f22af9d45aa3684d70a5c9bf5691ae95e",
+        "image_sha256": "ea919143cb1f057f3d35d726294166d5186f376e9751941b83940e75d48a288c",
+        "kernel_sha256": "7633fbac5ce30b726a1acdbf57f730aa847a9510984a25bc23f9ddcdb0956e1c",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "base_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+        "path": "artifacts/binary-port/nomount/94bafae7efafcabaaf20e7db119672c0e48d215513a0a5fb961a64c04547a581/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "94bafae7efafcabaaf20e7db119672c0e48d215513a0a5fb961a64c04547a581",
+        "layout_sha256": "2da626948a5d97f41eb2b32829ff150d09daf6853d648cc57a1c4279fe534481",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "patch",
+          "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+          "--layout",
+          "local/nomount-tail-anchor-20261015-01/layout-01/NoMount_2.1.1-20261014_baselines.kpm.json",
+          "--offsets",
+          "nomount/configs/B2N-416G-v4.json",
+          "--output",
+          "artifacts/binary-port/nomount/94bafae7efafcabaaf20e7db119672c0e48d215513a0a5fb961a64c04547a581/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "modified_range": [
+          44256,
+          92
+        ],
+        "mode": "static"
+      },
+      {
+        "target": "kernel_mi6-4.4",
+        "config": "nomount/configs/kernel_mi6-4.4-v4.json",
+        "config_sha256": "e4c9ab951fc657f6da7f0a7a9553cfe7e8d820a2d073477ec1d701f3a5f89d8b",
+        "image_sha256": "cd92912fc52a9f422625eaf2db98937a407644b70b2cf5149f6df7eb1f17b930",
+        "kernel_sha256": "cd92912fc52a9f422625eaf2db98937a407644b70b2cf5149f6df7eb1f17b930",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "base_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+        "path": "artifacts/binary-port/nomount/f4c1c21940a09a2c071b3071712d66d353fc0a40c21a26a1c4aec28ca975647b/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "f4c1c21940a09a2c071b3071712d66d353fc0a40c21a26a1c4aec28ca975647b",
+        "layout_sha256": "d31db0a3b9af5c66fb39002ead99b9af5024fa0c81ec607d1dfc6b7a0f84ba62",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "patch",
+          "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+          "--layout",
+          "local/nomount-tail-anchor-20261015-01/layout-01/NoMount_2.1.1-20261014_baselines.kpm.json",
+          "--offsets",
+          "nomount/configs/kernel_mi6-4.4-v4.json",
+          "--output",
+          "artifacts/binary-port/nomount/f4c1c21940a09a2c071b3071712d66d353fc0a40c21a26a1c4aec28ca975647b/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "modified_range": [
+          44256,
+          92
+        ],
+        "mode": "static"
+      },
+      {
+        "target": "boot_los23.2.img",
+        "config": "nomount/configs/boot_los23.2-v4.json",
+        "config_sha256": "f29f8326256af0256c4ce37e6fac8a3f54a3116a3a35e7da7ce013735612c925",
+        "image_sha256": "199658639f7389153ee8a7efe00154f0892e272ddc872728ea326e3e1ce2383b",
+        "kernel_sha256": "299f7e2580c54684c3b825bea57f1b16c53055f485ebd2b937593ac57ff9b0d2",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "base_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+        "path": "artifacts/binary-port/nomount/4b6fe6266ace0918f5d294380eb9650df8673a429ea613844a8c9b834e92054e/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "4b6fe6266ace0918f5d294380eb9650df8673a429ea613844a8c9b834e92054e",
+        "layout_sha256": "41657e135e1c8c8c8c6f7de3ba6b62070f252d484b47dd57ce122420337654a9",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "patch",
+          "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+          "--layout",
+          "local/nomount-tail-anchor-20261015-01/layout-01/NoMount_2.1.1-20261014_baselines.kpm.json",
+          "--offsets",
+          "nomount/configs/boot_los23.2-v4.json",
+          "--output",
+          "artifacts/binary-port/nomount/4b6fe6266ace0918f5d294380eb9650df8673a429ea613844a8c9b834e92054e/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "modified_range": [
+          44256,
+          92
+        ],
+        "mode": "static"
+      },
+      {
+        "target": "boot_67.2.A.3.178.img",
+        "config": "nomount/configs/boot_67.2.A.3.178-v4.json",
+        "config_sha256": "b64668668150c31f9d02013eadcb2aad2ff8862ab96fc95e0c7621834304dfa4",
+        "image_sha256": "06dbe42eccb4ea14a53e7b34d1f509bc7b176776db89d3280adba44c4b8b3731",
+        "kernel_sha256": "83a36d57811b16e3742150a72236727300cbceb345850eca6aad0dd826dd0232",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "base_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+        "path": "artifacts/binary-port/nomount/8d497f8fdf2ff2667498b350735f6ae117fa829144cc5f73f21d5595e50a299d/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "8d497f8fdf2ff2667498b350735f6ae117fa829144cc5f73f21d5595e50a299d",
+        "layout_sha256": "dfd68852ebcb6fab6ad1dc58144e74ad91760825a35cfb07f70fe4243e94640f",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "patch",
+          "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+          "--layout",
+          "local/nomount-tail-anchor-20261015-01/layout-01/NoMount_2.1.1-20261014_baselines.kpm.json",
+          "--offsets",
+          "nomount/configs/boot_67.2.A.3.178-v4.json",
+          "--output",
+          "artifacts/binary-port/nomount/8d497f8fdf2ff2667498b350735f6ae117fa829144cc5f73f21d5595e50a299d/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "modified_range": [
+          44256,
+          92
+        ],
+        "mode": "static"
+      },
+      {
+        "target": "kernel_android13-5.10",
+        "config": "nomount/configs/kernel_android13-5.10-v4.json",
+        "config_sha256": "dd748f064f34e90857faf4d85f20c048d3e8b113c03d4893ac69f194cff1fe27",
+        "image_sha256": "8eb4ef9fa91eb25ce9da8b8ff434e4c9e7ad3526a8da1b27c3833a378adf5e15",
+        "kernel_sha256": "8eb4ef9fa91eb25ce9da8b8ff434e4c9e7ad3526a8da1b27c3833a378adf5e15",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "base_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+        "path": "artifacts/binary-port/nomount/dfa3e6e99349d60fea428822583b9be8912714513fc12e2de81018a902384c29/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "dfa3e6e99349d60fea428822583b9be8912714513fc12e2de81018a902384c29",
+        "layout_sha256": "cef249a44d662eb04a13a27255cc101b380df47eb7be8824e6e92935abd6f5d6",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "patch",
+          "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+          "--layout",
+          "local/nomount-tail-anchor-20261015-01/layout-01/NoMount_2.1.1-20261014_baselines.kpm.json",
+          "--offsets",
+          "nomount/configs/kernel_android13-5.10-v4.json",
+          "--output",
+          "artifacts/binary-port/nomount/dfa3e6e99349d60fea428822583b9be8912714513fc12e2de81018a902384c29/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "modified_range": [
+          44256,
+          92
+        ],
+        "mode": "static"
+      },
+      {
+        "target": "kernel_android13-5.15",
+        "config": "nomount/configs/kernel_android13-5.15-v4.json",
+        "config_sha256": "27da9132dc11404bc5e1f5ec7af7c5d1029f48724b5ef36ae84b8951db711117",
+        "image_sha256": "080869136d6fec2592533e2e4e578c32dc981e9af6936c8a2b41de0a41d4811e",
+        "kernel_sha256": "080869136d6fec2592533e2e4e578c32dc981e9af6936c8a2b41de0a41d4811e",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "base_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+        "path": "artifacts/binary-port/nomount/8d497f8fdf2ff2667498b350735f6ae117fa829144cc5f73f21d5595e50a299d/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "8d497f8fdf2ff2667498b350735f6ae117fa829144cc5f73f21d5595e50a299d",
+        "layout_sha256": "dfd68852ebcb6fab6ad1dc58144e74ad91760825a35cfb07f70fe4243e94640f",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "patch",
+          "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+          "--layout",
+          "local/nomount-tail-anchor-20261015-01/layout-01/NoMount_2.1.1-20261014_baselines.kpm.json",
+          "--offsets",
+          "nomount/configs/kernel_android13-5.15-v4.json",
+          "--output",
+          "artifacts/binary-port/nomount/8d497f8fdf2ff2667498b350735f6ae117fa829144cc5f73f21d5595e50a299d/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "modified_range": [
+          44256,
+          92
+        ],
+        "mode": "static"
+      },
+      {
+        "target": "kernel_android14-5.15",
+        "config": "nomount/configs/kernel_android14-5.15-v4.json",
+        "config_sha256": "7a89ec5f90e3f2b2dbd656d2138fa9d7d1b2b0eb433fe6ebba3f68a264d830c9",
+        "image_sha256": "d6d02cf8941be4efe6d042a47cdab27699ebc36e3b85c6e553355cc7a1fc752d",
+        "kernel_sha256": "d6d02cf8941be4efe6d042a47cdab27699ebc36e3b85c6e553355cc7a1fc752d",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "base_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+        "path": "artifacts/binary-port/nomount/8d497f8fdf2ff2667498b350735f6ae117fa829144cc5f73f21d5595e50a299d/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "8d497f8fdf2ff2667498b350735f6ae117fa829144cc5f73f21d5595e50a299d",
+        "layout_sha256": "dfd68852ebcb6fab6ad1dc58144e74ad91760825a35cfb07f70fe4243e94640f",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "patch",
+          "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+          "--layout",
+          "local/nomount-tail-anchor-20261015-01/layout-01/NoMount_2.1.1-20261014_baselines.kpm.json",
+          "--offsets",
+          "nomount/configs/kernel_android14-5.15-v4.json",
+          "--output",
+          "artifacts/binary-port/nomount/8d497f8fdf2ff2667498b350735f6ae117fa829144cc5f73f21d5595e50a299d/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "modified_range": [
+          44256,
+          92
+        ],
+        "mode": "static"
+      },
+      {
+        "target": "kernel_android14-6.1",
+        "config": "nomount/configs/kernel_android14-6.1.json",
+        "config_sha256": "9e1182321daf334860aebba94137392c643cdf8356db3c49ca7357fbecf28ef0",
+        "image_sha256": "bbb9762942d0142acd1ec8fc316faaced629cee6fd7a9d0303338d19685f7b8c",
+        "kernel_sha256": "bbb9762942d0142acd1ec8fc316faaced629cee6fd7a9d0303338d19685f7b8c",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "base_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+        "path": "artifacts/binary-port/nomount/b02dc587cb51726f40c17a03bf0b9d081908eba6922cadb1a7907044ca40a08a/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "b02dc587cb51726f40c17a03bf0b9d081908eba6922cadb1a7907044ca40a08a",
+        "layout_sha256": "8f632aae0c267321c860cb9aac0e83137d5c7f744f930ebbb7e34432bdb61d14",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "patch",
+          "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+          "--layout",
+          "local/nomount-tail-anchor-20261015-01/layout-01/NoMount_2.1.1-20261014_baselines.kpm.json",
+          "--offsets",
+          "nomount/configs/kernel_android14-6.1.json",
+          "--output",
+          "artifacts/binary-port/nomount/b02dc587cb51726f40c17a03bf0b9d081908eba6922cadb1a7907044ca40a08a/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "modified_range": [
+          44256,
+          92
+        ],
+        "mode": "static"
+      },
+      {
+        "target": "kernel_mi8-4.9",
+        "config": "nomount/configs/kernel_mi8-4.9-v4.json",
+        "config_sha256": "7c45e04063d9e3c764a2727ada060e8eb0e93cfcaaf38ba375e45d58a5135ddd",
+        "image_sha256": "93d2c9ffd6b893bf86728f82db3174f3edff0d18f92977cb49dfedd7f2fd8b64",
+        "kernel_sha256": "93d2c9ffd6b893bf86728f82db3174f3edff0d18f92977cb49dfedd7f2fd8b64",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "base_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+        "path": "artifacts/binary-port/nomount/781e053bda096c774cb9434c0fbf55605c6abc5705f256413421962236d57684/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "781e053bda096c774cb9434c0fbf55605c6abc5705f256413421962236d57684",
+        "layout_sha256": "a8694a92eda9f05cfe22dc5156c524bc3e6a554c77e5f3e3799977da68c8a9e2",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "patch",
+          "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+          "--layout",
+          "local/nomount-tail-anchor-20261015-01/layout-01/NoMount_2.1.1-20261014_baselines.kpm.json",
+          "--offsets",
+          "nomount/configs/kernel_mi8-4.9-v4.json",
+          "--output",
+          "artifacts/binary-port/nomount/781e053bda096c774cb9434c0fbf55605c6abc5705f256413421962236d57684/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "modified_range": [
+          44256,
+          92
+        ],
+        "mode": "static"
+      },
+      {
+        "target": "kernel_mi9-4.14",
+        "config": "nomount/configs/kernel_mi9-4.14-v4.json",
+        "config_sha256": "ddf740fa7e5797ef7402d3a275403bac1b60bb92a5060a22ce1dd2cc7d474022",
+        "image_sha256": "229bdf7bfbc2c74a4e2fcb553bb10635624bc4d5b42a9b476d00319f2aa879fb",
+        "kernel_sha256": "229bdf7bfbc2c74a4e2fcb553bb10635624bc4d5b42a9b476d00319f2aa879fb",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "base_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+        "path": "artifacts/binary-port/nomount/09a49a36faba1e25078785848d652a9e787543eb1762a75eb99e77b1591f0c38/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "09a49a36faba1e25078785848d652a9e787543eb1762a75eb99e77b1591f0c38",
+        "layout_sha256": "34913bb4ca366c2d7779ff2c9ccab3872b64b3118b0254d01e974a2787947541",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "patch",
+          "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+          "--layout",
+          "local/nomount-tail-anchor-20261015-01/layout-01/NoMount_2.1.1-20261014_baselines.kpm.json",
+          "--offsets",
+          "nomount/configs/kernel_mi9-4.14-v4.json",
+          "--output",
+          "artifacts/binary-port/nomount/09a49a36faba1e25078785848d652a9e787543eb1762a75eb99e77b1591f0c38/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "modified_range": [
+          44256,
+          92
+        ],
+        "mode": "static"
+      },
+      {
+        "target": "kernel_mi10-4.19",
+        "config": "nomount/configs/kernel_mi10-4.19-v4.json",
+        "config_sha256": "7060f01c519ccacf06c177ad5800516dd4a4ba84c081e7eb7e2f9438ef176214",
+        "image_sha256": "cedd94d2e9a740075d0cc9853705ebe695a43c63502a62660c30aba018ed6823",
+        "kernel_sha256": "cedd94d2e9a740075d0cc9853705ebe695a43c63502a62660c30aba018ed6823",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "base_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+        "path": "artifacts/binary-port/nomount/a2b54956913b128f228509bb0c7d55155911d3d6ecc29cdd21a880ff67c12de9/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "a2b54956913b128f228509bb0c7d55155911d3d6ecc29cdd21a880ff67c12de9",
+        "layout_sha256": "e6f4b16657845a7df3748d46d15b8d13f6356f21ef7683a4ee484b0f17db4ae4",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "patch",
+          "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+          "--layout",
+          "local/nomount-tail-anchor-20261015-01/layout-01/NoMount_2.1.1-20261014_baselines.kpm.json",
+          "--offsets",
+          "nomount/configs/kernel_mi10-4.19-v4.json",
+          "--output",
+          "artifacts/binary-port/nomount/a2b54956913b128f228509bb0c7d55155911d3d6ecc29cdd21a880ff67c12de9/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "modified_range": [
+          44256,
+          92
+        ],
+        "mode": "static"
+      },
+      {
+        "target": "kernel_mi11-5.4",
+        "config": "nomount/configs/kernel_mi11-5.4-v4.json",
+        "config_sha256": "b2cd8b3044d7e223d48e5c64afc4a95e5b213cf10b26a0a87fce79ac83683727",
+        "image_sha256": "4211656a1250a81bdbc9d3710c18bcbca7e90834bab57b639f9dbcacc4ea50c8",
+        "kernel_sha256": "4211656a1250a81bdbc9d3710c18bcbca7e90834bab57b639f9dbcacc4ea50c8",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "base_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+        "path": "artifacts/binary-port/nomount/bc69619694faa8f30a783c394317f19fbfd4930f6a6810bb9481bd0bd7001431/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "bc69619694faa8f30a783c394317f19fbfd4930f6a6810bb9481bd0bd7001431",
+        "layout_sha256": "a96c5007c0d894d20de64f921ca273f4caadff360ec6be7af9a1e7103b8af4ba",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "patch",
+          "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+          "--layout",
+          "local/nomount-tail-anchor-20261015-01/layout-01/NoMount_2.1.1-20261014_baselines.kpm.json",
+          "--offsets",
+          "nomount/configs/kernel_mi11-5.4-v4.json",
+          "--output",
+          "artifacts/binary-port/nomount/bc69619694faa8f30a783c394317f19fbfd4930f6a6810bb9481bd0bd7001431/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "modified_range": [
+          44256,
+          92
+        ],
+        "mode": "static"
+      },
+      {
+        "target": "kernel_android12-5.10",
+        "config": "nomount/configs/kernel_android12-5.10-v4.json",
+        "config_sha256": "b0d653241531ea1517984f9f40bfbd8791ed4ceff96c425f7e4e47ff8a8f8a83",
+        "image_sha256": "ae2976e111bf11c8b56955df242757db9c9b2c06d0d12f57679b034ebfe71b0f",
+        "kernel_sha256": "ae2976e111bf11c8b56955df242757db9c9b2c06d0d12f57679b034ebfe71b0f",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "base_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+        "path": "artifacts/binary-port/nomount/dfa3e6e99349d60fea428822583b9be8912714513fc12e2de81018a902384c29/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "dfa3e6e99349d60fea428822583b9be8912714513fc12e2de81018a902384c29",
+        "layout_sha256": "cef249a44d662eb04a13a27255cc101b380df47eb7be8824e6e92935abd6f5d6",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "patch",
+          "artifacts/nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm",
+          "--layout",
+          "local/nomount-tail-anchor-20261015-01/layout-01/NoMount_2.1.1-20261014_baselines.kpm.json",
+          "--offsets",
+          "nomount/configs/kernel_android12-5.10-v4.json",
+          "--output",
+          "artifacts/binary-port/nomount/dfa3e6e99349d60fea428822583b9be8912714513fc12e2de81018a902384c29/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "modified_range": [
+          44256,
+          92
+        ],
+        "mode": "static"
+      }
+    ],
+    "legacy_ports": [
+      {
+        "targets": [
+          "B2N-416G_boot.img"
+        ],
+        "path": "artifacts/binary-port/nomount/b12e2bc835a8a2ed9f60300fe27b0000a1f2b8ecdf57e2280f15b9f0a4af158b/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "b12e2bc835a8a2ed9f60300fe27b0000a1f2b8ecdf57e2280f15b9f0a4af158b",
+        "parent_path": "artifacts/binary-port/nomount/94bafae7efafcabaaf20e7db119672c0e48d215513a0a5fb961a64c04547a581/NoMount_2.1.1-20261014_baselines.kpm",
+        "parent_sha256": "94bafae7efafcabaaf20e7db119672c0e48d215513a0a5fb961a64c04547a581",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "legacy-kp",
+          "artifacts/binary-port/nomount/94bafae7efafcabaaf20e7db119672c0e48d215513a0a5fb961a64c04547a581/NoMount_2.1.1-20261014_baselines.kpm",
+          "--output",
+          "artifacts/binary-port/nomount/b12e2bc835a8a2ed9f60300fe27b0000a1f2b8ecdf57e2280f15b9f0a4af158b/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "compat_receipt_sha256": "2c79a6033c120502022d80d14194343012b0f4868734b9625567dcb408b93710"
+      },
+      {
+        "targets": [
+          "kernel_mi6-4.4"
+        ],
+        "path": "artifacts/binary-port/nomount/b52a593b32c10b18febff305e7cef1e02a2240209ba327521eb3ea798b04ea54/NoMount_2.1.1-20261014_baselines.kpm",
+        "sha256": "b52a593b32c10b18febff305e7cef1e02a2240209ba327521eb3ea798b04ea54",
+        "parent_path": "artifacts/binary-port/nomount/f4c1c21940a09a2c071b3071712d66d353fc0a40c21a26a1c4aec28ca975647b/NoMount_2.1.1-20261014_baselines.kpm",
+        "parent_sha256": "f4c1c21940a09a2c071b3071712d66d353fc0a40c21a26a1c4aec28ca975647b",
+        "base_instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "legacy-kp",
+          "artifacts/binary-port/nomount/f4c1c21940a09a2c071b3071712d66d353fc0a40c21a26a1c4aec28ca975647b/NoMount_2.1.1-20261014_baselines.kpm",
+          "--output",
+          "artifacts/binary-port/nomount/b52a593b32c10b18febff305e7cef1e02a2240209ba327521eb3ea798b04ea54/NoMount_2.1.1-20261014_baselines.kpm"
+        ],
+        "compat_receipt_sha256": "d8711b610451214a225ffe6c088246b69a9d89a5a952643bc56c686bb6e05b26"
+      },
+      {
+        "targets": [
+          "B2N-416G_boot.img",
+          "kernel_mi6-4.4"
+        ],
+        "path": "artifacts/binary-port/nomount/06bd68500f2d6f9725038499a16bca1f54e88f1cde3c21f2dc95aa96f276d8ee/NoMount_2.1.1-20261014.kpm",
+        "sha256": "06bd68500f2d6f9725038499a16bca1f54e88f1cde3c21f2dc95aa96f276d8ee",
+        "parent_path": "artifacts/nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014.kpm",
+        "parent_sha256": "1ab36727b82cab1723da56f6f82273ff1fee57071836b8992f4e3d26ad40e1fa",
+        "base_instance_id": "nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264#1",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "legacy-kp",
+          "artifacts/nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014.kpm",
+          "--output",
+          "artifacts/binary-port/nomount/06bd68500f2d6f9725038499a16bca1f54e88f1cde3c21f2dc95aa96f276d8ee/NoMount_2.1.1-20261014.kpm"
+        ],
+        "compat_receipt_sha256": "c0ef4a4ac95e4938dea6f825fb01cec0f263db2fce039c5631473ceb64a54dc2"
+      }
+    ],
+    "patch_tool_sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033",
+    "handoff_sha256": "983865e90ac37626ac64fddaf121b4f76e77aaa9ae91eac3ecfe3ce80fa49521"
+  },
+  "anchors": {
+    "kernel_mi8-4.9": {
+      "scope": "Developer offline anchors and declared tails; not runtime discovery, independent audit or native execution",
+      "kernel_sha256": "93d2c9ffd6b893bf86728f82db3174f3edff0d18f92977cb49dfedd7f2fd8b64",
+      "symbol_input_sha256": "753677f15b1aa408330711cb609fa58539d8f16a3da4aa8554bf0856f6b139ca",
+      "derived": {
+        "inode_ops_size": {
+          "member": "set_acl",
+          "fragment": "int (*set_acl)(struct inode *, struct posix_acl *, int);",
+          "fields": [
+            {
+              "declaration": "pointer set_acl",
+              "bytes": 8
+            }
+          ],
+          "span": 8,
+          "alignment": 128,
+          "slot": 176,
+          "table_load_index": 7,
+          "member_load_index": 8,
+          "size": 256
+        },
+        "super_ops_size": {
+          "member": "nr_cached_objects",
+          "fragment": "long (*nr_cached_objects)(struct super_block *,\n\t\t\t\t  struct shrink_control *);\n\tlong (*free_cached_objects)(struct super_block *,\n\t\t\t\t    struct shrink_control *);",
+          "fields": [
+            {
+              "declaration": "pointer nr_cached_objects",
+              "bytes": 8
+            },
+            {
+              "declaration": "pointer free_cached_objects",
+              "bytes": 8
+            }
+          ],
+          "span": 16,
+          "alignment": 8,
+          "slot": 216,
+          "table_load_index": 11,
+          "member_load_index": 13,
+          "size": 232
+        },
+        "dentry_ops_size": {
+          "member": "d_real",
+          "fragment": "struct dentry *(*d_real)(struct dentry *, const struct inode *,\n\t\t\t\t unsigned int);\n\tvoid (*d_canonical_path)(const struct path *, struct path *);",
+          "fields": [
+            {
+              "declaration": "pointer d_real",
+              "bytes": 8
+            },
+            {
+              "declaration": "pointer d_canonical_path",
+              "bytes": 8
+            }
+          ],
+          "span": 16,
+          "alignment": 128,
+          "slot": 96,
+          "member_load_index": 38,
+          "flag": "DCACHE_OP_REAL",
+          "size": 128
+        },
+        "key_type_size": {
+          "member": "link",
+          "fragment": "struct list_head\tlink;\t\t\n\tstruct lock_class_key\tlock_class;",
+          "fields": [
+            {
+              "declaration": "struct list_head\tlink",
+              "bytes": 16
+            },
+            {
+              "declaration": "struct lock_class_key\tlock_class",
+              "bytes": 0
+            }
+          ],
+          "span": 16,
+          "alignment": 8,
+          "slot": 112,
+          "member_address_index": 10,
+          "base_register": 20,
+          "size": 128
+        }
+      },
+      "windows": {
+        "set_posix_acl": {
+          "symbol": "set_posix_acl",
+          "offset": 2265756,
+          "words": [
+            2847767549,
+            2432697341,
+            2835436531,
+            4177531893,
+            4181726211,
+            4181731427,
+            914359523,
+            4181725187,
+            4181743715,
+            3019900035,
+            1900023871,
+            1409286880,
+            2852258804,
+            704709621,
+            2852127731,
+            2550052549
+          ],
+          "assembly": [
+            "stp\tx29, x30, [sp, #-0x30]!",
+            "mov\tx29, sp",
+            "stp\tx19, x20, [sp, #0x10]",
+            "str\tx21, [sp, #0x20]",
+            "ldr\tx3, [x0, #0x28]",
+            "ldr\tx3, [x3, #0x50]",
+            "tbz\tw3, #0x10, 0xb4 <entry_16+0x74>",
+            "ldr\tx3, [x0, #0x20]",
+            "ldr\tx3, [x3, #0xb0]",
+            "cbz\tx3, 0xb4 <entry_16+0x74>",
+            "cmp\tw1, #0x4, lsl #12      ",
+            "b.eq\t0x88 <entry_16+0x48>",
+            "mov\tx20, x2",
+            "mov\tw21, w1",
+            "mov\tx19, x0",
+            "bl\t0xfffffffffffadb50 <entry_96+0xfffffffffffad9d0>"
+          ]
+        },
+        "super_cache_count": {
+          "symbol": "super_cache_count",
+          "offset": 1814464,
+          "words": [
+            2847767549,
+            3507716100,
+            2432697341,
+            2835436531,
+            2835504117,
+            2852193268,
+            4181731459,
+            2455961698,
+            921175587,
+            2852127733,
+            3573758399,
+            4181727360,
+            3019900480,
+            4181748738,
+            3019900418,
+            2852389856,
+            3594453056,
+            2852127731,
+            3107984001,
+            2432860832,
+            4181724802,
+            2550073912,
+            2852127734,
+            3107984001,
+            2432991904,
+            4181724802,
+            2550073907,
+            3533617251,
+            2333278913,
+            4071326979,
+            2332033056,
+            4074263011
+          ],
+          "assembly": [
+            "stp\tx29, x30, [sp, #-0x30]!",
+            "sub\tx4, x0, #0x4e0",
+            "mov\tx29, sp",
+            "stp\tx19, x20, [sp, #0x10]",
+            "stp\tx21, x22, [sp, #0x20]",
+            "mov\tx20, x1",
+            "ldr\tx3, [x4, #0x50]",
+            "and\tx2, x3, #0x20000000",
+            "tbz\tw3, #0x1d, 0x124 <entry_48+0x64>",
+            "mov\tx21, x0",
+            "dmb\tishld",
+            "ldr\tx0, [x4, #0x30]",
+            "cbz\tx0, 0x138 <entry_48+0x78>",
+            "ldr\tx2, [x0, #0xd8]",
+            "cbz\tx2, 0x138 <entry_48+0x78>",
+            "mov\tx0, x4",
+            "blr\tx2",
+            "mov\tx19, x0",
+            "ldr\tw1, [x20, #0x10]",
+            "add\tx0, x21, #0xa0",
+            "ldr\tx2, [x20, #0x18]",
+            "bl\t0xfffffffffffc2974 <entry_96+0xfffffffffffc27f4>",
+            "mov\tx22, x0",
+            "ldr\tw1, [x20, #0x10]",
+            "add\tx0, x21, #0x120",
+            "ldr\tx2, [x20, #0x18]",
+            "bl\t0xfffffffffffc2974 <entry_96+0xfffffffffffc27f4>",
+            "mov\tx3, #0xf5c3",
+            "add\tx1, x22, x19",
+            "movk\tx3, #0x5c28, lsl #16",
+            "add\tx0, x1, x0",
+            "movk\tx3, #0xc28f, lsl #32"
+          ]
+        },
+        "d_set_d_op": {
+          "symbol": "d_set_d_op",
+          "offset": 1900432,
+          "words": [
+            4181733378,
+            3036677474,
+            3107979266,
+            1384186339,
+            1923121155,
+            1778581599,
+            1409287585,
+            4177539073,
+            3019900001,
+            4181723171,
+            3019898979,
+            838860866,
+            3103784962,
+            4181724194,
+            3019899010,
+            3107979266,
+            840892482,
+            3103784962,
+            4181721122,
+            3019899010,
+            3107979266,
+            840826946,
+            3103784962,
+            4181722146,
+            3019899010,
+            3107979266,
+            840237122,
+            3103784962,
+            4181725218,
+            3019899010,
+            3107979266,
+            840761410,
+            3103784962,
+            4181728290,
+            3019899010,
+            3107979266,
+            840695874,
+            3103784962,
+            4181733409,
+            3019899009,
+            3107979265,
+            839254049,
+            3103784961,
+            3596551104,
+            2415996450,
+            962388035,
+            905968259,
+            1384120355
+          ],
+          "assembly": [
+            "ldr\tx2, [x0, #0x60]",
+            "cbnz\tx2, 0x170 <entry_48+0xb0>",
+            "ldr\tw2, [x0]",
+            "mov\tw3, #0x80f",
+            "movk\tw3, #0x400, lsl #16",
+            "tst\tw2, w3",
+            "b.ne\t0x18c <entry_96+0xc>",
+            "str\tx1, [x0, #0x60]",
+            "cbz\tx1, 0x16c <entry_48+0xac>",
+            "ldr\tx3, [x1, #0x10]",
+            "cbz\tx3, 0xf4 <entry_48+0x34>",
+            "orr\tw2, w2, #0x1",
+            "str\tw2, [x0]",
+            "ldr\tx2, [x1, #0x18]",
+            "cbz\tx2, 0x108 <entry_48+0x48>",
+            "ldr\tw2, [x0]",
+            "orr\tw2, w2, #0x2",
+            "str\tw2, [x0]",
+            "ldr\tx2, [x1]",
+            "cbz\tx2, 0x11c <entry_48+0x5c>",
+            "ldr\tw2, [x0]",
+            "orr\tw2, w2, #0x4",
+            "str\tw2, [x0]",
+            "ldr\tx2, [x1, #0x8]",
+            "cbz\tx2, 0x130 <entry_48+0x70>",
+            "ldr\tw2, [x0]",
+            "orr\tw2, w2, #0x800",
+            "str\tw2, [x0]",
+            "ldr\tx2, [x1, #0x20]",
+            "cbz\tx2, 0x144 <entry_48+0x84>",
+            "ldr\tw2, [x0]",
+            "orr\tw2, w2, #0x8",
+            "str\tw2, [x0]",
+            "ldr\tx2, [x1, #0x38]",
+            "cbz\tx2, 0x158 <entry_48+0x98>",
+            "ldr\tw2, [x0]",
+            "orr\tw2, w2, #0x10",
+            "str\tw2, [x0]",
+            "ldr\tx1, [x1, #0x60]",
+            "cbz\tx1, 0x16c <entry_48+0xac>",
+            "ldr\tw1, [x0]",
+            "orr\tw1, w1, #0x4000000",
+            "str\tw1, [x0]",
+            "ret",
+            "adrp\tx2, 0x25c4000 <entry_96+0x25c3e80>",
+            "ldrb\tw3, [x2, #0x738]",
+            "cbnz\tw3, 0xc8 <entry_48+0x8>",
+            "mov\tw3, #0x1"
+          ]
+        },
+        "unregister_key_type": {
+          "symbol": "unregister_key_type",
+          "offset": 3656584,
+          "words": [
+            2847833085,
+            2432697341,
+            2835436531,
+            4026602419,
+            2852127732,
+            2433245811,
+            2432746099,
+            2853372896,
+            2486804223,
+            4181736067,
+            2432811649,
+            4181737090,
+            2853372896,
+            4177527906,
+            4177526851,
+            4177541761,
+            4177542785,
+            2549389917,
+            2853438432,
+            2550136414,
+            4181721729,
+            3489707616,
+            2432819200,
+            2549556442
+          ],
+          "assembly": [
+            "stp\tx29, x30, [sp, #-0x20]!",
+            "mov\tx29, sp",
+            "stp\tx19, x20, [sp, #0x10]",
+            "adrp\tx19, 0x2277000 <entry_96+0x2276e80>",
+            "mov\tx20, x0",
+            "add\tx19, x19, #0x218",
+            "add\tx19, x19, #0x30",
+            "mov\tx0, x19",
+            "bl\t0xe67d9c <entry_96+0xe67c1c>",
+            "ldr\tx3, [x20, #0x70]",
+            "add\tx1, x20, #0x70",
+            "ldr\tx2, [x20, #0x78]",
+            "mov\tx0, x19",
+            "str\tx2, [x3, #0x8]",
+            "str\tx3, [x2]",
+            "str\tx1, [x20, #0x70]",
+            "str\tx1, [x20, #0x78]",
+            "bl\t0xffffffffffd26b38 <entry_96+0xffffffffffd269b8>",
+            "mov\tx0, x20",
+            "bl\t0xfffffffffffffb44 <entry_96+0xfffffffffffff9c4>",
+            "ldr\tx1, [x20]",
+            "adrp\tx0, 0x16ce000 <entry_96+0x16cde80>",
+            "add\tx0, x0, #0x78",
+            "bl\t0xffffffffffdc9544 <entry_96+0xffffffffffdc93c4>"
+          ]
+        }
+      },
+      "reserve_enabled": false,
+      "lockdep_enabled": false,
+      "whole_reference_type_size_used": false
+    },
+    "kernel_mi9-4.14": {
+      "scope": "Developer offline anchors and declared tails; not runtime discovery, independent audit or native execution",
+      "kernel_sha256": "229bdf7bfbc2c74a4e2fcb553bb10635624bc4d5b42a9b476d00319f2aa879fb",
+      "symbol_input_sha256": "1e17f7128e76b64999ffe2ff79113b82997b7af2a0d80c61c8452b1bbf74f4b8",
+      "derived": {
+        "inode_ops_size": {
+          "member": "set_acl",
+          "fragment": "int (*set_acl)(struct inode *, struct posix_acl *, int);",
+          "fields": [
+            {
+              "declaration": "pointer set_acl",
+              "bytes": 8
+            }
+          ],
+          "span": 8,
+          "alignment": 128,
+          "slot": 176,
+          "table_load_index": 7,
+          "member_load_index": 9,
+          "size": 256
+        },
+        "super_ops_size": {
+          "member": "nr_cached_objects",
+          "fragment": "long (*nr_cached_objects)(struct super_block *,\n\t\t\t\t  struct shrink_control *);\n\tlong (*free_cached_objects)(struct super_block *,\n\t\t\t\t    struct shrink_control *);",
+          "fields": [
+            {
+              "declaration": "pointer nr_cached_objects",
+              "bytes": 8
+            },
+            {
+              "declaration": "pointer free_cached_objects",
+              "bytes": 8
+            }
+          ],
+          "span": 16,
+          "alignment": 8,
+          "slot": 224,
+          "table_load_index": 12,
+          "member_load_index": 14,
+          "size": 240
+        },
+        "dentry_ops_size": {
+          "member": "d_real",
+          "fragment": "struct dentry *(*d_real)(struct dentry *, const struct inode *,\n\t\t\t\t unsigned int, unsigned int);\n\tvoid (*d_canonical_path)(const struct path *, struct path *);",
+          "fields": [
+            {
+              "declaration": "pointer d_real",
+              "bytes": 8
+            },
+            {
+              "declaration": "pointer d_canonical_path",
+              "bytes": 8
+            }
+          ],
+          "span": 16,
+          "alignment": 128,
+          "slot": 96,
+          "member_load_index": 39,
+          "flag": "DCACHE_OP_REAL",
+          "size": 128
+        },
+        "key_type_size": {
+          "member": "link",
+          "fragment": "struct list_head\tlink;\t\t\n\tstruct lock_class_key\tlock_class;",
+          "fields": [
+            {
+              "declaration": "struct list_head\tlink",
+              "bytes": 16
+            },
+            {
+              "declaration": "struct lock_class_key\tlock_class",
+              "bytes": 0
+            }
+          ],
+          "span": 16,
+          "alignment": 8,
+          "slot": 120,
+          "member_address_index": 7,
+          "base_register": 19,
+          "size": 136
+        }
+      },
+      "windows": {
+        "set_posix_acl": {
+          "symbol": "set_posix_acl",
+          "offset": 2372548,
+          "words": [
+            2847767549,
+            4177529845,
+            2432697341,
+            2835501044,
+            4181726216,
+            960579848,
+            905970536,
+            4181725192,
+            2852127732,
+            4181743880,
+            3019899624,
+            2852258803,
+            704709621,
+            1900023871,
+            1409286305,
+            2034238088
+          ],
+          "assembly": [
+            "stp\tx29, x30, [sp, #-0x30]!",
+            "str\tx21, [sp, #0x10]",
+            "mov\tx29, sp",
+            "stp\tx20, x19, [sp, #0x20]",
+            "ldr\tx8, [x0, #0x28]",
+            "ldrb\tw8, [x8, #0x52]",
+            "tbz\tw8, #0x0, 0x84 <entry_16+0x44>",
+            "ldr\tx8, [x0, #0x20]",
+            "mov\tx20, x0",
+            "ldr\tx8, [x8, #0xb0]",
+            "cbz\tx8, 0x84 <entry_16+0x44>",
+            "mov\tx19, x2",
+            "mov\tw21, w1",
+            "cmp\tw1, #0x4, lsl #12      ",
+            "b.ne\t0x4c <entry_16+0xc>",
+            "ldrh\tw8, [x20]"
+          ]
+        },
+        "super_cache_count": {
+          "symbol": "super_cache_count",
+          "offset": 1915780,
+          "words": [
+            2847767549,
+            4177529845,
+            2432697341,
+            2835501044,
+            3507549192,
+            960495880,
+            925368424,
+            2854159328,
+            335544360,
+            3507634196,
+            3573758399,
+            2852193267,
+            4181727880,
+            3019899144,
+            4181750024,
+            3019899080,
+            2853438432,
+            2853372897,
+            3594453248,
+            2852127733,
+            335544322,
+            2854159349,
+            3107986017,
+            2434007680,
+            4181725794,
+            2550070914,
+            3107986017,
+            4181725794,
+            2333409299,
+            2434138752,
+            2550070909,
+            3533617256
+          ],
+          "assembly": [
+            "stp\tx29, x30, [sp, #-0x30]!",
+            "str\tx21, [sp, #0x10]",
+            "mov\tx29, sp",
+            "stp\tx20, x19, [sp, #0x20]",
+            "sub\tx8, x0, #0x43d",
+            "ldrb\tw8, [x8]",
+            "tbnz\tw8, #0x5, 0x64 <entry_16+0x24>",
+            "mov\tx0, xzr",
+            "b\t0x100 <entry_48+0x40>",
+            "sub\tx20, x0, #0x490",
+            "dmb\tishld",
+            "mov\tx19, x1",
+            "ldr\tx8, [x20, #0x30]",
+            "cbz\tx8, 0x94 <entry_16+0x54>",
+            "ldr\tx8, [x8, #0xe0]",
+            "cbz\tx8, 0x94 <entry_16+0x54>",
+            "mov\tx0, x20",
+            "mov\tx1, x19",
+            "blr\tx8",
+            "mov\tx21, x0",
+            "b\t0x98 <entry_16+0x58>",
+            "mov\tx21, xzr",
+            "ldr\tw1, [x19, #0x18]",
+            "add\tx0, x20, #0x500",
+            "ldr\tx2, [x19, #0x20]",
+            "bl\t0xfffffffffffbfaac <entry_96+0xfffffffffffbf92c>",
+            "ldr\tw1, [x19, #0x18]",
+            "ldr\tx2, [x19, #0x20]",
+            "add\tx19, x0, x21",
+            "add\tx0, x20, #0x580",
+            "bl\t0xfffffffffffbfaac <entry_96+0xfffffffffffbf92c>",
+            "mov\tx8, #0xf5c3"
+          ]
+        },
+        "d_set_d_op": {
+          "symbol": "d_set_d_op",
+          "offset": 2011192,
+          "words": [
+            4181733384,
+            3036677512,
+            3107979272,
+            1384186345,
+            1923121161,
+            1778975007,
+            1409287457,
+            4177539073,
+            3019900033,
+            4181723176,
+            3019899016,
+            3107979272,
+            838861064,
+            3103784968,
+            4181724200,
+            3019899016,
+            3107979272,
+            840892680,
+            3103784968,
+            4181721128,
+            3019899016,
+            3107979272,
+            840827144,
+            3103784968,
+            4181722152,
+            3019899016,
+            3107979272,
+            840237320,
+            3103784968,
+            4181725224,
+            3019899016,
+            3107979272,
+            840761608,
+            3103784968,
+            4181728296,
+            3019899016,
+            3107979272,
+            840696072,
+            3103784968,
+            4181733416,
+            3019899016,
+            3107979272,
+            839254280,
+            3103784968,
+            3596551104,
+            3558932480,
+            402653140,
+            3558932480
+          ],
+          "assembly": [
+            "ldr\tx8, [x0, #0x60]",
+            "cbnz\tx8, 0x174 <entry_48+0xb4>",
+            "ldr\tw8, [x0]",
+            "mov\tw9, #0x80f",
+            "movk\tw9, #0x400, lsl #16",
+            "tst\tw8, w9",
+            "b.ne\t0x17c <entry_48+0xbc>",
+            "str\tx1, [x0, #0x60]",
+            "cbz\tx1, 0x170 <entry_48+0xb0>",
+            "ldr\tx8, [x1, #0x10]",
+            "cbz\tx8, 0xf8 <entry_48+0x38>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x1",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x18]",
+            "cbz\tx8, 0x10c <entry_48+0x4c>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x2",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1]",
+            "cbz\tx8, 0x120 <entry_48+0x60>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x4",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x8]",
+            "cbz\tx8, 0x134 <entry_48+0x74>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x800",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x20]",
+            "cbz\tx8, 0x148 <entry_48+0x88>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x8",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x38]",
+            "cbz\tx8, 0x15c <entry_48+0x9c>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x10",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x60]",
+            "cbz\tx8, 0x170 <entry_48+0xb0>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x4000000",
+            "str\tw8, [x0]",
+            "ret",
+            "brk\t#0x800",
+            "b\t0xc8 <entry_48+0x8>",
+            "brk\t#0x800"
+          ]
+        },
+        "unregister_key_type": {
+          "symbol": "unregister_key_type",
+          "offset": 3566144,
+          "words": [
+            2847833085,
+            2835435508,
+            2432697341,
+            2852127731,
+            3489731648,
+            2433171456,
+            2486608650,
+            2432819828,
+            2853438432,
+            2483196524,
+            905969792,
+            2840044137,
+            4177528104,
+            4177527049,
+            4177542772,
+            4177543796,
+            3489731668,
+            2433172116,
+            2853438432,
+            2549425724,
+            2853372896,
+            2550135494,
+            4181721697,
+            2415969600
+          ],
+          "assembly": [
+            "stp\tx29, x30, [sp, #-0x20]!",
+            "stp\tx20, x19, [sp, #0x10]",
+            "mov\tx29, sp",
+            "mov\tx19, x0",
+            "adrp\tx0, 0x228a000 <entry_96+0x2289e80>",
+            "add\tx0, x0, #0x1d0",
+            "bl\t0xda8dc0 <entry_96+0xda8c40>",
+            "add\tx20, x19, #0x78",
+            "mov\tx0, x20",
+            "bl\t0xa4b54 <entry_96+0xa49d4>",
+            "tbz\tw0, #0x0, 0x1b8 <entry_96+0x38>",
+            "ldp\tx9, x8, [x19, #0x78]",
+            "str\tx8, [x9, #0x8]",
+            "str\tx9, [x8]",
+            "str\tx20, [x19, #0x78]",
+            "str\tx20, [x19, #0x80]",
+            "adrp\tx20, 0x228a000 <entry_96+0x2289e80>",
+            "add\tx20, x20, #0x1d0",
+            "mov\tx0, x20",
+            "bl\t0xffffffffffd49abc <entry_96+0xffffffffffd4993c>",
+            "mov\tx0, x19",
+            "bl\t0xffffffffffffecec <entry_96+0xffffffffffffeb6c>",
+            "ldr\tx1, [x19]",
+            "adrp\tx0, 0x18a8000 <entry_96+0x18a7e80>"
+          ]
+        }
+      },
+      "reserve_enabled": false,
+      "lockdep_enabled": false,
+      "whole_reference_type_size_used": false
+    },
+    "kernel_mi10-4.19": {
+      "scope": "Developer offline anchors and declared tails; not runtime discovery, independent audit or native execution",
+      "kernel_sha256": "cedd94d2e9a740075d0cc9853705ebe695a43c63502a62660c30aba018ed6823",
+      "symbol_input_sha256": "58d0dd441161288a874983b068f6c70c371d3ddf1981eb8f65f59e3e0ffd890a",
+      "derived": {
+        "inode_ops_size": {
+          "member": "set_acl",
+          "fragment": "int (*set_acl)(struct inode *, struct posix_acl *, int);",
+          "fields": [
+            {
+              "declaration": "pointer set_acl",
+              "bytes": 8
+            }
+          ],
+          "span": 8,
+          "alignment": 64,
+          "slot": 176,
+          "table_load_index": 7,
+          "member_load_index": 9,
+          "size": 192
+        },
+        "super_ops_size": {
+          "member": "nr_cached_objects",
+          "fragment": "long (*nr_cached_objects)(struct super_block *,\n\t\t\t\t  struct shrink_control *);\n\tlong (*free_cached_objects)(struct super_block *,\n\t\t\t\t    struct shrink_control *);",
+          "fields": [
+            {
+              "declaration": "pointer nr_cached_objects",
+              "bytes": 8
+            },
+            {
+              "declaration": "pointer free_cached_objects",
+              "bytes": 8
+            }
+          ],
+          "span": 16,
+          "alignment": 8,
+          "slot": 224,
+          "table_load_index": 12,
+          "member_load_index": 14,
+          "size": 240
+        },
+        "dentry_ops_size": {
+          "member": "d_real",
+          "fragment": "struct dentry *(*d_real)(struct dentry *, const struct inode *);\n\tvoid (*d_canonical_path)(const struct path *, struct path *);",
+          "fields": [
+            {
+              "declaration": "pointer d_real",
+              "bytes": 8
+            },
+            {
+              "declaration": "pointer d_canonical_path",
+              "bytes": 8
+            }
+          ],
+          "span": 16,
+          "alignment": 64,
+          "slot": 96,
+          "member_load_index": 39,
+          "flag": "DCACHE_OP_REAL",
+          "size": 128
+        },
+        "key_type_size": {
+          "member": "link",
+          "fragment": "struct list_head\tlink;\t\t\n\tstruct lock_class_key\tlock_class;",
+          "fields": [
+            {
+              "declaration": "struct list_head\tlink",
+              "bytes": 16
+            },
+            {
+              "declaration": "struct lock_class_key\tlock_class",
+              "bytes": 0
+            }
+          ],
+          "span": 16,
+          "alignment": 8,
+          "slot": 120,
+          "member_address_index": 7,
+          "base_register": 19,
+          "size": 136
+        }
+      },
+      "windows": {
+        "set_posix_acl": {
+          "symbol": "set_posix_acl",
+          "offset": 2919512,
+          "words": [
+            2847767549,
+            4177529845,
+            2432697341,
+            2835501044,
+            4181726216,
+            960579848,
+            905970536,
+            4181725192,
+            2852127732,
+            4181743880,
+            3019899624,
+            2852258803,
+            704709621,
+            1900023871,
+            1409286305,
+            2034238088
+          ],
+          "assembly": [
+            "stp\tx29, x30, [sp, #-0x30]!",
+            "str\tx21, [sp, #0x10]",
+            "mov\tx29, sp",
+            "stp\tx20, x19, [sp, #0x20]",
+            "ldr\tx8, [x0, #0x28]",
+            "ldrb\tw8, [x8, #0x52]",
+            "tbz\tw8, #0x0, 0x84 <entry_16+0x44>",
+            "ldr\tx8, [x0, #0x20]",
+            "mov\tx20, x0",
+            "ldr\tx8, [x8, #0xb0]",
+            "cbz\tx8, 0x84 <entry_16+0x44>",
+            "mov\tx19, x2",
+            "mov\tw21, w1",
+            "cmp\tw1, #0x4, lsl #12      ",
+            "b.ne\t0x4c <entry_16+0xc>",
+            "ldrh\tw8, [x20]"
+          ]
+        },
+        "super_cache_count": {
+          "symbol": "super_cache_count",
+          "offset": 2392896,
+          "words": [
+            2847767549,
+            4177529845,
+            2432697341,
+            2835501044,
+            3507549192,
+            960495880,
+            925368424,
+            2854159328,
+            335544363,
+            3507634196,
+            3573758399,
+            2852193267,
+            4181727880,
+            3019899144,
+            4181750024,
+            3019899080,
+            2853438432,
+            2853372897,
+            3594453248,
+            2852127733,
+            335544322,
+            2854159349,
+            3107980897,
+            2434007680,
+            4181724770,
+            2550059857,
+            3107980897,
+            4181724770,
+            2333409299,
+            2434073216,
+            2550059852,
+            2868904552
+          ],
+          "assembly": [
+            "stp\tx29, x30, [sp, #-0x30]!",
+            "str\tx21, [sp, #0x10]",
+            "mov\tx29, sp",
+            "stp\tx20, x19, [sp, #0x20]",
+            "sub\tx8, x0, #0x43d",
+            "ldrb\tw8, [x8]",
+            "tbnz\tw8, #0x5, 0x64 <entry_16+0x24>",
+            "mov\tx0, xzr",
+            "b\t0x10c <entry_48+0x4c>",
+            "sub\tx20, x0, #0x490",
+            "dmb\tishld",
+            "mov\tx19, x1",
+            "ldr\tx8, [x20, #0x30]",
+            "cbz\tx8, 0x94 <entry_16+0x54>",
+            "ldr\tx8, [x8, #0xe0]",
+            "cbz\tx8, 0x94 <entry_16+0x54>",
+            "mov\tx0, x20",
+            "mov\tx1, x19",
+            "blr\tx8",
+            "mov\tx21, x0",
+            "b\t0x98 <entry_16+0x58>",
+            "mov\tx21, xzr",
+            "ldr\tw1, [x19, #0x4]",
+            "add\tx0, x20, #0x500",
+            "ldr\tx2, [x19, #0x18]",
+            "bl\t0xfffffffffffb4de8 <entry_96+0xfffffffffffb4c68>",
+            "ldr\tw1, [x19, #0x4]",
+            "ldr\tx2, [x19, #0x18]",
+            "add\tx19, x0, x21",
+            "add\tx0, x20, #0x540",
+            "bl\t0xfffffffffffb4de8 <entry_96+0xfffffffffffb4c68>",
+            "adds\tx8, x19, x0"
+          ]
+        },
+        "d_set_d_op": {
+          "symbol": "d_set_d_op",
+          "offset": 2506600,
+          "words": [
+            4181733384,
+            3036677512,
+            3107979272,
+            1384186345,
+            1923121161,
+            1778975007,
+            1409287457,
+            4177539073,
+            3019900033,
+            4181723176,
+            3019899016,
+            3107979272,
+            838861064,
+            3103784968,
+            4181724200,
+            3019899016,
+            3107979272,
+            840892680,
+            3103784968,
+            4181721128,
+            3019899016,
+            3107979272,
+            840827144,
+            3103784968,
+            4181722152,
+            3019899016,
+            3107979272,
+            840237320,
+            3103784968,
+            4181725224,
+            3019899016,
+            3107979272,
+            840761608,
+            3103784968,
+            4181728296,
+            3019899016,
+            3107979272,
+            840696072,
+            3103784968,
+            4181733416,
+            3019899016,
+            3107979272,
+            839254280,
+            3103784968,
+            3596551104,
+            3558932480,
+            402653140,
+            3558932480
+          ],
+          "assembly": [
+            "ldr\tx8, [x0, #0x60]",
+            "cbnz\tx8, 0x174 <entry_48+0xb4>",
+            "ldr\tw8, [x0]",
+            "mov\tw9, #0x80f",
+            "movk\tw9, #0x400, lsl #16",
+            "tst\tw8, w9",
+            "b.ne\t0x17c <entry_48+0xbc>",
+            "str\tx1, [x0, #0x60]",
+            "cbz\tx1, 0x170 <entry_48+0xb0>",
+            "ldr\tx8, [x1, #0x10]",
+            "cbz\tx8, 0xf8 <entry_48+0x38>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x1",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x18]",
+            "cbz\tx8, 0x10c <entry_48+0x4c>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x2",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1]",
+            "cbz\tx8, 0x120 <entry_48+0x60>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x4",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x8]",
+            "cbz\tx8, 0x134 <entry_48+0x74>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x800",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x20]",
+            "cbz\tx8, 0x148 <entry_48+0x88>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x8",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x38]",
+            "cbz\tx8, 0x15c <entry_48+0x9c>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x10",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x60]",
+            "cbz\tx8, 0x170 <entry_48+0xb0>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x4000000",
+            "str\tw8, [x0]",
+            "ret",
+            "brk\t#0x800",
+            "b\t0xc8 <entry_48+0x8>",
+            "brk\t#0x800"
+          ]
+        },
+        "unregister_key_type": {
+          "symbol": "unregister_key_type",
+          "offset": 4359104,
+          "words": [
+            2847833085,
+            2835435508,
+            2432697341,
+            2852127731,
+            2952883776,
+            2436456448,
+            2487563500,
+            2432819828,
+            2853438432,
+            2483222861,
+            905969792,
+            2840044137,
+            4177528104,
+            4177527049,
+            4177542772,
+            4177543796,
+            2952883796,
+            2436457108,
+            2853438432,
+            2549258525,
+            2853372896,
+            2550135293,
+            4181721697,
+            2952863712
+          ],
+          "assembly": [
+            "stp\tx29, x30, [sp, #-0x20]!",
+            "stp\tx20, x19, [sp, #0x10]",
+            "mov\tx29, sp",
+            "mov\tx19, x0",
+            "adrp\tx0, 0x2dc9000 <entry_96+0x2dc8e80>",
+            "add\tx0, x0, #0xe58",
+            "bl\t0x114d548 <entry_96+0x114d3c8>",
+            "add\tx20, x19, #0x78",
+            "mov\tx0, x20",
+            "bl\t0xbe6d8 <entry_96+0xbe558>",
+            "tbz\tw0, #0x0, 0x1b8 <entry_96+0x38>",
+            "ldp\tx9, x8, [x19, #0x78]",
+            "str\tx8, [x9, #0x8]",
+            "str\tx9, [x8]",
+            "str\tx20, [x19, #0x78]",
+            "str\tx20, [x19, #0x80]",
+            "adrp\tx20, 0x2dc9000 <entry_96+0x2dc8e80>",
+            "add\tx20, x20, #0xe58",
+            "mov\tx0, x20",
+            "bl\t0xffffffffffca6640 <entry_96+0xffffffffffca64c0>",
+            "mov\tx0, x19",
+            "bl\t0xffffffffffffe9c8 <entry_96+0xffffffffffffe848>",
+            "ldr\tx1, [x19]",
+            "adrp\tx0, 0x23fd000 <entry_96+0x23fce80>"
+          ]
+        }
+      },
+      "reserve_enabled": false,
+      "lockdep_enabled": false,
+      "whole_reference_type_size_used": false
+    },
+    "kernel_mi11-5.4": {
+      "scope": "Developer offline anchors and declared tails; not runtime discovery, independent audit or native execution",
+      "kernel_sha256": "4211656a1250a81bdbc9d3710c18bcbca7e90834bab57b639f9dbcacc4ea50c8",
+      "symbol_input_sha256": "a19e83304ebca14b08b7e755fd755e1fb2ad54212649941551faa91c79c1bc0d",
+      "derived": {
+        "inode_ops_size": {
+          "member": "set_acl",
+          "fragment": "int (*set_acl)(struct inode *, struct posix_acl *, int);\n\n\tANDROID_KABI_RESERVE(1);\n\tANDROID_KABI_RESERVE(2);\n\tANDROID_KABI_RESERVE(3);\n\tANDROID_KABI_RESERVE(4);",
+          "fields": [
+            {
+              "declaration": "pointer set_acl",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(1)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(2)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(3)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(4)",
+              "bytes": 8
+            }
+          ],
+          "span": 40,
+          "alignment": 64,
+          "slot": 160,
+          "table_load_index": 8,
+          "member_load_index": 10,
+          "size": 256
+        },
+        "super_ops_size": {
+          "member": "nr_cached_objects",
+          "fragment": "long (*nr_cached_objects)(struct super_block *,\n\t\t\t\t  struct shrink_control *);\n\tlong (*free_cached_objects)(struct super_block *,\n\t\t\t\t    struct shrink_control *);\n\n\tANDROID_KABI_RESERVE(1);\n\tANDROID_KABI_RESERVE(2);\n\tANDROID_KABI_RESERVE(3);\n\tANDROID_KABI_RESERVE(4);",
+          "fields": [
+            {
+              "declaration": "pointer nr_cached_objects",
+              "bytes": 8
+            },
+            {
+              "declaration": "pointer free_cached_objects",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(1)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(2)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(3)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(4)",
+              "bytes": 8
+            }
+          ],
+          "span": 48,
+          "alignment": 8,
+          "slot": 224,
+          "table_load_index": 12,
+          "member_load_index": 15,
+          "size": 272
+        },
+        "dentry_ops_size": {
+          "member": "d_real",
+          "fragment": "struct dentry *(*d_real)(struct dentry *, const struct inode *);\n\n\tANDROID_KABI_RESERVE(1);\n\tANDROID_KABI_RESERVE(2);\n\tANDROID_KABI_RESERVE(3);\n\tANDROID_KABI_RESERVE(4);",
+          "fields": [
+            {
+              "declaration": "pointer d_real",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(1)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(2)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(3)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(4)",
+              "bytes": 8
+            }
+          ],
+          "span": 40,
+          "alignment": 64,
+          "slot": 96,
+          "member_load_index": 39,
+          "flag": "DCACHE_OP_REAL",
+          "size": 192
+        },
+        "key_type_size": {
+          "member": "link",
+          "fragment": "struct list_head\tlink;\t\t\n\tstruct lock_class_key\tlock_class;",
+          "fields": [
+            {
+              "declaration": "struct list_head\tlink",
+              "bytes": 16
+            },
+            {
+              "declaration": "struct lock_class_key\tlock_class",
+              "bytes": 0
+            }
+          ],
+          "span": 16,
+          "alignment": 8,
+          "slot": 152,
+          "member_address_index": 8,
+          "base_register": 19,
+          "size": 168
+        }
+      },
+      "windows": {
+        "set_posix_acl": {
+          "symbol": "set_posix_acl",
+          "offset": 5371300,
+          "words": [
+            4160783966,
+            2847767549,
+            4177529845,
+            2835501044,
+            2432697341,
+            4181726216,
+            960579848,
+            905970728,
+            4181725192,
+            2852127732,
+            4181741832,
+            3019899816,
+            2852258803,
+            704709621,
+            1900023871,
+            1409286305
+          ],
+          "assembly": [
+            "str\tx30, [x18], #0x8",
+            "stp\tx29, x30, [sp, #-0x30]!",
+            "str\tx21, [sp, #0x10]",
+            "stp\tx20, x19, [sp, #0x20]",
+            "mov\tx29, sp",
+            "ldr\tx8, [x0, #0x28]",
+            "ldrb\tw8, [x8, #0x52]",
+            "tbz\tw8, #0x0, 0xa0 <entry_16+0x60>",
+            "ldr\tx8, [x0, #0x20]",
+            "mov\tx20, x0",
+            "ldr\tx8, [x8, #0xa0]",
+            "cbz\tx8, 0xa0 <entry_16+0x60>",
+            "mov\tx19, x2",
+            "mov\tw21, w1",
+            "cmp\tw1, #0x4, lsl #12      ",
+            "b.ne\t0x50 <entry_16+0x10>"
+          ]
+        },
+        "super_cache_count": {
+          "symbol": "super_cache_count$b8717d1e4e278c494edc1d20a7afd483",
+          "offset": 4811880,
+          "words": [
+            4160783966,
+            2847767549,
+            4177529845,
+            2835501044,
+            2432697341,
+            3507549192,
+            960495880,
+            925368424,
+            2854159328,
+            335544369,
+            3507634196,
+            3573758399,
+            4181727880,
+            2852193267,
+            3019899336,
+            4181750037,
+            3019899317,
+            3533138432,
+            4072494176,
+            4074447136,
+            4076691392,
+            2853503969,
+            2549945721,
+            2853438432,
+            2853372897,
+            3594453664,
+            2852127733,
+            335544322,
+            2854159349,
+            3107980897,
+            4181724770,
+            2434007680
+          ],
+          "assembly": [
+            "str\tx30, [x18], #0x8",
+            "stp\tx29, x30, [sp, #-0x30]!",
+            "str\tx21, [sp, #0x10]",
+            "stp\tx20, x19, [sp, #0x20]",
+            "mov\tx29, sp",
+            "sub\tx8, x0, #0x43d",
+            "ldrb\tw8, [x8]",
+            "tbnz\tw8, #0x5, 0x68 <entry_16+0x28>",
+            "mov\tx0, xzr",
+            "b\t0x128 <entry_48+0x68>",
+            "sub\tx20, x0, #0x490",
+            "dmb\tishld",
+            "ldr\tx8, [x20, #0x30]",
+            "mov\tx19, x1",
+            "cbz\tx8, 0xb0 <entry_16+0x70>",
+            "ldr\tx21, [x8, #0xe0]",
+            "cbz\tx21, 0xb4 <entry_16+0x74>",
+            "mov\tx0, #0xbb50",
+            "movk\tx0, #0xeaa3, lsl #16",
+            "movk\tx0, #0xd909, lsl #32",
+            "movk\tx0, #0xeafe, lsl #48",
+            "mov\tx1, x21",
+            "bl\t0xfffffffffff4567c <entry_96+0xfffffffffff454fc>",
+            "mov\tx0, x20",
+            "mov\tx1, x19",
+            "blr\tx21",
+            "mov\tx21, x0",
+            "b\t0xb4 <entry_16+0x74>",
+            "mov\tx21, xzr",
+            "ldr\tw1, [x19, #0x4]",
+            "ldr\tx2, [x19, #0x18]",
+            "add\tx0, x20, #0x500"
+          ]
+        },
+        "d_set_d_op": {
+          "symbol": "d_set_d_op",
+          "offset": 4926684,
+          "words": [
+            4181733384,
+            3036677512,
+            3107979272,
+            1384186345,
+            1923121161,
+            1778975007,
+            1409287457,
+            4177539073,
+            3019900033,
+            4181723176,
+            3019899016,
+            3107979272,
+            838861064,
+            3103784968,
+            4181724200,
+            3019899016,
+            3107979272,
+            840892680,
+            3103784968,
+            4181721128,
+            3019899016,
+            3107979272,
+            840827144,
+            3103784968,
+            4181722152,
+            3019899016,
+            3107979272,
+            840237320,
+            3103784968,
+            4181725224,
+            3019899016,
+            3107979272,
+            840761608,
+            3103784968,
+            4181728296,
+            3019899016,
+            3107979272,
+            840696072,
+            3103784968,
+            4181733416,
+            3019899016,
+            3107979272,
+            839254280,
+            3103784968,
+            3596551104,
+            3558932480,
+            402653140,
+            3558932480
+          ],
+          "assembly": [
+            "ldr\tx8, [x0, #0x60]",
+            "cbnz\tx8, 0x174 <entry_48+0xb4>",
+            "ldr\tw8, [x0]",
+            "mov\tw9, #0x80f",
+            "movk\tw9, #0x400, lsl #16",
+            "tst\tw8, w9",
+            "b.ne\t0x17c <entry_48+0xbc>",
+            "str\tx1, [x0, #0x60]",
+            "cbz\tx1, 0x170 <entry_48+0xb0>",
+            "ldr\tx8, [x1, #0x10]",
+            "cbz\tx8, 0xf8 <entry_48+0x38>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x1",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x18]",
+            "cbz\tx8, 0x10c <entry_48+0x4c>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x2",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1]",
+            "cbz\tx8, 0x120 <entry_48+0x60>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x4",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x8]",
+            "cbz\tx8, 0x134 <entry_48+0x74>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x800",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x20]",
+            "cbz\tx8, 0x148 <entry_48+0x88>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x8",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x38]",
+            "cbz\tx8, 0x15c <entry_48+0x9c>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x10",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x60]",
+            "cbz\tx8, 0x170 <entry_48+0xb0>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x4000000",
+            "str\tw8, [x0]",
+            "ret",
+            "brk\t#0x800",
+            "b\t0xc8 <entry_48+0x8>",
+            "brk\t#0x800"
+          ]
+        },
+        "unregister_key_type": {
+          "symbol": "unregister_key_type",
+          "offset": 6833680,
+          "words": [
+            4160783966,
+            2847833085,
+            2835435508,
+            2432697341,
+            2852127731,
+            4026615488,
+            2434039808,
+            2486538393,
+            2432852596,
+            2853438432,
+            2483217102,
+            905969792,
+            2840175209,
+            4177528104,
+            4177527049,
+            4177546868,
+            4177547892,
+            4026615508,
+            2434040468,
+            2853438432,
+            2549172463,
+            2853372896,
+            2550134754,
+            4181721697
+          ],
+          "assembly": [
+            "str\tx30, [x18], #0x8",
+            "stp\tx29, x30, [sp, #-0x20]!",
+            "stp\tx20, x19, [sp, #0x10]",
+            "mov\tx29, sp",
+            "mov\tx19, x0",
+            "adrp\tx0, 0x28db000 <entry_96+0x28dae80>",
+            "add\tx0, x0, #0x520",
+            "bl\t0xd64400 <entry_96+0xd64280>",
+            "add\tx20, x19, #0x98",
+            "mov\tx0, x20",
+            "bl\t0xb8ce0 <entry_96+0xb8b60>",
+            "tbz\tw0, #0x0, 0x1bc <entry_96+0x3c>",
+            "ldp\tx9, x8, [x19, #0x98]",
+            "str\tx8, [x9, #0x8]",
+            "str\tx9, [x8]",
+            "str\tx20, [x19, #0x98]",
+            "str\tx20, [x19, #0xa0]",
+            "adrp\tx20, 0x28db000 <entry_96+0x28dae80>",
+            "add\tx20, x20, #0x520",
+            "mov\tx0, x20",
+            "bl\t0xffffffffffc5258c <entry_96+0xffffffffffc5240c>",
+            "mov\tx0, x19",
+            "bl\t0xffffffffffffe160 <entry_96+0xffffffffffffdfe0>",
+            "ldr\tx1, [x19]"
+          ]
+        }
+      },
+      "reserve_enabled": true,
+      "lockdep_enabled": false,
+      "whole_reference_type_size_used": false
+    },
+    "kernel_android12-5.10": {
+      "scope": "Developer offline anchors and declared tails; not runtime discovery, independent audit or native execution",
+      "kernel_sha256": "ae2976e111bf11c8b56955df242757db9c9b2c06d0d12f57679b034ebfe71b0f",
+      "symbol_input_sha256": "000e531666f72a1761a041e789c0c8e9c1a36d64937524e00baf5f4e613da0d1",
+      "derived": {
+        "inode_ops_size": {
+          "member": "set_acl",
+          "fragment": "int (*set_acl)(struct inode *, struct posix_acl *, int);\n\n\tANDROID_KABI_RESERVE(1);\n\tANDROID_KABI_RESERVE(2);\n\tANDROID_KABI_RESERVE(3);\n\tANDROID_KABI_RESERVE(4);",
+          "fields": [
+            {
+              "declaration": "pointer set_acl",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(1)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(2)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(3)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(4)",
+              "bytes": 8
+            }
+          ],
+          "span": 40,
+          "alignment": 64,
+          "slot": 160,
+          "table_load_index": 12,
+          "member_load_index": 14,
+          "size": 256
+        },
+        "super_ops_size": {
+          "member": "nr_cached_objects",
+          "fragment": "long (*nr_cached_objects)(struct super_block *,\n\t\t\t\t  struct shrink_control *);\n\tlong (*free_cached_objects)(struct super_block *,\n\t\t\t\t    struct shrink_control *);\n\n\tANDROID_KABI_RESERVE(1);\n\tANDROID_KABI_RESERVE(2);\n\tANDROID_KABI_RESERVE(3);\n\tANDROID_KABI_RESERVE(4);",
+          "fields": [
+            {
+              "declaration": "pointer nr_cached_objects",
+              "bytes": 8
+            },
+            {
+              "declaration": "pointer free_cached_objects",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(1)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(2)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(3)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(4)",
+              "bytes": 8
+            }
+          ],
+          "span": 48,
+          "alignment": 8,
+          "slot": 192,
+          "table_load_index": 13,
+          "member_load_index": 16,
+          "size": 240
+        },
+        "dentry_ops_size": {
+          "member": "d_real",
+          "fragment": "struct dentry *(*d_real)(struct dentry *, const struct inode *);\n\tvoid (*d_canonical_path)(const struct path *, struct path *);\n\tANDROID_KABI_RESERVE(1);\n\tANDROID_KABI_RESERVE(2);\n\tANDROID_KABI_RESERVE(3);\n\tANDROID_KABI_RESERVE(4);",
+          "fields": [
+            {
+              "declaration": "pointer d_real",
+              "bytes": 8
+            },
+            {
+              "declaration": "pointer d_canonical_path",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(1)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(2)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(3)",
+              "bytes": 8
+            },
+            {
+              "declaration": "ANDROID_KABI_RESERVE(4)",
+              "bytes": 8
+            }
+          ],
+          "span": 48,
+          "alignment": 64,
+          "slot": 96,
+          "member_load_index": 40,
+          "flag": "DCACHE_OP_REAL",
+          "size": 192
+        },
+        "key_type_size": {
+          "member": "link",
+          "fragment": "struct list_head\tlink;\t\t\n\tstruct lock_class_key\tlock_class;",
+          "fields": [
+            {
+              "declaration": "struct list_head\tlink",
+              "bytes": 16
+            },
+            {
+              "declaration": "struct lock_class_key\tlock_class",
+              "bytes": 0
+            }
+          ],
+          "span": 16,
+          "alignment": 8,
+          "slot": 168,
+          "member_address_index": 11,
+          "base_register": 19,
+          "size": 184
+        }
+      },
+      "windows": {
+        "set_posix_acl": {
+          "symbol": "set_posix_acl",
+          "offset": 6508700,
+          "words": [
+            3573752639,
+            3506537471,
+            4160783966,
+            2835446781,
+            2835507194,
+            2835570680,
+            2835634166,
+            2835697652,
+            2432713725,
+            4181726216,
+            960579848,
+            905971368,
+            4181725192,
+            2852127732,
+            4181741832,
+            3019900456
+          ],
+          "assembly": [
+            "paciasp",
+            "sub\tsp, sp, #0x60",
+            "str\tx30, [x18], #0x8",
+            "stp\tx29, x30, [sp, #0x10]",
+            "stp\tx26, x25, [sp, #0x20]",
+            "stp\tx24, x23, [sp, #0x30]",
+            "stp\tx22, x21, [sp, #0x40]",
+            "stp\tx20, x19, [sp, #0x50]",
+            "add\tx29, sp, #0x10",
+            "ldr\tx8, [x0, #0x28]",
+            "ldrb\tw8, [x8, #0x52]",
+            "tbz\tw8, #0x0, 0x100 <entry_48+0x40>",
+            "ldr\tx8, [x0, #0x20]",
+            "mov\tx20, x0",
+            "ldr\tx8, [x8, #0xa0]",
+            "cbz\tx8, 0x100 <entry_48+0x40>"
+          ]
+        },
+        "super_cache_count": {
+          "symbol": "super_cache_count",
+          "offset": 5545152,
+          "words": [
+            3573752639,
+            3506504703,
+            4160783966,
+            2835512317,
+            2835566580,
+            2432730109,
+            3507524616,
+            960495880,
+            925368424,
+            2854159328,
+            335544427,
+            3507609620,
+            3573758399,
+            4181727880,
+            2852193267,
+            3019899304,
+            4181745928,
+            3019899240,
+            4026570185,
+            2434638121,
+            3406364937,
+            2479426857,
+            4043311423,
+            1409289346,
+            2853438432,
+            2853372897,
+            3594453248,
+            2852127720,
+            3577233664,
+            3108259852,
+            3112175210,
+            4181724777
+          ],
+          "assembly": [
+            "paciasp",
+            "sub\tsp, sp, #0x40",
+            "str\tx30, [x18], #0x8",
+            "stp\tx29, x30, [sp, #0x20]",
+            "stp\tx20, x19, [sp, #0x30]",
+            "add\tx29, sp, #0x20",
+            "sub\tx8, x0, #0x425",
+            "ldrb\tw8, [x8]",
+            "tbnz\tw8, #0x5, 0x6c <entry_16+0x2c>",
+            "mov\tx0, xzr",
+            "b\t0x214 <entry_96+0x94>",
+            "sub\tx20, x0, #0x478",
+            "dmb\tishld",
+            "ldr\tx8, [x20, #0x30]",
+            "mov\tx19, x1",
+            "cbz\tx8, 0xb0 <entry_16+0x70>",
+            "ldr\tx8, [x8, #0xc0]",
+            "cbz\tx8, 0xb0 <entry_16+0x70>",
+            "adrp\tx9, 0x12bb000 <entry_96+0x12bae80>",
+            "add\tx9, x9, #0x768",
+            "sub\tx9, x8, x9",
+            "ror\tx9, x9, #0x3",
+            "cmp\tx9, #0x2",
+            "b.hs\t0x22c <entry_96+0xac>",
+            "mov\tx0, x20",
+            "mov\tx1, x19",
+            "blr\tx8",
+            "mov\tx8, x0",
+            "mrs\tx0, SP_EL0",
+            "ldr\tw12, [x0, #0x448]",
+            "ldrsw\tx10, [x19, #0x4]",
+            "ldr\tx9, [x19, #0x18]"
+          ]
+        },
+        "d_set_d_op": {
+          "symbol": "d_set_d_op",
+          "offset": 5741408,
+          "words": [
+            3573752639,
+            4181733384,
+            3036677544,
+            3107979272,
+            1384186345,
+            1923121161,
+            1778975007,
+            1409287489,
+            4177539073,
+            3019900033,
+            4181723176,
+            3019899016,
+            3107979272,
+            838861064,
+            3103784968,
+            4181724200,
+            3019899016,
+            3107979272,
+            840892680,
+            3103784968,
+            4181721128,
+            3019899016,
+            3107979272,
+            840827144,
+            3103784968,
+            4181722152,
+            3019899016,
+            3107979272,
+            840237320,
+            3103784968,
+            4181725224,
+            3019899016,
+            3107979272,
+            840761608,
+            3103784968,
+            4181728296,
+            3019899016,
+            3107979272,
+            840696072,
+            3103784968,
+            4181733416,
+            3019899016,
+            3107979272,
+            839254280,
+            3103784968,
+            3573752767,
+            3596551104,
+            3558932480
+          ],
+          "assembly": [
+            "paciasp",
+            "ldr\tx8, [x0, #0x60]",
+            "cbnz\tx8, 0x17c <entry_48+0xbc>",
+            "ldr\tw8, [x0]",
+            "mov\tw9, #0x80f",
+            "movk\tw9, #0x400, lsl #16",
+            "tst\tw8, w9",
+            "b.ne\t0x184 <entry_96+0x4>",
+            "str\tx1, [x0, #0x60]",
+            "cbz\tx1, 0x174 <entry_48+0xb4>",
+            "ldr\tx8, [x1, #0x10]",
+            "cbz\tx8, 0xfc <entry_48+0x3c>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x1",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x18]",
+            "cbz\tx8, 0x110 <entry_48+0x50>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x2",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1]",
+            "cbz\tx8, 0x124 <entry_48+0x64>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x4",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x8]",
+            "cbz\tx8, 0x138 <entry_48+0x78>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x800",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x20]",
+            "cbz\tx8, 0x14c <entry_48+0x8c>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x8",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x38]",
+            "cbz\tx8, 0x160 <entry_48+0xa0>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x10",
+            "str\tw8, [x0]",
+            "ldr\tx8, [x1, #0x60]",
+            "cbz\tx8, 0x174 <entry_48+0xb4>",
+            "ldr\tw8, [x0]",
+            "orr\tw8, w8, #0x4000000",
+            "str\tw8, [x0]",
+            "autiasp",
+            "ret",
+            "brk\t#0x800"
+          ]
+        },
+        "unregister_key_type": {
+          "symbol": "unregister_key_type",
+          "offset": 9078860,
+          "words": [
+            3573752639,
+            4160783966,
+            2847767549,
+            4177529845,
+            2835501044,
+            2432697341,
+            3489726292,
+            2434720404,
+            2852127731,
+            2853438432,
+            2487582832,
+            2432868981,
+            2853503968,
+            2483380026,
+            2840240745,
+            2853438432,
+            4177528104,
+            4177527049,
+            4177548917,
+            4177549941,
+            2548364567,
+            2853372896,
+            2550133731,
+            4181721697
+          ],
+          "assembly": [
+            "paciasp",
+            "str\tx30, [x18], #0x8",
+            "stp\tx29, x30, [sp, #-0x30]!",
+            "str\tx21, [sp, #0x10]",
+            "stp\tx20, x19, [sp, #0x20]",
+            "mov\tx29, sp",
+            "adrp\tx20, 0x1fea000 <entry_96+0x1fe9e80>",
+            "add\tx20, x20, #0x7b8",
+            "mov\tx19, x0",
+            "mov\tx0, x20",
+            "bl\t0x1160368 <entry_96+0x11601e8>",
+            "add\tx21, x19, #0xa8",
+            "mov\tx0, x21",
+            "bl\t0x157e9c <entry_96+0x157d1c>",
+            "ldp\tx9, x8, [x19, #0xa8]",
+            "mov\tx0, x20",
+            "str\tx8, [x9, #0x8]",
+            "str\tx9, [x8]",
+            "str\tx21, [x19, #0xa8]",
+            "str\tx21, [x19, #0xb0]",
+            "bl\t0xffffffffff93d62c <entry_96+0xffffffffff93d4ac>",
+            "mov\tx0, x19",
+            "bl\t0xffffffffffffd164 <entry_96+0xffffffffffffcfe4>",
+            "ldr\tx1, [x19]"
+          ]
+        }
+      },
+      "reserve_enabled": true,
+      "lockdep_enabled": false,
+      "whole_reference_type_size_used": false
+    }
+  },
+  "reference_sources": [
+    {
+      "target": "kernel_mi8-4.9",
+      "commit": "dcfb1676925aec83b06ae04fd8ca989ced75067c",
+      "file": "include/linux/fs.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/dcfb1676925aec83b06ae04fd8ca989ced75067c/include/linux/fs.h",
+      "sha256": "af4741a5069ef00301122f2a009a23db58c608f02107648b7cb20a3ba7a616aa"
+    },
+    {
+      "target": "kernel_mi8-4.9",
+      "commit": "dcfb1676925aec83b06ae04fd8ca989ced75067c",
+      "file": "include/linux/dcache.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/dcfb1676925aec83b06ae04fd8ca989ced75067c/include/linux/dcache.h",
+      "sha256": "4a60850569cc427b7246121bb60d481e463bed3a76d70e907c167b3cc432ea4f"
+    },
+    {
+      "target": "kernel_mi8-4.9",
+      "commit": "dcfb1676925aec83b06ae04fd8ca989ced75067c",
+      "file": "include/linux/key-type.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/dcfb1676925aec83b06ae04fd8ca989ced75067c/include/linux/key-type.h",
+      "sha256": "e3d5f2efaf8da4dfb3650f5dcfacd97a97a31717861fc37365f75b0d0688f99d"
+    },
+    {
+      "target": "kernel_mi9-4.14",
+      "commit": "192eca8550f95c2eec58a474793d1d93fc1b3b67",
+      "file": "include/linux/fs.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/192eca8550f95c2eec58a474793d1d93fc1b3b67/include/linux/fs.h",
+      "sha256": "8db56d32684099ff94b0a6bf811ca74997125be1682abd5c79f3e4b8e20b5451"
+    },
+    {
+      "target": "kernel_mi9-4.14",
+      "commit": "192eca8550f95c2eec58a474793d1d93fc1b3b67",
+      "file": "include/linux/dcache.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/192eca8550f95c2eec58a474793d1d93fc1b3b67/include/linux/dcache.h",
+      "sha256": "4074fdbd7713fe68b8f68e61150019f3adb5542552c29cc48a741ba3a2d55e06"
+    },
+    {
+      "target": "kernel_mi9-4.14",
+      "commit": "192eca8550f95c2eec58a474793d1d93fc1b3b67",
+      "file": "include/linux/key-type.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/192eca8550f95c2eec58a474793d1d93fc1b3b67/include/linux/key-type.h",
+      "sha256": "9b33b481c02f2d5b79e39a765bd96714feb45997b6bb5f605807df77ed3f982f"
+    },
+    {
+      "target": "kernel_mi10-4.19",
+      "commit": "db67ca6001320efc1f945c270635434fc403a9d4",
+      "file": "include/linux/fs.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/db67ca6001320efc1f945c270635434fc403a9d4/include/linux/fs.h",
+      "sha256": "8f25c8a54a6a4bf6738eb22f09ab4a1550b27a965b98271e62ce62070d97bf1a"
+    },
+    {
+      "target": "kernel_mi10-4.19",
+      "commit": "db67ca6001320efc1f945c270635434fc403a9d4",
+      "file": "include/linux/dcache.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/db67ca6001320efc1f945c270635434fc403a9d4/include/linux/dcache.h",
+      "sha256": "d8839b5650de53c747a603ef2e6185c645adc83942ac3fc31a09824c51e03a9d"
+    },
+    {
+      "target": "kernel_mi10-4.19",
+      "commit": "db67ca6001320efc1f945c270635434fc403a9d4",
+      "file": "include/linux/key-type.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/db67ca6001320efc1f945c270635434fc403a9d4/include/linux/key-type.h",
+      "sha256": "5a59304aaa66128a1e5417af4bf9d35468c0a8bf35f8045108e9119c55be7df4"
+    },
+    {
+      "target": "kernel_mi11-5.4",
+      "commit": "7db0abb6726f611eedbbe92bbf8a4291c0dcdb69",
+      "file": "include/linux/fs.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/7db0abb6726f611eedbbe92bbf8a4291c0dcdb69/include/linux/fs.h",
+      "sha256": "d06e951f56f860e0cef8e04409800052e3058b87e6ec889b8dea9b83c09a8b89"
+    },
+    {
+      "target": "kernel_mi11-5.4",
+      "commit": "7db0abb6726f611eedbbe92bbf8a4291c0dcdb69",
+      "file": "include/linux/dcache.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/7db0abb6726f611eedbbe92bbf8a4291c0dcdb69/include/linux/dcache.h",
+      "sha256": "79f48b156e7a6e2a59e5941637050932cd67fb70f2999a22923cf17678c0aee9"
+    },
+    {
+      "target": "kernel_mi11-5.4",
+      "commit": "7db0abb6726f611eedbbe92bbf8a4291c0dcdb69",
+      "file": "include/linux/key-type.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/7db0abb6726f611eedbbe92bbf8a4291c0dcdb69/include/linux/key-type.h",
+      "sha256": "ba6e9f555caeac9428839b55d72b8fdb5b056996e0ad0ffaa4d3e67f243ad8de"
+    },
+    {
+      "target": "kernel_android12-5.10",
+      "commit": "91ca44c479db",
+      "file": "include/linux/fs.h",
+      "url": "https://android.googlesource.com/kernel/common/+/91ca44c479db/include/linux/fs.h?format=TEXT",
+      "sha256": "7d692d8f002590f7901bb20417b5f257d513ae03bc45cd3efeaa689baa7b0ebe"
+    },
+    {
+      "target": "kernel_android12-5.10",
+      "commit": "91ca44c479db",
+      "file": "include/linux/dcache.h",
+      "url": "https://android.googlesource.com/kernel/common/+/91ca44c479db/include/linux/dcache.h?format=TEXT",
+      "sha256": "e60319a032ade9daa2a61f8abf1fa92b6c43100f2101d4a0c24fa70fbcb2e22e"
+    },
+    {
+      "target": "kernel_android12-5.10",
+      "commit": "91ca44c479db",
+      "file": "include/linux/key-type.h",
+      "url": "https://android.googlesource.com/kernel/common/+/91ca44c479db/include/linux/key-type.h?format=TEXT",
+      "sha256": "96670aaf607765b375e0141441c5e2fd3c5fc41bb3e6f5c7b1cd6be676c93012"
+    },
+    {
+      "target": "kernel_mi8-4.9",
+      "file": "include/linux/cache.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/dcfb1676925aec83b06ae04fd8ca989ced75067c/include/linux/cache.h",
+      "commit": "dcfb1676925aec83b06ae04fd8ca989ced75067c",
+      "sha256": "c73e36e2f8249eff1deb6154b1a6851be34818081544cfac764765083747a536"
+    },
+    {
+      "target": "kernel_mi8-4.9",
+      "file": "arch/arm64/include/asm/cache.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/dcfb1676925aec83b06ae04fd8ca989ced75067c/arch/arm64/include/asm/cache.h",
+      "commit": "dcfb1676925aec83b06ae04fd8ca989ced75067c",
+      "sha256": "3abb2f88ca7bf018750b58de9a5dde142584371e0e5397c6a22279b921e1f618"
+    },
+    {
+      "target": "kernel_mi9-4.14",
+      "file": "include/linux/cache.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/192eca8550f95c2eec58a474793d1d93fc1b3b67/include/linux/cache.h",
+      "commit": "192eca8550f95c2eec58a474793d1d93fc1b3b67",
+      "sha256": "a73445aa4721fd24bebcf45835344ffe3e1163fb56bec03f3b26afdfbd771e15"
+    },
+    {
+      "target": "kernel_mi9-4.14",
+      "file": "arch/arm64/include/asm/cache.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/192eca8550f95c2eec58a474793d1d93fc1b3b67/arch/arm64/include/asm/cache.h",
+      "commit": "192eca8550f95c2eec58a474793d1d93fc1b3b67",
+      "sha256": "43f471de7b8ac88c3540419ddd28422b652d527a246384005a4ade571fc580a4"
+    },
+    {
+      "target": "kernel_mi10-4.19",
+      "file": "include/linux/cache.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/db67ca6001320efc1f945c270635434fc403a9d4/include/linux/cache.h",
+      "commit": "db67ca6001320efc1f945c270635434fc403a9d4",
+      "sha256": "a73445aa4721fd24bebcf45835344ffe3e1163fb56bec03f3b26afdfbd771e15"
+    },
+    {
+      "target": "kernel_mi10-4.19",
+      "file": "arch/arm64/include/asm/cache.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/db67ca6001320efc1f945c270635434fc403a9d4/arch/arm64/include/asm/cache.h",
+      "commit": "db67ca6001320efc1f945c270635434fc403a9d4",
+      "sha256": "027a28c99ae16f825862938d03b91642a378b369b5117981f8851af824774605"
+    },
+    {
+      "target": "kernel_mi11-5.4",
+      "file": "include/linux/cache.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/7db0abb6726f611eedbbe92bbf8a4291c0dcdb69/include/linux/cache.h",
+      "commit": "7db0abb6726f611eedbbe92bbf8a4291c0dcdb69",
+      "sha256": "a73445aa4721fd24bebcf45835344ffe3e1163fb56bec03f3b26afdfbd771e15"
+    },
+    {
+      "target": "kernel_mi11-5.4",
+      "file": "arch/arm64/include/asm/cache.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/7db0abb6726f611eedbbe92bbf8a4291c0dcdb69/arch/arm64/include/asm/cache.h",
+      "commit": "7db0abb6726f611eedbbe92bbf8a4291c0dcdb69",
+      "sha256": "9d65b6b6e1a42ad8eaf98727aa7f601aa0b1710aa8b4b287f7956e337430cc72"
+    },
+    {
+      "target": "kernel_android12-5.10",
+      "file": "include/linux/cache.h",
+      "url": "https://android.googlesource.com/kernel/common/+/91ca44c479dbf0f3b68212e6561286d2a2f92307/include/linux/cache.h?format=TEXT",
+      "commit": "91ca44c479dbf0f3b68212e6561286d2a2f92307",
+      "sha256": "89115edac649e8bc75ab158b3424c27ef4413d5420121d7268627bd97b2822ae"
+    },
+    {
+      "target": "kernel_android12-5.10",
+      "file": "arch/arm64/include/asm/cache.h",
+      "url": "https://android.googlesource.com/kernel/common/+/91ca44c479dbf0f3b68212e6561286d2a2f92307/arch/arm64/include/asm/cache.h?format=TEXT",
+      "commit": "91ca44c479dbf0f3b68212e6561286d2a2f92307",
+      "sha256": "a49f554456fea96fa36832b84d96469d509d23995b47f8cbcc30190d56b7a1a8"
+    },
+    {
+      "target": "kernel_mi8-4.9",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/dcfb1676925aec83b06ae04fd8ca989ced75067c/include/linux/lockdep.h",
+      "commit": "dcfb1676925aec83b06ae04fd8ca989ced75067c",
+      "sha256": "598a56a8c54ca6a8431455f940a9a541fe07b284925e1d19fca98b9aeb5007cf"
+    },
+    {
+      "target": "kernel_mi9-4.14",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/192eca8550f95c2eec58a474793d1d93fc1b3b67/include/linux/lockdep.h",
+      "commit": "192eca8550f95c2eec58a474793d1d93fc1b3b67",
+      "sha256": "b180e6f29e2afc12683ede7ef1e3a38946271e39174cd4d328a6cacbceb6e6dc"
+    },
+    {
+      "target": "kernel_mi10-4.19",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/db67ca6001320efc1f945c270635434fc403a9d4/include/linux/lockdep.h",
+      "commit": "db67ca6001320efc1f945c270635434fc403a9d4",
+      "sha256": "e862c9c0d5a211f2575ebfa1925702d8561bcb4b606d6ffe341ef2b6635d61bb"
+    },
+    {
+      "target": "kernel_mi11-5.4",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/7db0abb6726f611eedbbe92bbf8a4291c0dcdb69/include/linux/lockdep.h",
+      "commit": "7db0abb6726f611eedbbe92bbf8a4291c0dcdb69",
+      "sha256": "32c32b8cb3092fe1c35b3b900c507431a17d6733035f1df1999c23cef0c58a05"
+    },
+    {
+      "target": "kernel_android12-5.10",
+      "url": "https://android.googlesource.com/kernel/common/+/91ca44c479dbf0f3b68212e6561286d2a2f92307/include/linux/lockdep.h?format=TEXT",
+      "commit": "91ca44c479dbf0f3b68212e6561286d2a2f92307",
+      "sha256": "8231d46a2a73fdd1d1988269a0db7bde2210136e600bf184cbdc4172c852d696"
+    },
+    {
+      "target": "kernel_mi11-5.4",
+      "file": "include/linux/android_kabi.h",
+      "url": "https://raw.githubusercontent.com/MiCode/Xiaomi_Kernel_OpenSource/7db0abb6726f611eedbbe92bbf8a4291c0dcdb69/include/linux/android_kabi.h",
+      "commit": "7db0abb6726f611eedbbe92bbf8a4291c0dcdb69",
+      "sha256": "b986e2fa27e44f2c8a41c5c2c61001e572df729b63a1396af4ec91f3aa1609d4"
+    },
+    {
+      "target": "kernel_android12-5.10",
+      "file": "include/linux/android_kabi.h",
+      "url": "https://android.googlesource.com/kernel/common/+/91ca44c479dbf0f3b68212e6561286d2a2f92307/include/linux/android_kabi.h?format=TEXT",
+      "commit": "91ca44c479dbf0f3b68212e6561286d2a2f92307",
+      "sha256": "ba7f4e42274a6a6778d7a08f42ee347cde912dea1e73e3d6563e6ea9b003c38e"
+    },
+    {
+      "target": "kernel_android12-5.10",
+      "file": "include/linux/lockdep_types.h",
+      "url": "https://android.googlesource.com/kernel/common/+/91ca44c479dbf0f3b68212e6561286d2a2f92307/include/linux/lockdep_types.h?format=TEXT",
+      "commit": "91ca44c479dbf0f3b68212e6561286d2a2f92307",
+      "sha256": "d2affb6a6997ee8238b3d85fa1f2fb65c741f70a9cb904be31969d34a56a0fc2"
+    }
+  ],
+  "static_roundtrip": {
+    "scope": "Developer host validators and configuration-only binary roundtrip; no layout derivation or native execution",
+    "base_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43",
+    "records": [
+      {
+        "config": "nomount/configs/B2N-416G-v4.json",
+        "config_sha256": "ce3a31a0d2604d6003bedd96862eb17f22af9d45aa3684d70a5c9bf5691ae95e",
+        "derived_sha256": "94bafae7efafcabaaf20e7db119672c0e48d215513a0a5fb961a64c04547a581",
+        "table_size": 92
+      },
+      {
+        "config": "nomount/configs/kernel_mi6-4.4-v4.json",
+        "config_sha256": "e4c9ab951fc657f6da7f0a7a9553cfe7e8d820a2d073477ec1d701f3a5f89d8b",
+        "derived_sha256": "f4c1c21940a09a2c071b3071712d66d353fc0a40c21a26a1c4aec28ca975647b",
+        "table_size": 92
+      },
+      {
+        "config": "nomount/configs/boot_los23.2-v4.json",
+        "config_sha256": "f29f8326256af0256c4ce37e6fac8a3f54a3116a3a35e7da7ce013735612c925",
+        "derived_sha256": "4b6fe6266ace0918f5d294380eb9650df8673a429ea613844a8c9b834e92054e",
+        "table_size": 92
+      },
+      {
+        "config": "nomount/configs/boot_67.2.A.3.178-v4.json",
+        "config_sha256": "b64668668150c31f9d02013eadcb2aad2ff8862ab96fc95e0c7621834304dfa4",
+        "derived_sha256": "8d497f8fdf2ff2667498b350735f6ae117fa829144cc5f73f21d5595e50a299d",
+        "table_size": 92
+      },
+      {
+        "config": "nomount/configs/kernel_android13-5.10-v4.json",
+        "config_sha256": "dd748f064f34e90857faf4d85f20c048d3e8b113c03d4893ac69f194cff1fe27",
+        "derived_sha256": "dfa3e6e99349d60fea428822583b9be8912714513fc12e2de81018a902384c29",
+        "table_size": 92
+      },
+      {
+        "config": "nomount/configs/kernel_android13-5.15-v4.json",
+        "config_sha256": "27da9132dc11404bc5e1f5ec7af7c5d1029f48724b5ef36ae84b8951db711117",
+        "derived_sha256": "8d497f8fdf2ff2667498b350735f6ae117fa829144cc5f73f21d5595e50a299d",
+        "table_size": 92
+      },
+      {
+        "config": "nomount/configs/kernel_android14-5.15-v4.json",
+        "config_sha256": "7a89ec5f90e3f2b2dbd656d2138fa9d7d1b2b0eb433fe6ebba3f68a264d830c9",
+        "derived_sha256": "8d497f8fdf2ff2667498b350735f6ae117fa829144cc5f73f21d5595e50a299d",
+        "table_size": 92
+      },
+      {
+        "config": "nomount/configs/kernel_android14-6.1.json",
+        "config_sha256": "9e1182321daf334860aebba94137392c643cdf8356db3c49ca7357fbecf28ef0",
+        "derived_sha256": "b02dc587cb51726f40c17a03bf0b9d081908eba6922cadb1a7907044ca40a08a",
+        "table_size": 92
+      },
+      {
+        "config": "nomount/configs/kernel_mi8-4.9-v4.json",
+        "config_sha256": "7c45e04063d9e3c764a2727ada060e8eb0e93cfcaaf38ba375e45d58a5135ddd",
+        "derived_sha256": "781e053bda096c774cb9434c0fbf55605c6abc5705f256413421962236d57684",
+        "table_size": 92
+      },
+      {
+        "config": "nomount/configs/kernel_mi9-4.14-v4.json",
+        "config_sha256": "ddf740fa7e5797ef7402d3a275403bac1b60bb92a5060a22ce1dd2cc7d474022",
+        "derived_sha256": "09a49a36faba1e25078785848d652a9e787543eb1762a75eb99e77b1591f0c38",
+        "table_size": 92
+      },
+      {
+        "config": "nomount/configs/kernel_mi10-4.19-v4.json",
+        "config_sha256": "7060f01c519ccacf06c177ad5800516dd4a4ba84c081e7eb7e2f9438ef176214",
+        "derived_sha256": "a2b54956913b128f228509bb0c7d55155911d3d6ecc29cdd21a880ff67c12de9",
+        "table_size": 92
+      },
+      {
+        "config": "nomount/configs/kernel_mi11-5.4-v4.json",
+        "config_sha256": "b2cd8b3044d7e223d48e5c64afc4a95e5b213cf10b26a0a87fce79ac83683727",
+        "derived_sha256": "bc69619694faa8f30a783c394317f19fbfd4930f6a6810bb9481bd0bd7001431",
+        "table_size": 92
+      },
+      {
+        "config": "nomount/configs/kernel_android12-5.10-v4.json",
+        "config_sha256": "b0d653241531ea1517984f9f40bfbd8791ed4ceff96c425f7e4e47ff8a8f8a83",
+        "derived_sha256": "dfa3e6e99349d60fea428822583b9be8912714513fc12e2de81018a902384c29",
+        "table_size": 92
+      }
+    ],
+    "result": "PASS: selected static layouts and callback range refusal"
+  },
+  "alignment_tests": {
+    "scope": "Developer host fixtures with current private proxy definitions; original assertions preserved; no native kernel execution",
+    "results": [
+      {
+        "abi": "int",
+        "parent_sha256": "681a320ac5551b61bc22b02ed0824ac8143cfcf5f5d0c8e8d7331d1eb0223000",
+        "assertions_preserved": 693,
+        "generated_sha256": "cf5001915c8fbe396591c2d74404e4b8aef655d85fcfb50cf52cc7ca2a60bdd9",
+        "stdout": "inode materialization, full super table preservation, error cleanup and backing lifetime: PASS\nnative-parent lookup, UID cache validation, enumeration, cookies and proxy cleanup: PASS\nvirtual-directory inode reuse, child lookup, dot entries, UID visibility and retirement: PASS\ntopology publication, 15 fresh-parent and 18 cached-parent allocation failures, pruning and live-inode retirement: PASS\nbacking path ownership, native errors, merged enumeration, dot identity, UID and seek: PASS\nbacked inode cache, source permission, recursive lookup, cache refresh and path retirement: PASS\nmanaged backing subtrees, UID sources, search ACL, refresh, 17 allocation failures and retirement: PASS\nkeyring transport, command batches, mutex contracts, paging and rule replay: PASS\nexplicit ABI rejection, pair hash, native pair getattr, mount callbacks and kstat byte boundaries: PASS\nmount/plain permissions, complete subtree preparation, namespace selection, errors and typed getattr: PASS\npre/post/runtime events, dependency/BTF/registration errors, allocation cleanup, status and resident exit: PASS\nsmall-child collision and 2/3 transition, zero full hash for tiny lookup; UID collision/delete/limits/failures: PASS\nprivate memory: slab zero/alignment/boundaries, fallback and total failure, process and RCU free pairing: PASS\ncurrent proxy definitions: 128-byte headers, two table geometries, inverse lookup and full snapshot: PASS\n"
+      },
+      {
+        "abi": "bool",
+        "parent_sha256": "585a8287a2cd4b3f8c10095e4c82e1838f2d3c3b6b5957134bd22a749019c3d1",
+        "assertions_preserved": 693,
+        "generated_sha256": "beec90ff9fcdc53ebe35bd465e5070594338cb3412dbebdd5371227a5e7c3baf",
+        "stdout": "inode materialization, full super table preservation, error cleanup and backing lifetime: PASS\nnative-parent lookup, UID cache validation, enumeration, cookies and proxy cleanup: PASS\nvirtual-directory inode reuse, child lookup, dot entries, UID visibility and retirement: PASS\ntopology publication, 15 fresh-parent and 18 cached-parent allocation failures, pruning and live-inode retirement: PASS\nbacking path ownership, native errors, merged enumeration, dot identity, UID and seek: PASS\nbacked inode cache, source permission, recursive lookup, cache refresh and path retirement: PASS\nmanaged backing subtrees, UID sources, search ACL, refresh, 17 allocation failures and retirement: PASS\nkeyring transport, command batches, mutex contracts, paging and rule replay: PASS\nexplicit ABI rejection, pair hash, native pair getattr, mount callbacks and kstat byte boundaries: PASS\nmount/plain permissions, complete subtree preparation, namespace selection, errors and typed getattr: PASS\npre/post/runtime events, dependency/BTF/registration errors, allocation cleanup, status and resident exit: PASS\nsmall-child collision and 2/3 transition, zero full hash for tiny lookup; UID collision/delete/limits/failures: PASS\nprivate memory: slab zero/alignment/boundaries, fallback and total failure, process and RCU free pairing: PASS\ncurrent proxy definitions: 128-byte headers, two table geometries, inverse lookup and full snapshot: PASS\n"
+      }
+    ]
+  },
+  "tail_tests": {
+    "targets": 5,
+    "negative_cases": 37,
+    "prefix_independence": true
+  },
+  "derivation_tool_sha256": "8bb5f2470ac42d6bc05e3bac7ff4a4cb7eb57aab5d2e098527e8a97775ac2daf",
+  "parent_evidence_sha256": "83a8a69a37e918ebd98d21c28ee6f491d9225886830ffac6254226b813a0d03d"
+}

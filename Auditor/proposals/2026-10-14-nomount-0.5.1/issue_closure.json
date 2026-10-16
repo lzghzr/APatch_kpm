@@ -1,0 +1,17 @@
+{
+  "id": "DEV-036",
+  "status": "closed",
+  "closed_by": "Auditor",
+  "closure_note": "Auditor 独立复核关闭：LSM ABI/生命周期/独占性/缓存/Oracle 迁移复核通过；Tester 侧 Sony 5.15（Enforcing）真实应用与 artd 编译加载验证通过，4.19/4.4 回归全量 20/20 通过",
+  "review": {
+    "at": "2026-10-14T16:50:00Z",
+    "by": "Auditor",
+    "decision": "closed",
+    "commit": null,
+    "evidence": "Auditor/reports/responses/2026-10-14-DEV-036.md",
+    "report_sha256": "fe0d19b725ef85b6d74b3b9c9afcff989088a26c7a73c936535b6997aa3fd55b",
+    "instance_id": "nomount-0.5.1_baselines+g17d96f6cff64.rf55be15b.kpb51197a.ndk26.3.11579264#1",
+    "source_commit": "cfb971d195d997808b68567b8ffc61a4dcd32b90",
+    "note": "Auditor 独立复核关闭：1) 静态与架构审计确认原生 LSM ABI 适配严谨、锁外睡眠、i_mode 类别前置初始化、I_NEW 等待者回收与动态 relabel 缓存失效，2 处 Oracle 迁移合规；2) Tester 真机证据确认 Sony 5.15（Enforcing）下虚拟 APK 标签（u:object_r:system_file:s0）与源严格一致，artd/dex2oat 编译返回 0 且无 EACCES，真实应用域 u:r:priv_app:s0 正常加载执行且内存映射无泄漏；3) 4.19 与 4.4 真机回归全量通过（各 20/20）。全部闭环条件达成，正式关闭。"
+  }
+}

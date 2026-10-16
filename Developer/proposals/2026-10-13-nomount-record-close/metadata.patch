@@ -1,0 +1,82 @@
+--- a/metadata/modules/nomount.json
++++ b/metadata/modules/nomount.json
+@@ -2395,7 +2395,7 @@
+       "class": "record",
+       "severity": "中",
+       "owner": "Tester",
+-      "status": "fixed",
++      "status": "closed",
+       "title": "CFI 成功判据缺少直接证据",
+       "evidence": "两份4.19 boot-live报告只引用 bypass_kcfi done:0；冻结 SDK 在 slowpath 地址为空时也可返回0。",
+       "impact": "CFI 加载前条件的记录不可按现有摘要复算。",
+@@ -2403,7 +2403,7 @@
+       "closure": "Tester 追加更正后，Developer 或 Auditor 独立核对身份、已有日志及计数，维护者同步关闭。",
+       "found_in_build": "nomount-0.1.0_baselines+g5dd2d5ca48b7.rde831ef7.kpb51197a.ndk26.3.11579264#1",
+       "fixed_in_commit": "2eb1f31cc948c70b2318aa006d0c89063224f172",
+-      "closed_by": null,
++      "closed_by": "Developer",
+       "reviews": [
+         {
+           "at": "2026-10-14T00:03:56Z",
+@@ -2412,6 +2412,21 @@
+           "commit": "2eb1f31cc948c70b2318aa006d0c89063224f172",
+           "response": "Tester/reports/responses/2026-10-13-DEV-033.md",
+           "note": "两份实机报告追加 §6 现场补测与更正（KP 身份绑定、patch_config 偏移 0x003dd20c、否定判据全满）；原文前缀保留"
++        },
++        {
++          "at": "2026-10-14T00:37:13Z",
++          "by": "Developer",
++          "decision": "closed",
++          "commit": "49cc177539dd8ca67b60135705fe16d0ed6b4df7",
++          "evidence": "Developer/reports/responses/2026-10-13-DEV-033-034-close.md",
++          "report_sha256": "accb66f270d45a62632ecc2d6ee38cd2871afcefe9b391844a98c827f9e03fbd",
++          "instance_id": "nomount-0.1.0_baselines+g5dd2d5ca48b7.rde831ef7.kpb51197a.ndk26.3.11579264#1",
++          "source_commit": "c35ecd34ecb6a06c1d54ebda6e6a0e900065f16a",
++          "tested_sha256": [
++            "a3694526cac5c4cef05fd6b5326790101513f42c31094203c648618898ba7dcb",
++            "606ebed60723b116eb31f4cd3557b905fb76763e03d30422c2d030bab4d6e7f7"
++          ],
++          "note": "发现方一次独立确认：更正报告前缀与修复提交一致；两份boot预设0x003dd20c复算一致；证据范围和计数如实保留。"
+         }
+       ],
+       "found_at": "2026-10-13T22:46:48Z",
+@@ -2427,7 +2442,7 @@
+       "class": "record",
+       "severity": "中",
+       "owner": "Auditor",
+-      "status": "fixed",
++      "status": "closed",
+       "title": "CFI 日志要求与引用 SDK 的输出分支不符",
+       "evidence": "审计3.5节要求 error:0 日志；冻结SDK secpass.c:87-93 只在 if(err) 内输出该日志。",
+       "impact": "CFI 加载前条件的记录不可按现有摘要复算。",
+@@ -2435,7 +2450,7 @@
+       "closure": "Auditor 追加更正后，Developer 独立核对引用分支与修订判据，维护者同步关闭。",
+       "found_in_build": "nomount-0.1.0_baselines+g5dd2d5ca48b7.rde831ef7.kpb51197a.ndk26.3.11579264#1",
+       "fixed_in_commit": "c5d10800aeff4cbca3ba204936580289cbfd1ae5",
+-      "closed_by": null,
++      "closed_by": "Developer",
+       "reviews": [
+         {
+           "at": "2026-10-13T23:17:45Z",
+@@ -2444,6 +2459,21 @@
+           "commit": "c5d10800aeff4cbca3ba204936580289cbfd1ae5",
+           "response": "Auditor/reports/responses/2026-10-13-DEV-034.md",
+           "note": "报告尾部追加 §9 更正（§9.1 判据缺陷走查、§9.2 四阶段证明范围）；原 §1–§8 字节前缀完全保留"
++        },
++        {
++          "at": "2026-10-14T00:37:13Z",
++          "by": "Developer",
++          "decision": "closed",
++          "commit": "49cc177539dd8ca67b60135705fe16d0ed6b4df7",
++          "evidence": "Developer/reports/responses/2026-10-13-DEV-033-034-close.md",
++          "report_sha256": "accb66f270d45a62632ecc2d6ee38cd2871afcefe9b391844a98c827f9e03fbd",
++          "instance_id": "nomount-0.1.0_baselines+g5dd2d5ca48b7.rde831ef7.kpb51197a.ndk26.3.11579264#1",
++          "source_commit": "c35ecd34ecb6a06c1d54ebda6e6a0e900065f16a",
++          "tested_sha256": [
++            "a3694526cac5c4cef05fd6b5326790101513f42c31094203c648618898ba7dcb",
++            "606ebed60723b116eb31f4cd3557b905fb76763e03d30422c2d030bab4d6e7f7"
++          ],
++          "note": "发现方一次独立确认：更正报告前缀与修复提交一致；两份boot预设0x003dd20c复算一致；证据范围和计数如实保留。"
+         }
+       ],
+       "found_at": "2026-10-13T22:46:48Z",

@@ -1,0 +1,15 @@
+{
+  "archive": {
+    "path": "artifacts/evidence/f65273516ac3384559bcccfc333d4632800c3c38f08fd4e82165261cf69b90f1/nomount-evidence.tar.gz",
+    "sha256": "f65273516ac3384559bcccfc333d4632800c3c38f08fd4e82165261cf69b90f1",
+    "size": 2993544
+  },
+  "entries": 405,
+  "expanded_bytes": 22696226,
+  "manifest_sha256": "6afa01e6ec745e4a0edc0917a5e43ff90e1c699f9ba6b53dc89474b5332938c3",
+  "mode": "parallel-trial",
+  "module": "nomount",
+  "schema": 1,
+  "snapshot_commit": "6d538d4b44d8065c35d01c1f8cab4a95c3308f88",
+  "unique_files": 344
+}

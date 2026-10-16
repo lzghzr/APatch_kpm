@@ -1,0 +1,149 @@
+{
+  "existing_selftests": [
+    {
+      "name": "signature_parity",
+      "pass": true
+    },
+    {
+      "name": "acceptance_binding",
+      "pass": true
+    },
+    {
+      "name": "exploration_delivery",
+      "pass": true
+    },
+    {
+      "name": "version_history",
+      "pass": true
+    },
+    {
+      "name": "version_declared_lag",
+      "pass": true
+    },
+    {
+      "name": "identity_conflict",
+      "pass": true
+    },
+    {
+      "name": "cleanup_protection",
+      "pass": true
+    },
+    {
+      "name": "incomplete_identity",
+      "pass": true
+    },
+    {
+      "name": "harness_no_kallsyms_skip",
+      "pass": true
+    },
+    {
+      "name": "freeze_check_classification",
+      "pass": true
+    },
+    {
+      "name": "tester_watchdog_semantics",
+      "pass": true
+    },
+    {
+      "name": "signature_reverification",
+      "pass": true
+    },
+    {
+      "name": "delivery_flattened_history",
+      "pass": true
+    },
+    {
+      "name": "delivery_missing_module",
+      "pass": true
+    },
+    {
+      "name": "handoff_payload_schema",
+      "pass": true
+    },
+    {
+      "name": "handoff_registration",
+      "pass": true
+    },
+    {
+      "name": "candidate_strict_fields",
+      "pass": true
+    },
+    {
+      "name": "record_write_scope",
+      "pass": true
+    },
+    {
+      "name": "candidate_build_transaction",
+      "pass": true
+    },
+    {
+      "name": "acceptance_append_history",
+      "pass": true
+    },
+    {
+      "name": "archived_module_name",
+      "pass": true
+    },
+    {
+      "name": "identity_tokens",
+      "pass": true
+    },
+    {
+      "name": "report_versions",
+      "pass": true
+    },
+    {
+      "name": "referenced_reports_archived",
+      "pass": true
+    },
+    {
+      "name": "report_version_commits",
+      "pass": true
+    },
+    {
+      "name": "identity_submodule_blob",
+      "pass": true
+    },
+    {
+      "name": "legacy_info_metadata",
+      "pass": true
+    },
+    {
+      "name": "structure_core",
+      "pass": true
+    },
+    {
+      "name": "issue_closure_ceremony",
+      "pass": true
+    },
+    {
+      "name": "device_test_binding",
+      "pass": true
+    },
+    {
+      "name": "readme_heading_note",
+      "pass": true
+    },
+    {
+      "name": "hygiene_cjk_text",
+      "pass": true
+    },
+    {
+      "name": "artifact_prefix_case",
+      "pass": true
+    }
+  ],
+  "cases": {
+    "camel_project": true,
+    "wrong_name_rejected": true,
+    "wrong_version_rejected": true,
+    "artifact_set_camel": true,
+    "artifact_set_wrong_rejected": true,
+    "case_collision_rejected": true,
+    "filename_exact_rejected": true,
+    "ci_ordinary": true,
+    "ci_real_debug": true,
+    "ci_broken_debug": true
+  },
+  "scope": "Developer scratch-copy verification; maintainer policy not applied"
+}

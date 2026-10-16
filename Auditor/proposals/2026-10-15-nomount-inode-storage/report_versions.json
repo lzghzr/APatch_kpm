@@ -1,0 +1,62 @@
+[
+  {
+    "path": "Auditor/reports/2026-10-15-nomount-inode-storage-audit.md",
+    "sha256": "88f092d2cdd59459accf9096109a6549a77c5019ee6c51bb743dfb56cb4e2ef4",
+    "size": 11094,
+    "append_only_baseline": {
+      "sha256": "88f092d2cdd59459accf9096109a6549a77c5019ee6c51bb743dfb56cb4e2ef4",
+      "size": 11094,
+      "commit": null,
+      "kind": "archived",
+      "note": "Auditor 检查点提交的首次入库版本（nomount inode storage 修复候选审计报告）"
+    },
+    "versions": [
+      {
+        "sha256": "88f092d2cdd59459accf9096109a6549a77c5019ee6c51bb743dfb56cb4e2ef4",
+        "size": 11094,
+        "commit": null,
+        "pending_commit": true
+      }
+    ]
+  },
+  {
+    "path": "Auditor/reports/data/2026-10-15-nomount-inode-storage-artifact-audit.json",
+    "sha256": "d0a17155ff4c579a71e84af826cc3c57a8fd6ac8b6cb652b7938a414e6fb3fa9",
+    "size": 2486826,
+    "append_only_baseline": {
+      "sha256": "d0a17155ff4c579a71e84af826cc3c57a8fd6ac8b6cb652b7938a414e6fb3fa9",
+      "size": 2486826,
+      "commit": null,
+      "kind": "archived",
+      "note": "Auditor 检查点提交的首次入库版本（nomount inode storage 修复候选产物审计数据）"
+    },
+    "versions": [
+      {
+        "sha256": "d0a17155ff4c579a71e84af826cc3c57a8fd6ac8b6cb652b7938a414e6fb3fa9",
+        "size": 2486826,
+        "commit": null,
+        "pending_commit": true
+      }
+    ]
+  },
+  {
+    "path": "Auditor/reports/data/2026-10-15-nomount-inode-storage-static-scan.json",
+    "sha256": "24929a2e9138556351b6ff7926c6bde38e4ecae77a32dc5125c18b139b124d84",
+    "size": 9550,
+    "append_only_baseline": {
+      "sha256": "24929a2e9138556351b6ff7926c6bde38e4ecae77a32dc5125c18b139b124d84",
+      "size": 9550,
+      "commit": null,
+      "kind": "archived",
+      "note": "Auditor 检查点提交的首次入库版本（nomount inode storage 修复候选静态扫描数据）"
+    },
+    "versions": [
+      {
+        "sha256": "24929a2e9138556351b6ff7926c6bde38e4ecae77a32dc5125c18b139b124d84",
+        "size": 9550,
+        "commit": null,
+        "pending_commit": true
+      }
+    ]
+  }
+]

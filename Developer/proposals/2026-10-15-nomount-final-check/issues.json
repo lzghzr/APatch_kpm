@@ -1,0 +1,51 @@
+{
+  "module": "nomount",
+  "kind": "issue-proposal",
+  "proposed_by": "Developer",
+  "analysis_commit": "58e26a87ce1f92dcf2b322dc6d05b1bc34a51ec2",
+  "identities": [
+    {
+      "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+      "instance_id": "nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264#1",
+      "artifact_sha256": "1ab36727b82cab1723da56f6f82273ff1fee57071836b8992f4e3d26ad40e1fa"
+    },
+    {
+      "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+      "instance_id": "nomount-2.1.1-20261014_baselines+g9f323cd3deaa.r98bc011c.kpb51197a.ndk26.3.11579264#1",
+      "artifact_sha256": "b45ea0e0f0dca680fe33430f12b0006ce473c5bf25bb5a3a15a7a96fdba4dc43"
+    }
+  ],
+  "report": "Developer/proposals/2026-10-15-nomount-final-check/README.md",
+  "issues": [
+    {
+      "id": "DEV-043",
+      "class": "record",
+      "severity": "低",
+      "owner": "维护者",
+      "status": "open",
+      "title": "当前候选的发布与审计、风险范围登记尚未完整对齐",
+      "evidence": "检查提交58e26a87ce1f92dcf2b322dc6d05b1bc34a51ec2：metadata/modules/nomount.json status=candidate、deliveries为空；两个g9f323cd3deaa当前验收实例在audits数组中均无条目，但acceptances引用有效审计报告；RA-002 scope_extensions.covers_instances只列旧实例，当前实例未明确包含。",
+      "impact": "本地交付与审计、风险接受的实例追溯缺项；未验证远程发布状态，不推断代码运行故障。",
+      "suggestion": "维护者对齐交付记录，补当前实例审计索引；补充RA-002范围记录或明确当前验收构成扩围授权的依据。",
+      "closure": "维护者完成记录对齐，Developer或Auditor核对完整实例、报告与产物哈希、风险范围后独立复核。",
+      "frequency": "高频",
+      "confidence": "已确认",
+      "closed_by": null
+    },
+    {
+      "id": "DEV-044",
+      "class": "record",
+      "severity": "低",
+      "owner": "Auditor",
+      "status": "open",
+      "title": "5.15 Delta裁定的192字节对齐论据含算术错误",
+      "evidence": "Auditor/reports/2026-10-15-nomount-tail-anchors-audit.md §7.2第4项称inode_ops_size=256、dentry_ops_size=192两者均为128整数倍；实际192%128=64。",
+      "impact": "该论据不成立，需要Auditor说明更正是否影响5.15证据绑定；未据此确证生产代码或设备故障。",
+      "suggestion": "Auditor追加更正算式，核对目标原生对齐、私有头与第二表位移，确认Delta绑定结论的适用范围。",
+      "closure": "Auditor追加有证据的更正与结论说明，由Developer或维护者独立核对；原报告与既有测试断言保留。",
+      "frequency": "高频",
+      "confidence": "已确认",
+      "closed_by": null
+    }
+  ]
+}

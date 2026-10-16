@@ -146,7 +146,11 @@
       "instance_id": "re_kernel_static-8.0.0_abi3+g40f56f1e1476.rc6e986ec.kpb51197a.ndk26.3.11579264#1",
       "imported_by": "维护者",
       "imported_at": "2026-10-03T03:48:19Z",
-      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json"
+      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json",
+      "artifact_state": "not-retained",
+      "artifact_state_note": "模块 re_kernel_static 更名为 re_kernel_x，旧命名产物不再保留（用户有意删除）",
+      "artifact_state_recorded_at": "2026-10-14T18:08:16Z",
+      "artifact_state_recorded_by": "维护者"
     },
     {
       "module": "re_kernel_static",
@@ -287,7 +291,11 @@
       "instance_id": "re_kernel_static-8.0.0_abi3_debug+g40f56f1e1476.r6b018c83.kpb51197a.ndk26.3.11579264#1",
       "imported_by": "维护者",
       "imported_at": "2026-10-03T03:48:19Z",
-      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json"
+      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json",
+      "artifact_state": "not-retained",
+      "artifact_state_note": "模块 re_kernel_static 更名为 re_kernel_x，旧命名产物不再保留（用户有意删除）",
+      "artifact_state_recorded_at": "2026-10-14T18:08:16Z",
+      "artifact_state_recorded_by": "维护者"
     },
     {
       "module": "re_kernel_static",
@@ -428,7 +436,11 @@
       "instance_id": "re_kernel_static-8.0.0_abi4+g40f56f1e1476.red25fa6f.kpb51197a.ndk26.3.11579264#1",
       "imported_by": "维护者",
       "imported_at": "2026-10-03T03:48:20Z",
-      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json"
+      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json",
+      "artifact_state": "not-retained",
+      "artifact_state_note": "模块 re_kernel_static 更名为 re_kernel_x，旧命名产物不再保留（用户有意删除）",
+      "artifact_state_recorded_at": "2026-10-14T18:08:16Z",
+      "artifact_state_recorded_by": "维护者"
     },
     {
       "module": "re_kernel_static",
@@ -569,7 +581,11 @@
       "instance_id": "re_kernel_static-8.0.0_abi4_debug+g40f56f1e1476.r21a27d69.kpb51197a.ndk26.3.11579264#1",
       "imported_by": "维护者",
       "imported_at": "2026-10-03T03:48:20Z",
-      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json"
+      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json",
+      "artifact_state": "not-retained",
+      "artifact_state_note": "模块 re_kernel_static 更名为 re_kernel_x，旧命名产物不再保留（用户有意删除）",
+      "artifact_state_recorded_at": "2026-10-14T18:08:16Z",
+      "artifact_state_recorded_by": "维护者"
     },
     {
       "module": "re_kernel_static",
@@ -710,7 +726,11 @@
       "instance_id": "re_kernel_static-8.0.0_abi5+g40f56f1e1476.r2298d412.kpb51197a.ndk26.3.11579264#1",
       "imported_by": "维护者",
       "imported_at": "2026-10-03T03:48:20Z",
-      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json"
+      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json",
+      "artifact_state": "not-retained",
+      "artifact_state_note": "模块 re_kernel_static 更名为 re_kernel_x，旧命名产物不再保留（用户有意删除）",
+      "artifact_state_recorded_at": "2026-10-14T18:08:16Z",
+      "artifact_state_recorded_by": "维护者"
     },
     {
       "module": "re_kernel_static",
@@ -851,7 +871,11 @@
       "instance_id": "re_kernel_static-8.0.0_abi5_debug+g40f56f1e1476.r20f6465d.kpb51197a.ndk26.3.11579264#1",
       "imported_by": "维护者",
       "imported_at": "2026-10-03T03:48:20Z",
-      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json"
+      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json",
+      "artifact_state": "not-retained",
+      "artifact_state_note": "模块 re_kernel_static 更名为 re_kernel_x，旧命名产物不再保留（用户有意删除）",
+      "artifact_state_recorded_at": "2026-10-14T18:08:16Z",
+      "artifact_state_recorded_by": "维护者"
     },
     {
       "module": "re_kernel_static",
@@ -992,7 +1016,11 @@
       "instance_id": "re_kernel_static-8.0.0_abi6+g40f56f1e1476.r359585c3.kpb51197a.ndk26.3.11579264#1",
       "imported_by": "维护者",
       "imported_at": "2026-10-03T03:48:21Z",
-      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json"
+      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json",
+      "artifact_state": "not-retained",
+      "artifact_state_note": "模块 re_kernel_static 更名为 re_kernel_x，旧命名产物不再保留（用户有意删除）",
+      "artifact_state_recorded_at": "2026-10-14T18:08:16Z",
+      "artifact_state_recorded_by": "维护者"
     },
     {
       "module": "re_kernel_static",
@@ -1133,7 +1161,11 @@
       "instance_id": "re_kernel_static-8.0.0_abi6_debug+g40f56f1e1476.rd4d7118b.kpb51197a.ndk26.3.11579264#1",
       "imported_by": "维护者",
       "imported_at": "2026-10-03T03:48:21Z",
-      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json"
+      "handoff_manifest": "Developer/reports/handoffs/2026-10-02-re-kernel-static-style-candidate.json",
+      "artifact_state": "not-retained",
+      "artifact_state_note": "模块 re_kernel_static 更名为 re_kernel_x，旧命名产物不再保留（用户有意删除）",
+      "artifact_state_recorded_at": "2026-10-14T18:08:16Z",
+      "artifact_state_recorded_by": "维护者"
     }
   ],
   "audits": [],
@@ -1174,7 +1206,7 @@
   ],
   "acceptances": [],
   "deliveries": [],
-  "updated_at": "2026-10-03T07:02:08.099830+00:00",
+  "updated_at": "2026-10-14T18:13:23Z",
   "updated_by": "维护者",
   "superseded_by": "re_kernel_x",
   "archived_at": "2026-10-03T07:02:08.099830+00:00",
@@ -1184,6 +1216,42 @@
       "by": "维护者",
       "scope": "历史模块归档",
       "note": "源码已迁移为 re_kernel_x；保留历史构建与问题。版本门禁从历史冻结提交读取 KPM_NAME 核对旧产物，当前源码按现行模块检查。"
+    },
+    {
+      "at": "2026-10-14T18:07:04Z",
+      "by": "维护者",
+      "scope": "产物恢复：8 份 re_kernel_static 产物从规范路径 `artifacts/<instance>/` 消失（外部清理所致），已用 `local/` 下哈希一致的副本逐份恢复并复算 SHA-256 通过。",
+      "record": "metadata/modules/re_kernel_static.json#builds",
+      "verification": "恢复后 8/8 与登记哈希一致；严格门禁 identity_hashes 通过。",
+      "pending": "提醒：`artifacts/` 与 `local/` 均不受版本控制，清理时不得删除 artifacts 下已登记实例的产物。"
+    },
+    {
+      "at": "2026-10-14T18:08:16Z",
+      "by": "维护者",
+      "scope": "更正：8 份 re_kernel_static 产物系**用户有意删除**（项目更名后旧命名产物不保留），非意外缺失；维护者此前的恢复已按用户意图退回，构建记录改标 `artifact_state=not-retained`。",
+      "record": "metadata/modules/re_kernel_static.json#builds[].artifact_state",
+      "verification": "删除前逐条校验绝对路径在 artifacts/ 下且目录内仅该文件；门禁对该状态按已登记的有意缺失处理。",
+      "pending": "确认更名范围（仓库名/产物命名），以及其它历史模块是否同样不保留。"
+    },
+    {
+      "at": "2026-10-14T18:11:57Z",
+      "by": "维护者",
+      "scope": "更正不保留原因（用户澄清：属产品/产物命名改名，非仓库改名）；仓库远端与 README 名称不变。",
+      "record": "metadata/modules/re_kernel_static.json#builds[].artifact_state_note",
+      "verification": "原因与用户澄清一致；远端 origin 与 README 标题未变，故不改仓库名。",
+      "pending": "无"
+    },
+    {
+      "at": "2026-10-14T18:13:23Z",
+      "by": "维护者",
+      "scope": "登记改名关系：re_kernel_static → re_kernel_x（用户澄清）；旧命名产物 not-retained 原因同步更正。",
+      "record": "metadata/modules/re_kernel_static.json#renamed_to",
+      "verification": "模块目录 re_kernel_static 已不存在、re_kernel_x 存在；既有 superseded_by 与本条一致。",
+      "pending": "无"
     }
-  ]
+  ],
+  "renamed_to": "re_kernel_x",
+  "renamed_at": "2026-10-14T18:13:23Z",
+  "renamed_by": "用户",
+  "rename_note": "模块 `re_kernel_static` 更名为 `re_kernel_x`：模块目录已改名，旧命名产物不再保留（用户有意删除）。既有 `superseded_by=re_kernel_x` 与 `status=archived` 保持不变；本文件作为历史登记保留。"
 }

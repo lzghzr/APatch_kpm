@@ -1,0 +1,40 @@
+[
+  {
+    "instance_id": "nomount-2.1.1-20261014+g4b49827eb674.ra2d2c48f.kpb51197a.ndk26.3.11579264#1",
+    "source_commit": "b4cf78daff053dea0b5ca987b33782f6bbfda552",
+    "artifacts": {
+      "NoMount_2.1.1-20261014.kpm": "1db32ea9a394164a6d3fde01d94875c516eafff953a30bd9ced6ea1c8b7e66ea"
+    },
+    "report": "Auditor/reports/2026-10-15-nomount-operation-extents-audit.md",
+    "report_sha256": "b1fde3312db045b59260b11b1b0038488a8a9daf0f5bc6347d584ff026ef8fa5",
+    "data": "Auditor/reports/data/2026-10-15-nomount-operation-extents-artifact-audit.json",
+    "data_sha256": "ff9bbf8c48069da2cb345d72181588de0a024e4292d03ed62db1f8bd2b84ca5a",
+    "static_scan": "Auditor/reports/data/2026-10-15-nomount-operation-extents-static-scan.json",
+    "static_scan_sha256": "61aa2629acdf4642ed1bf262e8b807ad77103a40cc56c0d29a77ac30af3a25ce",
+    "audit_commit": null,
+    "variant": "base",
+    "offset_mode": "dynamic",
+    "scope": "操作表尺寸补齐探索审计：2 款探索件沙箱无缓存重编译 100% 吻合；4.4 动态派生件由最新 KP 源码二进制变换生成且收据可追溯；数学与几何严密证明 inode_ops（256B）、super_ops（280/232B）、dentry_ops（192/128B）末端片段与自然对齐推导成立；112 字节前缀与指令上限探针无过读风险；明确支持范围仅限 Case 1（Sony 4.19）与 Case 2（Nokia 4.4）两种几何，AUD-001 风险范围收窄至 key_type 但维持开放；同意 Tester 开展三趟探索真机实测（4.19 动态、4.4 legacy-kp 动态、5.15 BTF 回归）。",
+    "recorded_at": "2026-10-15T12:20:00Z",
+    "recorded_by": "维护者"
+  },
+  {
+    "instance_id": "nomount-2.1.1-20261014_baselines+g4b49827eb674.rdaba8f18.kpb51197a.ndk26.3.11579264#1",
+    "source_commit": "b4cf78daff053dea0b5ca987b33782f6bbfda552",
+    "artifacts": {
+      "NoMount_2.1.1-20261014_baselines.kpm": "77a5baa38d3072c4fb63da4cb70b286d83d93cf06fa06179b8c4125f9c2bc15a"
+    },
+    "report": "Auditor/reports/2026-10-15-nomount-operation-extents-audit.md",
+    "report_sha256": "b1fde3312db045b59260b11b1b0038488a8a9daf0f5bc6347d584ff026ef8fa5",
+    "data": "Auditor/reports/data/2026-10-15-nomount-operation-extents-artifact-audit.json",
+    "data_sha256": "ff9bbf8c48069da2cb345d72181588de0a024e4292d03ed62db1f8bd2b84ca5a",
+    "static_scan": "Auditor/reports/data/2026-10-15-nomount-operation-extents-static-scan.json",
+    "static_scan_sha256": "61aa2629acdf4642ed1bf262e8b807ad77103a40cc56c0d29a77ac30af3a25ce",
+    "audit_commit": null,
+    "variant": "baselines",
+    "offset_mode": "static",
+    "scope": "操作表尺寸补齐探索审计：2 款探索件沙箱无缓存重编译 100% 吻合；4.4 动态派生件由最新 KP 源码二进制变换生成且收据可追溯；数学与几何严密证明 inode_ops（256B）、super_ops（280/232B）、dentry_ops（192/128B）末端片段与自然对齐推导成立；112 字节前缀与指令上限探针无过读风险；明确支持范围仅限 Case 1（Sony 4.19）与 Case 2（Nokia 4.4）两种几何，AUD-001 风险范围收窄至 key_type 但维持开放；同意 Tester 开展三趟探索真机实测（4.19 动态、4.4 legacy-kp 动态、5.15 BTF 回归）。",
+    "recorded_at": "2026-10-15T12:20:00Z",
+    "recorded_by": "维护者"
+  }
+]

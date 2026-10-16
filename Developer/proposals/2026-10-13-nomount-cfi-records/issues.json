@@ -1,0 +1,42 @@
+{
+  "module": "nomount",
+  "source_commit": "c35ecd34ecb6a06c1d54ebda6e6a0e900065f16a",
+  "append_issues": [
+    {
+      "id": "DEV-033",
+      "class": "record",
+      "severity": "中",
+      "owner": "Tester",
+      "status": "open",
+      "title": "CFI 成功判据缺少直接证据",
+      "evidence": "两份4.19 boot-live报告只引用 bypass_kcfi done:0；冻结 SDK 在 slowpath 地址为空时也可返回0。",
+      "impact": "CFI 加载前条件的记录不可按现有摘要复算。",
+      "suggestion": "绑定实际 KP 构建身份，并补充每次运行直接挂接证据；无法取得则追加未验证状态及计数更正。",
+      "closure": "Tester 追加更正后，Developer 或 Auditor 独立核对身份、已有日志及计数，维护者同步关闭。",
+      "frequency": "本轮报告中出现",
+      "confidence": "已确认记录差异；实际挂接状态待补证",
+      "found_in_build": "nomount-0.1.0_baselines+g5dd2d5ca48b7.rde831ef7.kpb51197a.ndk26.3.11579264#1",
+      "fixed_in_commit": null,
+      "closed_by": null,
+      "reviews": []
+    },
+    {
+      "id": "DEV-034",
+      "class": "record",
+      "severity": "中",
+      "owner": "Auditor",
+      "status": "open",
+      "title": "CFI 日志要求与引用 SDK 的输出分支不符",
+      "evidence": "审计3.5节要求 error:0 日志；冻结SDK secpass.c:87-93 只在 if(err) 内输出该日志。",
+      "impact": "CFI 加载前条件的记录不可按现有摘要复算。",
+      "suggestion": "追加实际 KP 可取得的挂接证据要求，说明源码分支、符号地址、挂接结果和VFS实测的证明边界。",
+      "closure": "Auditor 追加更正后，Developer 独立核对引用分支与修订判据，维护者同步关闭。",
+      "frequency": "本轮报告中出现",
+      "confidence": "已确认记录差异；实际挂接状态待补证",
+      "found_in_build": "nomount-0.1.0_baselines+g5dd2d5ca48b7.rde831ef7.kpb51197a.ndk26.3.11579264#1",
+      "fixed_in_commit": null,
+      "closed_by": null,
+      "reviews": []
+    }
+  ]
+}

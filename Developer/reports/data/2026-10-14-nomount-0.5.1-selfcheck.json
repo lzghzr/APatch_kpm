@@ -1,0 +1,1881 @@
+{
+  "module": "nomount",
+  "version": "0.5.1",
+  "source_commit": "cfb971d195d997808b68567b8ffc61a4dcd32b90",
+  "scope": "Developer host checks and read-only device diagnosis; not independent audit or new candidate runtime acceptance",
+  "contracts": {
+    "scope": "Developer full Oracle migration plus native-LSM stubs; requires independent review and target SELinux-domain testing",
+    "results": [
+      {
+        "abi": "int",
+        "oracle_sha256": "41f7f250e1754bac0a613ff36432b6c0b07d28fa947f7452754563e56cff2c89",
+        "original_assertions": 735,
+        "unchanged_assertions": 733,
+        "assertion_migration": [
+          {
+            "index": 710,
+            "old": "assert(nm_inode_matches_binding(file_inode,&backing_path,NULL,0));",
+            "new": "assert(nm_inode_matches_binding(file_inode,&backing_path,NULL,0,1));",
+            "reason": "binding match adds the fixture source SID argument; other conditions preserved"
+          },
+          {
+            "index": 711,
+            "old": "assert(!nm_inode_matches_binding(file_inode,&wrong,NULL,0)&&!nm_inode_matches_binding(file_inode,&backing_path,NULL,NM_FLAG_IS_DIR));",
+            "new": "assert(!nm_inode_matches_binding(file_inode,&wrong,NULL,0,1)&&!nm_inode_matches_binding(file_inode,&backing_path,NULL,NM_FLAG_IS_DIR,1));",
+            "reason": "binding match adds the fixture source SID argument; other conditions preserved"
+          }
+        ],
+        "total_assertions": 786,
+        "generated_sha256": "26297ab9f52eb9778e31598c3f910c7529325d5ea40cc3ae07ec8ba8451e02c7",
+        "stdout": "inode materialization, full super table preservation, error cleanup and backing lifetime: PASS\nnative-parent lookup, UID cache validation, enumeration, cookies and proxy cleanup: PASS\nvirtual-directory inode reuse, child lookup, dot entries, UID visibility and retirement: PASS\ntopology publication, 15 fresh-parent and 18 cached-parent allocation failures, pruning and live-inode retirement: PASS\nbacking path ownership, native errors, merged enumeration, dot identity, UID and seek: PASS\nbacked inode cache, source permission, recursive lookup, cache refresh and path retirement: PASS\nmanaged backing subtrees, UID sources, search ACL, refresh, 17 allocation failures and retirement: PASS\nkeyring transport, command batches, mutex contracts, paging and rule replay: PASS\nexplicit ABI rejection, pair hash, native pair getattr, mount callbacks and kstat byte boundaries: PASS\nmount/plain permissions, complete subtree preparation, namespace selection, errors and typed getattr: PASS\npre/post/runtime events, dependency/BTF/registration errors, allocation cleanup, status and resident exit: PASS\nsmall-child collision and 2/3 transition, zero full hash for tiny lookup; UID collision/delete/limits/failures: PASS\nprivate memory: slab zero/alignment/boundaries, fallback and total failure, process and RCU free pairing: PASS\nindependent inode binding: rule freed while inode alive, same-source cache reuse, owner changes and initialization, path/node cleanup: PASS\nnative security context: SID/class transfer, mmap retention, source/parent relabel, cache reuse, allocation/notify failures and I_NEW waiter cleanup: PASS\n"
+      },
+      {
+        "abi": "bool",
+        "oracle_sha256": "2b8c3e569cf8a7e99aba4da018b350041583dbacfc66ab28a343cc18e8636ae6",
+        "original_assertions": 735,
+        "unchanged_assertions": 733,
+        "assertion_migration": [
+          {
+            "index": 710,
+            "old": "assert(nm_inode_matches_binding(file_inode,&backing_path,NULL,0));",
+            "new": "assert(nm_inode_matches_binding(file_inode,&backing_path,NULL,0,1));",
+            "reason": "binding match adds the fixture source SID argument; other conditions preserved"
+          },
+          {
+            "index": 711,
+            "old": "assert(!nm_inode_matches_binding(file_inode,&wrong,NULL,0)&&!nm_inode_matches_binding(file_inode,&backing_path,NULL,NM_FLAG_IS_DIR));",
+            "new": "assert(!nm_inode_matches_binding(file_inode,&wrong,NULL,0,1)&&!nm_inode_matches_binding(file_inode,&backing_path,NULL,NM_FLAG_IS_DIR,1));",
+            "reason": "binding match adds the fixture source SID argument; other conditions preserved"
+          }
+        ],
+        "total_assertions": 786,
+        "generated_sha256": "6daa09830187e7ed6eb01f84d82ed68971c51c10cb3ce893f39b4ebb520cafa0",
+        "stdout": "inode materialization, full super table preservation, error cleanup and backing lifetime: PASS\nnative-parent lookup, UID cache validation, enumeration, cookies and proxy cleanup: PASS\nvirtual-directory inode reuse, child lookup, dot entries, UID visibility and retirement: PASS\ntopology publication, 15 fresh-parent and 18 cached-parent allocation failures, pruning and live-inode retirement: PASS\nbacking path ownership, native errors, merged enumeration, dot identity, UID and seek: PASS\nbacked inode cache, source permission, recursive lookup, cache refresh and path retirement: PASS\nmanaged backing subtrees, UID sources, search ACL, refresh, 17 allocation failures and retirement: PASS\nkeyring transport, command batches, mutex contracts, paging and rule replay: PASS\nexplicit ABI rejection, pair hash, native pair getattr, mount callbacks and kstat byte boundaries: PASS\nmount/plain permissions, complete subtree preparation, namespace selection, errors and typed getattr: PASS\npre/post/runtime events, dependency/BTF/registration errors, allocation cleanup, status and resident exit: PASS\nsmall-child collision and 2/3 transition, zero full hash for tiny lookup; UID collision/delete/limits/failures: PASS\nprivate memory: slab zero/alignment/boundaries, fallback and total failure, process and RCU free pairing: PASS\nindependent inode binding: rule freed while inode alive, same-source cache reuse, owner changes and initialization, path/node cleanup: PASS\nnative security context: SID/class transfer, mmap retention, source/parent relabel, cache reuse, allocation/notify failures and I_NEW waiter cleanup: PASS\n"
+      }
+    ]
+  },
+  "native_btf": [
+    {
+      "target": "boot_67.2.A.3.178.img",
+      "input_sha256": "384f6f4915762a2d6e6a2686b590b951df29f8bb053dec2ae7ffe9e7d27af598",
+      "functions": {
+        "security_inode_getsecctx": {
+          "return_type": {
+            "kind": 1,
+            "name": "int",
+            "size": 4,
+            "encoding": 1
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 752
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 2,
+                "pointee": {
+                  "kind": 0,
+                  "name": "void",
+                  "size": 0
+                }
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "unsigned int",
+                "size": 4,
+                "encoding": 0
+              }
+            }
+          ]
+        },
+        "security_inode_notifysecctx": {
+          "return_type": {
+            "kind": 1,
+            "name": "int",
+            "size": 4,
+            "encoding": 1
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 752
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "security_release_secctx": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "char",
+                "size": 1,
+                "encoding": 0
+              }
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "security_inode_getsecid": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 752
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "unsigned int",
+                "size": 4,
+                "encoding": 0
+              }
+            }
+          ]
+        },
+        "iput": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 752
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "target": "kernel_android13-5.10",
+      "input_sha256": "ac4c10349c2b2beb0ff41c02398979cb4238f292b56cd05bb14cb97551cfd65e",
+      "functions": {
+        "security_inode_getsecctx": {
+          "return_type": {
+            "kind": 1,
+            "name": "int",
+            "size": 4,
+            "encoding": 1
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 704
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 2,
+                "pointee": {
+                  "kind": 0,
+                  "name": "void",
+                  "size": 0
+                }
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "unsigned int",
+                "size": 4,
+                "encoding": 0
+              }
+            }
+          ]
+        },
+        "security_inode_notifysecctx": {
+          "return_type": {
+            "kind": 1,
+            "name": "int",
+            "size": 4,
+            "encoding": 1
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 704
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "security_release_secctx": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "char",
+                "size": 1,
+                "encoding": 0
+              }
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "security_inode_getsecid": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 704
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "unsigned int",
+                "size": 4,
+                "encoding": 0
+              }
+            }
+          ]
+        },
+        "iput": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 704
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "target": "kernel_android13-5.15",
+      "input_sha256": "bbc21c0229bed03cd91c27bb69ddcb687be43ea6c2c90ac79ec0aae73cd022e7",
+      "functions": {
+        "security_inode_getsecctx": {
+          "return_type": {
+            "kind": 1,
+            "name": "int",
+            "size": 4,
+            "encoding": 1
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 752
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 2,
+                "pointee": {
+                  "kind": 0,
+                  "name": "void",
+                  "size": 0
+                }
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "unsigned int",
+                "size": 4,
+                "encoding": 0
+              }
+            }
+          ]
+        },
+        "security_inode_notifysecctx": {
+          "return_type": {
+            "kind": 1,
+            "name": "int",
+            "size": 4,
+            "encoding": 1
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 752
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "security_release_secctx": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "char",
+                "size": 1,
+                "encoding": 0
+              }
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "security_inode_getsecid": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 752
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "unsigned int",
+                "size": 4,
+                "encoding": 0
+              }
+            }
+          ]
+        },
+        "iput": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 752
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "target": "kernel_android14-5.15",
+      "input_sha256": "cd92dc6f040011cded0a368c7578a4e891162eaafaa988e1d43a17aea027ed2d",
+      "functions": {
+        "security_inode_getsecctx": {
+          "return_type": {
+            "kind": 1,
+            "name": "int",
+            "size": 4,
+            "encoding": 1
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 752
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 2,
+                "pointee": {
+                  "kind": 0,
+                  "name": "void",
+                  "size": 0
+                }
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "unsigned int",
+                "size": 4,
+                "encoding": 0
+              }
+            }
+          ]
+        },
+        "security_inode_notifysecctx": {
+          "return_type": {
+            "kind": 1,
+            "name": "int",
+            "size": 4,
+            "encoding": 1
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 752
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "security_release_secctx": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "char",
+                "size": 1,
+                "encoding": 0
+              }
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "security_inode_getsecid": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 752
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "unsigned int",
+                "size": 4,
+                "encoding": 0
+              }
+            }
+          ]
+        },
+        "iput": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 752
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "target": "kernel_android14-6.1",
+      "input_sha256": "a6d50a0423819928155e688e2b8b2cd8b5f7647fe87dc56677ca42abab2fe8df",
+      "functions": {
+        "security_inode_getsecctx": {
+          "return_type": {
+            "kind": 1,
+            "name": "int",
+            "size": 4,
+            "encoding": 1
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 704
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 2,
+                "pointee": {
+                  "kind": 0,
+                  "name": "void",
+                  "size": 0
+                }
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "unsigned int",
+                "size": 4,
+                "encoding": 0
+              }
+            }
+          ]
+        },
+        "security_inode_notifysecctx": {
+          "return_type": {
+            "kind": 1,
+            "name": "int",
+            "size": 4,
+            "encoding": 1
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 704
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 0,
+                "name": "void",
+                "size": 0
+              }
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "security_release_secctx": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "char",
+                "size": 1,
+                "encoding": 0
+              }
+            },
+            {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4,
+              "encoding": 0
+            }
+          ]
+        },
+        "security_inode_getsecid": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 704
+              }
+            },
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 1,
+                "name": "unsigned int",
+                "size": 4,
+                "encoding": 0
+              }
+            }
+          ]
+        },
+        "iput": {
+          "return_type": {
+            "kind": 0,
+            "name": "void",
+            "size": 0
+          },
+          "args": [
+            {
+              "kind": 2,
+              "pointee": {
+                "kind": 4,
+                "name": "inode",
+                "size": 704
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "native_symbols": [
+    {
+      "target": "B2N-416G_boot.img",
+      "symbol_input_sha256": "26dfcea65420dd4b5cc4699fab34c428df7a3c22906e7b3a7ecb163899d7662c",
+      "functions": {
+        "iput": {
+          "address": 1475092,
+          "type": "T"
+        },
+        "security_release_secctx": {
+          "address": 2579876,
+          "type": "T"
+        },
+        "security_inode_notifysecctx": {
+          "address": 2579964,
+          "type": "T"
+        },
+        "security_inode_getsecctx": {
+          "address": 2580188,
+          "type": "T"
+        },
+        "security_inode_getsecid": {
+          "address": 2588540,
+          "type": "T"
+        }
+      }
+    },
+    {
+      "target": "boot_los23.2.img",
+      "symbol_input_sha256": "d450f6ed8b84ea52c677b8160b593cb24496db1d5f5ff52dc8c3972a732881d8",
+      "functions": {
+        "iput": {
+          "address": 4949952,
+          "type": "T"
+        },
+        "security_inode_getsecid": {
+          "address": 7020428,
+          "type": "T"
+        },
+        "security_release_secctx": {
+          "address": 7034492,
+          "type": "T"
+        },
+        "security_inode_notifysecctx": {
+          "address": 7034804,
+          "type": "T"
+        },
+        "security_inode_getsecctx": {
+          "address": 7035164,
+          "type": "T"
+        }
+      }
+    },
+    {
+      "target": "boot_67.2.A.3.178.img",
+      "symbol_input_sha256": "97a4f9a244f2f734f9c5e11ec404f1f5ae27063c21d0ec65554d51dd1d5e8843",
+      "functions": {
+        "iput": {
+          "address": 5819628,
+          "type": "T"
+        },
+        "security_inode_getsecid": {
+          "address": 9073864,
+          "type": "T"
+        },
+        "security_release_secctx": {
+          "address": 9089256,
+          "type": "T"
+        },
+        "security_inode_notifysecctx": {
+          "address": 9089592,
+          "type": "T"
+        },
+        "security_inode_getsecctx": {
+          "address": 9089976,
+          "type": "T"
+        }
+      }
+    },
+    {
+      "target": "kernel_android13-5.10",
+      "symbol_input_sha256": "b6e2e742ddaceb4baf4356cdfca0c08e9447a4f4949921583842264d47a82d6a",
+      "functions": {
+        "iput": {
+          "address": 5674008,
+          "type": "T"
+        },
+        "security_inode_getsecid": {
+          "address": 9023300,
+          "type": "T"
+        },
+        "security_release_secctx": {
+          "address": 9037708,
+          "type": "T"
+        },
+        "security_inode_notifysecctx": {
+          "address": 9038020,
+          "type": "T"
+        },
+        "security_inode_getsecctx": {
+          "address": 9038372,
+          "type": "T"
+        }
+      }
+    },
+    {
+      "target": "kernel_android13-5.15",
+      "symbol_input_sha256": "20805e08e26219d0ffd87e1418f0c5f6fbe36e4a74014b66bb6dc12739ce37bb",
+      "functions": {
+        "iput": {
+          "address": 5829576,
+          "type": "T"
+        },
+        "security_inode_getsecid": {
+          "address": 9096920,
+          "type": "T"
+        },
+        "security_release_secctx": {
+          "address": 9112328,
+          "type": "T"
+        },
+        "security_inode_notifysecctx": {
+          "address": 9112664,
+          "type": "T"
+        },
+        "security_inode_getsecctx": {
+          "address": 9113048,
+          "type": "T"
+        }
+      }
+    },
+    {
+      "target": "kernel_android14-5.15",
+      "symbol_input_sha256": "db816cf1df42ba58b74c96e2e3cf986dc8230ba99b4f8113a42a5a2d4adea043",
+      "functions": {
+        "iput": {
+          "address": 5558540,
+          "type": "T"
+        },
+        "security_inode_getsecid": {
+          "address": 8683256,
+          "type": "T"
+        },
+        "security_release_secctx": {
+          "address": 8697992,
+          "type": "T"
+        },
+        "security_inode_notifysecctx": {
+          "address": 8698312,
+          "type": "T"
+        },
+        "security_inode_getsecctx": {
+          "address": 8698672,
+          "type": "T"
+        }
+      }
+    },
+    {
+      "target": "kernel_android14-6.1",
+      "symbol_input_sha256": "047e738413ed5abd18bb18ae2ce457d2c4b1d6522a185cc4279c806054904672",
+      "functions": {
+        "iput": {
+          "address": 3963064,
+          "type": "T"
+        },
+        "security_inode_getsecid": {
+          "address": 6289780,
+          "type": "T"
+        },
+        "security_release_secctx": {
+          "address": 6300208,
+          "type": "T"
+        },
+        "security_inode_notifysecctx": {
+          "address": 6300416,
+          "type": "T"
+        },
+        "security_inode_getsecctx": {
+          "address": 6300672,
+          "type": "T"
+        }
+      }
+    }
+  ],
+  "binary_checks": [
+    {
+      "target": "boot_67.2.A.3.178.img",
+      "base_sha256": "1062ee65515eeed841a423cdab68f7c20de233861266a7f88eb59ccfa628fea8",
+      "derived_sha256": "abe50c726bb7c42a4b21edf8485aef89cf98208c3324a49be5d2877166d9d134",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android13-5.10",
+      "base_sha256": "1062ee65515eeed841a423cdab68f7c20de233861266a7f88eb59ccfa628fea8",
+      "derived_sha256": "7d504ff79aa6eb445363d0ca1d60de92bd7f09db38186765df7ce280b4795fa4",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android13-5.15",
+      "base_sha256": "1062ee65515eeed841a423cdab68f7c20de233861266a7f88eb59ccfa628fea8",
+      "derived_sha256": "abe50c726bb7c42a4b21edf8485aef89cf98208c3324a49be5d2877166d9d134",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android14-5.15",
+      "base_sha256": "1062ee65515eeed841a423cdab68f7c20de233861266a7f88eb59ccfa628fea8",
+      "derived_sha256": "abe50c726bb7c42a4b21edf8485aef89cf98208c3324a49be5d2877166d9d134",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android14-6.1",
+      "base_sha256": "1062ee65515eeed841a423cdab68f7c20de233861266a7f88eb59ccfa628fea8",
+      "derived_sha256": "5fe04b35b244d63600f1639c3fe6cb0f7427871d3a026ea0e901cbb13bcdaad4",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "B2N-416G_boot.img",
+      "base_sha256": "1062ee65515eeed841a423cdab68f7c20de233861266a7f88eb59ccfa628fea8",
+      "derived_sha256": "fb4c0e5e25c4470759058a68e36f5fe8a9e8172fa9f635989c826ff14427cee7",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "boot_los23.2.img",
+      "base_sha256": "1062ee65515eeed841a423cdab68f7c20de233861266a7f88eb59ccfa628fea8",
+      "derived_sha256": "eeae3cec88c20793fcc966f60451c5803fb941e755ed5333e94bd4bc1fba6e57",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "boot_67.2.A.3.178.img",
+      "base_sha256": "d73f812c952e439f7f8dd81234442f367bde7399356e848cf40d1ef46eaf8401",
+      "derived_sha256": "12700d2fe49aabe3efdf05c70c14115982068f5af5d78d1bc6e746bf8146ebd2",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android13-5.10",
+      "base_sha256": "d73f812c952e439f7f8dd81234442f367bde7399356e848cf40d1ef46eaf8401",
+      "derived_sha256": "29b8cf6c03189cf58fbb1c4b2a3df1edc5921dc61ab7abdd6a8696a60c7c8d03",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android13-5.15",
+      "base_sha256": "d73f812c952e439f7f8dd81234442f367bde7399356e848cf40d1ef46eaf8401",
+      "derived_sha256": "12700d2fe49aabe3efdf05c70c14115982068f5af5d78d1bc6e746bf8146ebd2",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android14-5.15",
+      "base_sha256": "d73f812c952e439f7f8dd81234442f367bde7399356e848cf40d1ef46eaf8401",
+      "derived_sha256": "12700d2fe49aabe3efdf05c70c14115982068f5af5d78d1bc6e746bf8146ebd2",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "kernel_android14-6.1",
+      "base_sha256": "d73f812c952e439f7f8dd81234442f367bde7399356e848cf40d1ef46eaf8401",
+      "derived_sha256": "9949c582bc1aa8ec6a40a06796bd8e66960efb51bc0b6e6024849eb755cbdf94",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "B2N-416G_boot.img",
+      "base_sha256": "d73f812c952e439f7f8dd81234442f367bde7399356e848cf40d1ef46eaf8401",
+      "derived_sha256": "22234f60f0bdff9f7b6bb91ffc2655e1f26e125d636414885086be23010573ad",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    },
+    {
+      "target": "boot_los23.2.img",
+      "base_sha256": "d73f812c952e439f7f8dd81234442f367bde7399356e848cf40d1ef46eaf8401",
+      "derived_sha256": "c516e63b9f711dab649166daa795ecbf7d81df9abb905e48b330d3e28b31e6da",
+      "json_blob_equal": true,
+      "restore_base_equal": true,
+      "change_only_92_bytes": true
+    }
+  ],
+  "candidate_checks": {
+    "scope": "Developer candidate fingerprints, real ELF/import/instruction and layout bytes; not independent audit or target runtime",
+    "source_commit": "cfb971d195d997808b68567b8ffc61a4dcd32b90",
+    "candidate_verification": [
+      {
+        "build_id": "nomount-0.5.1+g17d96f6cff64.r512871f4.kpb51197a.ndk26.3.11579264",
+        "instance_id": "nomount-0.5.1+g17d96f6cff64.r512871f4.kpb51197a.ndk26.3.11579264#1",
+        "kind": "candidate",
+        "profile": "candidate",
+        "problems": [],
+        "notes": [
+          "源码核验通过（提交 blob 133 个）"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      },
+      {
+        "build_id": "nomount-0.5.1_baselines+g17d96f6cff64.rf55be15b.kpb51197a.ndk26.3.11579264",
+        "instance_id": "nomount-0.5.1_baselines+g17d96f6cff64.rf55be15b.kpb51197a.ndk26.3.11579264#1",
+        "kind": "candidate",
+        "profile": "candidate",
+        "problems": [],
+        "notes": [
+          "源码核验通过（提交 blob 133 个）"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      },
+      {
+        "build_id": "nomount-0.5.1_baselines_debug+g17d96f6cff64.r5f96b882.kpb51197a.ndk26.3.11579264",
+        "instance_id": "nomount-0.5.1_baselines_debug+g17d96f6cff64.r5f96b882.kpb51197a.ndk26.3.11579264#1",
+        "kind": "candidate",
+        "profile": "candidate",
+        "problems": [],
+        "notes": [
+          "源码核验通过（提交 blob 133 个）"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      },
+      {
+        "build_id": "nomount-0.5.1_debug+g17d96f6cff64.r0b80f597.kpb51197a.ndk26.3.11579264",
+        "instance_id": "nomount-0.5.1_debug+g17d96f6cff64.r0b80f597.kpb51197a.ndk26.3.11579264#1",
+        "kind": "candidate",
+        "profile": "candidate",
+        "problems": [],
+        "notes": [
+          "源码核验通过（提交 blob 133 个）"
+        ],
+        "source_verified": true,
+        "artifacts_verified": 1
+      }
+    ],
+    "artifacts": [
+      {
+        "artifact": {
+          "name": "nomount_0.5.1.kpm",
+          "sha256": "4676fe436e4cdf0e405ff158d80d983b35fd79fc6c0d5ae63f196017adf0725b",
+          "size": 152936,
+          "embedded": {
+            "name": "nomount",
+            "version": "0.5.1",
+            "license": "GPL v2",
+            "author": "maxsteeel, Codex",
+            "description": "NoMount: read-only file and directory views, resident until reboot",
+            "offset_mode": "dynamic",
+            "lifetime": "reboot"
+          },
+          "path": "artifacts/nomount-0.5.1+g17d96f6cff64.r512871f4.kpb51197a.ndk26.3.11579264/nomount_0.5.1.kpm"
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "kf_strncmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 17592,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "name": "nomount_0.5.1_baselines.kpm",
+          "sha256": "1062ee65515eeed841a423cdab68f7c20de233861266a7f88eb59ccfa628fea8",
+          "size": 111928,
+          "embedded": {
+            "name": "nomount",
+            "version": "0.5.1",
+            "license": "GPL v2",
+            "author": "maxsteeel, Codex",
+            "description": "NoMount: read-only file and directory views, resident until reboot",
+            "offset_mode": "static",
+            "lifetime": "reboot"
+          },
+          "path": "artifacts/nomount-0.5.1_baselines+g17d96f6cff64.rf55be15b.kpb51197a.ndk26.3.11579264/nomount_0.5.1_baselines.kpm"
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "name": "nomount_0.5.1_baselines_debug.kpm",
+          "sha256": "d73f812c952e439f7f8dd81234442f367bde7399356e848cf40d1ef46eaf8401",
+          "size": 111936,
+          "embedded": {
+            "name": "nomount",
+            "version": "0.5.1_d",
+            "license": "GPL v2",
+            "author": "maxsteeel, Codex",
+            "description": "NoMount: read-only file and directory views, resident until reboot",
+            "offset_mode": "static",
+            "lifetime": "reboot"
+          },
+          "path": "artifacts/nomount-0.5.1_baselines_debug+g17d96f6cff64.r5f96b882.kpb51197a.ndk26.3.11579264/nomount_0.5.1_baselines_debug.kpm"
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "name": "nomount_0.5.1_debug.kpm",
+          "sha256": "9f0f91cb32d7a237f25a8abc1465c31ff57f70283e04fe60614135efbceeb03e",
+          "size": 152936,
+          "embedded": {
+            "name": "nomount",
+            "version": "0.5.1_d",
+            "license": "GPL v2",
+            "author": "maxsteeel, Codex",
+            "description": "NoMount: read-only file and directory views, resident until reboot",
+            "offset_mode": "dynamic",
+            "lifetime": "reboot"
+          },
+          "path": "artifacts/nomount-0.5.1_debug+g17d96f6cff64.r0b80f597.kpb51197a.ndk26.3.11579264/nomount_0.5.1_debug.kpm"
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "kf_strncmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 17592,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/abe50c726bb7c42a4b21edf8485aef89cf98208c3324a49be5d2877166d9d134/nomount_0.5.1_baselines.kpm",
+          "name": "nomount_0.5.1_baselines.kpm",
+          "sha256": "abe50c726bb7c42a4b21edf8485aef89cf98208c3324a49be5d2877166d9d134",
+          "size": 111928
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/7d504ff79aa6eb445363d0ca1d60de92bd7f09db38186765df7ce280b4795fa4/nomount_0.5.1_baselines.kpm",
+          "name": "nomount_0.5.1_baselines.kpm",
+          "sha256": "7d504ff79aa6eb445363d0ca1d60de92bd7f09db38186765df7ce280b4795fa4",
+          "size": 111928
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/abe50c726bb7c42a4b21edf8485aef89cf98208c3324a49be5d2877166d9d134/nomount_0.5.1_baselines.kpm",
+          "name": "nomount_0.5.1_baselines.kpm",
+          "sha256": "abe50c726bb7c42a4b21edf8485aef89cf98208c3324a49be5d2877166d9d134",
+          "size": 111928
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/abe50c726bb7c42a4b21edf8485aef89cf98208c3324a49be5d2877166d9d134/nomount_0.5.1_baselines.kpm",
+          "name": "nomount_0.5.1_baselines.kpm",
+          "sha256": "abe50c726bb7c42a4b21edf8485aef89cf98208c3324a49be5d2877166d9d134",
+          "size": 111928
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/5fe04b35b244d63600f1639c3fe6cb0f7427871d3a026ea0e901cbb13bcdaad4/nomount_0.5.1_baselines.kpm",
+          "name": "nomount_0.5.1_baselines.kpm",
+          "sha256": "5fe04b35b244d63600f1639c3fe6cb0f7427871d3a026ea0e901cbb13bcdaad4",
+          "size": 111928
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/fb4c0e5e25c4470759058a68e36f5fe8a9e8172fa9f635989c826ff14427cee7/nomount_0.5.1_baselines.kpm",
+          "name": "nomount_0.5.1_baselines.kpm",
+          "sha256": "fb4c0e5e25c4470759058a68e36f5fe8a9e8172fa9f635989c826ff14427cee7",
+          "size": 111928
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/8c50c2cd4a9d3fa3bfcf35437244c99a04e54073c07c3bbd69270c0082041b4e/nomount_0.5.1_baselines.kpm",
+          "name": "nomount_0.5.1_baselines.kpm",
+          "sha256": "8c50c2cd4a9d3fa3bfcf35437244c99a04e54073c07c3bbd69270c0082041b4e",
+          "size": 123568
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10752,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/eeae3cec88c20793fcc966f60451c5803fb941e755ed5333e94bd4bc1fba6e57/nomount_0.5.1_baselines.kpm",
+          "name": "nomount_0.5.1_baselines.kpm",
+          "sha256": "eeae3cec88c20793fcc966f60451c5803fb941e755ed5333e94bd4bc1fba6e57",
+          "size": 111928
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/12700d2fe49aabe3efdf05c70c14115982068f5af5d78d1bc6e746bf8146ebd2/nomount_0.5.1_baselines_debug.kpm",
+          "name": "nomount_0.5.1_baselines_debug.kpm",
+          "sha256": "12700d2fe49aabe3efdf05c70c14115982068f5af5d78d1bc6e746bf8146ebd2",
+          "size": 111936
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/29b8cf6c03189cf58fbb1c4b2a3df1edc5921dc61ab7abdd6a8696a60c7c8d03/nomount_0.5.1_baselines_debug.kpm",
+          "name": "nomount_0.5.1_baselines_debug.kpm",
+          "sha256": "29b8cf6c03189cf58fbb1c4b2a3df1edc5921dc61ab7abdd6a8696a60c7c8d03",
+          "size": 111936
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/12700d2fe49aabe3efdf05c70c14115982068f5af5d78d1bc6e746bf8146ebd2/nomount_0.5.1_baselines_debug.kpm",
+          "name": "nomount_0.5.1_baselines_debug.kpm",
+          "sha256": "12700d2fe49aabe3efdf05c70c14115982068f5af5d78d1bc6e746bf8146ebd2",
+          "size": 111936
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/12700d2fe49aabe3efdf05c70c14115982068f5af5d78d1bc6e746bf8146ebd2/nomount_0.5.1_baselines_debug.kpm",
+          "name": "nomount_0.5.1_baselines_debug.kpm",
+          "sha256": "12700d2fe49aabe3efdf05c70c14115982068f5af5d78d1bc6e746bf8146ebd2",
+          "size": 111936
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/9949c582bc1aa8ec6a40a06796bd8e66960efb51bc0b6e6024849eb755cbdf94/nomount_0.5.1_baselines_debug.kpm",
+          "name": "nomount_0.5.1_baselines_debug.kpm",
+          "sha256": "9949c582bc1aa8ec6a40a06796bd8e66960efb51bc0b6e6024849eb755cbdf94",
+          "size": 111936
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/22234f60f0bdff9f7b6bb91ffc2655e1f26e125d636414885086be23010573ad/nomount_0.5.1_baselines_debug.kpm",
+          "name": "nomount_0.5.1_baselines_debug.kpm",
+          "sha256": "22234f60f0bdff9f7b6bb91ffc2655e1f26e125d636414885086be23010573ad",
+          "size": 111936
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/ef8e0e57771ecc2be5df630f2fe7e742d30a357aa9e113af6fa2f132bca33cbf/nomount_0.5.1_baselines_debug.kpm",
+          "name": "nomount_0.5.1_baselines_debug.kpm",
+          "sha256": "ef8e0e57771ecc2be5df630f2fe7e742d30a357aa9e113af6fa2f132bca33cbf",
+          "size": 123576
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10752,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      },
+      {
+        "artifact": {
+          "path": "artifacts/binary-port/nomount/c516e63b9f711dab649166daa795ecbf7d81df9abb905e48b330d3e28b31e6da/nomount_0.5.1_baselines_debug.kpm",
+          "name": "nomount_0.5.1_baselines_debug.kpm",
+          "sha256": "c516e63b9f711dab649166daa795ecbf7d81df9abb905e48b330d3e28b31e6da",
+          "size": 111936
+        },
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ],
+        "sdk_exports_resolved": true,
+        "instructions": 10749,
+        "fp_simd_sve_x18_operands": 0,
+        "elf_and_layout": "PASS"
+      }
+    ],
+    "original_oracle_files_unchanged": 24
+  },
+  "surface_checks": {
+    "source_commit": "cfb971d195d997808b68567b8ffc61a4dcd32b90",
+    "frozen_oracle_scripts_unchanged": 35,
+    "original_oracle_script_hashes": {
+      "nomount/tools/test_backing_directory.py": "b976e53d4dd65a62c3cda3444f6640d6b7743dc658b0d6cdbf66e5126cbe693b",
+      "nomount/tools/test_backing_directory_layout.py": "2fa09b63b6520210575597294efc047b8f88edebb11d96f6eb869e11e8ab6f20",
+      "nomount/tools/test_backing_inode.py": "0c5278826869d9c76c839760dd8114bcf2ee01bbc089899d700d492286f32ca9",
+      "nomount/tools/test_backing_inode_layout.py": "d71832fa5647fbebdff7ca3d8499435fe6c67e7ddb9a05ff0855f2916dd89afc",
+      "nomount/tools/test_backing_subtree.py": "fdf5646a5361427da48ad239fe9519d073b1c78c5db4e5177b0ba476322fc636",
+      "nomount/tools/test_call_abis.py": "6d6e4ba5bf250ad5442e08e3c1bcec59831d90171910d272bc0bff993b20a1ef",
+      "nomount/tools/test_control.py": "db88c53f647bceec4e0337158e486172fb8a62374d515cc3d7c23e9da244854b",
+      "nomount/tools/test_control_layout.py": "be150f8dfb338e43d381e0c92c25250238cc83241c5b5aab6cab38c86e80108d",
+      "nomount/tools/test_directory.py": "6fc61ebca92dd138c1a188faaec0c2aa9c8cc584f393728aae1e8c0641aa21e8",
+      "nomount/tools/test_directory_abis.py": "69f4fe63d03e3efd7c93a18d8dc27252238732836c525105538c0973aeeaca46",
+      "nomount/tools/test_directory_btf.py": "efddf26f103bc04ed7ef529895d01616441139fb4de67de2948021d1e19fb1e0",
+      "nomount/tools/test_directory_layout.py": "2bc72e9348a9f713bc0fa2666088929fbc319c96442b454b2728834becd64ff9",
+      "nomount/tools/test_file.py": "86721f3213cfb792add846c9c31ddef5245c44f0ac7d84e4ace66bf0fe443f9b",
+      "nomount/tools/test_file_layout.py": "b42123c896a330a90a151d8598507eac50fdb1277e91bf1e1816c4a78c06d54c",
+      "nomount/tools/test_hotpath_rules.py": "2bd3714a5475c241e4e696578fe1056d295edbbaae5d6945747776e4395d6688",
+      "nomount/tools/test_inode.py": "9d81d278fdca22d231ce93d73ad396c0e840d4808170232ee4b14dd0b10d17d8",
+      "nomount/tools/test_inode_binding.py": "e6acf04158a886cd7518def2259b3cce9b245dcce0e9be8e4af73726b76696cd",
+      "nomount/tools/test_inode_layout.py": "f493fd30946f76f5a1ba224b44ab7f3a29c4a75428551ab41802264bf29944d3",
+      "nomount/tools/test_inspect_target.py": "cf330ddb86754489e1e615cf0296e220b276b9694e31aa8ff32e646e18750216",
+      "nomount/tools/test_kpm.py": "a424faa647972950e5d50d9833baab1b396e1527830fde6c7eff0dcf7d3a1ad3",
+      "nomount/tools/test_layout.py": "f5af6d8e5231531ae15141f4abc5a4e12ad55216f4a20b9ff7a2d18c2a423e0c",
+      "nomount/tools/test_load_events.py": "683334568ff3ea392edb945576187b473ac2007fc7c1693313fd73cebf06a230",
+      "nomount/tools/test_memory.py": "500ac7b6b423f25a4d7b5d341aa41004d5ad2465c5accbd5edd4a62192b94425",
+      "nomount/tools/test_mount_abis.py": "7fada16a0e10c68759392b69c8fe5581f129552754c16cd71c956e43920ac1a2",
+      "nomount/tools/test_native.py": "e1f84c2bcd4a8ca95fd37a5dfaa33b28672fc54be380a24cc9f0558a09b462f0",
+      "nomount/tools/test_native_memory.py": "567d3e1b8f8c38dbbe7dcf71cba0c7a8d840efd4b89a91a8125923e861d7a821",
+      "nomount/tools/test_rule_layout.py": "97484e8534d87bc4a02f776a759ccfd376d53196acd8e7848439eafcffa65049",
+      "nomount/tools/test_rules.py": "51182e51219e3807caad221a4adddd9e69a2f7e05ecb1dc895e05bac0fc174fb",
+      "nomount/tools/test_target_layout.py": "7dd7db4171f033d18afd43232dc0035d3d5a3650d71daffa1e7b2160bdf00610",
+      "nomount/tools/test_topology.py": "e046f294b9252e27c9e1056e55f0223dc5a9a7dcfcab00fdf0e9e664a0f0dd60",
+      "nomount/tools/test_topology_layout.py": "01bc20547c26a7f87f75d26ebe79fc4883075974637941150e4b4d12f8cd0ee2",
+      "nomount/tools/test_upstream_cli.py": "01e7d62fe69dc368a786702f3e1ec6c8c7de10d206514c8526af2f3ac1b57650",
+      "nomount/tools/test_virtual_directory.py": "da0ce1419d6fc9dedf87adb8bbfc71489d5499a3930f1af110ed494faad97249",
+      "nomount/tools/test_virtual_directory_layout.py": "c57681e511e5f079ab6b0c12124cc2edf54b39577fcf99d0980603dca22e9bed",
+      "nomount/tools/test_zip_module.py": "759d8ff46237198b498bbe5bee513d50fa8ea645cf75477cc47829e70729f9d5"
+    },
+    "upstream_commit": "7046c7ad3ee0bf4ae66e80f6b93b1e30db0cb4e3",
+    "zip_instance_id": "nomount-zip-0.5.1+gd59432122045.ndk26.3.11579264#2",
+    "zip_sha256": "3c101a96ddb42b6ca1ce33d9d2f17270f918704bcfdf19ee4da64b066c0490e8",
+    "zip_changed_entries": [
+      "NOTICE.md",
+      "module.prop",
+      "webroot/index.js"
+    ],
+    "complete_face_literals": 4
+  },
+  "zip_shell": {
+    "scope": "Developer shell/API stubs, relocated Android paths; not device boot or installer proof",
+    "cases": [
+      "install rejects missing",
+      "install rejects isolation_error",
+      "install rejects malformed",
+      "old driver version accepted via read-only protocol probes",
+      "active root flag wins over stale root files",
+      "unsupported architecture rejected before API calls",
+      "metamount-first startup restores UID before NUL-safe rules; completion clears marker",
+      "startup rejects/rolls back missing",
+      "startup rejects/rolls back uid_error",
+      "startup rejects/rolls back add_error",
+      "rule injection skipped for data-disable",
+      "rule injection skipped for module-disable",
+      "rule injection skipped for module-remove",
+      "rule injection skipped for previous-boot",
+      "uninstall clears rules, removes owned link and preserves other link"
+    ],
+    "sources": {
+      "nomount/module/common.sh": "c4806204688a189125423147aa612b4fbb09a4636cc7ce3df634a34d2c297f45",
+      "nomount/module/post-fs-data.sh": "062827cc3cbdb97ff39b2c8f360a74261c316e8f0a5dabbb19946f7c8fea80e6",
+      "nomount/module/module.prop": "873456c3b6f03966e16eff7d4af922a83c3ced0eabd4f5a1bc1c50e65b86a37f",
+      "nomount/module/uninstall.sh": "63e8e956eccff721ddfd8d7c40ee930587623775ae268e33a7398bc4523a474d",
+      "nomount/module/boot-completed.sh": "05757ae28aa68fee9c5a0655050b86285dfba89bc36f253c8d5037d57719b9dc",
+      "nomount/module/metamount.sh": "947e469fe2f278a3117e38b75b7cfa7b5a356513bcd8bdecb5fb1dae1c460c5b",
+      "nomount/module/README.md": "eb58465ed476370c81b17d0184fdc6a089b139d2dc15e161ad5185e43048239f",
+      "nomount/module/customize.sh": "b7944d51f2d53bc81b8188c9afa4fc1917c720ef7957a1fc9a31b0cd2a2295a8",
+      "nomount/module/NOTICE.md": "9c6256a882632f28042d7f74d58cea85e00f13e13418f97bbeebe009e378bd8c",
+      "nomount/tools/test_zip_module.py": "759d8ff46237198b498bbe5bee513d50fa8ea645cf75477cc47829e70729f9d5",
+      "nomount/nomount/module/rule-paths.sh": "e731b64b9bbdf6da6c28296688b1830a16be200b5fd914b6d1e382495dd8f6ce"
+    },
+    "result": "PASS"
+  },
+  "code_style": {
+    "files": [
+      "nomount/nm_security.c",
+      "nomount/nm_inode.c",
+      "nomount/nm_inode_entry.c",
+      "nomount/nm_rules.h",
+      "nomount/nm_virtual_directory.c",
+      "nomount/nm_directory.c"
+    ],
+    "clang_format": "PASS"
+  },
+  "linux44_header": {
+    "url": "https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux/+/refs/tags/v4.4/include/linux/security.h",
+    "sha256": "b4211112dfea5cf67c70f01127ae50fd437b3b12c3adfe430c180f9be59c2ddc"
+  },
+  "device_observations": {
+    "authorization": "User explicitly authorized read-only access to connected phone",
+    "device_fingerprint_sha256_prefix": "48b7ee2f",
+    "kernel": "5.15.189-android13-8-00016-g51bba4309aac-ab14546557",
+    "android": 15,
+    "selinux": "Enforcing",
+    "boot_partition_sha256": "c4a3515a836df95db1ff7f3d90358796784f4a399a13d5dad63052c89f4c83e4",
+    "boot_identity_matches": "Tester/reports/runs/2026-10-14-nomount-0.5.0-5.15-boot-live#1.md",
+    "source_commit": "773385757fcaaa6588e7946862e6784842c1901c",
+    "base_instance_id": "nomount-0.5.0_baselines+g6e270f8a5698.r71a1a5a7.kpb51197a.ndk26.3.11579264#1",
+    "base_sha256": "fd5340662be4a36cb4bb63c86e33754d79a63aea23ac3fed3ae032e02eee3b9d",
+    "target_sha256": "d908196e2d889888863196b04fe285b4ad3d012d35a5523868b43999ab8c0ca9",
+    "zip_instance_id": "nomount-zip-0.5.0+g3294dedbfe67.ndk26.3.11579264#1",
+    "zip_sha256": "b6271dde3dda3ff2e1edf1330add61add12d03457ee6aa4b4cc73a8ea44100e3",
+    "installed_zip_entry_hashes_match": [
+      "bin/nm",
+      "metamount.sh",
+      "webroot/index.js"
+    ],
+    "pms_system_registration": true,
+    "artd_apk_read": "Permission denied",
+    "source_label": "u:object_r:system_file:s0",
+    "virtual_apk_label": "u:object_r:unlabeled:s0",
+    "ordinary_app_class_loading": "empty DexPathList / ClassNotFoundException observed in existing logs",
+    "direct_new_app_domain_probe": false,
+    "changes_to_device": []
+  },
+  "gate": {
+    "regular_failures": 0,
+    "regular_warnings": 1,
+    "warning": "historical zram_zstd binary-port handoff misses handoff_by/handoff_at",
+    "nomount_version": "0.5.1 source consistent; metadata 0.5.0 is in-flight before maintainer import"
+  }
+}

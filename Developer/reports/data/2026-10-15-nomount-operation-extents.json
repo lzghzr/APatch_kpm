@@ -1,0 +1,377 @@
+{
+  "sony": {
+    "receipt_sha256": "f69bfe17f964d16999f62542ccec9ee47d39880139b1c8a96c11bf91041053b3",
+    "derived": {
+      "inode_ops_size": 256,
+      "super_ops_size": 280,
+      "dentry_ops_size": 192
+    },
+    "run": "PASS: three operation extents, full layout preparation, BTF routing and guarded table prefix\nPASS: 42 target fields, three common native ABI preparations and refusal boundaries",
+    "kernel_sha256": "299f7e2580c54684c3b825bea57f1b16c53055f485ebd2b937593ac57ff9b0d2",
+    "image_sha256": "199658639f7389153ee8a7efe00154f0892e272ddc872728ea326e3e1ce2383b",
+    "evidence": {
+      "windows": {
+        "set_posix_acl": {
+          "offset": 5360996,
+          "words": [
+            4160783966,
+            2847767549,
+            4177529845,
+            2835501044,
+            2432697341,
+            4181726216,
+            960579848,
+            905970504,
+            4181725192,
+            4181743880,
+            3019899624,
+            1900023871,
+            1409286305
+          ]
+        },
+        "super_cache_count": {
+          "offset": 4817308,
+          "words": [
+            3507565576,
+            960495880,
+            925368424,
+            2854159328,
+            3596551104,
+            4160783966,
+            2847767549,
+            2835437558,
+            2835501044,
+            2432697341,
+            3573758399,
+            3507601416,
+            2852127731,
+            4181721352,
+            2852193268,
+            3019899368,
+            4181751061,
+            3019899349,
+            3533138432,
+            2853503969,
+            3507651190
+          ]
+        }
+      },
+      "dentry_prefix": {
+        "offset": 46015040,
+        "size": 112,
+        "sha256": "9fab90296f5465c8d77a344ce9ef7e51fa792f2880d781f397d63570a732862d"
+      }
+    }
+  },
+  "b2n": {
+    "receipt_sha256": "16685c831064247aef7e472a36d439fb60428ce1b1bbf7b201c96bfa79baee5c",
+    "derived": {
+      "inode_ops_size": 256,
+      "super_ops_size": 232,
+      "dentry_ops_size": 128
+    },
+    "run": "PASS: three operation extents, full layout preparation, BTF routing and guarded table prefix\nPASS: 42 target fields, three common native ABI preparations and refusal boundaries",
+    "kernel_sha256": "7633fbac5ce30b726a1acdbf57f730aa847a9510984a25bc23f9ddcdb0956e1c",
+    "image_sha256": "ea919143cb1f057f3d35d726294166d5186f376e9751941b83940e75d48a288c",
+    "evidence": {
+      "windows": {
+        "set_posix_acl": {
+          "offset": 1744736,
+          "words": [
+            2847767549,
+            2852127715,
+            2432697341,
+            2835436531,
+            4177531893,
+            4181726208,
+            4181731332,
+            310381504,
+            914359332,
+            4181725280,
+            4181748740,
+            310381504,
+            3019899812
+          ]
+        },
+        "super_cache_count": {
+          "offset": 1377800,
+          "words": [
+            2847767549,
+            2432697341,
+            2835504117,
+            2852127733,
+            3507683328,
+            2835436531,
+            2852193268,
+            4181731330,
+            2455961683,
+            921174914,
+            3573758399,
+            4181727234,
+            3531603987,
+            3019899042,
+            4181748802,
+            3019898978,
+            3594453056,
+            2852127731,
+            3107984001,
+            2432828064,
+            4181724802
+          ]
+        }
+      },
+      "dentry_prefix": {
+        "offset": 16425152,
+        "size": 112,
+        "sha256": "b33acac82f66d4a905d18269d92e3ba7266f3848501261701dfa949b3eb23979"
+      }
+    }
+  },
+  "btf_5_15": {
+    "scope": "Developer production BTF queries with emulated native API; not ARM64 invocation or device proof",
+    "btf_sha256": "384f6f4915762a2d6e6a2686b590b951df29f8bb053dec2ae7ffe9e7d27af598",
+    "query_fixture_sha256": "13fe9dadae1f60c1903d51b1ed81186a0bcf0aafbae69845e511168b817f0ebb",
+    "sources": {
+      "nomount/nm_structs.h": "0e99be2918cb84804a2e0a8f6b9dcc89e8bca8eedd6002c8248921cafba9bb6f",
+      "nomount/nm_offsets.c": "2a50dcce626c8f18f686f1c00e09dfaa5d49bd1d5cd3322ec9811de1f70092c1",
+      "nomount/nm_btf.c": "bd7bdb97803f6bb0e290c3d9fab735bee406a80b3fa46d4361e6e349021c4b10",
+      "local/nomount-capacity-20261015-01/test_target_layout_api.py": "0d1442d48c0047ae0291e1e72785c28ddf0f4756388841d76e34b52298581208"
+    },
+    "expected_stop": null,
+    "returncode": 0,
+    "offsets": {
+      "file_inode_ops": 32,
+      "file_mapping": 232,
+      "inode_superblock": 40,
+      "inode_number": 64,
+      "inode_nlink": 72,
+      "inode_size": 80,
+      "dentry_ops": 96,
+      "file_ops_size": 288,
+      "inode_ops_size": 256,
+      "super_ops_size": 232,
+      "dentry_ops_size": 192,
+      "key_type_size": 184,
+      "inode_private": 728,
+      "file_private": 216,
+      "file_position": 120,
+      "file_flags": 64,
+      "file_cred": 160,
+      "fop_open": 112,
+      "fop_release": 128,
+      "fop_mmap": 96,
+      "fop_splice_read": 200,
+      "inode_file_ops": 384,
+      "inode_data": 400,
+      "inode_data_size": 272,
+      "inode_hash": 240,
+      "inode_blocks": 144,
+      "iop_getattr": 112,
+      "sop_drop_inode": 40,
+      "sop_evict_inode": 48,
+      "dentry_lock": 88,
+      "fop_iterate": 56,
+      "fop_iterate_shared": 64,
+      "dop_init": 40,
+      "dop_release": 48,
+      "mutex_size": 48,
+      "mutex_no_lockdep": 1,
+      "key_callbacks": 32,
+      "key_preparse_data": 48,
+      "getattr_callback_args": 5,
+      "getattr_function_args": 4,
+      "kstat_inode_first": 0,
+      "name_hash_args": 3,
+      "permission_abi": 2,
+      "fillattr_abi": 3,
+      "getattr_context_kind": 1,
+      "dir_actor_abi": 0
+    },
+    "output": "layout: BTF objects=32 mapping=232 sb=40 ino=64 nlink=72 size=80 d_op=96\nfile_operations size=288\ninode_operations size=256\nsuper_operations size=232\ndentry_operations size=192\nkey_type size=184\nnamespace pointee and mount slot rejection: PASS\nOFFSETS\nfile_inode_ops 32\nfile_mapping 232\ninode_superblock 40\ninode_number 64\ninode_nlink 72\ninode_size 80\ndentry_ops 96\nfile_ops_size 288\ninode_ops_size 256\nsuper_ops_size 232\ndentry_ops_size 192\nkey_type_size 184\ninode_private 728\nfile_private 216\nfile_position 120\nfile_flags 64\nfile_cred 160\nfop_open 112\nfop_release 128\nfop_mmap 96\nfop_splice_read 200\ninode_file_ops 384\ninode_data 400\ninode_data_size 272\ninode_hash 240\ninode_blocks 144\niop_getattr 112\nsop_drop_inode 40\nsop_evict_inode 48\ndentry_lock 88\nfop_iterate 56\nfop_iterate_shared 64\ndop_init 40\ndop_release 48\nmutex_size 48\nmutex_no_lockdep 1\nkey_callbacks 32\nkey_preparse_data 48\ngetattr_callback_args 5\ngetattr_function_args 4\nkstat_inode_first 0\nname_hash_args 3\npermission_abi 2\nfillattr_abi 3\ngetattr_context_kind 1\ndir_actor_abi 0\n"
+  },
+  "capacity": {
+    "result": "PASS: owned capacity, exact-copy guard page, BTF source policy and control bounds",
+    "fixture_adaptation": "private in-memory stub for new calculate_function_operation_sizes dependency; original assertions and production files unchanged"
+  },
+  "identity": [
+    {
+      "build_id": "nomount-2.1.1-20261014+g4b49827eb674.ra2d2c48f.kpb51197a.ndk26.3.11579264",
+      "instance_id": "nomount-2.1.1-20261014+g4b49827eb674.ra2d2c48f.kpb51197a.ndk26.3.11579264#1",
+      "kind": "exploration",
+      "profile": "exploration",
+      "problems": [],
+      "notes": [
+        "探索记录（kind=exploration）：只核验产物与记录完整性，不按候选/交付标准判定",
+        "源码核验通过（提交 blob 147 个）"
+      ],
+      "source_verified": true,
+      "artifacts_verified": 1,
+      "elf": {
+        "sha256": "1db32ea9a394164a6d3fde01d94875c516eafff953a30bd9ced6ea1c8b7e66ea",
+        "size": 211776,
+        "table_offset": 116272,
+        "table_bytes": 92,
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "kf_strncmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ]
+      }
+    },
+    {
+      "build_id": "nomount-2.1.1-20261014_baselines+g4b49827eb674.rdaba8f18.kpb51197a.ndk26.3.11579264",
+      "instance_id": "nomount-2.1.1-20261014_baselines+g4b49827eb674.rdaba8f18.kpb51197a.ndk26.3.11579264#1",
+      "kind": "exploration",
+      "profile": "exploration",
+      "problems": [],
+      "notes": [
+        "探索记录（kind=exploration）：只核验产物与记录完整性，不按候选/交付标准判定",
+        "源码核验通过（提交 blob 147 个）"
+      ],
+      "source_verified": true,
+      "artifacts_verified": 1,
+      "elf": {
+        "sha256": "77a5baa38d3072c4fb63da4cb70b286d83d93cf06fa06179b8c4125f9c2bc15a",
+        "size": 111864,
+        "table_offset": 43176,
+        "table_bytes": 92,
+        "imports": [
+          "compat_copy_to_user",
+          "cred_offset",
+          "kallsyms_lookup_name_by_suffix",
+          "kf_memchr",
+          "kf_memcmp",
+          "kf_memcpy",
+          "kf_memset",
+          "kf_strcmp",
+          "printk",
+          "sp_el0_is_current",
+          "sp_el0_is_thread_info",
+          "task_in_thread_info_offset",
+          "task_struct_offset",
+          "thread_info_in_task",
+          "thread_size"
+        ]
+      }
+    }
+  ],
+  "binary_port": {
+    "source_commit": "b4cf78daff053dea0b5ca987b33782f6bbfda552",
+    "base_instance_id": "nomount-2.1.1-20261014+g4b49827eb674.ra2d2c48f.kpb51197a.ndk26.3.11579264#1",
+    "base_sha256": "1db32ea9a394164a6d3fde01d94875c516eafff953a30bd9ced6ea1c8b7e66ea",
+    "tool": "patch_offsets.py",
+    "tool_sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033",
+    "command": [
+      "python3",
+      "patch_offsets.py",
+      "legacy-kp",
+      "artifacts/nomount-2.1.1-20261014+g4b49827eb674.ra2d2c48f.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014.kpm",
+      "--output",
+      "artifacts/binary-port/nomount/d9d7d29785961e15f7db03bf1cc589ef48b0a5ecdf3afe621b9545958949ddc6/NoMount_2.1.1-20261014.kpm"
+    ],
+    "derived_path": "artifacts/binary-port/nomount/d9d7d29785961e15f7db03bf1cc589ef48b0a5ecdf3afe621b9545958949ddc6/NoMount_2.1.1-20261014.kpm",
+    "derived_sha256": "d9d7d29785961e15f7db03bf1cc589ef48b0a5ecdf3afe621b9545958949ddc6",
+    "compat_receipt": "artifacts/binary-port/nomount/d9d7d29785961e15f7db03bf1cc589ef48b0a5ecdf3afe621b9545958949ddc6/NoMount_2.1.1-20261014.kpm.compat.json",
+    "target": "B2N-416G_boot.img",
+    "target_image_sha256": "ea919143cb1f057f3d35d726294166d5186f376e9751941b83940e75d48a288c",
+    "kind": "exploration",
+    "receipt": {
+      "schema": 1,
+      "kind": "binary-port",
+      "kpm": "NoMount_2.1.1-20261014.kpm",
+      "parent_kpm": "NoMount_2.1.1-20261014.kpm",
+      "parent_sha256": "1db32ea9a394164a6d3fde01d94875c516eafff953a30bd9ced6ea1c8b7e66ea",
+      "sha256": "d9d7d29785961e15f7db03bf1cc589ef48b0a5ecdf3afe621b9545958949ddc6",
+      "lookup_mode": "exact",
+      "import_from": "kallsyms_lookup_name_by_suffix",
+      "pointer_import": "kallsyms_lookup_name",
+      "pointer_import_added": false,
+      "adapter": "adrp-ldr-br-x16",
+      "imports_resolved": 1,
+      "modified_ranges": [
+        {
+          "offset": 40,
+          "size": 8
+        },
+        {
+          "offset": 60,
+          "size": 2
+        },
+        {
+          "offset": 204128,
+          "size": 24
+        },
+        {
+          "offset": 211776,
+          "size": 1744
+        }
+      ]
+    }
+  },
+  "original_oracles": {
+    "count": 48,
+    "base_commit": "8fef17d2e811d47027c6508d6569afb3fe3f02cb",
+    "byte_identical": true
+  },
+  "source_commit": "b4cf78daff053dea0b5ca987b33782f6bbfda552",
+  "builds": [
+    {
+      "instance_id": "nomount-2.1.1-20261014+g4b49827eb674.ra2d2c48f.kpb51197a.ndk26.3.11579264#1",
+      "source_commit": "b4cf78daff053dea0b5ca987b33782f6bbfda552",
+      "artifacts": [
+        {
+          "name": "NoMount_2.1.1-20261014.kpm",
+          "sha256": "1db32ea9a394164a6d3fde01d94875c516eafff953a30bd9ced6ea1c8b7e66ea",
+          "size": 211776,
+          "embedded": {
+            "name": "NoMount",
+            "version": "2.1.1-20261014",
+            "license": "GPL v2",
+            "author": "maxsteeel, Codex",
+            "description": "NoMount: read-only file and directory views, resident until reboot",
+            "offset_mode": "dynamic",
+            "lifetime": "reboot"
+          },
+          "path": "artifacts/nomount-2.1.1-20261014+g4b49827eb674.ra2d2c48f.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014.kpm"
+        }
+      ]
+    },
+    {
+      "instance_id": "nomount-2.1.1-20261014_baselines+g4b49827eb674.rdaba8f18.kpb51197a.ndk26.3.11579264#1",
+      "source_commit": "b4cf78daff053dea0b5ca987b33782f6bbfda552",
+      "artifacts": [
+        {
+          "name": "NoMount_2.1.1-20261014_baselines.kpm",
+          "sha256": "77a5baa38d3072c4fb63da4cb70b286d83d93cf06fa06179b8c4125f9c2bc15a",
+          "size": 111864,
+          "embedded": {
+            "name": "NoMount",
+            "version": "2.1.1-20261014",
+            "license": "GPL v2",
+            "author": "maxsteeel, Codex",
+            "description": "NoMount: read-only file and directory views, resident until reboot",
+            "offset_mode": "static",
+            "lifetime": "reboot"
+          },
+          "path": "artifacts/nomount-2.1.1-20261014_baselines+g4b49827eb674.rdaba8f18.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014_baselines.kpm"
+        }
+      ]
+    }
+  ],
+  "boundary": "Developer offline layout preparation and host safety checks only; native registration and device runtime pending; AUD-001 remains open",
+  "skill_update": "User-authorized update of kernel-offset-derivation: end-member offset plus verified natural tail span and final whole-type alignment"
+}

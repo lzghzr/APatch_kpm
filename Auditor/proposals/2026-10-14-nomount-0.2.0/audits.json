@@ -1,0 +1,78 @@
+[
+  {
+    "instance_id": "nomount-0.2.0+geb65e9ed8940.r6312e275.kpb51197a.ndk26.3.11579264#1",
+    "source_commit": "c5c49e98164e0129e29b4bd3ba05c8affcd0b352",
+    "artifacts": {
+      "nomount_0.2.0.kpm": "51f7f07a76ecc7a4cc4a51e52dd08c3e3ac4d57ff5d60874421ce2d47c778868"
+    },
+    "report": "Auditor/reports/2026-10-14-nomount-0.2.0-module-audit.md",
+    "report_sha256": "59a27b9d255d9b7385b18518db44fd1cbceff5d036b4f20ca2193175ef71c638",
+    "data": "Auditor/reports/data/2026-10-14-nomount-0.2.0-artifact-audit.json",
+    "data_sha256": "abce7e134f6f96bb667610cbfa9ce2419b6b8ffc894904bde8da8bd17ff6aafb",
+    "static_scan": "Auditor/reports/data/2026-10-14-nomount-0.2.0-static-scan.json",
+    "static_scan_sha256": "571a463c5d4f1540480b01f55a2437b313b7015f3cf1c16053111c6198dddc83",
+    "audit_commit": null,
+    "variant": "base",
+    "offset_mode": "dynamic",
+    "scope": "0.2.0 审计：4 份候选产物沙箱无缓存重编译逐字节吻合；4 份 4.4 目标派生件独立重跑两段链路（`patch` 写入目标配置与 `legacy-kp` 生成符号转接跳板）逐字节吻合、回执一致；patch 差异严格限于 84 字节配置表，legacy-kp 安全重定向 CALL26 指令；4.4 调用 ABI（3 参数 getattr 回调、2 参数 vfs_getattr、inode-first kstat、2 参数 name_hash）审查通过；RA-002 前提成立，维持常驻不卸载约束；未发现阻塞性缺陷，同意 legacy-kp 派生件进入真机测试",
+    "recorded_at": "2026-10-14T02:45:00Z",
+    "recorded_by": "维护者"
+  },
+  {
+    "instance_id": "nomount-0.2.0_baselines+geb65e9ed8940.r61a544d0.kpb51197a.ndk26.3.11579264#1",
+    "source_commit": "c5c49e98164e0129e29b4bd3ba05c8affcd0b352",
+    "artifacts": {
+      "nomount_0.2.0_baselines.kpm": "78a83a9a9ba9008edab6c8dfadb368569d850470ea76eb1d56113b8bbaac61ea"
+    },
+    "report": "Auditor/reports/2026-10-14-nomount-0.2.0-module-audit.md",
+    "report_sha256": "59a27b9d255d9b7385b18518db44fd1cbceff5d036b4f20ca2193175ef71c638",
+    "data": "Auditor/reports/data/2026-10-14-nomount-0.2.0-artifact-audit.json",
+    "data_sha256": "abce7e134f6f96bb667610cbfa9ce2419b6b8ffc894904bde8da8bd17ff6aafb",
+    "static_scan": "Auditor/reports/data/2026-10-14-nomount-0.2.0-static-scan.json",
+    "static_scan_sha256": "571a463c5d4f1540480b01f55a2437b313b7015f3cf1c16053111c6198dddc83",
+    "audit_commit": null,
+    "variant": "baselines",
+    "offset_mode": "static",
+    "scope": "0.2.0 审计：4 份候选产物沙箱无缓存重编译逐字节吻合；4 份 4.4 目标派生件独立重跑两段链路（`patch` 写入目标配置与 `legacy-kp` 生成符号转接跳板）逐字节吻合、回执一致；patch 差异严格限于 84 字节配置表，legacy-kp 安全重定向 CALL26 指令；4.4 调用 ABI（3 参数 getattr 回调、2 参数 vfs_getattr、inode-first kstat、2 参数 name_hash）审查通过；RA-002 前提成立，维持常驻不卸载约束；未发现阻塞性缺陷，同意 legacy-kp 派生件进入真机测试",
+    "recorded_at": "2026-10-14T02:45:00Z",
+    "recorded_by": "维护者"
+  },
+  {
+    "instance_id": "nomount-0.2.0_baselines_debug+geb65e9ed8940.r64fb3121.kpb51197a.ndk26.3.11579264#1",
+    "source_commit": "c5c49e98164e0129e29b4bd3ba05c8affcd0b352",
+    "artifacts": {
+      "nomount_0.2.0_baselines_debug.kpm": "2dd02fbcdf0fb37a851878dfb4d522b346dac3075de15de9b05d70cb2d0c545c"
+    },
+    "report": "Auditor/reports/2026-10-14-nomount-0.2.0-module-audit.md",
+    "report_sha256": "59a27b9d255d9b7385b18518db44fd1cbceff5d036b4f20ca2193175ef71c638",
+    "data": "Auditor/reports/data/2026-10-14-nomount-0.2.0-artifact-audit.json",
+    "data_sha256": "abce7e134f6f96bb667610cbfa9ce2419b6b8ffc894904bde8da8bd17ff6aafb",
+    "static_scan": "Auditor/reports/data/2026-10-14-nomount-0.2.0-static-scan.json",
+    "static_scan_sha256": "571a463c5d4f1540480b01f55a2437b313b7015f3cf1c16053111c6198dddc83",
+    "audit_commit": null,
+    "variant": "baselines_debug",
+    "offset_mode": "static",
+    "scope": "0.2.0 审计：4 份候选产物沙箱无缓存重编译逐字节吻合；4 份 4.4 目标派生件独立重跑两段链路（`patch` 写入目标配置与 `legacy-kp` 生成符号转接跳板）逐字节吻合、回执一致；patch 差异严格限于 84 字节配置表，legacy-kp 安全重定向 CALL26 指令；4.4 调用 ABI（3 参数 getattr 回调、2 参数 vfs_getattr、inode-first kstat、2 参数 name_hash）审查通过；RA-002 前提成立，维持常驻不卸载约束；未发现阻塞性缺陷，同意 legacy-kp 派生件进入真机测试",
+    "recorded_at": "2026-10-14T02:45:00Z",
+    "recorded_by": "维护者"
+  },
+  {
+    "instance_id": "nomount-0.2.0_debug+geb65e9ed8940.r33b78ac3.kpb51197a.ndk26.3.11579264#1",
+    "source_commit": "c5c49e98164e0129e29b4bd3ba05c8affcd0b352",
+    "artifacts": {
+      "nomount_0.2.0_debug.kpm": "43cb651dddabda851dc7b6f6debda8e330a069989a39d46d49e42b5880fd0957"
+    },
+    "report": "Auditor/reports/2026-10-14-nomount-0.2.0-module-audit.md",
+    "report_sha256": "59a27b9d255d9b7385b18518db44fd1cbceff5d036b4f20ca2193175ef71c638",
+    "data": "Auditor/reports/data/2026-10-14-nomount-0.2.0-artifact-audit.json",
+    "data_sha256": "abce7e134f6f96bb667610cbfa9ce2419b6b8ffc894904bde8da8bd17ff6aafb",
+    "static_scan": "Auditor/reports/data/2026-10-14-nomount-0.2.0-static-scan.json",
+    "static_scan_sha256": "571a463c5d4f1540480b01f55a2437b313b7015f3cf1c16053111c6198dddc83",
+    "audit_commit": null,
+    "variant": "debug",
+    "offset_mode": "dynamic",
+    "scope": "0.2.0 审计：4 份候选产物沙箱无缓存重编译逐字节吻合；4 份 4.4 目标派生件独立重跑两段链路（`patch` 写入目标配置与 `legacy-kp` 生成符号转接跳板）逐字节吻合、回执一致；patch 差异严格限于 84 字节配置表，legacy-kp 安全重定向 CALL26 指令；4.4 调用 ABI（3 参数 getattr 回调、2 参数 vfs_getattr、inode-first kstat、2 参数 name_hash）审查通过；RA-002 前提成立，维持常驻不卸载约束；未发现阻塞性缺陷，同意 legacy-kp 派生件进入真机测试",
+    "recorded_at": "2026-10-14T02:45:00Z",
+    "recorded_by": "维护者"
+  }
+]

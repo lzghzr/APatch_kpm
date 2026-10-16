@@ -130,12 +130,12 @@ if [ -n "$SUPERKEY" ]; then
   [ -n "$KPVER" ] || KPVER="$(dev "$KP_CMD $SUPERKEY version")"
   [ -n "$KPVER" ] || KPVER="采不到（$KP_CMD kpver/version 无输出）"
 elif [ -n "$MANAGER_UID" ]; then
-  MODULES="$(dev_root "su $MANAGER_UID -c \"/data/adb/ap/bin/kpatch su kpm list 2>/dev/null || /data/adb/kpatch su kpm list 2>/dev/null\"")"
+  MODULES="$(dev_root "su $MANAGER_UID -c \"/data/adb/ap/bin/kpatch su kpm list 2>/dev/null || /data/adb/kpatch su kpm list 2>/dev/null || /data/local/tmp/kpatch su kpm list 2>/dev/null\"")"
   KP_PATH="kpatch su kpm list（Manager UID $MANAGER_UID 免密通道）"
   if [ -n "$MODULES" ]; then MODULES_OK=1; else
     MODULES="采不到（Manager UID $MANAGER_UID 执行 kpatch 无输出）"
   fi
-  KPVER="$(dev_root "su $MANAGER_UID -c \"/data/adb/ap/bin/kpatch su kpver 2>/dev/null || /data/adb/kpatch su kpver 2>/dev/null\"")"
+  KPVER="$(dev_root "su $MANAGER_UID -c \"/data/adb/ap/bin/kpatch su kpver 2>/dev/null || /data/adb/kpatch su kpver 2>/dev/null || /data/local/tmp/kpatch su kpver 2>/dev/null\"")"
   [ -n "$KPVER" ] || KPVER="采不到（kpatch kpver 无输出）"
 fi
 

@@ -1,0 +1,117 @@
+{
+  "module": "nomount",
+  "version": "2.1.1-20261014",
+  "kind": "binary-port-handoff",
+  "handoff_by": "Developer",
+  "handoff_at": "2026-10-16T01:03:36.773160+00:00",
+  "binary_ports": [
+    {
+      "kind": "binary-port",
+      "transformation": "legacy-kp",
+      "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+      "base_instance_id": "nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264#1",
+      "base_artifact": {
+        "name": "NoMount_2.1.1-20261014.kpm",
+        "sha256": "1ab36727b82cab1723da56f6f82273ff1fee57071836b8992f4e3d26ad40e1fa",
+        "size": 219984,
+        "embedded": {
+          "name": "NoMount",
+          "version": "2.1.1-20261014",
+          "license": "GPL v2",
+          "author": "maxsteeel, Codex",
+          "description": "NoMount: read-only file and directory views, resident until reboot",
+          "offset_mode": "dynamic",
+          "lifetime": "reboot"
+        },
+        "path": "artifacts/nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014.kpm"
+      },
+      "tool": {
+        "path": "patch_offsets.py",
+        "source_commit": "ebad05883bcd6173d5e2a867559aa6bcb3e45810",
+        "sha256": "97a51b293af447b3cd6608c953cec95cdfc62f985346463f2285b28ab3c86033"
+      },
+      "command": [
+        "python3",
+        "patch_offsets.py",
+        "legacy-kp",
+        "artifacts/nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014.kpm",
+        "--output",
+        "artifacts/binary-port/nomount/06bd68500f2d6f9725038499a16bca1f54e88f1cde3c21f2dc95aa96f276d8ee/NoMount_2.1.1-20261014.kpm"
+      ],
+      "derived": {
+        "path": "artifacts/binary-port/nomount/06bd68500f2d6f9725038499a16bca1f54e88f1cde3c21f2dc95aa96f276d8ee/NoMount_2.1.1-20261014.kpm",
+        "name": "NoMount_2.1.1-20261014.kpm",
+        "sha256": "06bd68500f2d6f9725038499a16bca1f54e88f1cde3c21f2dc95aa96f276d8ee",
+        "size": 221728
+      },
+      "receipt": {
+        "path": "artifacts/binary-port/nomount/06bd68500f2d6f9725038499a16bca1f54e88f1cde3c21f2dc95aa96f276d8ee/NoMount_2.1.1-20261014.kpm.compat.json",
+        "name": "NoMount_2.1.1-20261014.kpm.compat.json",
+        "sha256": "c0ef4a4ac95e4938dea6f825fb01cec0f263db2fce039c5631473ceb64a54dc2",
+        "size": 741,
+        "data": {
+          "schema": 1,
+          "kind": "binary-port",
+          "kpm": "NoMount_2.1.1-20261014.kpm",
+          "parent_kpm": "NoMount_2.1.1-20261014.kpm",
+          "parent_sha256": "1ab36727b82cab1723da56f6f82273ff1fee57071836b8992f4e3d26ad40e1fa",
+          "sha256": "06bd68500f2d6f9725038499a16bca1f54e88f1cde3c21f2dc95aa96f276d8ee",
+          "lookup_mode": "exact",
+          "import_from": "kallsyms_lookup_name_by_suffix",
+          "pointer_import": "kallsyms_lookup_name",
+          "pointer_import_added": false,
+          "adapter": "adrp-ldr-br-x16",
+          "imports_resolved": 1,
+          "modified_ranges": [
+            {
+              "offset": 40,
+              "size": 8
+            },
+            {
+              "offset": 60,
+              "size": 2
+            },
+            {
+              "offset": 212256,
+              "size": 24
+            },
+            {
+              "offset": 219984,
+              "size": 1744
+            }
+          ]
+        }
+      },
+      "generated_by": "Developer",
+      "generated_at": "2026-10-16T01:03:36.773160+00:00",
+      "target": {
+        "target": "B2N-416G_boot.img",
+        "kernel": "4.4.192-perf+",
+        "image_sha256": "ea919143cb1f057f3d35d726294166d5186f376e9751941b83940e75d48a288c",
+        "kernel_sha256": "7633fbac5ce30b726a1acdbf57f730aa847a9510984a25bc23f9ddcdb0956e1c",
+        "kernelpatch_version": "0xd04"
+      },
+      "load": {
+        "phase": "pre-kernel-init",
+        "arguments": [],
+        "lifetime": "reboot"
+      },
+      "regeneration": {
+        "command": [
+          "python3",
+          "patch_offsets.py",
+          "legacy-kp",
+          "artifacts/nomount-2.1.1-20261014+g9f323cd3deaa.r33de5496.kpb51197a.ndk26.3.11579264/NoMount_2.1.1-20261014.kpm",
+          "--output",
+          "local/nomount-TST-001-current-legacy-20261015-01/NoMount_2.1.1-20261014.kpm"
+        ],
+        "sha256": "06bd68500f2d6f9725038499a16bca1f54e88f1cde3c21f2dc95aa96f276d8ee",
+        "archive_identical": true,
+        "archive_preserved": true
+      },
+      "limitations": [
+        "Exact-name lookup replaces suffix lookup; native registration and user-path behavior require Tester verification."
+      ]
+    }
+  ]
+}

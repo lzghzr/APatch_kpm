@@ -1,0 +1,229 @@
+{
+  "tool": "Auditor/tools/static_scan.py",
+  "scanned_at": "2026-10-15T05:08:16-0700",
+  "module": "nomount",
+  "files": [
+    "nomount/nm_backing_directory.c",
+    "nomount/nm_backing_entry.c",
+    "nomount/nm_backing_inode.c",
+    "nomount/nm_backing_subtree.c",
+    "nomount/nm_btf.c",
+    "nomount/nm_control.c",
+    "nomount/nm_control_entry.c",
+    "nomount/nm_control_key.c",
+    "nomount/nm_control_lock.c",
+    "nomount/nm_current.c",
+    "nomount/nm_directory.c",
+    "nomount/nm_directory_entry.c",
+    "nomount/nm_directory_nodes.c",
+    "nomount/nm_file.c",
+    "nomount/nm_file_entry.c",
+    "nomount/nm_inode.c",
+    "nomount/nm_inode_entry.c",
+    "nomount/nm_layout.c",
+    "nomount/nm_log.h",
+    "nomount/nm_memory.c",
+    "nomount/nm_native.c",
+    "nomount/nm_native_entry.c",
+    "nomount/nm_offsets.c",
+    "nomount/nm_operations.c",
+    "nomount/nm_protocol.h",
+    "nomount/nm_rules.c",
+    "nomount/nm_rules.h",
+    "nomount/nm_rules_entry.c",
+    "nomount/nm_security.c",
+    "nomount/nm_structs.h",
+    "nomount/nm_topology.c",
+    "nomount/nm_topology_entry.c",
+    "nomount/nm_virtual_directory.c",
+    "nomount/nomount.c",
+    "nomount/nomount/kernel/src/nomount.c",
+    "nomount/nomount/kernel/src/nomount.h",
+    "nomount/nomount/userspace/src/nm.c",
+    "nomount/nomount/userspace/src/nm.h"
+  ],
+  "heuristic": true,
+  "counts": {
+    "free_without_null": 3,
+    "sleep_in_callback": 13,
+    "unchecked_shift": 7,
+    "user_input_no_auth": 2
+  },
+  "hits": [
+    {
+      "pattern": "unchecked_shift",
+      "file": "nomount/nm_btf.c",
+      "line": 352,
+      "code": "if (field.bits || field.size != 8 || ((field.type->info >> 24) & 31) != 2)",
+      "note": "对字段 info 做移位后直接使用；核对字段取值范围与溢出"
+    },
+    {
+      "pattern": "unchecked_shift",
+      "file": "nomount/nm_btf.c",
+      "line": 355,
+      "code": "if (!proto || ((proto->info >> 24) & 31) != 13)",
+      "note": "对字段 info 做移位后直接使用；核对字段取值范围与溢出"
+    },
+    {
+      "pattern": "unchecked_shift",
+      "file": "nomount/nm_btf.c",
+      "line": 360,
+      "code": "if (!result || IS_ERR(result) || ((result->info >> 24) & 31) != 1)",
+      "note": "对字段 info 做移位后直接使用；核对字段取值范围与溢出"
+    },
+    {
+      "pattern": "unchecked_shift",
+      "file": "nomount/nm_btf.c",
+      "line": 489,
+      "code": "if (!pointer || IS_ERR(pointer) || ((pointer->info >> 24) & 31) != 2)",
+      "note": "对字段 info 做移位后直接使用；核对字段取值范围与溢出"
+    },
+    {
+      "pattern": "unchecked_shift",
+      "file": "nomount/nm_btf.c",
+      "line": 556,
+      "code": "|| ((field.type->info >> 24) & 31) != 2",
+      "note": "对字段 info 做移位后直接使用；核对字段取值范围与溢出"
+    },
+    {
+      "pattern": "unchecked_shift",
+      "file": "nomount/nm_btf.c",
+      "line": 599,
+      "code": "|| data_rc || length_rc || ((data_field.type->info >> 24) & 31) != 2",
+      "note": "对字段 info 做移位后直接使用；核对字段取值范围与溢出"
+    },
+    {
+      "pattern": "unchecked_shift",
+      "file": "nomount/nm_btf.c",
+      "line": 600,
+      "code": "|| ((length_field.type->info >> 24) & 31) != 1",
+      "note": "对字段 info 做移位后直接使用；核对字段取值范围与溢出"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "nomount/nm_native.c",
+      "line": 38,
+      "code": "NM_NATIVE_LOOKUP(nm_memdup_user, memdup_user);",
+      "note": "函数 nm_prepare_native 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "nomount/nm_native.c",
+      "line": 92,
+      "code": "struct nm_payload* payload = kfunc(nm_memdup_user)((const void __user*)(uintptr_t)address, sizeof(*payload));",
+      "note": "函数 nm_exchange_payload 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "nomount/nm_native.c",
+      "line": 92,
+      "code": "函数 nm_exchange_payload",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    },
+    {
+      "pattern": "user_input_no_auth",
+      "file": "nomount/nomount.c",
+      "line": 42,
+      "code": "函数 nomount_ctl0",
+      "note": "处理用户输入（netlink/proc）但未见发送方身份校验；可达性取决于 netlink 协议号权限与 SELinux 策略，需真机确认"
+    },
+    {
+      "pattern": "free_without_null",
+      "file": "nomount/nomount/kernel/src/nomount.c",
+      "line": 127,
+      "code": "kfree(rcu_dereference_raw(dir->children));",
+      "note": "kfree 释放 rcu_dereference_raw 后未置空；若该指针是全局/静态变量，卸载或二次释放会触发释放后使用"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "nomount/nomount/kernel/src/nomount.c",
+      "line": 300,
+      "code": "if (!(info = kmalloc(sizeof(*info), GFP_KERNEL))) goto out;",
+      "note": "函数 nm_materialize_rule 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "nomount/nomount/kernel/src/nomount.c",
+      "line": 907,
+      "code": "if (!(nm_sop = kmalloc(sizeof(*nm_sop), GFP_KERNEL))) return -ENOMEM;",
+      "note": "函数 nomount_hijack_superblock 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "nomount/nomount/kernel/src/nomount.c",
+      "line": 921,
+      "code": "if (!(new_array = kmalloc((count + 1) * sizeof(void *) + (count * sizeof(*proxies)), GFP_KERNEL))) {",
+      "note": "函数 nomount_hijack_superblock 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "nomount/nomount/kernel/src/nomount.c",
+      "line": 966,
+      "code": "if (!(ops = kmalloc(sizeof(*ops), GFP_KERNEL))) return -ENOMEM;",
+      "note": "函数 nomount_hijack_dir_ops 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "nomount/nomount/kernel/src/nomount.c",
+      "line": 1073,
+      "code": "struct nomount_dir_node *dir_node = kzalloc(sizeof(*dir_node), GFP_KERNEL);",
+      "note": "函数 __nomount_alloc_dir_node 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "nomount/nomount/kernel/src/nomount.c",
+      "line": 1081,
+      "code": "struct nomount_child_array *array = kmalloc(sz, GFP_KERNEL);",
+      "note": "函数 nm_alloc_child_array 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "nomount/nomount/kernel/src/nomount.c",
+      "line": 1172,
+      "code": "struct nm_rule_array *arr = kmalloc(sizeof(struct nm_rule_array) + count * sizeof(struct nm_rule) + heap_size, GFP_KERNEL);",
+      "note": "函数 nm_alloc_rule_array 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "nomount/nomount/kernel/src/nomount.c",
+      "line": 1199,
+      "code": "struct nomount_leaf *leaf = kzalloc(sizeof(*leaf) + len + 1, GFP_KERNEL);",
+      "note": "函数 nm_alloc_leaf 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "free_without_null",
+      "file": "nomount/nomount/kernel/src/nomount.c",
+      "line": 1245,
+      "code": "kfree(leaf);",
+      "note": "kfree 释放 leaf 后未置空；若该指针是全局/静态变量，卸载或二次释放会触发释放后使用"
+    },
+    {
+      "pattern": "free_without_null",
+      "file": "nomount/nomount/kernel/src/nomount.c",
+      "line": 1352,
+      "code": "kfree(rcu_access_pointer(parent->rules));",
+      "note": "kfree 释放 rcu_access_pointer 后未置空；若该指针是全局/静态变量，卸载或二次释放会触发释放后使用"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "nomount/nomount/kernel/src/nomount.c",
+      "line": 1403,
+      "code": "if (!(r_buf = kmalloc(r_len + 1, GFP_KERNEL))) return -ENOMEM;",
+      "note": "函数 __nomount_add_rule 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "nomount/nomount/kernel/src/nomount.h",
+      "line": 234,
+      "code": "if (!(new_arr = kmalloc(sizeof(*new_arr) + (count + 1) * sizeof(uid_t), GFP_KERNEL)))",
+      "note": "函数 nm_uid_add 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    },
+    {
+      "pattern": "sleep_in_callback",
+      "file": "nomount/nomount/kernel/src/nomount.h",
+      "line": 261,
+      "code": "if (!(new_arr = kmalloc(sizeof(*new_arr) + (count - 1) * sizeof(uid_t), GFP_KERNEL))) return -ENOMEM;",
+      "note": "函数 nm_uid_del 内出现可能睡眠/分配操作；需确认调用路径是否持锁或在原子上下文"
+    }
+  ]
+}

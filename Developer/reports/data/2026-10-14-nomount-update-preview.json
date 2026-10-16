@@ -1,0 +1,9 @@
+{
+  "scope": "Local replay example; tag 2026101400 was not published",
+  "update_json": {
+    "version": "v2.1.1-20261014",
+    "versionCode": 20261014,
+    "zipUrl": "https://github.com/lzghzr/APatch_kpm/releases/download/2026101400/NoMount-kpm_2.1.1-20261014.zip",
+    "changelog": "https://github.com/lzghzr/APatch_kpm/releases/download/2026101400/NoMount-kpm-changelog.md"
+  }
+}
