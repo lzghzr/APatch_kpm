@@ -1,9 +1,3 @@
-static struct btf* kfunc_def(bpf_get_btf_vmlinux)(void);
-static int kfunc_def(btf_find_by_name_kind)(const struct btf* btf, const char* name, u8 kind);
-static const struct btf_type* kfunc_def(btf_type_by_id)(const struct btf* btf, u32 id);
-static const char* kfunc_def(btf_name_by_offset)(const struct btf* btf, u32 offset);
-static const struct btf_type* kfunc_def(btf_resolve_size)(const struct btf* btf, const struct btf_type* type,
-                                                          u32* size);
 static struct kpm_btf rekernel_btf;
 
 static int rekernel_btf_release_abi() {
@@ -63,21 +57,9 @@ static int rekernel_btf_release_abi() {
   }
 
 static int calculate_btf_offsets() {
-  kfunc_lookup_name(bpf_get_btf_vmlinux);
-  kfunc_lookup_name(btf_find_by_name_kind);
-  kfunc_lookup_name(btf_type_by_id);
-  kfunc_lookup_name(btf_name_by_offset);
-  kfunc_lookup_name(btf_resolve_size);
-  if (!kfunc(bpf_get_btf_vmlinux) || !kfunc(btf_find_by_name_kind) || !kfunc(btf_type_by_id)
-      || !kfunc(btf_name_by_offset) || !kfunc(btf_resolve_size))
-    return -ENODATA;
-  const struct btf* btf = kfunc(bpf_get_btf_vmlinux)();
-  if (IS_ERR(btf))
-    return PTR_ERR(btf);
-  if (!btf)
-    return -ENODATA;
-  rekernel_btf = (struct kpm_btf){btf, kfunc(btf_find_by_name_kind), kfunc(btf_type_by_id), kfunc(btf_name_by_offset),
-                                  kfunc(btf_resolve_size)};
+  int rc = kpm_btf_init(&rekernel_btf);
+  if (rc)
+    return rc;
 
   const struct btf_type* type;
   int value;
