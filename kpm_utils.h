@@ -88,6 +88,36 @@ struct kpm_btf_field {
   u32 offset, bits, size;
 };
 
+// 初始化调用者的 BTF 上下文；接口或数据缺失返回 -ENODATA，原生错误保留。
+static struct btf* kfunc_def(bpf_get_btf_vmlinux)(void);
+static int kfunc_def(btf_find_by_name_kind)(const struct btf* btf, const char* name, u8 kind);
+static const struct btf_type* kfunc_def(btf_type_by_id)(const struct btf* btf, u32 id);
+static const char* kfunc_def(btf_name_by_offset)(const struct btf* btf, u32 offset);
+static const struct btf_type* kfunc_def(btf_resolve_size)(const struct btf* btf, const struct btf_type* type,
+                                                          u32* size);
+
+static inline int kpm_btf_init(struct kpm_btf* result) {
+  kfunc_lookup_name(bpf_get_btf_vmlinux);
+  kfunc_lookup_name(btf_find_by_name_kind);
+  kfunc_lookup_name(btf_type_by_id);
+  kfunc_lookup_name(btf_name_by_offset);
+  kfunc_lookup_name(btf_resolve_size);
+  if (!kfunc(bpf_get_btf_vmlinux) || !kfunc(btf_find_by_name_kind) || !kfunc(btf_type_by_id)
+      || !kfunc(btf_name_by_offset) || !kfunc(btf_resolve_size))
+    return -ENODATA;
+  const struct btf* btf = kfunc(bpf_get_btf_vmlinux)();
+  if (IS_ERR(btf))
+    return PTR_ERR(btf);
+  if (!btf)
+    return -ENODATA;
+  result->data = btf;
+  result->find_by_name_kind = kfunc(btf_find_by_name_kind);
+  result->type_by_id = kfunc(btf_type_by_id);
+  result->name_by_offset = kfunc(btf_name_by_offset);
+  result->resolve_size = kfunc(btf_resolve_size);
+  return 0;
+}
+
 static inline const struct btf_type* kpm_btf_type(const struct kpm_btf* btf, const char* name, u8 kind) {
   int id = btf->find_by_name_kind(btf->data, name, kind);
   return id > 0 ? btf->type_by_id(btf->data, id) : NULL;
@@ -418,6 +448,7 @@ static inline int kpm_btf_enum(const struct kpm_btf* btf, const struct btf_type*
   __INST_GET_LABEL(abbr)
 
 __INST_SF_RN_RD_SH_IMM12_FUNCS(add_imm, 0x7F800000u, 0x11000000u)
+__INST_SF_RN_RD_SH_IMM12_FUNCS(adds_imm, 0x7F800000u, 0x31000000u)
 __INST_SF_RN_RD_SH_IMM12_FUNCS(sub_imm, 0x7F800000u, 0x51000000u)
 __INST_SF_RN_RD_SH_IMM12_FUNCS(subs_imm, 0x7F800000u, 0x71000000u)
 __INST_SF_RM_RN_RD_FUNCS(add_ext, 0x7FE00000u, 0x0B200000u)
@@ -446,7 +477,16 @@ __INST_GET_N(ubfm)
 __INST_GET_IMMR(ubfm)
 __INST_GET_IMMS(ubfm)
 
+__INST_SF_RN_RD_FUNCS(sbfm, 0x7F800000u, 0x13000000u)
+__INST_GET_N(sbfm)
+__INST_GET_IMMR(sbfm)
+__INST_GET_IMMS(sbfm)
+
 __INST_RD_IMMLO_IMMHI_FUNCS(adrp, 0x9F000000u, 0x90000000u)
+
+__INST_SF_RM_RN_RD_FUNCS(ands_reg, 0x7F200000u, 0x6A000000u)
+__INST_GET_SHIFT(ands_reg)
+__INST_GET_IMM6(ands_reg)
 
 __INST_SF_RN_RD_N_FUNCS(and_imm, 0x7F800000u, 0x12000000u)
 __INST_SF_RN_RD_N_FUNCS(orr_imm, 0x7F800000u, 0x32000000u)
@@ -455,6 +495,10 @@ __INST_SF_RN_RD_N_FUNCS(tst_imm, 0x7F80001Fu, 0x7200001Fu)
 __INST_FUNCS(b, 0xFC000000u, 0x14000000u)
 __INST_GET_IMM26(b)
 __INST_GET_IMM26_LABEL(b)
+
+__INST_FUNCS(paciasp, 0xFFFFFFFFu, 0xD503233Fu)
+__INST_FUNCS(autiasp, 0xFFFFFFFFu, 0xD50323BFu)
+__INST_FUNCS(bti_c, 0xFFFFFFFFu, 0xD503245Fu)
 
 __INST_FUNCS(b_cond, 0xFF000010u, 0x54000000u)
 __INST_GET_IMM19(b_cond)
@@ -497,6 +541,11 @@ __INST_GET_RT2(stp)
 __INST_GET_PAIR_MODE(stp)
 __INST_GET_SIZE(stp)
 __INST_GET_PAIR_IMM(stp)
+
+// LDAR/LDARB/LDARH：size选择宽度，其余固定字段不与LDXR/LDAXR混用。
+__INST_RN_FUNCS(ldar, 0x3FFFFC00u, 0x08DFFC00u)
+__INST_GET_RT(ldar)
+__INST_GET_SIZE(ldar)
 
 __INST_SIZE_RN_RT_LDR_FUNCS(ldr_imm, 0x3B000000u, 0x39400000u)
 __INST_GET_IMM12(ldr_imm)
