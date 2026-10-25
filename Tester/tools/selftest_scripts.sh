@@ -6,7 +6,7 @@
 #
 # 覆盖: 身份正反用例（在册实例/缺 instance-id/未登记/产物被篡改/运行 ID 不覆盖）/
 #       正常一轮 / 加载失败 / 卸载失败 / 崩溃 / 软重启 / 设备无响应（看门狗）/
-#       A2 至多一次 adb reboot / 基线 pstore 残留 / 缺 SUPERKEY / 证据采集 /
+#       A2 至多一次 adb reboot / 基线 pstore 残留 / 缺特权通道 / 证据采集 /
 #       MNT-010 仪器冻结基线、删除、假冻结、报告绑定
 #
 # 边界: **这不是真机结论**（C2）。mock 只能证明脚本逻辑、判据分支与退出码；
@@ -93,7 +93,7 @@ run() {  # run <名称> <场景> <OBSERVE> <命令...>
   mkdir -p "$CASE_DIR/runs" "$CASE_DIR/esc" "$CASE_DIR/env" "$CASE_DIR/ev"
   CASE_OUT="$CASE_DIR/out.txt"
   MOCK_DIR="$STATE" MOCK_SCEN="$scen" ADB="$BIN/adb" FASTBOOT="$BIN/fastboot" \
-  SUPERKEY="mock-superkey" TIMEOUT=1 OBSERVE="$obs" POLL=1 TOOL_FREEZE_COMMIT="$SELFTEST_FREEZE_COMMIT" \
+  TIMEOUT=1 OBSERVE="$obs" POLL=1 TOOL_FREEZE_COMMIT="$SELFTEST_FREEZE_COMMIT" \
   RUNDIR="$CASE_DIR/runs" ESCDIR="$CASE_DIR/esc" OUTDIR="$CASE_DIR/env" \
     "$@" >"$CASE_OUT" 2>&1
   return $?
@@ -123,15 +123,15 @@ check_has "preflight 判定 pstore 干净" "$ENVF" "空（无旧崩溃残留）"
 check_has "preflight 记录 fastboot 状态" "$ENVF" "fastboot 状态"
 check_not "preflight 不落序列号明文" "$ENVF" "MOCKDEVICE0001"
 
-# ---- 2. 预检：未提供 SUPERKEY（A3/A6） --------------------------------------
+# ---- 2. 预检：未检测到 Manager UID / 特权通道（A3/A6） ------------------------
 rm -rf "$STATE"; mkdir -p "$STATE"
-CASE_DIR="$WORK/cases/preflight_nosuperkey"; mkdir -p "$CASE_DIR/env"
+CASE_DIR="$WORK/cases/preflight_no_privilege"; mkdir -p "$CASE_DIR/env"
 CASE_OUT="$CASE_DIR/out.txt"
-MOCK_DIR="$STATE" MOCK_SCEN=ok ADB="$BIN/adb" FASTBOOT="$BIN/fastboot" \
-SUPERKEY="" TIMEOUT=1 OUTDIR="$CASE_DIR/env" \
+MOCK_DIR="$STATE" MOCK_SCEN=no_privilege ADB="$BIN/adb" FASTBOOT="$BIN/fastboot" \
+TIMEOUT=1 OUTDIR="$CASE_DIR/env" \
   bash Tester/tools/preflight.sh >"$CASE_OUT" 2>&1
-check_rc "preflight/缺 SUPERKEY 仍返回 0（环境问题，非缺陷）" 0 "$?"
-check_has "preflight 标注未提供 SUPERKEY" "$(first "$CASE_DIR/env" .md)" "未提供 SUPERKEY"
+check_rc "preflight/缺特权通道仍返回 0（环境问题，非缺陷）" 0 "$?"
+check_has "preflight 标注未检测到 Manager UID" "$(first "$CASE_DIR/env" .md)" "未检测到 APatch Manager UID"
 
 # ---- 3. 身份：正反用例（MNT-008） ------------------------------------------
 if [ "$HAVE_REAL" -eq 1 ]; then
@@ -234,7 +234,7 @@ if [ "$HAVE_REAL" -eq 1 ]; then
   printf 'OLD-ESCALATION-EVIDENCE-MUST-NOT-BE-LOST\n' > "$OLD_ESC"
   OLD_SHA="$(sha256_hex < "$OLD_ESC")"
   MOCK_DIR="$STATE" MOCK_SCEN=crash ADB="$BIN/adb" FASTBOOT="$BIN/fastboot" \
-  SUPERKEY="mock-superkey" TIMEOUT=1 OBSERVE=1 POLL=1 TOOL_FREEZE_COMMIT="$SELFTEST_FREEZE_COMMIT" \
+  TIMEOUT=1 OBSERVE=1 POLL=1 TOOL_FREEZE_COMMIT="$SELFTEST_FREEZE_COMMIT" \
   RUNDIR="$CASE_DIR/runs" ESCDIR="$CASE_DIR/esc" \
     bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" --instance-id "$REAL_ID" \
       >"$CASE_OUT" 2>&1
@@ -277,7 +277,7 @@ rm -rf "$STATE"; mkdir -p "$STATE"
 CASE_DIR="$WORK/cases/collect_out"; mkdir -p "$CASE_DIR"
 CASE_OUT="$CASE_DIR/out.txt"
 MOCK_DIR="$STATE" MOCK_SCEN=ok ADB="$BIN/adb" FASTBOOT="$BIN/fastboot" \
-SUPERKEY="mock-superkey" TIMEOUT=1 \
+TIMEOUT=1 \
   bash Tester/tools/collect_evidence.sh --build-id 'mock-instance#1' --module "$REAL_MODULE" \
     --out "$CASE_DIR/explicit" >"$CASE_OUT" 2>&1
 check_rc "collect_evidence/--out 显式目录" 0 "$?"

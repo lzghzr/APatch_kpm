@@ -13,7 +13,7 @@ Tester 的目标不是「把设备救回来」，而是**保住现场证据**并
 | 设备重启 | 加载后 `boot_id` 改变或 `uptime` 变小，或出现重启循环 |
 | 内核崩溃 | `dmesg` / `console-ramoops` 出现 `Unable to handle kernel`、`BUG:`、`Kernel panic`、`Call trace`：**出现即升级**（不自动卸载、保现场）；**缺席不算通过**，只能记"未观察到" |
 | 界面卡死 | 屏幕冻结、触摸无效、无开机动画但设备未关机 |
-| 加载无返回 | `truncate <superkey> module load ...` 超过 `--timeout` 仍无返回（由看门狗终止） |
+| 加载无返回 | Manager UID 通道 `kpm load ...` 超过 `--timeout` 仍无返回（由看门狗终止） |
 | 脚本退出码 **90** | 看门狗判定**设备无响应**（超时或被信号杀死，rc=124 或 ≥128） |
 | 脚本退出码 **1** | **判据 FAIL**（含 KP 控制命令按状态返回非 0，例如"已加载/已卸载"）：这是实现/测试问题，**不是**设备无响应，不要按本流程处理 |
 | 脚本退出码 **3** | 加载前检出 pstore 残留旧崩溃 → 停在加载前，先问维护者（C4） |
@@ -45,7 +45,7 @@ bash Tester/tools/collect_evidence.sh --build-id <build_id> --out Tester/reports
 | --- | --- | --- |
 | 崩溃日志 | `/sys/fs/pstore/console-ramoops*`、`/proc/last_kmsg` | **最关键的证据**，重启后仍存在 |
 | 内核日志尾部 | `adb shell dmesg \| tail -n 400` | 采集前不要 `dmesg -c` 清空 |
-| 模块状态 | `truncate <superkey> module list` / `module info <name>` | 若 adb 可用 |
+| 模块状态 | Manager UID 通道 `kpm list` / `kpm info <name>` | 若 adb 可用 |
 | 设备环境事实 | `uname -a`、`getprop ro.build.fingerprint`、`getprop ro.product.model` | 机型脱敏，序列号只存 sha256 前 8 位 |
 | 回归时间线 | `uptime`、`/proc/stat` 的 `btime`、加载命令时间戳 | 用于判断是软重启还是卡死 |
 | 最后一次成功的步骤 | 测试脚本日志 | 指明在哪个判据上失败 |
@@ -86,5 +86,5 @@ bash Tester/tools/collect_evidence.sh --build-id <build_id> --out Tester/reports
 ## 7. 常见误判
 
 - **把环境限制当缺陷**：设备本身不稳、USB 掉线、adb 版本不匹配导致的无响应，要写成环境事实。
-- **把测试缺陷当实现缺陷**：superkey 错误、路径不存在、`truncate` 未安装导致的失败，是实现方之外的测试缺陷。
+- **把测试缺陷当实现缺陷**：特权通道未就绪、路径不存在、`kpatch` 不可执行导致的失败，是实现方之外的测试缺陷。
 - **证据被自己毁掉**：进入流程前执行了 `dmesg -c`、重装模块、清 pstore，会让问题无法归因——这也是要写进实机报告的事实。

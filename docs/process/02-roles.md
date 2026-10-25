@@ -61,7 +61,7 @@ CI 构建规则（`.github/workflows/build-kpm.yml`）：**只构建「有 Makef
 | A1 | 设备操作**白名单** | `adb shell/push/pull/getprop/dmesg/reboot`、`adb reboot bootloader`、`fastboot devices/getvar`、`fastboot reboot` |
 | A1 | 设备操作**黑名单**（禁止） | `fastboot flash/erase/-w`、`adb shell rm -rf`、清 pstore、改 superkey、卸载/重装 APatch、刷机、进 recovery 清数据 |
 | A2 | 自主 `adb reboot` 作为死机恢复 | **有条件批准**：① 已记录四项基线且基线 pstore 为空，仅用于无响应类异常；② **只允许一次**，之后停止重试并升级；③ 当前出现崩溃特征或发现 pstore 非空时保留现场交维护者；④ 先尽力采集可读证据并通知维护者，记录恢复时间、动作与结果；⑤ 重启可能改变现场，恢复后立即采证 |
-| A3 | superkey 一次性提供 | 经会话/环境变量传入，**只读、不落盘、不进报告、不进 git**；未提供时 `module list/load/unload` 不可执行，按 A6 记为未执行 |
+| A3 | Manager UID 免密特权通道 | 通过 APatch Manager UID 走 `kpatch su kpm` 通道；未获取特权通道时 `kpm list/load/unload` 不可执行，按 A6 记为未执行 |
 | A4 | 原始证据落库位置 | 原始 dmesg/pstore 全文（可能含序列号）放 `local/tester-raw/`（已 gitignore）：入库只放**脱敏摘要**，序列号一律换成设备指纹哈希 |
 | A5 | 物理动作请求单 | 需要人手时用 [escalation 模板](../templates/escalation.md) 的「需要维护者执行的物理动作」发起，维护者按「动作回执」回填（时间/动作/结果） |
 | A6 | 「无设备 / 未授权 ⇒ 未执行」 | 是**合法状态**（沿用 `not-run` 先例），不算失败；但必须写明未执行的原因与未覆盖清单 |
@@ -126,3 +126,19 @@ CI 构建规则（`.github/workflows/build-kpm.yml`）：**只构建「有 Makef
 
 **必须产出**：身份记录、版本一致性、验收结论（复算哈希，不采信报告）、签署的交付提交、覆盖矩阵更新。
 清单见 [05-maintainer-acceptance.md](05-maintainer-acceptance.md)。
+
+### 维护者的裁决职责
+
+每次收到角色结果，**由维护者判断下一步走哪条**并写明依据。这是维护者的职责，不推给角色、也不推给用户。
+
+| 情况 | 裁决 |
+| --- | --- |
+| 实现或文档缺陷，且在当事人路径内可修 | **打回开发**：交 Developer，附判定表与复现证据；维护者不代改角色路径 |
+| 每轮实现改完，或修复后需复核 | **交审计**：独立重编/重解析是**每轮固定步骤**（见 [03-round-flow.md](03-round-flow.md) §2），不是按风险才叫；风险面（ABI、并发、越界）要求专项覆盖 |
+| 结论依赖真机行为（加载、注入、时序、用户主路径） | **交测试**：Tester 上机，绑定身份三要素 |
+| 证据不足、身份不可解析、报告与实测矛盾 | **打回重做**：指明缺什么（身份/判据/未覆盖项），不接受"通过"结论 |
+| 角色之间结论冲突 | 按证据层级裁定：Tier-1 真机 > Tier-2 独立审计 > Tier-3 自测；低层级让位或补证 |
+| 需要用户决定（范围、风险、签名与发布） | **反馈用户**：给读数、影响与建议，不代为决定 |
+
+裁决要留痕：`maintainer_records` 写清「为什么走这条路」，以及未采纳某意见的理由。
+维护者不写角色结论；裁决只决定「下一步由谁做、做什么」。

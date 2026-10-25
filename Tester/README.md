@@ -10,7 +10,6 @@
 ## 工具
 
 ```bash
-export SUPERKEY=<本机 superkey>      # 只放环境变量，不写进任何提交的文件
 bash Tester/tools/preflight.sh       # 预检 + 环境事实 + 加载前基线（所有 adb 调用带看门狗）
 bash Tester/tools/run_test.sh --kpm artifacts/<instance_id>/re_kernel_8.0.0.kpm \
      --module re_kernel --timeout 120 --tool-freeze-commit '<完整冻结工具 SHA>' \
@@ -25,7 +24,7 @@ bash Tester/tools/selftest_scripts.sh   # 离线自检：mock 设备驱动上面
 | --- | --- | --- |
 | 0 | 强证据判据通过 | 写实机报告（补功能判据与未覆盖），交维护者验收 |
 | 1 | 判据失败（设备仍可用） | 记录现象与归属，交 Developer 或 Tester 修复 |
-| 2 | 用法/环境错误（缺 SUPERKEY、产物不存在、**身份不符**：`--instance-id` 未在册或产物哈希与登记不一致） | 修环境/换正确实例，不算产品缺陷 |
+| 2 | 用法/环境错误（缺特权通道、产物不存在、**身份不符**：`--instance-id` 未在册或产物哈希与登记不一致） | 修环境/换正确实例，不算产品缺陷 |
 | 3 | **前置条件未满足**（pstore 残留 / 基线采不到） | 停下问维护者（C4），不得"先加载再说" |
 | **90** | **设备无响应/崩溃/重启** | **停止重试，走升级流程并通知维护者** |
 
@@ -49,12 +48,12 @@ bash Tester/tools/selftest_scripts.sh   # 离线自检：mock 设备驱动上面
 7. **加载类操作人在环**；死机后**零重试**（含跨会话）（C3）。
 8. **设备操作白名单**：`adb shell/push/pull/getprop/dmesg/reboot`、`adb reboot bootloader`、
    `fastboot devices/getvar/reboot`。**黑名单**：`fastboot flash/erase/-w`、`adb shell rm -rf`、
-   清 pstore、改 superkey、卸载/重装 APatch、刷机、进 recovery 清数据（A1）。
+   清 pstore、修改 APatch 管理器权限/重装管理器、卸载/重装 APatch、刷机、进 recovery 清数据（A1）。
 9. **恢复通道**：软件通道优先——`adb reboot` **至多一次**，且必须已记录基线、基线 pstore 干净；
    物理动作（长按电源、进 fastboot、拔插、换机）由维护者执行，用升级单的
    「需要维护者执行的物理动作」发起、维护者用「动作回执」回填（A2/A5）。
 10. **结论上限**：只对「该字节在该机型/该内核/该次加载下存活 N 秒且 X/Y 条强证据判据通过」负责（C2）。
-11. 公开文件不写设备序列号、superkey、抓包原文；序列号只保留 `sha256(serial)[:8]`。
+11. 公开文件不写设备序列号、管理器凭据/特权通道凭据、抓包原文；序列号只保留 `sha256(serial)[:8]`。
    **原始证据**（可能含序列号的 dmesg/pstore 全文）放 `local/tester-raw/`（gitignore），入库只放脱敏摘要（A4）。
 
 ## 目录
@@ -76,5 +75,5 @@ local/tester-raw/             原始证据与离线自检产物（gitignore，�
 1. 一次只加载**一个**变体；一次只验证一组判据。
 2. 预检不通过就停，不带着不稳定设备测试。
 3. 死机/卡死**不自救**：不重复加载、不改偏移、不刷机；只采集证据并通知维护者。
-4. 公开文件不写设备序列号、superkey、抓包原文；序列号只保留 `sha256(serial)[:8]`。
+4. 公开文件不写设备序列号、管理器凭据/特权通道凭据、抓包原文；序列号只保留 `sha256(serial)[:8]`。
 5. 报告必须写清**未覆盖**部分、每项**未采集原因**（C7）与失败归属（实现缺陷 / 测试缺陷 / 环境事实）。

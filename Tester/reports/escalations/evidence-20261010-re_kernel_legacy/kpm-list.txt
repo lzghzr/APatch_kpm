@@ -1,2 +1,0 @@
-cgroupv2_freeze
-re_kernel

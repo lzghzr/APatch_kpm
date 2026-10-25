@@ -16,7 +16,7 @@ B2N-416G_boot.img 的裸 Image SHA-256：`7633fbac5ce30b726a1acdbf57f730aa847a95
 - `binder_alloc_mmap_handler`：映射基址写入 `alloc+0x38`，首块 `data` 写入 `buffer+0x58`，交叉验证这两个字段。
 - 因而该目标 `binder_buffer.data=0x58`、`binder_alloc.buffer=0x38`。旧表曾有 `alloc.buffer=0x40`，必须按镜像修正，不能凭已有表直接复用。
 
-详细开发证据见 [本轮报告](../../../../Developer/reports/2026-10-02-re-kernel-static-binder-read.md)。这些值只覆盖本轮读取适配，完整目标配置仍需核对其它字段。
+详细开发证据见 [本轮报告]。这些值只覆盖本轮读取适配，完整目标配置仍需核对其它字段。
 
 ## 静态模块如何使用
 

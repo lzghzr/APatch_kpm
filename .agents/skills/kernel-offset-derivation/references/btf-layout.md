@@ -31,7 +31,7 @@ rek、rekx 当前查询依赖 `bpf_get_btf_vmlinux`、`btf_find_by_name_kind`、
 
 vmlinux BTF 的元数据有效不表示已建立所有类型解析缓存。不要直接套用依赖 `resolved_ids/resolved_sizes` 的 `btf_type_id_size`：typedef→pointer、u32→typedef→integer 等链可能访问未建立的缓存。
 
-当前实现使用按类型链解析的 `btf_resolve_size`，核对返回类型、尺寸及 ERR_PTR；使用其它 API 前必须读目标实现的初始化和错误契约。`run_cmd_demo` 的 BTF 经验见 [开发记录](../../../../Developer/reports/2026-10-09-run-cmd-demo.md)中的 DEV-021。
+当前实现使用按类型链解析的 `btf_resolve_size`，核对返回类型、尺寸及 ERR_PTR；使用其它 API 前必须读目标实现的初始化和错误契约。`run_cmd_demo` 的 BTF 经验见 [开发记录]中的 DEV-021。
 
 ## 函数 ABI 与结构体布局
 
@@ -43,4 +43,4 @@ BTF 类型偏移不代替函数签名。释放函数需查询 FUNC→FUNC_PROTO�
 
 运行生产查询函数的宿主测试可验证真实 BTF 类型链、字段、布局和错误契约，但没有执行目标 ARM64 入口。离线存在查询符号也不证明运行端 KP 能查到它。真机加载、原生函数调用和生命周期仍需绑定产物验证。
 
-本轮 13 份语料的具体范围与结果见 [窗口与新语料自检](../../../../Developer/reports/2026-10-10-rek-offset-windows.md)。6.18 的有效 BTF 缺少当前依赖的 `binder_alloc.buffer`，不能借旧字段推导宣称支持；该目标同时超出当前 KP 支持范围。回归语料范围、偏移可取得与运行端支持分别记录。
+本轮 13 份语料的具体范围与结果见 [窗口与新语料自检]。6.18 的有效 BTF 缺少当前依赖的 `binder_alloc.buffer`，不能借旧字段推导宣称支持；该目标同时超出当前 KP 支持范围。回归语料范围、偏移可取得与运行端支持分别记录。

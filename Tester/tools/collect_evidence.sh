@@ -18,8 +18,6 @@ MODULE=""
 OUTDIR="${OUTDIR:-Tester/reports/escalations}"
 ADB="${ADB:-adb}"
 TIMEOUT="${TIMEOUT:-15}"
-KP_CMD="${KP_CMD:-truncate}"
-SUPERKEY="${SUPERKEY:-}"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -74,11 +72,13 @@ collect "dmesg-tail" "dmesg | tail -n 400"
 collect "dmesg-crash-lines" "dmesg | grep -E 'Unable to handle kernel|Kernel panic|BUG:|Call trace|watchdog|hard lockup|soft lockup' | tail -n 100"
 collect "uptime-btime" "cat /proc/uptime; cat /proc/stat | grep btime; cat /proc/sys/kernel/random/boot_id"
 collect "env" "uname -a; getprop ro.product.model; getprop ro.build.fingerprint; getprop ro.build.version.release; getenforce"
-if [ -n "$SUPERKEY" ]; then
-  collect "modules-list" "$KP_CMD $SUPERKEY module list"
-  collect "module-info" "$KP_CMD $SUPERKEY module info $MODULE"
+MANAGER_PKG="$(run_to "$TIMEOUT" "$ADB" shell "pm list packages -U 2>/dev/null | grep -E 'me\.bmax\.apatch'" 2>/dev/null || true)"
+MANAGER_UID="$(printf '%s' "$MANAGER_PKG" | grep -oE 'uid:[0-9]+' | cut -d: -f2)"
+if [ -n "$MANAGER_UID" ]; then
+  collect "modules-list" "su $MANAGER_UID -c \"/data/local/tmp/kpatch su kpm list 2>/dev/null || /data/adb/ap/bin/kpatch su kpm list 2>/dev/null || /data/adb/kpatch su kpm list 2>/dev/null\"" root
+  collect "module-info" "su $MANAGER_UID -c \"/data/local/tmp/kpatch su kpm info $MODULE 2>/dev/null || /data/adb/ap/bin/kpatch su kpm info $MODULE 2>/dev/null || /data/adb/kpatch su kpm info $MODULE 2>/dev/null\"" root
 else
-  echo "MISS    modules-list（未提供 SUPERKEY）" | tee "$DEST/modules-list.txt"
+  echo "MISS    modules-list（未获取到 Manager UID）" | tee "$DEST/modules-list.txt"
 fi
 
 cat > "$DEST/README.md" <<EOF

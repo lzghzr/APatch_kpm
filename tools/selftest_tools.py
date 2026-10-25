@@ -792,6 +792,34 @@ def _run_checks():
         if moved.returncode == 0:
             cases["迁移后仍可读冻结旧路径"] = identity.git_blob_at(frozen, "mod/src/file.txt") == b"A\n"
             cases["迁移后新路径可读"] = identity.git_blob_at(frozen, "mod2/src/file.txt") is None
+        # 逻辑名也迁移：模拟新 clone，只存在新名字的对象库，不靠旧 gitdir 幸存。
+        if moved.returncode == 0:
+            subprocess.run(["git", "-C", str(parent), "config", "-f", ".gitmodules", "--rename-section",
+                            "submodule.mod", "submodule.mod2"], check=True, capture_output=True)
+            subprocess.run(["git", "-C", str(parent), "config", "--rename-section", "submodule.mod", "submodule.mod2"],
+                           check=True, capture_output=True)
+            old_store = parent / ".git/modules/mod"
+            new_store = parent / ".git/modules/mod2"
+            old_store.rename(new_store)
+            (parent / "mod2/.git").write_text("gitdir: " + os.path.relpath(new_store, parent / "mod2") + "\n")
+            subprocess.run(["git", "-C", str(parent), "submodule", "sync"], check=True, capture_output=True)
+            subprocess.run(["git", "-C", str(parent), "add", ".gitmodules"], check=True, capture_output=True)
+            subprocess.run(["git", "-C", str(parent)] + env + ["commit", "-qm", "rename submodule identity"],
+                           check=True, capture_output=True)
+            identity._SUBMODULE_REPO_CACHE.clear()
+            identity._BLOB_CACHE.clear()
+            cases["逻辑名和路径均迁移仍读冻结对象"] = identity.git_blob_at(frozen, "mod/src/file.txt") == b"A\n"
+            cases["改名后filters仍读冻结对象"] = identity.blobs_at(frozen, ["mod/src/file.txt"], filters=True).get("mod/src/file.txt") == b"A\n"
+            cases["改名后缺失文件仍拒绝"] = identity.git_blob_at(frozen, "mod/src/missing.txt") is None
+            # 无对应来源时不能借用其它模块的对象库。
+            subprocess.run(["git", "-C", str(parent), "config", "-f", ".gitmodules", "submodule.mod2.url", "unrelated"],
+                           check=True, capture_output=True)
+            subprocess.run(["git", "-C", str(parent), "add", ".gitmodules"], check=True, capture_output=True)
+            subprocess.run(["git", "-C", str(parent)] + env + ["commit", "-qm", "unrelated submodule source"],
+                           check=True, capture_output=True)
+            identity._SUBMODULE_REPO_CACHE.clear()
+            identity._BLOB_CACHE.clear()
+            cases["不同URL不能代替历史来源"] = identity.git_blob_at(frozen, "mod/src/file.txt") is None
         results.append(("identity_submodule_blob", all(cases.values()), str(cases)))
     finally:
         identity.REPO = saved_repo

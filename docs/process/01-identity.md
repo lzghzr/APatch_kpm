@@ -159,3 +159,28 @@ local/                        日志、锁、隔离工作区、临时证据；�
 - 登记期由维护者在 `maintainer_records[].baseline_layouts` 记录 `instance_id`、归档 `path`、文件 `sha256`/`size`
   与布局内嵌的 `kpm_sha256`。布局内嵌目标 `.kpm` 的 SHA-256，是它与实例对应的独立判据。
 - 布局缺失或与实例哈希不对应时，该实例的静态移植能力视为未覆盖，不得由其它变体的布局代填。
+
+## 身份登记不入库：接手时自建（2026-10-25 定）
+
+`.gitignore` 排除了 `/metadata/*`、`/docs/records/*`、`/docs/proposals/*` 与三方目录下的
+`reports/`、`proposals/`、`patches/`。因此仓库里**不含**：
+
+- `metadata/modules/*.json`（构建登记、验收、问题单状态）
+- `metadata/identity.json`（角色分离、约定与判据来源）
+- `metadata/checks/`（判据实现与夹具）
+- `docs/records/`（裁定、授权、常驻记录、发布说明）
+- 三方报告与提案
+
+**后果**：从仓库 clone 后，`instance_id`、产物哈希、验收与问题单状态都查不到，交付无法自证。
+工具能跑（它们读工作区文件），但**复算没有依据**。
+
+**接手（新机器 / 新会话 / 他人）必须自建**，最小步骤：
+
+1. 建 `metadata/modules/<模块>.json`：按 `tools/identity.py` 的登记格式，
+   从交付产物、`docs/records/` 记录与既有哈希重建 `builds[]`、`acceptances[]`、`issues[]`；
+2. 建 `metadata/identity.json`：角色分离、约定与判据来源，内容以 `docs/process/` 为准；
+3. 恢复 `metadata/checks/` 与 `tools/selftest_tools.py` 的夹具；
+4. 跑 `python3 tools/check_repository.py` 与 `python3 tools/selftest_tools.py`，逐项补齐差异；
+5. 在交接记录里写明「身份登记为本地自建，非仓库内容」，避免下一手误以为仓库即权威。
+
+自建后的登记与仓库内产物哈希必须逐条一致；不一致说明产物或记录被改动，按问题单处理。

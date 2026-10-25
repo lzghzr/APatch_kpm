@@ -19,7 +19,8 @@ on:
       - "nomount/module/**"
       - "nomount/README.md"
       - "nomount/tools/**"
-      - "nomount/nomount"
+      - "nomount/upstream/nomount"
+      - "zram_zstd/upstream/zstd"
       - "KernelPatch"
       - ".gitmodules"
 
@@ -41,7 +42,8 @@ on:
       - "nomount/module/**"
       - "nomount/README.md"
       - "nomount/tools/**"
-      - "nomount/nomount"
+      - "nomount/upstream/nomount"
+      - "zram_zstd/upstream/zstd"
       - "KernelPatch"
       - ".gitmodules"
 
@@ -298,6 +300,23 @@ jobs:
           python3 nomount/tools/release_zip.py merge --zip-dir target_zip --release-dir release --tag "$RELEASE_TAG" --repository "$GITHUB_REPOSITORY"
           (cd release && sha256sum --check SHA256SUMS)
 
+      - name: Select release uploads
+        run: |
+          # 只上传用户需要的资产；构建清单与校验和留在 CI 侧。
+          mkdir upload
+          shopt -s nullglob
+          for kpm in release/*.kpm; do
+            cp "$kpm" upload/
+            if [ -f "${kpm}.json" ]; then
+              cp "${kpm}.json" upload/
+            fi
+          done
+          companion=(release/NoMount-kpm_*.zip)
+          test "${#companion[@]}" -eq 1
+          cp "${companion[0]}" upload/
+          test -f release/NoMount-kpm.json
+          cp release/NoMount-kpm.json upload/
+
       - name: Upload release
         if: github.event.inputs.release == 'true'
         uses: ncipollo/release-action@v1
@@ -305,7 +324,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           name: ${{ github.event.inputs.version }}
           tag: ${{ github.event.inputs.version }}
-          artifacts: "release/*"
+          artifacts: "upload/*"
           commit: ${{ github.sha }}
           artifactErrorsFailBuild: true
           immutableCreate: true

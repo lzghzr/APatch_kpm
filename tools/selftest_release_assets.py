@@ -69,5 +69,51 @@ class ReleaseAssetsTests(unittest.TestCase):
         self.reject()
 
 
+class UploadSelectionTests(unittest.TestCase):
+    """验证 Release 上传集只含用户需要的资产。"""
+
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.release = self.root / "release"
+        self.release.mkdir()
+        repo = Path(__file__).resolve().parents[1]
+        workflow = (repo / ".github/workflows/build-kpm.yml").read_text()
+        step = workflow.split("      - name: Select release uploads\n", 1)[1]
+        self.script = textwrap.dedent(step.split("        run: |\n", 1)[1].split("\n      - name:", 1)[0])
+
+    def write_assets(self):
+        for name in ("re_kernel_x_1.6.kpm", "other_mod_x_1.6.kpm",
+                     "NoMount-kpm_2.1.1-20261014.zip"):
+            (self.release / name).write_bytes(b"payload")
+        for name in ("re_kernel_x_1.6.kpm.json", "BUILD_MANIFEST.json",
+                     "NoMount-kpm_2.1.1-20261014.zip.json", "NoMount-kpm.json"):
+            (self.release / name).write_text("{}")
+        (self.release / "SHA256SUMS").write_text("")
+
+    def run_script(self):
+        return subprocess.run(["bash", "-e", "-o", "pipefail", "-c", self.script],
+                              cwd=self.root, capture_output=True, text=True)
+
+    def test_uploads_only_user_assets(self):
+        self.write_assets()
+        result = self.run_script()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual({p.name for p in (self.root / "upload").iterdir()}, {
+            "re_kernel_x_1.6.kpm", "re_kernel_x_1.6.kpm.json", "other_mod_x_1.6.kpm",
+            "NoMount-kpm_2.1.1-20261014.zip", "NoMount-kpm.json"})
+
+    def test_missing_companion_zip_rejected(self):
+        self.write_assets()
+        (self.release / "NoMount-kpm_2.1.1-20261014.zip").unlink()
+        self.assertNotEqual(self.run_script().returncode, 0)
+
+    def test_missing_update_manifest_rejected(self):
+        self.write_assets()
+        (self.release / "NoMount-kpm.json").unlink()
+        self.assertNotEqual(self.run_script().returncode, 0)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

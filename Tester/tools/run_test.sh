@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # 真机功能测试（带看门狗）：加载一个 KPM 变体、跑判据、卸载。
 #
-#   export SUPERKEY=<superkey>
 #   bash Tester/tools/run_test.sh --kpm artifacts/<instance_id>/re_kernel_8.0.0.kpm \
 #        --module re_kernel --timeout 120 [--observe 60] [--tool-freeze-commit <完整 SHA>]
 #        --instance-id '<build_id>#<n>' [--recover]
@@ -16,7 +15,7 @@
 #   docs/process/tester-handbook.md 3.1~3.3   证据强度 / 加载前基线 / 判据脚本绑定
 #   docs/process/02-roles.md Tester 授权表    A1 设备白名单、A2 至多一次 adb reboot、C1/C4/C5
 #
-# 环境变量: ADB / KP_CMD / SUPERKEY / TIMEOUT / OBSERVE / POLL
+# 环境变量: ADB / TIMEOUT / OBSERVE / POLL
 #   （POLL 是观察轮询间隔，默认 10s；离线自检用它加速）
 
 set -uo pipefail
@@ -32,8 +31,6 @@ TIMEOUT="${TIMEOUT:-30}"
 OBSERVE="${OBSERVE:-60}"
 POLL="${POLL:-10}"
 ADB="${ADB:-adb}"
-KP_CMD="${KP_CMD:-truncate}"
-SUPERKEY="${SUPERKEY:-}"
 RECOVER=0
 NO_UNLOAD=0
 COMMIT="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
@@ -56,7 +53,6 @@ done
 [ -n "$MODULE" ] || { echo "缺少 --module" >&2; exit 2; }
 [ -f "$KPM" ] || { echo "产物不存在: $KPM" >&2; exit 2; }
 [ -n "$INSTANCE_ID" ] || { echo "缺少 --instance-id（必须是 metadata 在册的 instance_id，形如 <build_id>#<n>）" >&2; exit 2; }
-[ -n "$SUPERKEY" ] || { echo "缺少 SUPERKEY（环境变量），无法加载模块" >&2; exit 2; }
 
 sha256_hex() {
   if command -v sha256sum >/dev/null 2>&1; then sha256sum | cut -d' ' -f1
@@ -95,6 +91,13 @@ timed_out() { [ "$1" -eq 124 ] 2>/dev/null || [ "$1" -ge 128 ] 2>/dev/null; }
 
 FAIL_PAT='unknown symbol|hook .* error|error:|Error|failed|Failed|not found|No such file|Permission denied|Operation not permitted|Invalid argument|denied'
 fail_text() { printf '%s' "$1" | grep -Eq "$FAIL_PAT"; }
+
+MANAGER_UID=""
+KP_BIN=""
+kpm_run() {
+  local subcmd="$1"
+  adb_out "su -c 'su $MANAGER_UID -c \"$KP_BIN su kpm $subcmd\"'"
+}
 
 # ---------------------------------------------------------------- 候选身份绑定（MNT-008）
 # 加载入口必须绑定"在册实例"：instance_id 能在 metadata 里找到，且产物字节哈希与登记一致。
@@ -323,10 +326,22 @@ if ! adb_alive; then
   adb_alive || escalate "adb 连续 2 次无响应" 1
 fi
 
+MANAGER_PKG="$(adb_out "pm list packages -U 2>/dev/null | grep -E 'me\.bmax\.apatch'")"
+MANAGER_UID="$(printf '%s' "$MANAGER_PKG" | grep -oE 'uid:[0-9]+' | cut -d: -f2)"
+[ -n "$MANAGER_UID" ] || { echo "未检测到 APatch Manager UID，无法加载模块（特权通道不可用）" >&2; exit 2; }
+
+for candidate in /data/local/tmp/kpatch /data/adb/ap/bin/kpatch /data/adb/kpatch; do
+  if [ "$(adb_out "su -c 'test -x $candidate && su $MANAGER_UID -c \"$candidate su hello\" 2>/dev/null'")" = "hello1158" ]; then
+    KP_BIN="$candidate"
+    break
+  fi
+done
+[ -n "$KP_BIN" ] || KP_BIN="/data/local/tmp/kpatch"
+
 BOOT0="$(adb_out 'cat /proc/sys/kernel/random/boot_id')"
 UPTIME0="$(adb_out 'cat /proc/uptime')"
 PSTORE_RAW="$(adb_out 'ls -A /sys/fs/pstore/ 2>&1')"
-BASE_LIST="$(adb_out "$KP_CMD $SUPERKEY module list")"
+BASE_LIST="$(kpm_run "list")"
 
 # pstore 基线判定：空 → 干净；有文件名 → 旧崩溃残留；含错误文本 → 未采集
 if printf '%s' "$PSTORE_RAW" | grep -Eq 'Permission denied|No such file|not found|Error'; then
@@ -350,7 +365,7 @@ if printf '%s' "$BASE_LIST" | grep -q "$MODULE"; then
     log "模块 $MODULE 已在运行（--no-unload 模式：跳过初始 unload，继续测试）"
   else
     log "模块 $MODULE 已在运行，先卸载再测（不覆盖旧状态）"
-    adb_out "$KP_CMD $SUPERKEY module unload $MODULE" | tee -a "$LOG"
+    kpm_run "unload $MODULE" | tee -a "$LOG"
   fi
 fi
 
@@ -363,7 +378,7 @@ log "推送 $KPM -> $REMOTE"
 run_to "$((TIMEOUT*3))" "$ADB" push "$KPM" "$REMOTE" >>"$LOG" 2>&1 || escalate "adb push 失败/超时（设备可能已无响应）" 1
 
 log "加载模块"
-LOAD_OUT="$(adb_out "$KP_CMD $SUPERKEY module load $REMOTE")"
+LOAD_OUT="$(kpm_run "load $REMOTE")"
 LOAD_RC=$?
 printf '%s\n' "$LOAD_OUT" | tee -a "$LOG"
 timed_out "$LOAD_RC" && escalate "module load 超时未返回" 1
@@ -411,22 +426,22 @@ fi
 
 # 加载后的模块列表：这是"加载成功"判据的一部分，必须在卸载前取
 LOADED_LISTED=0
-printf '%s' "$(adb_out "$KP_CMD $SUPERKEY module list")" | grep -q "$MODULE" && LOADED_LISTED=1
+printf '%s' "$(kpm_run "list")" | grep -q "$MODULE" && LOADED_LISTED=1
 
 # ---------------------------------------------------------------- 3. 卸载或常驻存活检查
 if [ "$NO_UNLOAD" -eq 1 ]; then
   log "跳过卸载阶段（--no-unload 模式：本模块设计为常驻，卸载会触发 UAF）"
-  AFTER_LIST="$(adb_out "$KP_CMD $SUPERKEY module list")"
+  AFTER_LIST="$(kpm_run "list")"
   RESIDENT_LISTED=0
   printf '%s' "$AFTER_LIST" | grep -q "$MODULE" && RESIDENT_LISTED=1
 else
   log "卸载模块"
-  UNLOAD_OUT="$(adb_out "$KP_CMD $SUPERKEY module unload $MODULE")"
+  UNLOAD_OUT="$(kpm_run "unload $MODULE")"
   UNLOAD_RC=$?
   printf '%s\n' "$UNLOAD_OUT" | tee -a "$LOG"
   timed_out "$UNLOAD_RC" && escalate "module unload 超时未返回" 1
 
-  AFTER_LIST="$(adb_out "$KP_CMD $SUPERKEY module list")"
+  AFTER_LIST="$(kpm_run "list")"
   STILL_LISTED=0
   printf '%s' "$AFTER_LIST" | grep -q "$MODULE" && STILL_LISTED=1
 

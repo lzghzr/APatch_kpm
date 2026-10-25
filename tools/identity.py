@@ -107,7 +107,7 @@ def gitlink_map(commit):
 
 
 def _submodule_repo(commit, prefix):
-    """迁移后仍通过冻结声明的稳定子模块名读取对象库。"""
+    """迁移后定位子模块对象库；逻辑名也改变时核对唯一同源声明。"""
     checkout = REPO / prefix
     if checkout.is_dir():
         return checkout
@@ -122,6 +122,23 @@ def _submodule_repo(commit, prefix):
             if path == prefix and common:
                 name = field[len("submodule."):-len(".path")]
                 repo = REPO / common / "modules" / name
+                if not repo.is_dir():
+                    # 新 clone 只有改名后的对象库；按同一来源定位，内容仍由冻结 gitlink 决定。
+                    url = git(["config", "--blob", f"{commit}:.gitmodules", "--get", f"submodule.{name}.url"])
+                    current = git(["config", "--blob", "HEAD:.gitmodules", "--get-regexp", r"^submodule\..*\.url$"])
+                    matches = []
+                    for entry in current.splitlines():
+                        option, value = entry.split(None, 1)
+                        if url and value == url:
+                            matches.append(option[len("submodule."):-len(".url")])
+                    if len(matches) == 1:
+                        renamed = matches[0]
+                        path = git(["config", "--blob", "HEAD:.gitmodules", "--get", f"submodule.{renamed}.path"])
+                        candidate = REPO / path
+                        if path and (candidate / ".git").is_file():
+                            repo = candidate
+                        else:
+                            repo = REPO / common / "modules" / renamed
                 break
         _SUBMODULE_REPO_CACHE[key] = repo
     return _SUBMODULE_REPO_CACHE[key]

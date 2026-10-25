@@ -67,7 +67,11 @@ shell_dispatch() {
     *"dmesg -c"*) return 0 ;;
     *"ls -A /sys/fs/pstore"*) pstore_list; return 0 ;;
     *"cat /sys/fs/pstore"*) echo "mock pstore dump"; return 0 ;;
-    *"module list"*)
+    *"pm list packages"*)
+      if [ "$SCEN" = "no_privilege" ]; then return 0; fi
+      echo "package:me.bmax.apatch uid:10234"; return 0 ;;
+    *"su hello"*) echo "hello1158"; return 0 ;;
+    *"kpm list"*|*"module list"*)
       if [ "$SCEN" = resident_fail ] && [ -f "$DIR/loaded_first_seen" ]; then
         return 0
       fi
@@ -76,13 +80,13 @@ shell_dispatch() {
         echo "${MOCK_MODULE:-re_kernel} mock-version"
       fi
       return 0 ;;
-    *"module unload"*)
+    *"kpm unload"*|*"module unload"*)
       if [ "$SCEN" = unload_fail ]; then echo "unload failed: module not found"; return 1; fi
       rm -f "$DIR/loaded"; echo "unload ok"; return 0 ;;
-    *"module load"*)
+    *"kpm load"*|*"module load"*)
       if [ "$SCEN" = load_fail ]; then echo "unknown symbol: kf_get_task_ext"; return 1; fi
       : > "$DIR/loaded"; echo "load ok"; return 0 ;;
-    *"module info"*) echo "${MOCK_MODULE:-re_kernel} mock-version mock"; return 0 ;;
+    *"kpm info"*|*"module info"*) echo "${MOCK_MODULE:-re_kernel} mock-version mock"; return 0 ;;
     *dmesg*) dmesg_text; return 0 ;;
     *kpver*|*" version"*) echo "0.13.9-mock"; return 0 ;;
     *"uname -r"*) echo "4.14.356-mock"; return 0 ;;

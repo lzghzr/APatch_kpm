@@ -14,7 +14,6 @@
 ## 2. 预检
 
 ```bash
-export SUPERKEY=<本机 superkey>            # 只放环境变量，不写进提交的文件
 bash Tester/tools/preflight.sh             # 输出 Tester/reports/environments/<日期>-<指纹>.md
 ```
 
@@ -25,13 +24,13 @@ bash Tester/tools/preflight.sh             # 输出 Tester/reports/environments/
 | 内核版本 | `uname -r` / `uname -a` |
 | 机型（脱敏） | `getprop ro.product.model`、`ro.build.fingerprint` |
 | 系统与补丁级别 | `getprop ro.build.version.release`、`ro.build.version.security_patch` |
-| APatch/KernelPatch 版本 | `getprop` 与 `truncate <superkey> kpver`（若有） |
-| 已加载模块 | `truncate <superkey> module list` |
+| APatch/KernelPatch 版本 | `getprop` 与 Manager UID 通道 `kpatch su kpver`（若有） |
+| 已加载模块 | Manager UID 通道 `kpatch su kpm list` |
 | SELinux 状态 | `getenforce` |
 | 设备稳定性 | `uptime`、`btime`、最近 10 分钟是否有崩溃 |
 | 设备指纹哈希 | `sha256(序列号)[:8]`（序列号本身不落盘） |
 
-预检失败（设备离线、superkey 错误、无 `truncate`/`truncate` 不可执行）属于**测试环境问题**，先解决环境，不要进入功能测试。
+预检失败（设备离线、特权通道不可用）属于**测试环境问题**，先解决环境，不要进入功能测试。
 
 ## 3. 判据与计数
 
@@ -161,7 +160,7 @@ Tester 自有工具修复后，在 `Tester/reports/responses/<日期>-<问题编
 | --- | --- |
 | 加载返回 `kallsyms_lookup_name` 失败、偏移推导失败 | 实现缺陷（Developer） |
 | 加载后崩溃/卡死/软重启 | 实现缺陷（**高**，走升级流程） |
-| `truncate: not found`、superkey 错误、`/data/local/tmp` 无权限 | 测试缺陷（Tester） |
+| 特权通道不可用、Manager UID 未检测到、`/data/local/tmp` 无权限 | 测试缺陷（Tester） |
 | USB 掉线、设备过热降频、adb 版本不匹配 | 环境事实（记录，不算缺陷） |
 | 某机型 SELinux 拦截 netlink 协议号 | 环境事实 + 可达性结论的限制条件（写进报告） |
 

@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # 真机预检：采集环境事实与加载前基线，落盘供实机报告引用。
 #
-#   export SUPERKEY=<superkey>
 #   bash Tester/tools/preflight.sh
 #
 # 约定:
 #   * 每个 adb/fastboot 调用都有硬超时（run_to），不会挂住；
 #   * 设备序列号只落 sha256 前 8 位，明文不写文件；
-#   * 预检失败（设备离线 / superkey 错误 / 无 truncate）属测试环境问题，不要进入功能测试；
+#   * 预检失败（设备离线 / 特权通道不可用）属测试环境问题，不要进入功能测试；
 #   * 采不到的项必须写明原因（C7），不允许留空。
 #
 # 规则来源: docs/process/tester-handbook.md 2/3.2、docs/process/02-roles.md Tester 授权表 A1/C4/C7
@@ -21,8 +20,6 @@ ADB="${ADB:-adb}"
 FASTBOOT="${FASTBOOT:-fastboot}"
 TIMEOUT="${TIMEOUT:-15}"
 OUTDIR="${OUTDIR:-Tester/reports/environments}"
-KP_CMD="${KP_CMD:-truncate}"
-SUPERKEY="${SUPERKEY:-}"
 
 sha256_hex() {
   if command -v sha256sum >/dev/null 2>&1; then sha256sum | cut -d' ' -f1
@@ -80,7 +77,7 @@ SELINUX="$(dev 'getenforce')"
 UPTIME="$(dev 'cat /proc/uptime')"
 BTIME="$(dev 'cat /proc/stat | grep btime')"
 
-# C4 基线：boot_id / uptime / pstore 残留 / 已加载模块
+# C4 基线：boot_id / uptime / pstore 残留 / 已加载模块 (module list)
 BOOTID="$(dev 'cat /proc/sys/kernel/random/boot_id')"
 BOOTID_SRC="直接读取"
 if [ -z "$BOOTID" ]; then
@@ -110,33 +107,21 @@ fi
 
 MODULES=""
 KPVER=""
-KP_PATH="未使用（未提供 SUPERKEY 且未找到 Manager UID）"
+KP_PATH="未使用（未检测到 APatch Manager UID）"
 MODULES_OK=0
-MANAGER_UID=""
-if [ -z "$SUPERKEY" ]; then
-  MANAGER_PKG="$(dev "pm list packages -U 2>/dev/null | grep -E 'me\.bmax\.apatch'")"
-  MANAGER_UID="$(printf '%s' "$MANAGER_PKG" | grep -oE 'uid:[0-9]+' | cut -d: -f2)"
-fi
+MANAGER_PKG="$(dev "pm list packages -U 2>/dev/null | grep -E 'me\.bmax\.apatch'")"
+MANAGER_UID="$(printf '%s' "$MANAGER_PKG" | grep -oE 'uid:[0-9]+' | cut -d: -f2)"
 
-if [ -n "$SUPERKEY" ]; then
-  MODULES="$(dev "$KP_CMD $SUPERKEY module list")"
-  KP_PATH="$KP_CMD <superkey> module list（直接执行）"
-  [ -n "$MODULES" ] || { MODULES="$(dev_root "$KP_CMD $SUPERKEY module list")"; KP_PATH="${KP_CMD}（su -c 回退）"; }
-  if [ -n "$MODULES" ]; then MODULES_OK=1; else
-    MODULES="采不到（$KP_CMD 无输出，且 su -c 回退也无输出：检查 superkey 与 $KP_CMD 是否存在/可执行）"
-    KP_PATH="$KP_CMD 直接执行与 su -c 回退均失败"
-  fi
-  KPVER="$(dev "$KP_CMD $SUPERKEY kpver")"
-  [ -n "$KPVER" ] || KPVER="$(dev "$KP_CMD $SUPERKEY version")"
-  [ -n "$KPVER" ] || KPVER="采不到（$KP_CMD kpver/version 无输出）"
-elif [ -n "$MANAGER_UID" ]; then
-  MODULES="$(dev_root "su $MANAGER_UID -c \"/data/adb/ap/bin/kpatch su kpm list 2>/dev/null || /data/adb/kpatch su kpm list 2>/dev/null || /data/local/tmp/kpatch su kpm list 2>/dev/null\"")"
+if [ -n "$MANAGER_UID" ]; then
+  MODULES="$(dev_root "su $MANAGER_UID -c \"/data/local/tmp/kpatch su kpm list 2>/dev/null || /data/adb/ap/bin/kpatch su kpm list 2>/dev/null || /data/adb/kpatch su kpm list 2>/dev/null\"")"
   KP_PATH="kpatch su kpm list（Manager UID $MANAGER_UID 免密通道）"
   if [ -n "$MODULES" ]; then MODULES_OK=1; else
     MODULES="采不到（Manager UID $MANAGER_UID 执行 kpatch 无输出）"
   fi
-  KPVER="$(dev_root "su $MANAGER_UID -c \"/data/adb/ap/bin/kpatch su kpver 2>/dev/null || /data/adb/kpatch su kpver 2>/dev/null || /data/local/tmp/kpatch su kpver 2>/dev/null\"")"
+  KPVER="$(dev_root "su $MANAGER_UID -c \"/data/local/tmp/kpatch su kpver 2>/dev/null || /data/adb/ap/bin/kpatch su kpver 2>/dev/null || /data/adb/kpatch su kpver 2>/dev/null\"")"
   [ -n "$KPVER" ] || KPVER="采不到（kpatch kpver 无输出）"
+else
+  MODULES="采不到（未检测到 APatch Manager UID）"
 fi
 
 FB_STATE="$(run_to 8 "$FASTBOOT" devices 2>/dev/null || true)"
@@ -204,5 +189,5 @@ echo "preflight: OK"
 echo "环境事实已写入 $OUT"
 echo "设备指纹：$FP  内核：$KERNEL  SELinux：$SELINUX"
 echo "基线：boot_id=[$BOOTID] uptime=[$UPTIME] pstore=[$PSTORE_STATE]"
-[ -n "$SUPERKEY" ] || echo "提示：未设置 SUPERKEY，无法读取模块清单（功能测试会因缺 superkey 退出码 2）"
+[ "$MODULES_OK" -eq 1 ] || echo "提示：未获取到特权通道，无法读取模块清单（功能测试会因缺少特权通道按未执行记录）"
 exit 0

@@ -43,3 +43,18 @@ __pycache__/
 /kernel_img/*
 !/kernel_img/README.md
 !/kernel_img/offset_harness/
+
+# 报告太多了，不再入库
+/Auditor/*
+!/Auditor/tools/
+!/Auditor/README.md
+/Developer/*
+!/Developer/tools/
+!/Developer/README.md
+/Tester/*
+!/Tester/tools/
+!/Tester/README.md
+/docs/proposals/*
+/docs/records/*
+/metadata/*
+!/metadata/README.md
