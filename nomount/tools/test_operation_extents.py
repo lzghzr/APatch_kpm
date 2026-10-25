@@ -129,3 +129,18 @@ puts("PASS: three operation extents, full layout preparation, BTF routing and gu
 
 if __name__ == '__main__':
     main()
+
+
+# 原文与既有断言完整保留；追加独立的双符号缺失回退、联合契约和N1-N8回归。
+def append_vfs_anchor_cases():
+    import subprocess
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--output', type=Path, required=True)
+    args, _ = parser.parse_known_args()
+    root = Path(__file__).resolve().parents[2]
+    subprocess.run([sys.executable, '-B', str(root / 'nomount/tools/test_vfs_anchor_wiring.py'),
+                    '--output', str(args.output / 'vfs-anchors')], check=True)
+
+
+if __name__ == '__main__':
+    append_vfs_anchor_cases()

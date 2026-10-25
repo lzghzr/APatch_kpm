@@ -17,6 +17,8 @@ struct kstat;
 struct vfsmount;
 struct user_namespace;
 struct mnt_idmap;
+struct vm_area_struct;
+struct delayed_call;
 
 // 已核对目标 BTF 的挂载前部；上下文成员仅在相应原生 ABI 下读取。
 struct nm_mount_context_head {
@@ -41,6 +43,12 @@ struct nm_key_callbacks {
 };
 // name/def_datalen、三个回调和link均为独立必备成员；总和只证明可读前缀，非sizeof(key_type)。
 enum { NM_KEY_TYPE_PROBE_SIZE = sizeof(struct nm_key_type_head) + sizeof(struct nm_key_callbacks) + 2 * sizeof(void*) };
+// 已核对目标声明的完整尾部：link之后是无LOCKDEP时的空lock_class_key；自然对齐为8。
+// 只在已核对该声明契约及原生注册/注销几何时使用，不表示任意厂商的尾部。
+struct nm_key_type_tail {
+  void* next;
+  void* prev;
+};
 // key_preparsed_payload 中 data 与 datalen 连续；其起点跨版本变化。
 struct nm_key_data {
   const void* data;
@@ -62,6 +70,11 @@ struct nm_mutex_owner {
   u32 osq;
   void* wait_next;
   void* wait_prev;
+};
+// 已核对Android OEM声明：owner型mutex之后是两个u64 OEM槽，无magic/dep_map。
+struct nm_mutex_owner_oem {
+  struct nm_mutex_owner common;
+  u64 oem[2];
 };
 
 // 已对照首轮目标源码 7fc8455b2fa8 的 include/linux/fs.h 与目标访存。
@@ -86,6 +99,18 @@ struct nm_timespec {
   int64_t seconds;
   int64_t nanoseconds;
 };
+
+struct nm_setattr_layout {
+  int lock_offset;
+  int lock_kind;  // 1=rw_semaphore，2=mutex；由目标类型确认。
+  int slot;
+  int context;
+};
+
+// 只解释共同ia_valid头部；SIZE及复合位判定不读取后续iattr布局。
+struct nm_iattr_head {
+  unsigned int ia_valid;
+};
 struct nm_inode_size_times {
   int64_t i_size;
   struct nm_timespec i_atime;
@@ -103,6 +128,10 @@ struct nm_super_head {
   int64_t s_maxbytes;
   void* s_type;
   const void* s_op;
+  const void* s_dq_op;
+  const void* s_qcop;
+  const void* s_export_op;
+  unsigned long s_flags;
 };
 
 // drop_inode／evict_inode／put_super在两目标声明中连续；只取其实际起点。
@@ -145,9 +174,28 @@ struct nm_file_io_ops {
   long (*write_iter)(struct kiocb*, struct iov_iter*);
 };
 
+// 已核对的连续片段；绝对位置仍取目标 mmap / release 锚点，不按版本号分派。
+struct nm_file_control_ops {
+  long (*unlocked_ioctl)(struct file*, unsigned int, unsigned long);
+  long (*compat_ioctl)(struct file*, unsigned int, unsigned long);
+  int (*mmap)(struct file*, struct vm_area_struct*);
+};
+struct nm_file_sync_ops {
+  int (*release)(struct inode*, struct file*);
+  int (*fsync)(struct file*, long long, long long, int);
+};
+
 // 两目标的 iterate 紧随共同IO前部；shared成员是否存在另由原生枚举入口核对。
 struct nm_file_iteration_ops {
   struct nm_file_io_ops io;
+  void* iterate;
+  void* iterate_shared;
+};
+
+// 已核对的iopoll插入形态；iterate/iterate_shared仍为相邻指针，其绝对槽由调用者取得。
+struct nm_file_iopoll_iteration_ops {
+  struct nm_file_io_ops io;
+  void* iopoll;
   void* iterate;
   void* iterate_shared;
 };
@@ -210,6 +258,67 @@ struct nm_dentry_lockref_ops {
 struct nm_inode_lookup_ops {
   struct dentry* (*lookup)(struct inode*, struct dentry*, unsigned int);
 };
+// 现代链接接口的共同前部；follow_link 旧接口不使用此片段。
+struct nm_inode_link_ops {
+  struct dentry* (*lookup)(struct inode*, struct dentry*, unsigned int);
+  const char* (*get_link)(struct dentry*, struct inode*, struct delayed_call*);
+};
+// 仅用于已核对的旧Android声明：getattr锚点同时约束整个前部的几何。
+struct nm_inode_android_link_prefix {
+  struct nm_inode_link_ops link;
+  void* permission;
+  void* permission2;
+  void* get_acl;
+  int (*readlink)(struct dentry*, char*, int);
+  void* create;
+  void* hardlink;
+  void* unlink;
+  void* symlink;
+  void* mkdir;
+  void* rmdir;
+  void* mknod;
+  void* rename;
+  void* setattr;
+  void* setattr2;
+  void* getattr;
+};
+struct nm_inode_plain_link_prefix {
+  struct nm_inode_link_ops link;
+  void* permission;
+  void* get_acl;
+  int (*readlink)(struct dentry*, char*, int);
+  void* create;
+  void* hardlink;
+  void* unlink;
+  void* symlink;
+  void* mkdir;
+  void* rmdir;
+  void* mknod;
+  void* rename;
+  void* setattr;
+  void* getattr;
+};
+struct nm_inode_follow_prefix {
+  void* lookup;
+  const char* (*follow_link)(struct dentry*, void**);
+  void* permission;
+  void* permission2;
+  void* get_acl;
+  int (*readlink)(struct dentry*, char*, int);
+  void (*put_link)(struct inode*, void*);
+  void* create;
+  void* hardlink;
+  void* unlink;
+  void* symlink;
+  void* mkdir;
+  void* rmdir;
+  void* mknod;
+  void* rename;
+  void* rename2;
+  void* setattr;
+  void* setattr2;
+  void* getattr;
+};
 
 struct nm_dentry_revalidation_ops {
   int (*d_revalidate)(struct dentry*, unsigned int);
@@ -242,6 +351,16 @@ struct nm_inode_acl_tail {
   void* set_acl;
   u64 reserved[4];
 };
+// 只取已核对的memcg node自然片段；尾部nr_items后无成员，数组步长另含cacheline对齐。
+struct nm_list_lru_node_members {
+  u32 lock;
+  void* next;
+  void* prev;
+  long lru_items;
+  void* memcg_lrus;
+  long nr_items;
+};
+
 struct nm_inode_xattr_acl_tail {
   void* getattr;
   void* setxattr;
@@ -301,6 +420,15 @@ struct nm_super_context_tail {
   struct nm_super_reporting_tail reporting;
   u64 reserved[4];
 };
+struct nm_super_context_no_umount_end_tail {
+  struct nm_super_drop_prefix lifecycle;
+  void* clone_mnt_data;
+  void* copy_mnt_data;
+  void* update_mnt_data;
+  void* umount_begin;
+  struct nm_super_reporting_tail reporting;
+  u64 reserved[4];
+};
 struct nm_dentry_canonical_tail {
   struct nm_dentry_release_prune lifecycle;
   void* iput;
@@ -321,8 +449,20 @@ struct nm_dentry_select_tail {
   void* real;
   void* canonical_path;
 };
+// 独立canonical字段之后还有四槽；不同于canonical复用首个KABI槽的声明。
+struct nm_dentry_real_reserved_tail {
+  struct nm_dentry_release_prune lifecycle;
+  void* iput;
+  void* dname;
+  void* automount;
+  void* manage;
+  void* real;
+  void* canonical_path;
+  u64 reserved[4];
+};
 // 两份声明各至少有14个独立指针槽；只在这个已确认的前缀内找canonical回调。
 enum { NM_DENTRY_TAIL_PROBE_SIZE = 14 * sizeof(void*) };
+enum nm_operation_anchor { NM_OPERATION_ANCHOR_NONE, NM_OPERATION_ANCHOR_SDCARDFS, NM_OPERATION_ANCHOR_D_REAL };
 
 // 共同的16字节布局；actor返回类型由目标原型确认。
 struct nm_dir_context {

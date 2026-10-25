@@ -7,6 +7,7 @@ import unittest
 import zipfile
 
 from release_zip import MANIFEST, PACKAGE, digest, merge, prepare
+from test_zip_metadata import ZipMetadataTests
 
 
 class ZipReleaseTests(unittest.TestCase):

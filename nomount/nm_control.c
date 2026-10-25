@@ -25,6 +25,9 @@ static int nm_control_rules(struct nm_payload* payload, bool add) {
     else {
       memcpy(&del_header, payload->buffer + offset, header);
       rule_header.uid = del_header.uid;
+      rule_header.uid_end = del_header.uid_end;
+      rule_header.deny_start = del_header.deny_start;
+      rule_header.deny_end = del_header.deny_end;
       rule_header.v_len = del_header.v_len;
     }
     unsigned int names = (unsigned int)rule_header.v_len + rule_header.r_len;
@@ -34,21 +37,37 @@ static int nm_control_rules(struct nm_payload* payload, bool add) {
     }
     const char* path = payload->buffer + offset + header;
     int rc;
+    rc = nm_validate_rule_scope(rule_header.uid, rule_header.uid_end, rule_header.deny_start, rule_header.deny_end);
+    if (rc) {
+      nm_control_error(payload, rc);
+      offset += header + names;
+      continue;
+    }
     if (add) {
       // backing解析可进入VFS回调，必须在管理锁外完成。
       struct nomount_rule* rule =
-          nm_alloc_rule(path + rule_header.v_len, rule_header.r_len, rule_header.flags, rule_header.uid);
+          nm_alloc_scoped_rule(path + rule_header.v_len, rule_header.r_len, rule_header.flags, rule_header.uid,
+                               rule_header.uid_end, rule_header.deny_start, rule_header.deny_end);
       if (IS_ERR(rule))
         rc = PTR_ERR(rule);
       else {
         nm_management_lock();
-        rc = nm_topology_add_locked(path, rule_header.v_len, rule, &updates);
+        rc = nm_activate_xattr_reads_locked();
+        if (!rc)
+          rc = nm_activate_xattr_writes_locked();
+#ifndef CONFIG_KPM_BASELINES
+        if (!rc)
+          rc = nm_activate_xattr_extra_locked();
+#endif
+        if (!rc)
+          rc = nm_topology_add_locked(path, rule_header.v_len, rule, &updates);
         nm_management_unlock();
         if (rc)
           nm_rule_put(rule);
       }
     } else
-      rc = nm_topology_remove_locked(path, rule_header.v_len, rule_header.uid, &updates);
+      rc = nm_topology_remove_scope_locked(path, rule_header.v_len, rule_header.uid, rule_header.uid_end,
+                                           rule_header.deny_start, rule_header.deny_end, &updates);
     nm_control_error(payload, rc);
     offset += header + names;
   }
@@ -92,7 +111,9 @@ static int nm_control_list(struct nm_payload* payload) {
         goto done;
       }
       struct nm_rule_hdr header = {
-          .flags = rule->flags, .uid = rule->target_uid, .v_len = entry->leaf->v_len, .r_len = rule->r_len};
+          .flags = rule->flags, .uid = rule->target_uid, .uid_end = rule->uid_end,
+          .deny_start = rule->deny_start, .deny_end = rule->deny_end,
+          .v_len = entry->leaf->v_len, .r_len = rule->r_len};
       memcpy(payload->buffer + used, &header, sizeof(header));
       used += sizeof(header);
       memcpy(payload->buffer + used, entry->leaf->paths, header.v_len);
@@ -120,8 +141,8 @@ static int nm_execute_payload(struct nm_payload* payload) {
   int rc = 0;
   switch (payload->cmd) {
     case NM_CMD_GET_VERSION:
-      payload->data_size = sizeof(NM_KPM_VERSION) - 1;
-      memcpy(payload->buffer, NM_KPM_VERSION, payload->data_size);
+      payload->data_size = sizeof(NM_CONTROL_VERSION) - 1;
+      memcpy(payload->buffer, NM_CONTROL_VERSION, payload->data_size);
       break;
     case NM_CMD_ADD_RULE:
     case NM_CMD_DEL_RULE:

@@ -20,8 +20,8 @@ set_perm "$MODPATH/bin/nm" 0 0 0755
 MODDIR="$MODPATH"
 . "$MODDIR/common.sh"
 if ! nm_check_api; then
-    ui_print "! 无法连接 NoMount。请先在 APatch 中嵌入对应设备的 KPM，参数留空。"
-    abort "! 嵌入后重启手机，再安装这个 ZIP。"
+    ui_print "! 无法连接 NoMount。"
+    abort "! 需要 v22 控制协议。请成组更新 NoMount 2.2.0 KPM 与配套 ZIP，并在安装或嵌入 KPM 后重启；若仍失败，请检查适配情况和安装日志。"
 fi
 ui_print "- NoMount 已连接，驱动版本：$NM_DRIVER_VERSION"
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""核对正式发布的更新入口、版本化下载地址及变更说明。"""
+"""核对正式发布的更新入口、版本化下载地址及校验清单。"""
 import json
 from pathlib import Path
 import tempfile
 import unittest
 import zipfile
 
-from release_zip import CHANGELOG, MANIFEST, PACKAGE, UPDATE, digest, merge, prepare, publish_update
+from release_zip import MANIFEST, PACKAGE, UPDATE, digest, merge, prepare, publish_update
 
 
 class UpdateJsonTests(unittest.TestCase):
@@ -43,20 +43,22 @@ class UpdateJsonTests(unittest.TestCase):
         prepare(result, staged)
         merge(staged, self.release)
 
-    def test_update_points_to_tagged_versioned_zip_and_bundled_changelog(self):
+    def test_update_points_to_tagged_versioned_zip(self):
         publish_update(self.release, "release/2026 10", "lzghzr/APatch_kpm")
         update = json.loads((self.release / UPDATE).read_text())
         self.assertEqual(update, {
             "version": "v2.1.1-20261014", "versionCode": 20261014,
             "zipUrl": "https://github.com/lzghzr/APatch_kpm/releases/download/release%2F2026%2010/" + PACKAGE,
-            "changelog": "https://github.com/lzghzr/APatch_kpm/releases/download/release%2F2026%2010/" + CHANGELOG,
         })
         self.assertIs(type(update["versionCode"]), int)
-        with zipfile.ZipFile(self.release / PACKAGE) as package:
-            self.assertEqual((self.release / CHANGELOG).read_bytes(), package.read("CHANGELOG.md"))
+        self.assertFalse((self.release / "NoMount-kpm-changelog.md").exists())
+        build = json.loads((self.release / "BUILD_MANIFEST.json").read_text())
+        self.assertNotIn("changelog", build["companions"][0])
+        self.assertEqual(build["companions"][0]["update"],
+                         {"file": UPDATE, "sha256": digest(self.release / UPDATE)})
         lines = (self.release / "SHA256SUMS").read_text().splitlines()
         sums = dict(line.split("  ", 1)[::-1] for line in lines)
-        self.assertEqual(set(sums), {PACKAGE, MANIFEST, "BUILD_MANIFEST.json", UPDATE, CHANGELOG})
+        self.assertEqual(set(sums), {PACKAGE, MANIFEST, "BUILD_MANIFEST.json", UPDATE})
         for name, value in sums.items():
             self.assertEqual(digest(self.release / name), value)
 
@@ -64,7 +66,7 @@ class UpdateJsonTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "发布仓库"):
             publish_update(self.release, "1.0.0", "Other/Repository")
         self.assertFalse((self.release / UPDATE).exists())
-        self.assertFalse((self.release / CHANGELOG).exists())
+        self.assertFalse((self.release / "NoMount-kpm-changelog.md").exists())
 
     def test_repeated_update_cannot_replace_metadata(self):
         publish_update(self.release, "1.0.0", "lzghzr/APatch_kpm")

@@ -87,7 +87,7 @@ def main():
     a = p.parse_args()
     root = Path(__file__).resolve().parents[2]
     a.output.mkdir(parents=True, exist_ok=False)
-    upstream = (root / 'nomount/nomount/module/webroot/index.js').read_text()
+    upstream = (root / 'nomount/upstream/nomount/module/webroot/index.js').read_text()
     original = a.output / 'original.js'
     original.write_text(upstream)
     revised = a.output / 'revised.js'

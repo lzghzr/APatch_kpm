@@ -17,7 +17,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
-    upstream = root / 'nomount/nomount'
+    upstream = root / 'nomount/upstream/nomount'
     commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=upstream).decode().strip()
     assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=upstream)
     header = (upstream / 'userspace/src/nm.h').read_text()

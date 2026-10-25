@@ -35,5 +35,6 @@ static int nm_register_control(void) {
   }
   // 注册为最后一步。内核已能调用表，成功后不得释放；模块驻留到重启。
   nm_registered_key_type = table;
+  __atomic_store_n(&nm_xattr_resident, true, __ATOMIC_RELEASE);
   return 0;
 }

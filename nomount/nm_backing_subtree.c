@@ -2,7 +2,7 @@
 /* Managed automatic directories inherit the selected parent view at lookup time. */
 static struct nomount_rule* nm_inherit_backing_directory(struct inode* parent, struct dentry* dentry) {
   struct nm_inode_info* info = nm_is_directory_inode(parent) ? nm_inode_private(parent) : NULL;
-  if (!info || !info->r_path.dentry)
+  if (!info || !info->r_path.dentry || (info->flags & NM_FLAG_OPAQUE))
     return NULL;
   const struct nm_qstr* name = &((struct nm_dentry_head*)dentry)->d_name;
   struct nm_path path;

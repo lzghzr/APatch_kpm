@@ -11,6 +11,7 @@ static int kfunc_def(nm_readonly_mmap)(struct file*, struct vm_area_struct*);
 
 // 完整 backing 引擎准备时安装原生权限检查；文件对象阶段可独立准备回调表。
 static int (*nm_backing_open_permission)(const struct nm_path*);
+static int (*nm_backing_write_open_permission)(const struct nm_path*, int);
 
 static int nm_prepare_file_functions(void) {
   kfunc(nm_dentry_open) = (typeof(kfunc(nm_dentry_open)))kallsyms_lookup_name_by_suffix("dentry_open");
@@ -22,19 +23,26 @@ static int nm_prepare_file_functions(void) {
 }
 
 static int nm_open(struct inode* inode, struct file* file) {
-  if (nm_file_flags(file) & (03U | 01000U))  // O_ACCMODE / O_TRUNC：首轮只读。
+  unsigned int flags = nm_file_flags(file);
+  // O_TRUNC也要求源写权限，包括O_RDONLY|O_TRUNC。源open后，外层VFS继续经setattr截断。
+  bool writing = flags & 01003U;
+  // 独立只读文件引擎不具备源写权限委托；完整backing准备后才开放写句柄。
+  if (writing && !nm_backing_write_open_permission)
     return -EROFS;
   struct nm_inode_info* info = nm_inode_private(inode);
   if (!info)
     return -ENODEV;
   if (info->flags & NM_FLAG_VIRTUAL_DIR) {
+    if (writing)
+      return -EROFS;
     nm_set_file_private(file, NULL);
     return 0;
   }
   if (!info->r_path.dentry)
     return -ENODEV;
-  if (nm_backing_open_permission) {
-    int rc = nm_backing_open_permission(&info->r_path);
+  if (writing || nm_backing_open_permission) {
+    int rc =
+        writing ? nm_backing_write_open_permission(&info->r_path, flags) : nm_backing_open_permission(&info->r_path);
     if (rc)
       return rc;
   }
@@ -82,6 +90,26 @@ static long nm_read_iter(struct kiocb* request, struct iov_iter* iter) {
   return rc;
 }
 
+// open持有同一源file直至release；同步请求只换ki_filp，不重开、不重试短写。
+// VFS调用者保留自己的写引用；本回调不嵌套mnt_want_write/file_start_write。
+static long nm_write_iter(struct kiocb* request, struct iov_iter* iter) {
+  if (!request || !iter)
+    return -EINVAL;
+  struct nm_kiocb_head* iocb = (void*)request;
+  if (iocb->ki_complete)
+    return -EOPNOTSUPP;
+  struct file* outer = iocb->ki_filp;
+  struct file* backing = outer ? nm_file_private(outer) : NULL;
+  const struct nm_file_io_ops* ops = backing ? nm_file_ops(backing) : NULL;
+  long (*callback)(struct kiocb*, struct iov_iter*) = ops ? ops->write_iter : NULL;
+  if (!callback)
+    return -EINVAL;
+  iocb->ki_filp = backing;
+  long rc = callback(request, iter);
+  iocb->ki_filp = outer;
+  return rc;
+}
+
 static int nm_mmap(struct file* file, struct vm_area_struct* area) {
   struct file* backing = nm_file_private(file);
   if (!backing || nm_file_mapping(file) != nm_file_mapping(backing))
@@ -100,10 +128,64 @@ static long nm_splice_read(struct file* file, int64_t* position, struct pipe_ino
       backing ? nm_fop(backing, struct_offset.fop_splice_read) : NULL;
   return callback ? callback(backing, position, pipe, length, flags) : -EINVAL;
 }
+
+// VFS 持有外层 file 引用，open 持有 backing 引用；沿用原生回调的权限及 errno。
+static long nm_ioctl(struct file* file, unsigned int command, unsigned long argument) {
+  struct file* backing = nm_file_private(file);
+  long (*callback)(struct file*, unsigned int, unsigned long) =
+      backing ? nm_fop(backing, struct_offset.fop_mmap - offsetof(struct nm_file_control_ops, mmap)) : NULL;
+  return callback ? callback(backing, command, argument) : -ENOTTY;
+}
+
+static long nm_compat_ioctl(struct file* file, unsigned int command, unsigned long argument) {
+  struct file* backing = nm_file_private(file);
+  int slot = struct_offset.fop_mmap - offsetof(struct nm_file_control_ops, mmap)
+             + offsetof(struct nm_file_control_ops, compat_ioctl);
+  long (*callback)(struct file*, unsigned int, unsigned long) = backing ? nm_fop(backing, slot) : NULL;
+  // compat 缺失不能改调 native ioctl；参数解释归原生 compat 回调。
+  return callback ? callback(backing, command, argument) : -ENOTTY;
+}
+
+static int nm_fsync(struct file* file, long long start, long long end, int datasync) {
+  struct file* backing = nm_file_private(file);
+  int (*callback)(struct file*, long long, long long, int) =
+      backing ? nm_fop(backing, struct_offset.fop_release + offsetof(struct nm_file_sync_ops, fsync)) : NULL;
+  return callback ? callback(backing, start, end, datasync) : -EINVAL;
+}
+
+static int nm_validate_file_control_offsets(const struct struct_offset* offsets) {
+  int first = offsets->fop_mmap - offsetof(struct nm_file_control_ops, mmap);
+  int sync = offsets->fop_release + offsetof(struct nm_file_sync_ops, fsync);
+  const int slots[] = {first, first + offsetof(struct nm_file_control_ops, compat_ioctl), sync};
+  const int existing[] = {offsets->fop_open, offsets->fop_release, offsets->fop_mmap, offsets->fop_splice_read};
+  for (unsigned int i = 0; i < sizeof(slots) / sizeof(slots[0]); i++) {
+    if (slots[i] < 0 || slots[i] < sizeof(struct nm_file_io_ops) || slots[i] % 8
+        || slots[i] + 8 > offsets->file_ops_size)
+      return -EINVAL;
+    for (unsigned int j = 0; j < sizeof(existing) / sizeof(existing[0]); j++)
+      if (slots[i] == existing[j])
+        return -EINVAL;
+    for (unsigned int j = 0; j < i; j++)
+      if (slots[i] == slots[j])
+        return -EINVAL;
+  }
+  return 0;
+}
+
 // 发布前构造完整目标尺寸的操作表；失败不发布，已发布表由模块驻留持有。
 static void* nm_new_file_operations(void) {
   struct struct_offset offsets = struct_offset;
   int rc = nm_validate_file_offsets(&offsets);
+  if (!rc)
+    rc = nm_validate_file_control_offsets(&offsets);
+#ifndef CONFIG_KPM_BASELINES
+  if (!rc) {
+    bool unavailable = false;
+    rc = calculate_btf_file_control(&unavailable);
+    if (rc == -ENODATA && unavailable)
+      rc = 0;  // 无BTF时沿用已核对的共同片段；已有锚点及完整尺寸仍必须有效。
+  }
+#endif
   if (rc)
     return ERR_PTR(rc);
   void* table = nm_new_operations(NM_FILE_OPS, NULL);
@@ -116,5 +198,9 @@ static void* nm_new_file_operations(void) {
   nm_set_fop(table, offsets.fop_release, nm_release);
   nm_set_fop(table, offsets.fop_mmap, nm_mmap);
   nm_set_fop(table, offsets.fop_splice_read, nm_splice_read);
+  int control = offsets.fop_mmap - offsetof(struct nm_file_control_ops, mmap);
+  nm_set_fop(table, control, nm_ioctl);
+  nm_set_fop(table, control + offsetof(struct nm_file_control_ops, compat_ioctl), nm_compat_ioctl);
+  nm_set_fop(table, offsets.fop_release + offsetof(struct nm_file_sync_ops, fsync), nm_fsync);
   return table;
 }

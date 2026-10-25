@@ -5,6 +5,11 @@
 #include "nm_control_lock.c"
 
 // 命令使用上述管理锁和完整backing引擎。
+#include <hook.h>
+#include "nm_xattr.c"
+#include "nm_xattr_write.c"
+#include "nm_xattr_extra.c"
+
 #include "nm_control.c"
 
 // keyring引用命令分派，最后发布。
@@ -25,6 +30,7 @@ int nm_prepare_control_engine(void) {
       nm_discard_management_mutex();
     nm_topology_ready = false;
     nm_backing_open_permission = NULL;
+    nm_backing_write_open_permission = NULL;
     nm_discard_directory_view();
   }
   return rc;

@@ -10,11 +10,12 @@ nm_log() {
     printf '%s\n' "$*" >> "$NM_LOG"
 }
 
-# 查询控制协议；不根据内核版本或驱动版本字符串决定兼容性。
+# 首项是线协议号，不是内核版本或 KPM 发布版本；只接受本包支持的 v22 ABI。
 nm_check_api() {
     [ -x "$NM_BIN" ] || return 1
     NM_DRIVER_VERSION=$("$NM_BIN" version 2>/dev/null) || return 1
     [ -n "$NM_DRIVER_VERSION" ] || return 1
+    [ "${NM_DRIVER_VERSION%% *}" = 22 ] || return 1
     isolated_state=$("$NM_BIN" uid block_isolated 2>/dev/null) || return 1
     case "$isolated_state" in 0|1) return 0 ;; *) return 1 ;; esac
 }

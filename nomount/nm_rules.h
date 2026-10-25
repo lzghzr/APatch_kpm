@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /* Base port: maxsteeel/nomount 1ded61dc908c511072162fa0bee44e6ccdb7b4c7.
- * Child lookup and UID prefilter: 7046c7ad3ee0bf4ae66e80f6b93b1e30db0cb4e3. */
+ * Child lookup and UID prefilter: 7046c7ad3ee0bf4ae66e80f6b93b1e30db0cb4e3.
+ * UID ranges and opaque views: bf1847f98fed382369c43bfd652cd93774b9b8e3. */
 #ifndef __NM_RULES_H
 #define __NM_RULES_H
 
@@ -9,6 +10,7 @@
 #define NM_FLAG_IS_DIR (1U << 0)
 #define NM_FLAG_VIRTUAL_DIR (1U << 1)
 #define NM_FLAG_WHITEOUT (1U << 2)
+#define NM_FLAG_OPAQUE (1U << 3)
 
 struct nm_directory_node;
 
@@ -16,10 +18,14 @@ struct nomount_rule {
   struct nm_path r_path;
   u32 refs;
   u32 target_uid;
+  u32 uid_end;
+  u32 deny_start;
+  u32 deny_end;
   u16 r_len;
   u16 flags;
   bool published;
   bool inherit_backing;  // 仅自动父目录／保留目录使用，不来自控制协议。
+  bool inherited_child;  // 仅无显式规则的临时子项，不进入管理树。
   struct nomount_rule* next;
   char paths[];
 };
@@ -31,6 +37,8 @@ struct nm_inode_info {
   u32 secid;
   int init_error;
   bool initialized;
+  bool inherited_child;                    // 绑定来源，不持有规则或额外缓存引用。
+  void (*link_put)(struct inode*, void*);  // 旧链接清理在物化时固定；path保活原生inode与文件系统。
   struct rcu_head rcu;
 };
 

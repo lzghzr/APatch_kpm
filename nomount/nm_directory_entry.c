@@ -16,6 +16,7 @@
 // 仅用于初始化失败：操作表尚未安装到原生对象，不能用于已发布视图的撤销。
 static void nm_discard_directory_view(void) {
   nm_discard_operations(nm_inode_engine.inode_ops);
+  nm_discard_operations(nm_inode_engine.symlink_ops);
   nm_discard_operations(nm_inode_engine.file_ops);
   nm_discard_operations((void*)nm_inode_engine.directory_ops);
   nm_discard_operations(nm_virtual_directory_fops);

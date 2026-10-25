@@ -6,17 +6,34 @@
 
 - 首轮目标为用户提供的 `boot_los23.2.img`，内核版本 `4.19.325-cip134-st18-perf-g7fc8455b2fa8`。
 - 下一轮目标为 `B2N-416G_boot.img`（4.4.192-perf+）。参考 Nokia SDM660 提交 `67c3e103decafc3ff8a361c39f079a0dfce2a23c` 的声明与目标配置；参考源码为4.4.196，不能声明为镜像的准确构建源码。变化字段另以目标机器码交叉核对。
-- 以 `UPSTREAM.md` 指定的 Git 提交为原版源码基线。上游 Git 子模块位于 `nomount/nomount`；移植代码在本目录单独维护。
+- 以 `UPSTREAM.md` 指定的 Git 提交为原版源码基线。上游 Git 子模块位于 `nomount/upstream/nomount`；移植代码在本目录单独维护。
 - 首轮内核源码参考为 `LineageOS/android_kernel_sony_sm8250` 的 `7fc8455b2fa84be76364c2457e6503b867ceb12a`，与镜像版本标记一致。源码用于核对字段语义，运行时偏移仍取自目标。
 - 普通文件、目录枚举、APK 资源和映射访问共用一致的规则。PackageManager 的扫描成功不代表应用进程读取成功。
 - 模块成功初始化后驻留到重启，与 zram_zstd 保持一致；不实现热卸载和已发布回调的撤销。exit 只作诊断，不能把其返回值当成 KP 卸载保护。
+
+## 本地静态适配数据
+
+用户静态适配以本次提供的 boot 镜像重新取证，绑定镜像身份生成结果；不按机型或内核版本套用旧表。
+目标配置与回归输入放在仓库根目录的 `local/nomount/configs/`，由已有 `/local/` 规则忽略，不进入源码或默认构建。
+该目录目前保留22份历史配置，其中12份v4用于既有回归；文件内容不因移动而改变。
+依赖这些输入的自检须先备齐原目标证据，缺文件应报未就绪，不能把空配置矩阵算作通过。
+
+新检出若需重放历史回归，可从迁移前提交恢复本地输入（仅在目标目录不存在时执行）：
+
+```sh
+mkdir -p local
+# <迁移前提交> 可取本次迁移提交的父提交；恢复的是历史回归输入，不是新设备适配结果。
+git archive <迁移前提交> nomount/configs | tar -x -C local
+```
+
+历史报告保留原路径；本文件下列 `local/` 路径均相对仓库根目录。
 
 ## 文件职责
 
 - `nomount.c`：KPM 元信息、完整初始化、状态查询和驻留诊断入口。
 - `Makefile`：dynamic / static 两种产物，静态版附带布局 JSON。
-- `configs/boot_los23.2.json`：首轮目标的38项配置及镜像、源码和证据绑定。
-- `configs/B2N-416G.json`／`configs/boot_los23.2-v2.json`：0.2.0 的42项静态配置。原0.1.0配置与候选保持原样。
+- `local/nomount/configs/boot_los23.2.json`：首轮目标的38项配置及镜像、源码和证据绑定。
+- `local/nomount/configs/B2N-416G.json`／`local/nomount/configs/boot_los23.2-v2.json`：0.2.0 的42项静态配置。原0.1.0配置与候选保持原样。
 - `nm_layout.c`：布局获取层的编译入口；当前只构建对象文件。
 - `nm_native_entry.c`：布局、操作表尺寸和原生封装的联合编译入口。
 - `nm_rules_entry.c`：规则核心的独立编译入口；与其他临时入口分别编译。
@@ -30,7 +47,7 @@
 - `nm_protocol.h`：与原版用户态工具一致的控制载荷。
 - `nm_operations.c`：按目标完整尺寸分配/复制操作表，及发布前失败清理。
 - `nm_rules.h` / `nm_rules.c`：模块私有规则、UID 筛选和子项索引；原生结构访问通过布局层。
-- `nm_file.c`：首轮文件 open/release、同步 read_iter、seek、只读 mmap 和 splice_read 回调。
+- `nm_file.c`：文件 open/release、同步 read_iter/write_iter、seek、只读 mmap 和 splice_read 回调。
 - `nm_inode.c`：普通文件 inode 物化、getattr 与完整 super_operations 代理。
 - `nm_current.c`：复用 KP current/cred 布局取得 fsuid 与 compat 状态。
 - `nm_directory_nodes.c`：私有目录视图、子项规则选择及虚拟枚举 cookie。
@@ -82,18 +99,29 @@
 - 合并枚举共用现有规则过滤器，先读 backing，再输出虚拟子项；点项显示 outer 目录和父目录编号。blocked UID 保留 backing 内容并跳过规则子项。枚举／seek 同时核对 backing inode 操作表和已打开 file 的 f_op，拒绝再次进入模块目录表，覆盖 i_fop 先发布而 i_op 尚未发布的窗口。
 - 纯虚拟／backing 目录共用完整操作表和 iget5_locked 缓存，依 rule 类型分派。backing 目录复制既有字段覆盖的属性，保留自己的 i_data；getattr 转交源路径，再替换 ino/dev。新inode候选先取得独立path/node引用，缓存命中释放本次候选的引用及info。
 - 完整 backing 引擎必须在实际 KPM 初始化时经 nm_prepare_backing_queries 准备，源原生权限接口和其 ABI 不可用就失败。准备成功后安装 open 的源读取权限检查，普通文件和 backing 目录均执行 MAY_OPEN | MAY_READ，以补足 dentry_open 不做 DAC 的边界。完整入口随后经 nm_prepare_backing_subtrees 接入来源继承和 MAY_EXEC：backing 父目录的显式 lookup 与 ref-walk revalidate 都经权限分派器调用源 mount/inode 的搜索权限；LOOKUP_RCU 仍返回 ECHILD。各独立对象准备入口用于分段开发，实际 KPM 初始化须走完整入口。
-- backing fallback取得完整源path后转交临时规则，物化取得独立path再释放规则，不进管理索引；标记 published 以阻止误入管理树。普通文件复用文件物化，子目录新建空节点并递归走相同目录引擎。显式规则优先，blocked UID 在 fallback 前产生负项；无显式 leaf 的 owned positive／negative 均由既有 revalidate 强制重查。
-- 完整引擎依赖全齐后才开放拓扑中的 backing 目录规则。准备失败只清理尚未发布的私有表，并清空拓扑准备状态和权限入口；已有引擎拒绝重复完整准备。fallback symlink／特殊文件尚未物化。
-- 在已有管理目录下新增深层规则时，建立私有自动父链，管理阶段不解析这些前缀的当前 UID 视图。自动／保留目录的 inherit_backing 只属于模块私有规则；查找时从实际父inode的独立path取得来源，使用原生 vfs_path_lookup 查询相应子目录，并持独立 path/rule/node 引用。ENOENT 保留纯目录，其他原生错误保留，源为非目录时返回 ENOTDIR。继承目录的 owned 缓存强制重查，以覆盖源出现／变化；显式来源撤销后有子规则的目录恢复父来源。
+- backing fallback取得完整源path后转交临时规则，物化取得独立path再释放规则，不进管理索引；标记 published 以阻止误入管理树。普通文件复用文件物化，子目录新建空节点并递归走相同目录引擎。显式规则优先，blocked UID 在 fallback 前产生负项；无显式 leaf 的 owned 普通文件／目录正项按下述严格回源判据复用；负项和链接仍失效重查。
+- 继承正项复用仅接普通文件／目录：每次ref-walk用源父path与有界名字快照执行原生查询，核对mount+dentry、类型、普通文件mapping、mode/uid/gid、SID及已复制的size/times/blocks（目录另核对nlink）。源标签仍经getsecctx验证，命中不再notifysecctx；atime变化也保守失效，净收益待真机。
+- inherited_child为私有来源标记，区分无显式规则的临时子项与显式／自动父；不增加缓存引用，info/rule的ARM64尺寸保持64/56字节。可睡眠查询前后分别用短RCU选择当前UID规则、核对父视图与名字；变更则失效重建，不在存活inode上换源/刷新标签。不跨睡眠持有规则裸指针，不持d_lock或管理锁回源，不用TTL/generation跳过源检查。既有path/node生命周期及原生shrinker回收保持。
+- Developer入口为tools/test_cache_reuse.py：读取1545条int/bool冻结夹具，仅按7c4e160授权迁移M1-O1/O2的稳定正项返回值，类型检查、负项与clear_rules后失效保持；其余表达式和顺序不变，追加源／规则／绑定变化和回源交错。工具手动调用，未接共享门禁；宿主桩不证明原生dcache命中、shrinker或真实并发，迁移独立复核待Auditor。
+- 完整引擎依赖全齐后才开放拓扑中的 backing 目录规则。准备失败只清理尚未发布的私有表，并清空拓扑准备状态和权限入口；已有引擎拒绝重复完整准备。fallback普通链接按下述现代接口契约物化，特殊文件仍拒绝。
+- 在已有管理目录下新增深层规则时，建立私有自动父链，管理阶段不解析这些前缀的当前 UID 视图。自动／保留目录的 inherit_backing 只属于模块私有规则；查找时从实际父inode的独立path取得来源，使用原生 vfs_path_lookup 查询相应子目录，并持独立 path/rule/node 引用。ENOENT 保留纯目录，其他原生错误保留，源为非目录时返回 ENOTDIR。自动／保留目录的 inherit_backing 分支仍强制重查，以覆盖源出现／变化；显式来源撤销后有子规则的目录恢复父来源。
 - 在建管理父链前已打开的 fallback 目录持有原节点及源 path；新路径查找进入新管理节点。现有 FD 的目录视图保持到引用结束。删除最后子规则会裁剪自动父链，已打开的 inode 持有空节点直到 evict；撤销有子项的显式目录仍保留该管理节点。
 - keyring 载荷先经过 `CAP_SYS_ADMIN` 检查，再通过原生 `memdup_user` 取得内核快照；响应核对用户拷贝长度。控制协议保持 4096 字节及 32/64 位地址传递。
+- v22 保持4096字节外层；ADD／列表记录头24字节、DEL头18字节。`version` 回复为 `22 (KPM <发布版本>)`，KPM元信息仍使用发布版本。配套CLI在非version操作前探测且精确要求协议22；安装器同样核对线协议号，不按内核版本选择布局。用户必须成组更新KPM与ZIP后重启。
+- UID默认作用域为(0,0)，单UID为(uid,uid)，范围包含两端；默认规则可带排除范围，显式范围拒绝重叠，相同范围不同排除集合返回EEXIST。删除精确匹配范围和排除集合，旧单UID内部入口仍可用。范围条数不按UID个数展开。
+- opaque的backing目录只提供属性/安全标签，子项来自显式规则；禁止backing查找、自动父目录来源继承和backing枚举。inode绑定中的flags包含opaque位，切换opaque/合并视图必须重新匹配缓存。带内容的`.replace`先建opaque目录再加文件，空`.replace`与`.remove`白化；启动每步核对错误，失败清规则。
 - 控制层使用原生 `__mutex_init`／`mutex_lock`／`mutex_unlock`，按目标完整 mutex 尺寸分配。当前明确要求无 `dep_map`，含 lockdep 的布局返回 EOPNOTSUPP；原生动态 class key 注册未接入。首轮配置已确认 DEBUG_LOCK_ALLOC／DEBUG_MUTEXES／DEBUG_SPINLOCK／LOCKDEP 未启用，mutex_size=32，初始化 class key 为 NULL。动态尺寸与 ABI 从 BTF 取得，静态值来自对应源码／配置证据，验证放在布局层。
-- key_type 只共用 name／def_datalen 前16字节和连续的 preparse／free_preparse／instantiate 回调；key_preparsed_payload 只共用连续 data／datalen。其起点由 nm_offsets.c 配置、nm_btf.c 查询。BTF 核对回调 ABI、完整尺寸和连续位置；key type 优先按已证完整尺寸分配；BTF明确不可用且完整尺寸未知时，可使用独立512字节清零容量，覆盖已核对声明及内部注册写入。容量不写入key_type_size，不参与原表复制。成功注册为初始化最后一步，此后表、锁和模块均驻留到重启。接口版本由 nm_protocol.h 的 NM_KPM_VERSION 提供。
+- key_type 只共用 name／def_datalen 前16字节和连续的 preparse／free_preparse／instantiate 回调；key_preparsed_payload 只共用连续 data／datalen。其起点由 nm_offsets.c 配置、nm_btf.c 查询。BTF 核对回调 ABI、完整尺寸和连续位置；key type 优先按已证完整尺寸分配；BTF明确不可用且完整尺寸未知时，可使用独立512字节清零容量，覆盖已核对声明及内部注册写入。容量不写入key_type_size，不参与原表复制。成功注册为初始化最后一步，此后表、锁和模块均驻留到重启。接口版本由 nm_protocol.h 的 NM_CONTROL_VERSION 提供，NM_KPM_VERSION 单独标识发布版本。
+- 动态自建表对已取得的 inode_operations／dentry_operations／key_type 尺寸执行512字节上界门控：超界在完整准备／控制校验时返回E2BIG，自建分配在分配前拒绝；不截断，不影响按精确尺寸复制原表。注册锚点已识别的link及其16字节链表写入也须在容量内，超界错误不得进入尾部未覆盖的降级。完整尾部未覆盖且已知尺寸在界内时沿用原处理；尺寸仍为-1时保留既有512字节回退，这不证明未知厂商尾部在界内，AUD-001保持OPEN。静态编译分支不增加该门控。
+- 无 BTF 的 key_type 尺寸取自已核对的注册／注销与声明契约：`register_key_type` 前18～23条由原始type的name与链表容器关系取得link，`unregister_key_type` 前16～20条核对同一节点的next／prev及两个自指针写回；两者须一致。注册入口可见class初始化时，要求实际memset目标、零值、零长度及`class_offset == link + sizeof(nm_key_type_tail)`；初始化已被编译器消除的形态沿用对应完整声明契约。管理mutex仅证明其自身布局，不用来推断key_type的LOCKDEP。完整尾部为link加空lock_class_key，自然对齐8；未知入口保留独立容量，已识别形态内部冲突报错。不能识别任意厂商未使用的追加尾部，AUD-001仍须独立复核。
+- 控制布局新增GCC、无SCS、SCS和PAC入口，三个key回调由原生56字节前缀与调用者交叉确认，调用者最多30条，载荷检查最多13条；CFI跳板只接受一条直接B，可带BTI C前缀并核对4／8字节边界。mutex完整初始化最多10条，覆盖count、owner和已核对的owner加两个OEM槽声明，不按版本号分派。`tools/test_key_control_shapes.py`对8份无BTF语料执行逐指令NOP／原子状态写回、调用身份、class冲突与保护页；矩阵还执行8份实际BTF尺寸读取。此处覆盖控制布局和尺寸，不等于其它VFS字段或完整模块已适配。
 - 批次 ADD 逐项在锁外解析 backing，再持管理锁发布；DEL 在管理锁内处理。完整记录操作失败后仍继续，status 保留第一错误，arg1 为已遍历字节末端；截断记录停在该记录起点。载荷非事务，已成功的前后记录保留。统一在管理锁外 finish 退役对象。
 - GET_LIST 对管理索引持同一 mutex，列出用户可重提交的显式规则，跳过 automatic 与仅供子项保留的 inherit_backing 目录。单页在锁内取得一致内容；跨页修改仍为尽力分页。无法容纳单条记录时返回 EOVERFLOW。自动父目录统一设置 inherit_backing，在实际父视图以后由 pure 变为 backing 时也能取得源子目录；纯父没有来源时保持纯目录。
 - 操作表的大小、每个回调位置、调用 ABI 和 CFI 必须得到目标证据，不能把整份上游头文件视为通用布局。
 - 使用新字段前先比较需要支持的上游声明及目标厂商声明，并核对 SDK 是否已有可用结构。共同前部直接放进 `nm_structs.h`，不为其中每个成员新增偏移。当前 SDK 对 file/kiocb/file_operations 仅有前向声明；共同片段已比较 4.4、4.9、4.14、4.19、5.15、6.6 和首轮目标。
-- 首轮文件表只填写读取相关回调。open 拒绝写打开和 O_TRUNC；read_iter 在转交前拒绝异步请求；mmap 使用原生 `generic_file_readonly_mmap`，保持 outer VMA 文件引用和 backing 页缓存映射，拒绝共享可写映射。
+- CFI 窗口识别同时接受回调减锚点、锚点减回调；仍核对旋转、比较及分支。`super_cache_count` 的 slowpath 形态限定前27条，核对64位 type ID 构造、`__cfi_slowpath` 调用目标及后续 sb/回调实参。keyring 的 SUB/CMN 载荷检查限定前10条，回调槽读取的寄存器与栈写入重排限定前22条；同源入口夹具见 `tools/test_cfi_layout_shapes.py`，不能外推为其他编译形态的支持。
+- 首轮文件表只填写读取相关回调；当前写打开与截断准入见下述M1/M2契约。首轮open拒绝写打开和O_TRUNC；read_iter 在转交前拒绝异步请求；mmap 使用原生 `generic_file_readonly_mmap`，保持 outer VMA 文件引用和 backing 页缓存映射，拒绝共享可写映射。
+- 文件表另接入ioctl／compat_ioctl／fsync，沿用open持有的backing引用转发，保持原生参数与errno；compat缺回调不得回退native。`nm_file_control_ops`和`nm_file_sync_ops`只描述已核对的连续片段，以已有mmap／release锚点定位；BTF存在时独立验证新增槽位与参数原型。所有新旧file槽位显式拒绝负数。`test_file_control.py`、`test_file_control_layout.py`和`test_file_control_replay.py`由Developer在该功能候选冻结前手动执行，未接共享门禁；行为等价与目标性能推进记录见`Developer/proposals/2026-10-22-nomount-functional-parity/README.md`。
 - 物化层须将 inode 的 i_mapping 转接到 backing，并在 inode 生命周期内持有规则引用。mmap 成功后按原版处理 S_PRIVATE；不能把 vma->vm_file 替换成 backing 而省略 VMA 引用记账。
 - 普通文件通过原生 new_inode 取得文件系统分配的对象；保留原生锁、链表、引用及嵌入 i_data。规则由物化函数另取一份引用，d_splice_alias 接收 inode 引用，原生失败路径也可能消耗它。
 - super_operations 复制完整目标尺寸，原生 alloc/destroy/free 与尾部均保留，只替换 drop/evict。发布前完成私有头部和表初始化，以 CAS 防止覆盖发生变化的原表；公开后的代理表驻留。调用方持管理锁及 sb 路径引用。
@@ -102,6 +130,7 @@
 - 目录按 fsuid 选择规则，使用 kpm_utils.h 的 task_fsuid 和已初始化 KP cred 偏移。compat cookie 复用 SDK 取得的当前 thread_info 及 TIF_32BIT，不新增 task/cred 偏移。
 - 重验证在 ref-walk 中运行，LOOKUP_RCU 返回 ECHILD。使用原生 dget_parent/dput 稳定父目录引用，规则替换／删除和 UID 排除使已有注入缓存失效。
 - 原生 dentry 操作表按完整字节与 NULL 形态共享不可变快照，CAS 发布后驻留。只替换 revalidate/weak，原生 release 及其他回调、d_fsdata 均保留。快照不保存可悬空的原表地址，不为每个条目分配回收对象。
+- dentry 发布在调用者持有 d_lock 时计算最终 flags，先 release 写 d_op，再以一次 release 写 d_flags 发布调用标志；不得在操作表发布前写入新标志。`tools/test_dentry_publication.py` 检查生产 helper 的两处存储边界、原有 flags 语义及未插桩 ARM64 STLR 顺序；宿主检查不证明 VFS 并发。
 - injected dentry 当前仅接新建、无原生私有数据且无需原生 d_init/d_release 的对象；其余返回 EOPNOTSUPP 并保持原表。普通 lookup 包装失败时摘哈希，释放原生 alias 返回引用，再传播错误。
 - 枚举在 RCU 内复制名称与元数据，在解锁后调用原生 actor。保留原版 32/64 位 cookie；32 位索引超过表示范围返回 EOVERFLOW，缓冲区满时保持当前项的位置。普通父目录转发保存的原 iterate 回调，不再次取得同一 inode 的锁。
 - inode 初始化器中的局部操作表可能带有不可预知的编译器后缀。查不到表名时，从入口固定窗口跟踪地址，先核对 i_fop 与 i_data 的共同几何，再用已确认的 open 槽和原生 no_open 回调核对表身份。读取须在已取得的核心镜像边界内；CFI 只跟随一条核心代码区内的直接 B。不得为了宿主夹具合成运行端不存在的查询别名。
@@ -119,6 +148,8 @@
 - 规范路径允许裁掉尾部斜线；拒绝根目录规则、空分量、点分量和超长名称。只有 ENOENT 被当作缺失父目录；其他原生解析错误保留。原生 d_hash_and_lookup 的错误在发布前处理，成功后对缓存目标 d_drop/dput，并调用 shrink_dcache_parent。
 
 ## 验证
+
+v22 候选冻结前，Developer 显式运行 `tools/test_v22_sync.py --oracle-output <冻结 contracts 目录> --output <新目录>` 与 `tools/test_v22_module.py --output <新目录>`。前者重放双 ABI 业务夹具并贯通实际 CLI 字节与控制处理，后者重放安装/启动及 WebUI Node VM 用例。生成副本的协议迁移见 `Developer/proposals/2026-10-22-nomount-v22/README.md`；原 Oracle 文件保持不变，迁移待独立复核。这两项未接共享门禁，宿主自检不覆盖浏览器渲染或真实内核并发。
 
 `tools/inspect_target.py` 生成单个目标的镜像、配置、符号和短函数入口清单。这是开发输入，不是运行时加载或安全结论。
 
@@ -230,10 +261,10 @@ Android boot 输入按 boot 头的 kernel 段长度截取后解压。arm64 头�
 
 ## 0.5.0 inode绑定
 
-- nm_inode_info只保存独立r_path、dir_node、类型flags和initialized状态。物化时原生path_get，目录候选另取node引用；新inode接收，iget失败／命中缓存释放候选引用。普通文件在new_inode成功后取得path，避免失败多取引用。
+- nm_inode_info保存独立r_path、dir_node、类型flags、来源／初始化及链接清理状态，不保留管理rule引用。物化时原生path_get，目录候选另取node引用；新inode接收，iget失败／命中缓存释放候选引用。普通文件在new_inode成功后取得path，避免失败多取引用。
 - evict在进程上下文释放path/node，RCU只释放info内存。管理规则引用及批次退役保留；inode不增加规则refs，规则撤销后可直接释放，已打开文件继续使用其独立path。
 - 目录iget按node散列，同path/mount、node、flags才可能命中；initialized前由原生iget等待初始化，完成后核对共同nm_inode_owner_prefix的mode/uid/gid。此状态属私有结构，避免新增原生i_state偏移。属性核对从调用者保活的path读取，RCU退役的info只比较指针与私有字段。
-- dentry重验证核对相同绑定与虚拟ino，来源或属性改变失效；继承目录的强制重查保留。open／getattr／fallback／源搜索权限均改用独立path。
+- dentry重验证核对相同绑定与虚拟ino，来源或属性改变失效；自动父目录与不满足正项复用判据的继承对象仍重查。open／getattr／fallback／源搜索权限均改用独立path。
 - test_inode_binding.py从0.4.3冻结Oracle迁移全部693条原断言，673条保持表达式及顺序，20条改变仅涉及私有字段、inode不再增加rule引用、独立path释放和node散列；原文／新文逐项记录回执，需Auditor复核。旧脚本保持冻结。/new替换夹具补不同dentry，保留来源变更失效的原断言。
 - 新用例检查规则真正释放后的open/read、同来源缓存复用、mount/node/flags不匹配、mode/uid/gid变化、新inode初始化等待及路径／节点引用平衡。46项配置与原有七目标范围保持不变；宿主自检不替代实机VFS、ACL及CFI结论。
 
@@ -300,8 +331,8 @@ Android boot 输入按 boot 头的 kernel 段长度截取后解压。arm64 头�
 ## 操作表末端尺寸
 
 - `nm_structs.h` 的inode尾部从getattr起，super从drop_inode起，dentry从release起；片段保留自然对齐，完整inode／dentry表的64字节对齐另算。支持范围为前述Sony声明与Nokia语义参考，不代表任意厂商追加尾部均已确认。
-- BTF明确不可用时，`nm_prepare_operation_sizes`先执行所需字段探测，再从set_posix_acl首13条、super_cache_count首13／17／21条取得set_acl与nr_cached_objects。后者与free_cached_objects连续，避免扫描较长的super_cache_scan。
-- dentry两份声明均有至少14个独立指针槽，只在sdcardfs_ci_dops的112字节前缀内定位sdcardfs_canonical_path；CFI复用核心代码区单B跳板核对。缺少这些符号或同表成员几何不匹配时失败，不扩大表读取范围。
+- BTF明确不可用时，`nm_prepare_operation_sizes`先执行所需字段探测，再从set_posix_acl首13条、super_cache_count旧形态最坏27条（13／17／21为特定成功分支），VFS形态含可选PAC前缀最多27条，取得set_acl与nr_cached_objects。后者与free_cached_objects连续，避免扫描较长的super_cache_scan。
+- sdcardfs两符号齐全时保持112字节前缀主路径；单符号残缺直接失败，主路径解析失败不穿透。仅两符号皆缺时，从d_set_d_op最长47条取得d_real，使用独立的无umount_end／独立canonical加四预留槽联合契约；锚点来源写入状态与日志。d_real可得不证明未知尾部，AUD-001仍open。
 - 尾部选择同时核对iop.getattr→set_acl、sop.drop→nr_cached及drop→evict、dop.init／release→canonical关系；使用片段的sizeof／offsetof计算完整尺寸。三项范围全部有效后写回，原表复制／比较继续使用所得完整尺寸。
 - 已知声明几何不能证明隐蔽的未使用厂商尾部不存在；`AUD-001`仍开放，候选发布前由独立审计评估这一支持契约及key新建容量边界。
 - `tools/test_operation_extents.py`在原动态准备夹具生成后追加新窗口和用例，原工具及原断言保持；验证两目标三项尺寸、后续全部布局准备、BTF路由、冲突拒绝及112字节保护页边界。宿主准备通过不等于原生注册或完整初始化通过。
@@ -315,7 +346,7 @@ Android boot 输入按 boot 头的 kernel 段长度截取后解压。arm64 头�
 
 ## 新增镜像适配
 
-- `configs/kernel_mi6-4.4-v4.json` 绑定米6镜像；其三类操作表符合已有4.4尾部契约。厂商声明用于解释共同片段；不同于目标指令的字段逐项记录，不能把参考源码称为准确构建源码。`tty_default_fops` 的完整复制／清零长度优先于参考声明的大小。完整复制范围仍待核对的目标只保留本地草稿，不能按版本号或build-id填值后交接。
+- `local/nomount/configs/kernel_mi6-4.4-v4.json` 绑定米6镜像；其三类操作表符合已有4.4尾部契约。厂商声明用于解释共同片段；不同于目标指令的字段逐项记录，不能把参考源码称为准确构建源码。`tty_default_fops` 的完整复制／清零长度优先于参考声明的大小。完整复制范围仍待核对的目标只保留本地草稿，不能按版本号或build-id填值后交接。
 - 米6的两种新增GCC形态分别读取register_key_type前19条、super_cache_count前13条。原始type、链表容器、shrinker→sb→s_op及回调实参链均须确认；`test_gcc_layout_shapes.py` 使用真实窗口及保护页核对。
 - 原生is_vmalloc_addr不存在时，`nm_offsets.c` 从kvfree首14条核对保留x0的入口、两次无符号地址比较、完整范围常量和原生vfree／kfree分派。范围同时用于两种模式的私有分配释放，不写入结构体偏移表；未知形态仍拒绝。RCU回调继续把vmalloc对象交给vfree_atomic，slab对象交给kfree。`test_vmalloc_range.py` 覆盖独立函数、内联范围、缺依赖和保护页。
 - 新增目标的静态配置和动态准备覆盖分别记录在开发报告；静态件可用不代表动态解析已经覆盖同一编译形态。
@@ -327,5 +358,130 @@ Android boot 输入按 boot 头的 kernel 段长度截取后解压。arm64 头�
 - 完整尺寸按“目标锚点偏移 + 含锚点的连续尾部宽度，再按类型要求向上对齐”计算。源码只提供锚点之后的指针、预留槽、空 lock_class_key 和最终对齐；条件宏必须与目标 IKCONFIG 核对。未知尾部声明停止分析。最高已访问成员自身仍只给出下界。
 - 米8、米9的参考 cache 宏链为128字节，米10、米11和Android12-5.10为64字节，并核对目标原生表地址。米8／米9的 inode_operations 因此为256字节；不能沿用统一64字节对齐模型得到的192。原生地址对齐只能交叉核对要求，不能单独证明完整尺寸。
 - `nm_directory_proxy`／`nm_dentry_proxy` 的表头按128字节对齐。第二份快照的位移仍按目标完整表尺寸取整；128字节要求的目标，其表尺寸也为128的倍数。分配、反查私有头部和完整快照由 `test_proxy_alignment.py` 追加验证；历史断言保留。
-- 米8、米9、米10、米11、Android12-5.10 的 `configs/*-v4.json` 是离线静态适配；动态模式尚未覆盖这些目标的完整无BTF编译形态。其余八份目标的动态覆盖边界沿用本轮之前的记录。
+- 米8、米9、米10、米11、Android12-5.10 的 `local/nomount/configs/*-v4.json` 是离线静态适配；动态模式尚未覆盖这些目标的完整无BTF编译形态。其余八份目标的动态覆盖边界沿用本轮之前的记录。
 - `test_tail_derivation.py` 用真实短窗口及断链、错标志、未知尾部反例检查解析；参考尾部仍是支持契约，隐藏厂商追加字段不能仅凭这些窗口排除，独立审计与实机验证继续分别记录。
+
+
+## 文档分工与加载接入
+
+README 仅写普通用户的文件选择、界面操作和可见状态；加载差异、偏移、路径、时序、排查与发布配方放本文件及 [配套工程约定](module/AGENTS.md)。README 的更新记录保留原文与原顺序。
+
+- 动态 `NoMount.kpm` 在加载时获取目标布局；静态 `NoMount_baselines.kpm` 是移植模板，须按目标镜像适配后加载，同名 `.kpm.json` 与基线绑定。实际 KPM 文件名带版本号，管理名称均为 `NoMount`，每次只用一份。
+- 目标为 Android ARM64，适配范围 4.4～6.1；6.1 只有离线适配。同一内核版本的其他设备仍须独立确认，没有 BTF 的设备可能需要静态移植。
+- 嵌入件随 boot 管理；安装方式由运行端 KP 从 `/data/adb/ap/kpm/nomount/nomount.kpm` 读取，在 `post-fs-data` / `before` 阶段加载，先于配套规则发布。运行端须支持该目录机制。
+- 安装方式的技术判定共同核对 `load_source=file`、`load_event=post-fs-data` 与对应目录加载日志 `rc=0`；只有文件来源字段不能单独证明本次开机自动加载。
+- `/data/adb/ap/kpm/nomount/disable` 仅阻止下次目录加载，不卸载当前 KPM，不影响 boot 中的嵌入件；替换安装文件需重启，嵌入方式更新须替换 boot 中的模块。成功初始化后驻留到重启，不执行热卸载。
+- OTA 保留 userdata 时通常保留已安装文件，但内核、KP 与布局契约须重新确认，不能据文件仍在认定兼容。
+- 本轮 Sony Xperia 1 II / Linux 4.19 / KP d09 / 指纹 `508d47da` 验证了安装、无 BTF 动态准备与配套发布；5.15 未测，文件添加夹具与隐藏已有文件的覆盖分别记录。身份与证据见 `Developer/reports/2026-10-17-nomount-install-path-docs.md` 的身份表与引用。
+
+
+## 2026-10-20 VFS入口扩展（阶段实现）
+
+- 当前新增范围为米8 4.9、米9 4.14、米10 4.19、米11 5.4、Android12 5.10。每次取得字段、完整表尺寸和原生ABI分别核对，组件准备不等于完整初始化。
+- 基础字段识别支持准确PAC前缀；GCC的kstat字段按实际序列在前20／23条内取得，旧Clang窗口不扩大。哈希函数区分GCC长度检查和Clang清零／重排，旧path_open包装同时核对path复制及dentry→inode来源。
+- 新inode初始化器的固定前20条（有PAC时多1条）追踪参数保存、ADRP／ADD及no_open表身份。已核对五目标的fop／flctx／i_data连续声明，按共同片段取得相对位置；旧入口仍要求原有显式mapping交叉检查。FP及SCS改写清除相关地址来源，未知调用／原子指令拒绝。
+- address_space的完整memset仍优先读原生长度参数；新增GCC 24条和PAC 27条内联整对象清零形态，验证零覆盖、缺口补齐和后续原生锁调用，不能按最高单成员写入猜尺寸。两形态分别覆盖160／224字节，支持范围绑定已核对的初始化语义和声明。
+- 目录迭代槽由实际调用者及simple_dir_operations回调双向确认；共同片段分别覆盖无iopoll及插入iopoll的形态，iterate与iterate_shared连续。权限入口按NULL mount包装／原生inode两参的数据流区分，核对inode_permission2／__inode_permission2／generic_permission实际目标，不按版本号选ABI。
+- `Developer/tools/verify_nomount_vfs_matrix.py`对明确选择的镜像执行生产代码、参考比较、逐指令反例和保护页；它同时记录所有未覆盖阶段。当前米8／米9／米10验证40项，米11／Android12验证34项，五目标的hash另作直接验证。
+- super生命周期新增25／27／35／45条入口，核对原始sb、s_op及put_super实参；仅支持不改写保存对象的前缀，条件分支必须越过回调，未知指令拒绝。CFI只接已观察到的2／3位旋转，LDAR识别统一放公共工具头并区分LDXR／LDAXR／STLR。
+- 五目标的dentry生命周期／actor及完整inode／super／dentry表准备仍未覆盖；米11和Android12的getattr入口也未覆盖。缺少必需尺寸时继续拒绝完整准备，不能发布为五目标动态兼容件；既有静态配置保持原样。
+
+## 2026-10-20 VFS回调补充与尺寸证据
+
+- 五目标的dentry init／release／actor均已接通。GCC入口只读前13条与DCACHE_OP_PRUNE前向分支的6条块；分支位移限制384字节，目标在已确认代码范围，且回跳到原flags检查。其它形态分别为17／24／27条，Android的lockref置dead为内联原子读取及count=-128写回。
+- empty_dir_readdir按已确认的pos==0路径核对actor、名称长度、DT_DIR、inode编号及32位返回检查，包含CFI旋转2／3位；保留旧形态及其错误语义。
+- 米11的getattr固定47条核对memset、保留的path／stat／mask／flags及交错CFI；Android12固定42条核对内联清零和属性标志、原始path／stat／mask及CFI。其simple_getattr前11条与generic_fillattr的两参字段复制交叉确认。前三份原getattr路径不变。
+- 新尺寸证据读取器独立核对set_acl、nr_cached_objects、d_real及list_lru_node数组步长。最后一项来自list_lru_count_node的5／7条完整短函数：原生node数组索引、末端nr_items和RET，取得64／128字节对齐；不是相邻全局符号距离。memcg node的已核对自然片段48字节，最终对齐另由数组步长给出。
+- 尺寸读取器目前只供明确选定目标的离线证据执行，不接入完整尺寸接受调度。原native字段位置与相同对齐，仍可能对应含／不含KABI预留槽的不同sizeof；五份的inode／super／dentry完整尺寸仍保留未知哨兵，完整准备拒绝。
+- 新矩阵入口为`Developer/tools/verify_nomount_vfs_completion.py`：先原样运行上一轮矩阵，再追加43项参考比较、回调／末端锚点反例、保护页与未知尺寸拒绝。旧Oracle及断言不改；静态v4尺寸依赖目标IKCONFIG和已核对尾部声明，不能据此声称动态尺寸已经获得。
+
+
+## backing符号链接接口
+
+- 现代get_link使用vfs_get_link；vfs_readlink不存在时以generic_readlink接readlink槽。旧follow_link/put_link以generic_readlink进入模块回调，再传backing dentry/inode；两种都保留原生用户复制、errno及清理语义。
+- 源readlink槽按已核对前部及permission ABI/getattr联合几何取得：Android mount型readlink@40，getattr@128或follow型@144；原生inode/namespace/idmap型readlink@32/getattr@112。不扫描表取偏移；有效BTF独立核对槽/原型，缺API/数据才用声明。静态46项/92字节配置保持。
+- 源readlink只接受已知generic_readlink，或现代原生vfs_readlink可处理的NULL默认槽；未知自定义readlink即使get_link已知也拒绝。资格检查在物化及跟随前执行，不调用未知回调。
+- 现代正向身份为simple_get_link、page_get_link、f2fs_get_link、ext4_encrypted_get_link、f2fs_encrypted_get_link及其具名入口；CFI仅核对有效核心区间内至已知函数体的单B（可带BTI C）。未知回调/跳板在调用前拒绝。
+- 旧接口整对核对simple_follow_link+NULL、page_follow_link_light+page_put_link、ext4_encrypted_follow_link+kfree_put_link；清理配对在可能睡眠的分配/安全入口前校验并捕获，指针在inode info中固定。源安全检查在follow前执行，错误由原生回调自行清理，错误cookie不再交给调用者。成功cookie在外层path_put前用源inode和捕获的put清理。
+- 链接独立表纳入virtual识别/getattr/evict与失败清理。清除IOP_NOFOLLOW，保留原生空i_link及自己的i_data；RCU回调先返回ECHILD。相对/绝对字符串、解密或缺钥匙编码结果原样交给VFS，不自行解密。
+- backing枚举保留原生DT_LNK/DT_UNKNOWN，受管理子项的d_ino与lookup相同按父编号/名字计算；blocked UID及点项语义保持。actor仍在模块RCU之外调用。
+- Developer依次手动运行test_link_interfaces.py、test_link_consistency.py：后者保留前者963处断言及顺序后追加源readlink资格、路径/FD属性、枚举编号及cookie退役用例。test_link_prefix.py与test_link_readlink_layout.py核对6份声明前部及真实/合成BTF源readlink槽。既有8份BTF/80项负例与12份静态配置回归继续执行。测试未接共享门禁；宿主直接回调不证明原生syscall、CFI、实际解密、O_PATH建立或并发。
+
+
+## xattr读取入口
+
+- `nm_xattr.c`接原生vfs_getxattr/vfs_listxattr，以及经BTF确认存在的独立do_get_acl；对三类自建inode，将dentry及get的userns/idmap改为info持有的源path；普通inode和纯虚拟目录直通。原生函数继续执行权限、LSM（含security.*捷径）、handler分派与errno；模块不自行解释/调用未知文件系统回调，链接的正向资格核验不变。
+- get支持已核对的plain四参、userns/idmap五参，list为三参。有效BTF逐项核对参数数目/宽度、具名dentry/context与返回值；BTF不可用仅沿已核对的plain/userns共同契约。静态仍46项/92字节；idmap新接入要求BTF，未知形态拒绝ADD。
+- 控制key成功注册后才标记驻留。首次ADD在管理锁内完成所需接入（普通get/list及存在时的独立ACL），全部成功后才调用拓扑发布；版本查询与DEL不触发。部分成功保留且ready为false、回调直通；后续ADD只重试未成功的一处。当前SDK没有在途撤钩同步，不以失败回滚释放这些已发布代码；它们与控制key同样驻留到重启。
+- 原生调用者持有外层dentry/inode，info的独立源path覆盖可睡眠调用。源为自建inode/循环、绑定损坏或源上下文为空时，在原生调用前拒绝；不查当下规则代替已打开FD的绑定。每次读取不分配、不调用管理锁、不取额外path引用。
+- `tools/test_xattr_read.py`保留链接轮989处宿主断言及顺序再追加路径/FD、原生错误、注册失败/部分成功与阻断发布夹具；SDK参数帧直接读取当前hook.h声明。`tools/test_xattr_read_btf.py`保留8份真实BTF的原断言后追加读取ABI负例。Developer候选自检手动调用，未接共享门禁；不把原生桩称为真实LSM/syscall/CFI或性能证据。
+- 独立ACL入口存在性同时核对BTF与原生符号；原型/上下文未知、同址别名或证据冲突时拒绝。独立入口无静态契约时拒绝；旧共享契约中的无入口形态沿get处理ACL。`test_xattr_acl.py`在1021处断言后追加第三入口失败/重试和access/default路径/FD实参；`test_xattr_acl_btf.py`追加真实入口及签名反例。
+- 当前完成get/list及已证独立ACL读取侧；setattr与setxattr接入下述A档契约。ATTR_SIZE由M2单独处理，普通文件M1写入见下述句柄契约。AUD-001仍OPEN。
+
+## 属性修改的 A 档权限契约
+
+- 属性与安全标签仍沿维护者 `docs/records/2026-10-23-setattr-permission-semantics-ruling.md` 第五节A档保持快照：模块不主动刷新全存活别名。动态版在下述 DAC 委托能力具备时，新的 permission 决策读取绑定源的 DAC，而不是虚拟 inode 的旧 mode/uid/gid；能力未启用的目标和静态版保留既有行为。源安全标签仍没有全别名刷新协议。`DEV-055` 的剩余直接字段读者与真机验证另行交接。
+- 快照指虚拟 inode 缓存的 mode/uid/gid 与安全标签，不是所有系统调用结果的快照。getattr 仍读取绑定源属性，可能返回新 mode；路径重验证可以丢弃旧 dentry、后续物化可取得新属性，已持有 FD 则继续引用旧 inode。源文件系统及安全回调的原生返回值仍须保留，不能承诺源撤权后每一次操作都会成功。
+- 成功setattr会回写发起修改的那个虚拟inode的mode/uid/gid/size/times；所有引用该同一inode的FD自然共享更新。其它别名inode，以及直接在源侧发生的属性变化，不主动同步；LSM标签没有刷新协议。上面的快照语义不表示发起修改的inode永久保持旧mode/uid/gid。
+- A档锁序为VFS调用者已持有的外层inode锁→源inode锁。源锁使用已核验的可失败原生接口；获取失败原样返回且不解锁，成功获取后所有返回路径配对释放。源是外层自身或模块自建inode时拒绝递归。只调用目标ABI已确认的notify_change/notify_change2，不自行调用未知文件系统私有回调。
+- **跨mount弱语义**：回调不取得源mnt_want_write/drop_write，只依赖VFS调用者已持有的外层写引用；同sb重取会与freezer互等。跨mount时并没有源侧writer/freeze屏障，只能保留源notify_change与文件系统自身实际提供的检查。notify_change没有通用只读/freeze保护；模块在源锁内另用已确认的__mnt_is_readonly检查当前MNT_READONLY/SB_RDONLY状态，先拒绝EROFS再进入修改，不能隔离随后remount-ro的竞态，也不能宣称完成完整源写事务。
+- nm_setattr.c接普通文件、符号链接及有源目录的setattr槽。动态版仅在目标BTF确认源锁位置/类型、ia_valid、回调与原生helper原型后启用；有效BTF冲突保留错误，缺失数据/符号时属性修改拒绝。静态46项表尚未提供源锁证据，setattr返回EOPNOTSUPP，已有读取能力保持。未知/负布局在调用前拒绝，不按版本猜偏移。
+- namespace/idmap回调使用绑定源mount的上下文，但要求与调用者上下文相同；不同映射下iattr已转换的UID/GID尚无重解释契约，返回EXDEV。ATTR_SIZE按下述M2契约转交；MODE/UID/GID与SIZE复合在源锁前拒绝。普通文件M1写入不通过该属性支路。纯虚拟目录无源时返回EOPNOTSUPP。
+
+## setxattr 的 A 档入口契约
+
+- 按同一裁定第六节，`nm_xattr_write.c`在完整vfs_setxattr取锁、权限与LSM检查之前换绑源dentry；原生函数自行取得源inode锁、执行trusted.*的CAP_SYS_ADMIN与security.*的LSM检查、handler分派及CREATE/REPLACE，不调用noperm或私有handler。路径/lpath与FD使用相同入口及inode绑定，不查询当前规则替换held-FD来源。
+- **跨mount弱语义**：回调不取得源mnt_want_write/drop_write，只依赖VFS调用者已持有的外层写引用；同sb重取会与freezer互等。没有源侧writer/freeze屏障，也不隔离随后remount-ro竞态。转交前用已确认的__mnt_is_readonly查询当前源MNT_READONLY/SB_RDONLY状态，先拒绝EROFS再进入修改；不能宣称完成完整源写事务。此限制独立记DEV-056，OPEN；DEV-055的held-FD快照限制仍OPEN。
+- 新写入口由BTF核对plain五参、userns/idmap六参及具名dentry/context、参数/返回宽度与只读helper原型；mapped要求调用上下文与源mount相同，否则EXDEV。源绑定损坏、未初始化、负布局或循环在原生调用前拒绝。原生源path引用覆盖整个可睡眠调用，不额外取得锁/分配；不刷新虚拟inode权限或安全标签快照。
+- managed security.capability到达转交入口时EOPNOTSUPP，避免写入可能已按外层对象转换的载荷。旧形态可能在hook前已返回原生EPERM/EINVAL，不承诺syscall一律EOPNOTSUPP。该名字在取得转换层证据前仍属未完成项，其它security.*保留原生LSM。
+- 独立do_set_acl写支路单独核对具名原型/符号存在性，存在时在ACL解析与原生锁/权限/LSM之前同源换绑；不从普通入口推断全名空间覆盖。缺失或不一致证据时拒绝ADD，不按版本猜原型。
+- 控制key驻留后的首次ADD先激活读族、再激活写族，全部安装成功才发布规则。部分写hook保留、ready=false且managed修改拒绝；下次只补未成功hook。静态表没有新转交证据，已核对的plain/userns入口只用于EOPNOTSUPP拒绝；未知形态/独立ACL无证据则拒绝ADD。旧静态46项表不变。无BTF动态目标仅在源锁已准备、context=0、无do_set_acl且nm_xattr_signature.c的36/24/11/8条真实形态全部一致时启用plain5：同一entry dentry的锁链、locked权限/安全调用链及readonly完整短函数交叉核对；未知或冲突保留拒绝。context=1/2无BTF路径未覆盖。
+- Developer手动运行`tools/test_xattr_write.py`、`tools/test_xattr_write_btf.py`、`tools/test_xattr_plain5.py`及12份静态配置回归；旧业务断言只追加，工具未接共享门禁。宿主权限/LSM模型不能代替原生syscall、SELinux、CFI或并发freeze/remount的实机验证。
+
+
+## xattr 删除与 syscall 列表入口
+
+- 动态版首次ADD在读取族、写入族之后准备`nm_xattr_extra.c`，有完整证据时两个新hook全部安装并发布ready后才发布规则；部分安装保留供重试，managed请求在ready前拒绝。BTF明确不可用、无独立删除ACL且旧follow共同几何已确认时，若源锁原始推导结果仅为不支持／缺来源，可关闭extra而继续建立只读规则：ready保持false，set沿既有拒绝hook，remove由已核对的原生空槽前置拒绝；handler型删除不沿用此降级。源锁冲突／无效数据／未准备、有效BTF错误及hook失败仍中止，不把汇总的setter关闭状态当作全部原因。静态版不接此层，配置及既有行为不变。
+- `vfs_removexattr`独立核对plain二参、mapped三参及具名dentry/context，不从setxattr的参数数目推断；无BTF仅接受真实目标29/16/9条前缀，同一dentry的源锁与独立permission/security链必须一致。源不存在属性的ENODATA由原生删除透传。存在独立`vfs_remove_acl`时另核对具名mapped三参BTF并在其取inode/锁/权限/LSM之前换源；非BTF缺该符号可继续，存在但无签名证据则拒绝，不从do_set_acl推测删除支路。删除没有nscap值转换，security.capability删除仍交原生权限/LSM，设置限制保持。
+- 目标syscall内部`listxattr(dentry,user_buffer,size)`可能内联导出VFS实现。额外入口只换dentry，保留原生分配/用户拷贝/零长度探测/总字节数；不清S_PRIVATE、不填猜测的i_op槽、不在模块中拼接或过滤属性列表。有BTF核对其三参具名原型；无BTF核对25条helper与9条独立security前缀，未知形态或有效BTF错误拒绝接线。
+- Developer手动运行`tools/test_xattr_remove_list.py`与`tools/test_xattr_remove_list_btf.py`。宿主测试保留1666条Oracle，原生list函数体以字段访问器及FS/LSM/拷贝桩承接，并使用宿主临时文件的真实xattr；不替代Android原生路径/FD/LSM三态复验。DEV-059/060由发现方复核关闭。
+
+## 普通文件 M1：backing 句柄转发
+
+- 依据写入链裁定第四节（ab392d7），受管理路径所在挂载必须可写；不绕过外层VFS只读检查。数据直写绑定backing，不做copy-up，源原生权限或打开失败原样透传；O_TRUNC与ATTR_SIZE沿下述M2自然边界，复合拒绝仍保留。
+- 完整backing引擎在源权限接口和write_iter共同槽/签名核验成功后，将write_iter填入尚未发布的普通文件表并启用写打开。独立文件/物化入口仍是只读能力，未具备源写权限委托时保持EROFS；纯虚拟目录也不开放写打开。BTF有效时拒绝槽位/原型/具名参数冲突，不可用才沿已核对共同IO声明；静态表不新增字段。
+- 源DAC按实际访问模式检查MAY_OPEN|MAY_WRITE，RDWR另含MAY_READ；不能用读权限替代写权限，也不能把dentry_open称作完整DAC入口。源file沿open→同步write/read/fsync→release保持同一对象，release先清private_data再fput。源安全回调及held-FD/别名快照沿既有句柄模型，不增加逐次权限委托/别名刷新协议。
+- write_iter与read_iter一样只临时换ki_filp、保留ki_pos/请求标志/迭代器和原生返回值；短写不补写，出错恢复外层指针。ki_complete非NULL在源回调前EOPNOTSUPP；源写回调缺失EINVAL。不新增逐次mnt_want_write/file_start_write，不重开来源，不按sb或版本号分派。
+- open的原生写句柄责任与每次VFS的freeze责任不同；本M1不新增独立源freeze取得协议，不将句柄模型表述为所有并发freeze情形已获真机证明。freeze/remount和真实源LSM/持久性仍需Tester验证。
+- fsync沿已接通的源回调，完整保留range/datasync与errno；同步完成不等于断电持久性证明。写入之前的拒绝/零进展错误应保持数据不变；原生写后或fsync错误可能发生在数据已修改后，不做内存字节伪回滚。
+- 后段初始化失败同时清读/写准入，释放未发布表。test_file_write.py追加完整prepare与后段失败重准备、六类M1用例；test_file_write_btf.py在8份BTF旧断言后追加write_iter反例。Developer手动触发，未接共享门禁。宿主pwrite/fsync/重开证据不代替目标设备文件系统、CFI/LSM或断电测试。
+
+
+## M2：自然边界的大小修改
+
+- 依据`docs/records/2026-10-23-truncate-oracle-migration-auth.md`，nm_open保留O_TRUNC，并把该位计入源写权限意图；O_RDONLY|O_TRUNC也检查MAY_WRITE及原有读取权限。只剔除CREAT/EXCL/NOCTTY，不复制VFS检查链、不增加内部truncate hook。
+- 源dentry_open完成打开，外层VFS随后通过handle_truncate→setattr处理O_TRUNC。不能把传入flag或源open成功当作截断完成。truncate/ftruncate同样转交既有源inode锁→notify_change(2)→成功后同步发起虚拟inode的size/times等属性。
+- SIZE与MODE/UID/GID复合在源锁前整体EOPNOTSUPP；包括外层notify内生的MODE。保留KILL原始标记，不清位制造可接受请求。该复合形态被拒绝，真机未做panic测试。
+- 源只读、锁失败、未知/负布局、无源、跨映射沿属性A档拒绝；静态表仍缺源锁证据，保持EOPNOTSUPP。没有新增源writer/freeze屏障，也不隔离remount-ro竞态；A档已记录的跨mount弱语义及DEV-055快照边界继续适用。
+- 成功只同步发起inode，其它别名缓存不主动刷新；借用的源mapping保留，页缓存/映射协调由源文件系统承担。源在报错前可能已部分修改，不伪回滚磁盘/缓存，也不把源错误后的虚拟缓存旧值说成所有路径都原子失败。
+- 当前完整宿主入口为`tools/test_truncate.py`，以冻结1379条Oracle逐条登记4处已授权期望迁移，追加path/FD/O_TRUNC及拒绝路径；其它断言表达式不变。先前分阶段工具的输入绑定旧里程碑，不能将旧冻结输出当作当前生产已执行。另手动执行8份BTF、原负例及12份静态配置回归；未接共享门禁。宿主IO/mmap/fsync不代替目标LSM/CFI、页缓存并发、断电或性能证据。
+
+
+## 无 BTF 的源 inode 锁
+
+- `nm_offsets.c`在`vfs_setxattr`／`vfs_removexattr`／`do_truncate2`的固定36／29／43条前缀内，追踪入口dentry→共同d_inode→锁入参。来源只经64位MOV保留；BL清caller-saved，访存写回清基址，未知指令拒绝。前向分支合流取来源交集并检查锁阶段，不接回边。
+- 紧邻BL的`ADD x0, xN, #imm`必须来自已确认inode。调用目标按核心代码区内单跳CFI／BTI归一化，与具名`down_write/up_write`或`mutex_lock/mutex_unlock`匹配，不能凭两个地址不同判断锁类型。同函数的lock/unlock先一致，再要求至少两个不同函数体的偏移与锁类型一致；存在的第三来源冲突或不能确认时也拒绝，不投票。
+- `nm_prepare_setattr`仅在BTF返回`-ENODATA && unavailable`时调用该推导；有效BTF错误原样保留。新锚点限plain／Android接口，mapped接口继续要求BTF。新锁证据缺失只保留可选写回调的EOPNOTSUPP，读入口不因它失败；成功仍要求killable／interruptible锁、unlock、readonly及notify符号齐全。
+- 静态46项表和MODE／UID／GID与SIZE复合拒绝保持原样。`setxattr`由原生VFS自己取锁，不依赖`nm_setattr_layout`；其独立写入ABI的BTF门保持原契约，补源锁不等于开放无BTF的xattr写入。
+- 1505条基础宿主入口为`tools/test_inode_lock.py`，读取1433条int／bool Oracle并逐条保留，更新实际prepare及宿主命名副本，再追加真实目标窗口回放、合成mutex／其它合法偏移、冲突／别名／来源破坏／分支／保护页／BTF路由及非BTF准备后的setter调用。测试只在给定本地Image上执行生产推导，不执行目标机器码；原生ABI、LSM／CFI和并发安全须独立审计与真机确认。
+- 设备真实`cip135-st19`的`vfs_removexattr`解锁位于索引28；29条固定窗口完整包含该调用，原28条仅覆盖其前置ADD。`tools/test_inode_lock_device.py`保留1505条Oracle，追加真实设备的截短／完整窗口对照与新增尾字的正反夹具；追踪器来源、控制流、阶段及多源接受条件不变。
+
+## DEV-055：按能力启用的动态 DAC 委托
+
+- 完整 backing 引擎准备时，在控制注册与 inode 发布前为普通文件和目录装 permission；Android 接口同时装 permission2。符号链接表与静态版保持原样。BTF 独立核对回调与 generic_permission 原型，源表字段边界使用 BTF 类型尺寸，不用 owned 表容量替代。
+- BTF 不可用时，permission ABI 与 getattr 几何共同限定已核对声明前部；generic 的调用参数另取具名入口证据。Sony Android 入口使用 13 条前缀，Nokia 分离入口使用 39 条范围内的 FASTPERM 直达路径；非 Android 二参复用既有 inode/mask 到 generic 的前缀。未知形态不调用新接口，记录具体错误并保留原核心能力，该目标的 DEV-055 DAC 限制仍存在。
+- 每次 permission 先对 MAY_NOT_BLOCK 返回 ECHILD，再读已初始化 inode info 的独立源 path。源绑定断链、初始化失败或递归虚拟来源拒绝；没有来源的纯虚拟目录使用自身 generic DAC。有源时只接受 NULL 或正向确认的 generic_permission 槽，Android permission2 必须为空；未知文件系统自定义授权返回 EOPNOTSUPP，不用 generic 替代它。
+- generic 使用源 inode 和源 mount 的 userns/idmap，保留原生 DAC、ACL、capability fallback 和错误值。模块不复制 ACL 算法，不取管理锁、外层或源 inode 锁，不改凭据或 S_PRIVATE。既有 setattr 的外层 inode → 源 inode 锁序不变。普通已打开 read/write 不增加逐次撤权重检。
+- 此次 permission 决策只保留外层 security_inode_permission 一次调用；实际 inode LSM hook 随原生 S_PRIVATE 门控为 0 或 1。mmap 成功后清位的既有动作和断言不变，回调不采样该位，因此并发清位不会添加第二次 inode LSM。原 open 阶段既有完整源权限检查与 capability 的原生安全检查仍按各自契约执行。
+- 自检入口为 tools/test_dev055_permission.py 和 tools/test_dev055_permission_btf.py：1837 条旧宿主断言逐条保留，追加源 DAC、拒绝、完整动态 prepare 与 mmap 清位交错；8 份真实 BTF 追加回调/helper 的独立签名反例。宿主 ACL/capability 依赖桩和确定性交错不代替原生 syscall、CFI、SELinux 或真实并发证据。
+- O_NOATIME 封口尚未实现：仅在 security_file_fcntl 前按当前 f_flags 判断“新增”存在并发清位后重新添加的窗口。阶段性封口范围需维护者取得用户选择后再实现；不要把 DAC 委托概括成 DEV-055 全部闭环。

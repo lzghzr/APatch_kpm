@@ -137,6 +137,55 @@ static int nm_wrap_dentry(struct dentry* dentry, bool owned) {
   return rc;
 }
 
+// 名字可能在可睡眠回源期间退役；只复制名字，不在 d_lock 下回源。
+static bool nm_inherited_name(struct dentry* dentry, struct dentry* parent, struct nm_qstr* name, char* buffer,
+                              bool compare) {
+  const struct nm_dentry_head* head = (void*)dentry;
+  kfunc(nm_spin_lock)(nm_dentry_lock_address(dentry));
+  bool valid = head->d_parent == parent && head->d_name.name && head->d_name.len && head->d_name.len <= 255;
+  if (valid && compare)
+    valid = head->d_name.len == name->len && !memcmp(head->d_name.name, name->name, name->len);
+  else if (valid) {
+    *name = head->d_name;
+    memcpy(buffer, name->name, name->len);
+    name->name = buffer;
+  }
+  kfunc(nm_spin_unlock)(nm_dentry_lock_address(dentry));
+  return valid;
+}
+
+// 两次短 RCU 观察之间可睡眠；不把 leaf/rule/array 裸指针带出读侧。
+static bool nm_inherited_view(struct inode* parent, const struct nm_qstr* name, u32 uid) {
+  if (uid != nm_current_fsuid() || nomount_is_uid_blocked(uid) || !nm_is_directory_inode(parent))
+    return false;
+  const struct nm_inode_info* info = nm_inode_private(parent);
+  if (!info || !info->r_path.mnt || !info->r_path.dentry || (info->flags & NM_FLAG_OPAQUE))
+    return false;
+  nm_rcu_read_lock();
+  struct nm_directory_node* node = nm_inode_directory_node(parent);
+  struct nomount_leaf* leaf = node ? nm_find_child(nm_rules_load(node->children), name->name, name->len) : NULL;
+  bool allowed = node && (!leaf || !nm_select_rule(leaf, uid));
+  nm_rcu_read_unlock();
+  return allowed;
+}
+
+static int nm_revalidate_inherited(struct dentry* parent_dentry, struct dentry* dentry, struct inode* inode) {
+  const struct nm_inode_info* info = nm_inode_private(inode);
+  if (!info || !info->inherited_child || !__atomic_load_n(&info->initialized, __ATOMIC_ACQUIRE) || info->init_error)
+    return 0;
+  struct inode* parent = nm_dentry_inode(parent_dentry);
+  struct nm_qstr name;
+  char buffer[256];
+  u32 uid = nm_current_fsuid();
+  if (!nm_inherited_name(dentry, parent_dentry, &name, buffer, false) || !nm_inherited_view(parent, &name, uid))
+    return 0;
+  int rc = nm_inode_engine.revalidate_backing(parent, inode, &name);
+  if (rc <= 0)
+    return rc;
+  // 规则/自动父链在回源期间发布时，旧继承 node 不能遮蔽新的显式视图。
+  return nm_inherited_name(dentry, parent_dentry, &name, buffer, true) && nm_inherited_view(parent, &name, uid);
+}
+
 static int nm_dentry_validate(struct dentry* dentry, unsigned int flags, bool weak) {
   // ref-walk 保证 dentry/inode 生命周期，RCU-walk 由 VFS 重试为 ref-walk。
   if (flags & 0x40U)  // LOOKUP_RCU。
@@ -175,7 +224,8 @@ static int nm_dentry_validate(struct dentry* dentry, unsigned int flags, bool we
               inode, &rule->r_path, nm_is_directory_inode(inode) ? nm_rules_load(leaf->this_dir) : NULL, rule->flags,
               nm_inode_secid(rule->r_path.dentry ? nm_dentry_inode(rule->r_path.dentry) : parent));
       struct nm_inode_info* parent_info = nm_is_directory_inode(parent) ? nm_inode_private(parent) : NULL;
-      if (rule->inherit_backing && parent_info && parent_info->r_path.dentry)
+      if (rule->inherit_backing && parent_info && parent_info->r_path.dentry
+          && !(parent_info->flags & NM_FLAG_OPAQUE))
         valid_rule = false;  // 源目录暂缺时物化了 pure inode，出现后仍需重新解析。
     }
   }
@@ -185,6 +235,10 @@ static int nm_dentry_validate(struct dentry* dentry, unsigned int flags, bool we
     result = !inode;
   } else if (valid_rule) {
     result = 1;
+  } else if (!has_rule && owned && inode && nm_is_virtual_inode(inode) && nm_inode_engine.revalidate_backing) {
+    result = nm_revalidate_inherited(parent_dentry, dentry, inode);
+    if (!result)
+      kfunc(nm_d_drop)(dentry);
   } else if (has_rule || owned) {
     kfunc(nm_d_drop)(dentry);
     result = 0;
@@ -256,7 +310,8 @@ static struct dentry* nm_directory_lookup(struct inode* parent, struct dentry* d
     if (rc)
       return ERR_PTR(rc);
     struct nm_inode_info* info = nm_inode_private(parent);
-    if (!blocked && nm_inode_engine.lookup_backing && info && info->r_path.dentry)
+    if (!blocked && nm_inode_engine.lookup_backing && info && info->r_path.dentry
+        && !(info->flags & NM_FLAG_OPAQUE))
       return nm_inode_engine.lookup_backing(parent, dentry, flags);
     return kfunc(nm_d_splice_alias)(NULL, dentry);
   }

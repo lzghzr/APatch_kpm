@@ -15,6 +15,10 @@ static int nm_prepare_operation_sizes(void) {
   }
 #endif
   for (int kind = NM_FILE_OPS; kind <= NM_KEY_TYPE; kind++) {
+#ifndef CONFIG_KPM_BASELINES
+    if (nm_owned_operation_size(kind) == -E2BIG)
+      return -E2BIG;
+#endif
     // key仅创建新表；其余类型还用于复制原表，继续要求完整尺寸。
     int size = kind == NM_KEY_TYPE ? nm_owned_operation_size(kind) : nm_operation_size(kind);
     if (size < 0)

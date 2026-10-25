@@ -88,34 +88,33 @@ def merge(zip_directory, release):
 
 
 UPDATE = "NoMount-kpm.json"
-CHANGELOG = "NoMount-kpm-changelog.md"
 
 
 def publish_update(release, tag, repository):
     if not tag or not repository:
         raise ValueError("发布标签和仓库不能为空")
-    if any((release / name).exists() for name in (UPDATE, CHANGELOG)):
+    if (release / UPDATE).exists():
         raise ValueError("发布目录已有更新信息，拒绝覆盖")
     with zipfile.ZipFile(release / PACKAGE) as archive:
         props = dict(line.split("=", 1) for line in archive.read("module.prop").decode().splitlines()
                      if "=" in line and not line.startswith("#"))
         code = int(props["versionCode"])
-        changelog = archive.read("CHANGELOG.md")
     if not 0 < code < 2 ** 31:
         raise ValueError("versionCode 须为正的 32 位整数")
     base = "https://github.com/" + repository + "/releases/"
     if props.get("updateJson") != base + "latest/download/" + UPDATE:
         raise ValueError("module.prop 更新地址与发布仓库不一致")
+    # 资产名与 URL 都随版本走：同名 JSON 由 latest/download 取到，里面对应本版 ZIP。
     download = base + "download/" + quote(tag, safe="") + "/"
+    # 指向本版 tag 而非 main：更新日志不会随主线后续改动而漂移。
+    changelog = ("https://raw.githubusercontent.com/" + repository + "/"
+                 + quote(tag, safe="") + "/nomount/module/CHANGELOG.md")
     update = {"version": props["version"], "versionCode": code,
-              "zipUrl": download + quote(PACKAGE, safe=""),
-              "changelog": download + CHANGELOG}
+              "zipUrl": download + quote(PACKAGE, safe=""), "changelog": changelog}
     (release / UPDATE).write_text(json.dumps(update, ensure_ascii=False, indent=2) + "\n")
-    (release / CHANGELOG).write_bytes(changelog)
     path = release / "BUILD_MANIFEST.json"
     build = json.loads(path.read_text())
     build["companions"][0]["update"] = {"file": UPDATE, "sha256": digest(release / UPDATE)}
-    build["companions"][0]["changelog"] = {"file": CHANGELOG, "sha256": digest(release / CHANGELOG)}
     path.write_text(json.dumps(build, ensure_ascii=False, indent=2) + "\n")
     write_sums(release)
 

@@ -13,7 +13,7 @@ KPM_NAME("NoMount");
 KPM_VERSION(MYKPM_VERSION);
 KPM_LICENSE("GPL v2");
 KPM_AUTHOR("maxsteeel, Codex");
-KPM_DESCRIPTION("NoMount: read-only file and directory views, resident until reboot");
+KPM_DESCRIPTION("NoMount: backing file and directory views, resident until reboot");
 
 #ifdef CONFIG_KPM_BASELINES
 #define NM_OFFSET_MODE "static"

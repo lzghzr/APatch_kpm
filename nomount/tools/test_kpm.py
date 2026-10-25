@@ -111,7 +111,7 @@ int main(void){
         assert (args.output / ('restored-' + base.name)).read_bytes() == before
         binaries.append({'base': base.name, 'base_sha256': sha(base), 'derived_sha256': sha(patched), 'table_offset': offset, 'table_size': size})
     assert len(binaries) == 2
-    files = ['nomount/nomount.c', 'nomount/Makefile', 'nomount/configs/boot_los23.2.json', 'patch_offsets.py']
+    files = ['nomount/nomount.c', 'nomount/Makefile', 'local/nomount/configs/boot_los23.2.json', 'patch_offsets.py']
     receipt = {'scope': 'Developer host lifecycle and binary roundtrip; not native startup, CFI or device proof',
                'sources': {p: sha(root / p) for p in files}, 'tool_sha256': sha(Path(__file__)),
                'oracle_receipt_sha256': sha(args.oracle_output / 'receipt.json'), 'binaries': binaries, 'result': run.stdout.strip()}

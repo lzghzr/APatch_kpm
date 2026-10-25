@@ -409,7 +409,8 @@ static void nm_topology_retire_empty_anchors(struct nm_topology_updates* updates
   }
 }
 
-static int nm_topology_remove_locked(const char* path, u16 length, u32 uid, struct nm_topology_updates* updates) {
+static int nm_topology_remove_scope_locked(const char* path, u16 length, u32 uid, u32 end,
+                                           u32 deny_start, u32 deny_end, struct nm_topology_updates* updates) {
   if (!nm_topology_ready)
     return -ENODEV;
   length = path ? nm_trim_path(path, length) : length;
@@ -422,15 +423,18 @@ static int nm_topology_remove_locked(const char* path, u16 length, u32 uid, stru
     return -ENOENT;
   struct nomount_rule* rule = NULL;
   for (u32 i = 0; i < rules->count; i++)
-    if (rules->rules[i]->target_uid == uid)
+    if (rules->rules[i]->target_uid == uid && rules->rules[i]->uid_end == end
+        && rules->rules[i]->deny_start == deny_start && rules->rules[i]->deny_end == deny_end)
       rule = rules->rules[i];
   if (!rule)
     return -ENOENT;
   if (entry->leaf->this_dir && nm_rules_load(entry->leaf->this_dir->children)) {
-    if ((rule->flags & NM_FLAG_IS_DIR) || !uid || rules->rules[0]->target_uid) {
+    if ((rule->flags & NM_FLAG_IS_DIR) || (!uid && !end)
+        || rules->rules[0]->target_uid || rules->rules[0]->uid_end) {
       if (rule->flags & NM_FLAG_VIRTUAL_DIR)
         return 0;
-      struct nomount_rule* directory = nm_alloc_rule(NULL, 0, NM_FLAG_IS_DIR | NM_FLAG_VIRTUAL_DIR, uid);
+      struct nomount_rule* directory = nm_alloc_scoped_rule(NULL, 0, NM_FLAG_IS_DIR | NM_FLAG_VIRTUAL_DIR,
+                                                           uid, end, deny_start, deny_end);
       if (IS_ERR(directory))
         return PTR_ERR(directory);
       directory->inherit_backing = entry->parent && entry->parent->owner;
@@ -474,8 +478,12 @@ static int nm_topology_remove_locked(const char* path, u16 length, u32 uid, stru
     nm_topology_invalidate(anchor, cached);
     return 0;
   }
-  rc = nm_remove_leaf_rule(entry->leaf, uid, &updates->rules);
+  rc = nm_remove_leaf_rule_scope(entry->leaf, uid, end, deny_start, deny_end, &updates->rules);
   return rc;
+}
+
+static int nm_topology_remove_locked(const char* path, u16 length, u32 uid, struct nm_topology_updates* updates) {
+  return nm_topology_remove_scope_locked(path, length, uid, uid, 0, 0, updates);
 }
 
 // 调用者解锁后执行；一次宽限期覆盖本批次的规则、叶节点和原生 anchor 路径。

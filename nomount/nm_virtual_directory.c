@@ -51,7 +51,7 @@ static void nm_put_virtual_directory_node(void* node) { nm_directory_node_put(no
 // 候选先取得独立path/node引用；新inode接收，命中或失败则在进程上下文释放。
 static struct dentry* nm_materialize_virtual_directory(struct inode* parent, struct dentry* dentry,
                                                        struct nomount_rule* rule, void* node, u64 number) {
-  bool backed = rule && rule->flags == NM_FLAG_IS_DIR && rule->r_path.dentry;
+  bool backed = rule && (rule->flags & ~NM_FLAG_OPAQUE) == NM_FLAG_IS_DIR && rule->r_path.dentry;
   bool pure = rule && rule->flags == (NM_FLAG_IS_DIR | NM_FLAG_VIRTUAL_DIR) && !rule->r_path.dentry;
   if (!node || (!pure && !backed) || (backed && !nm_inode_engine.lookup_backing))
     return ERR_PTR(-EOPNOTSUPP);
@@ -172,7 +172,7 @@ static long nm_virtual_directory_read(struct file* file, char* buffer, unsigned 
 static int64_t nm_virtual_directory_llseek(struct file* file, int64_t offset, int whence) {
   struct inode* inode = nm_file_inode(file);
   struct nm_inode_info* info = inode && nm_is_directory_inode(inode) ? nm_inode_private(inode) : NULL;
-  if (info && !(info->flags & NM_FLAG_VIRTUAL_DIR))
+  if (info && !(info->flags & (NM_FLAG_VIRTUAL_DIR | NM_FLAG_OPAQUE)))
     return nm_inode_engine.seek_backing ? nm_inode_engine.seek_backing(file, offset, whence) : -EOPNOTSUPP;
   bool compat = nm_current_compat();
   if (whence == 0 && nm_virtual_position(offset, compat))
@@ -186,7 +186,7 @@ static int nm_virtual_directory_iterate(struct file* file, struct nm_dir_context
   struct nm_inode_info* info = nm_is_directory_inode(inode) ? nm_inode_private(inode) : NULL;
   if (!info || !info->dir_node)
     return -ENODEV;
-  if (!(info->flags & NM_FLAG_VIRTUAL_DIR))
+  if (!(info->flags & (NM_FLAG_VIRTUAL_DIR | NM_FLAG_OPAQUE)))
     return nm_inode_engine.iterate_backing ? nm_inode_engine.iterate_backing(file, context, info->dir_node)
                                            : -EOPNOTSUPP;
   if (context->pos < 0)
@@ -239,6 +239,12 @@ static int nm_prepare_virtual_directory_engine(void) {
                   : struct_offset.getattr_callback_args == 3 ? (void*)nm_virtual_directory_getattr_mount
                                                              : (void*)nm_virtual_directory_getattr;
   nm_set_operation_callback(iops, struct_offset.iop_getattr, getattr);
+  status = nm_install_setattr(iops);
+  if (status) {
+    nm_discard_operations(iops);
+    nm_discard_operations(fops);
+    return status;
+  }
   ((struct nm_file_io_ops*)fops)->read = nm_virtual_directory_read;
   ((struct nm_file_io_ops*)fops)->llseek = nm_virtual_directory_llseek;
   nm_set_operation_callback(fops, struct_offset.fop_open, nm_open);

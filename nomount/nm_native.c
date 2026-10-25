@@ -107,8 +107,6 @@ static int nm_exchange_payload(const void* data, size_t length, int (*execute)(s
   struct nm_payload* payload = kfunc(nm_memdup_user)((const void __user*)(uintptr_t)address, sizeof(*payload));
   if (IS_ERR(payload))
     return PTR_ERR(payload);
-  if (!payload)
-    return -ENOMEM;
   int rc = -EFAULT;
   if (payload->magic != NOMOUNT_MAGIC_SIG)
     goto out;

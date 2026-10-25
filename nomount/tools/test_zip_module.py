@@ -31,7 +31,7 @@ def main():
                 text = text.replace('"/$partition"', '"' + str(work) + '/$partition"')
                 text = text.replace('"/system/$partition"', '"' + str(work) + '/system/$partition"')
                 (mod / p.name).write_text(text)
-        shutil.copyfile(root / 'nomount/nomount/module/rule-paths.sh', mod / 'rule-paths.sh')
+        shutil.copyfile(root / 'nomount/upstream/nomount/module/rule-paths.sh', mod / 'rule-paths.sh')
         (work / 'boot_id').write_text('boot-one\n')
         (work / 'system').mkdir()
         data = work / 'data/adb/nomount'
@@ -183,7 +183,7 @@ if a[:2]==['rule','list']:print('[]')
     cases.append('uninstall clears rules, removes owned link and preserves other link')
     for p in (root / 'nomount/module').glob('*.sh'):
         subprocess.run(['/bin/sh', '-n', str(p)], check=True)
-    source_paths = list((root / 'nomount/module').glob('*')) + [Path(__file__), root / 'nomount/nomount/module/rule-paths.sh']
+    source_paths = list((root / 'nomount/module').glob('*')) + [Path(__file__), root / 'nomount/upstream/nomount/module/rule-paths.sh']
     receipt = {'scope': 'Developer shell/API stubs, relocated Android paths; not device boot or installer proof',
                'cases': cases, 'sources': {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in source_paths if p.is_file()},
                'result': 'PASS'}

@@ -71,6 +71,32 @@ def adapt_webui(js):
     return js
 
 
+def adapt_cli(body):
+    """生成副本：v22 ABI 探测；默认规则允许独立的 UID 排除范围。"""
+    before = 'if (args.deny_start < args.target_uid || args.deny_end > args.target_uid_end) {'
+    assert body.count(before) == 1
+    body = body.replace(before, 'if ((args.target_uid || args.target_uid_end) && '
+                        '(args.deny_start < args.target_uid || args.deny_end > args.target_uid_end)) {', 1)
+    before = '    switch (args.action) {'
+    assert body.count(before) == 1
+    probe = '''    /* KPM companion: verify wire ABI before any non-version operation. */
+    if (args.action != ACTION_NONE && args.action != ACTION_VERSION) {
+        payload->cmd = NM_CMD_GET_VERSION;
+        payload->arg1 = payload->data_size = 0;
+        if (nm_send_payload(payload) != 0 || payload->data_size < 2
+            || payload->data_size > sizeof(payload->buffer)
+            || payload->buffer[0] != '2' || payload->buffer[1] != '2'
+            || (payload->data_size > 2 && payload->buffer[2] != ' ')) {
+            print_literal("nm: incompatible driver protocol; v22 required\\n");
+            goto do_exit;
+        }
+        payload->cmd = payload->target_uid = payload->arg1 = payload->data_size = 0;
+    }
+
+'''
+    return body.replace(before, probe + before, 1)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--ndk', type=Path, required=True)
@@ -78,11 +104,11 @@ def main():
     parser.add_argument('--toolchain', default='ndk26.3.11579264')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
-    upstream = root / 'nomount/nomount'
+    upstream = root / 'nomount/upstream/nomount'
     commit = git(root, 'rev-parse', 'HEAD').decode().strip()
     if git(root, 'status', '--porcelain'):
         parser.error('候选必须从干净冻结提交构建。')
-    row = git(root, 'ls-tree', commit, 'nomount/nomount').decode().split()
+    row = git(root, 'ls-tree', commit, 'nomount/upstream/nomount').decode().split()
     assert row[:2] == ['160000', 'commit']
     upstream_commit = row[2]
     assert git(upstream, 'rev-parse', 'HEAD').decode().strip() == upstream_commit
@@ -100,13 +126,15 @@ def main():
     sources = {}
     for path in upstream_paths:
         data = git(upstream, 'show', upstream_commit + ':' + path)
-        inputs['nomount/nomount/' + path] = sha(data)
+        inputs['nomount/upstream/nomount/' + path] = sha(data)
         if path.startswith('module/'):
             contents[path.removeprefix('module/')] = data
         elif path.startswith('userspace/src/'):
             sources[Path(path).name] = data
         elif path == 'LICENSE':
             contents['LICENSE'] = data
+
+    sources['nm.c'] = adapt_cli(sources['nm.c'].decode()).encode()
 
     # 对输出副本适配状态展示，冻结上游保持原字节。
     js = adapt_webui(contents['webroot/index.js'].decode())

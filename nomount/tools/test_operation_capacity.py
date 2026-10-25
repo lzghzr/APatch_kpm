@@ -40,6 +40,8 @@ static int calculate_btf_operation_sizes(bool* unavailable) {
   *unavailable = btf_unavailable;
   return btf_error;
 }
+// 此夹具直接设置复制尺寸；真实函数推导由test_operation_extents执行。
+static int calculate_function_operation_sizes(void) { return 0; }
 static void* nm_zalloc(unsigned long size) {
   requested = size;
   if (allocation_error) return NULL;

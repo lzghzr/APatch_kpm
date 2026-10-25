@@ -70,6 +70,8 @@ static int nm_backing_directory_filter(struct nm_dir_context* context, const cha
     number = actor->self_number;
   else if (length == 2 && name[0] == '.' && name[1] == '.')
     number = actor->parent_number;
+  else if (actor->filter.node && length > 0)
+    number = nm_name_hash((const void*)(uintptr_t)actor->self_number, name, length);
   return nm_directory_filter(context, name, length, offset, number, type);
 }
 static bool nm_backing_directory_filter_bool(struct nm_dir_context* context, const char* name, int length,

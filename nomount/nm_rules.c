@@ -43,7 +43,9 @@ static bool nm_rule_path_valid(const char* path, unsigned int length) {
 
 // 路径引用归规则对象持有；最后一个引用在进程上下文释放。
 static struct nomount_rule* nm_alloc_rule(const char* path, u16 length, u32 flags, u32 uid) {
-  if (flags & ~(NM_FLAG_IS_DIR | NM_FLAG_VIRTUAL_DIR | NM_FLAG_WHITEOUT))
+  if (flags & ~(NM_FLAG_IS_DIR | NM_FLAG_VIRTUAL_DIR | NM_FLAG_WHITEOUT | NM_FLAG_OPAQUE))
+    return ERR_PTR(-EINVAL);
+  if ((flags & NM_FLAG_OPAQUE) && (flags & (NM_FLAG_VIRTUAL_DIR | NM_FLAG_WHITEOUT)))
     return ERR_PTR(-EINVAL);
   if ((flags & NM_FLAG_VIRTUAL_DIR) && (!(flags & NM_FLAG_IS_DIR) || (flags & NM_FLAG_WHITEOUT)))
     return ERR_PTR(-EINVAL);
@@ -56,6 +58,7 @@ static struct nomount_rule* nm_alloc_rule(const char* path, u16 length, u32 flag
     return ERR_PTR(-ENOMEM);
   rule->refs = 1;
   rule->target_uid = uid;
+  rule->uid_end = uid;
   rule->flags = flags;
   rule->r_len = length;
   if (backed) {
@@ -76,7 +79,36 @@ static struct nomount_rule* nm_alloc_rule(const char* path, u16 length, u32 flag
     rule->flags &= ~NM_FLAG_IS_DIR;
     if ((nm_inode_mode(inode) & 0170000) == 0040000)
       rule->flags |= NM_FLAG_IS_DIR;
+    if ((flags & NM_FLAG_OPAQUE) && !(rule->flags & NM_FLAG_IS_DIR)) {
+      kfunc(nm_path_put)(&resolved);
+      nm_free(rule);
+      return ERR_PTR(-ENOTDIR);
+    }
     rule->r_path = resolved;
+  }
+  return rule;
+}
+
+// 线协议作用域先验证再解析路径；旧单 UID 内部入口保持原约定。
+static int nm_validate_rule_scope(u32 uid, u32 end, u32 deny_start, u32 deny_end) {
+  if (end < uid)
+    return -EINVAL;
+  if ((deny_start || deny_end)
+      && (!deny_start || !deny_end || deny_start > deny_end
+          || deny_start < uid || deny_end > (uid || end ? end : (u32)-1)))
+    return -EINVAL;
+  return 0;
+}
+static struct nomount_rule* nm_alloc_scoped_rule(const char* path, u16 length, u32 flags,
+                                               u32 uid, u32 end, u32 deny_start, u32 deny_end) {
+  int rc = nm_validate_rule_scope(uid, end, deny_start, deny_end);
+  if (rc)
+    return ERR_PTR(rc);
+  struct nomount_rule* rule = nm_alloc_rule(path, length, flags, uid);
+  if (!IS_ERR(rule)) {
+    rule->uid_end = end;
+    rule->deny_start = deny_start;
+    rule->deny_end = deny_end;
   }
   return rule;
 }
@@ -136,12 +168,16 @@ static struct nomount_rule* nm_select_rule(struct nomount_leaf* leaf, u32 uid) {
   if (array) {
     for (u32 i = 0; i < array->count; i++) {
       struct nomount_rule* rule = array->rules[i];
-      if (rule->target_uid == uid)
-        return rule;
-      if (!rule->target_uid)
-        fallback = rule;
+      bool denied = rule->deny_start && uid >= rule->deny_start && uid <= rule->deny_end;
+      if (!rule->target_uid && !rule->uid_end) {
+        if (!denied)
+          fallback = rule;
+        continue;
+      }
       if (rule->target_uid > uid)
         break;
+      if (uid <= rule->uid_end && !denied)
+        return rule;
     }
   }
   return fallback;
@@ -160,8 +196,19 @@ static struct nm_rule_array* nm_build_leaf_rule_array(struct nomount_leaf* leaf,
     return ERR_PTR(-EINVAL);
   struct nm_rule_array* old = nm_rules_load(leaf->rules);
   u32 count = old ? old->count : 0, pos = 0;
-  while (pos < count && old->rules[pos]->target_uid < rule->target_uid) pos++;
-  bool replace = pos < count && old->rules[pos]->target_uid == rule->target_uid;
+  while (pos < count && (old->rules[pos]->target_uid < rule->target_uid
+         || (old->rules[pos]->target_uid == rule->target_uid && old->rules[pos]->uid_end < rule->uid_end))) pos++;
+  bool replace = pos < count && old->rules[pos]->target_uid == rule->target_uid
+                 && old->rules[pos]->uid_end == rule->uid_end;
+  for (u32 i = 0; i < count; i++) {
+    const struct nomount_rule* existing = old->rules[i];
+    if (replace && i == pos) {
+      if (existing->deny_start != rule->deny_start || existing->deny_end != rule->deny_end)
+        return ERR_PTR(-EEXIST);
+    } else if ((rule->target_uid || rule->uid_end) && (existing->target_uid || existing->uid_end)
+               && existing->target_uid <= rule->uid_end && rule->target_uid <= existing->uid_end)
+      return ERR_PTR(-EEXIST);
+  }
   if (!replace && count == (u32)-1)
     return ERR_PTR(-EOVERFLOW);
   struct nm_rule_array* array = nm_alloc_rule_array(count + !replace);
@@ -182,7 +229,7 @@ static void nm_publish_leaf_rule(struct nomount_leaf* leaf, struct nomount_rule*
   struct nomount_rule* retired = NULL;
   if (old)
     for (u32 i = 0; i < old->count; i++)
-      if (old->rules[i]->target_uid == rule->target_uid) {
+      if (old->rules[i]->target_uid == rule->target_uid && old->rules[i]->uid_end == rule->uid_end) {
         retired = old->rules[i];
         break;
       }
@@ -206,12 +253,14 @@ static int nm_set_leaf_rule(struct nomount_leaf* leaf, struct nomount_rule* rule
 }
 
 // 拓扑层先处理有子目录的叶节点（保留虚拟目录规则），再调用这个数组操作。
-static int nm_remove_leaf_rule(struct nomount_leaf* leaf, u32 uid, struct nm_rule_updates* updates) {
+static int nm_remove_leaf_rule_scope(struct nomount_leaf* leaf, u32 uid, u32 end,
+                                     u32 deny_start, u32 deny_end, struct nm_rule_updates* updates) {
   struct nm_rule_array* old = nm_rules_load(leaf->rules);
   if (!old)
     return -ENOENT;
   u32 pos = 0;
-  while (pos < old->count && old->rules[pos]->target_uid != uid) pos++;
+  while (pos < old->count && (old->rules[pos]->target_uid != uid || old->rules[pos]->uid_end != end
+         || old->rules[pos]->deny_start != deny_start || old->rules[pos]->deny_end != deny_end)) pos++;
   if (pos == old->count)
     return -ENOENT;
   struct nm_rule_array* array = NULL;
@@ -228,6 +277,10 @@ static int nm_remove_leaf_rule(struct nomount_leaf* leaf, u32 uid, struct nm_rul
   updates->rules = retired;
   nm_rules_retire(&old->rcu);
   return 0;
+}
+
+static int nm_remove_leaf_rule(struct nomount_leaf* leaf, u32 uid, struct nm_rule_updates* updates) {
+  return nm_remove_leaf_rule_scope(leaf, uid, uid, 0, 0, updates);
 }
 
 static struct nm_child* nm_entries(struct nomount_child_array* array) {

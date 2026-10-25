@@ -208,6 +208,28 @@ static int calculate_btf_file_offsets(bool* unavailable) {
   return 0;
 }
 
+// 新增控制回调独立核验，不改变原文件布局查询入口的契约。
+static int calculate_btf_file_control(bool* unavailable) {
+  struct kpm_btf btf;
+  int rc = nm_get_btf(&btf, unavailable);
+  if (rc)
+    return rc;
+  const struct btf_type* ops = kpm_btf_type(&btf, "file_operations", 4);
+  if (!ops)
+    return -ENOENT;
+  const u8 ioctl_args[] = {0x88, 4, 8}, sync_args[] = {0x88, 8, 8, 4};
+  int control = struct_offset.fop_mmap - offsetof(struct nm_file_control_ops, mmap);
+  int native_ioctl = nm_btf_callback(&btf, ops, "unlocked_ioctl", ioctl_args, 3, 8);
+  int compat_ioctl = nm_btf_callback(&btf, ops, "compat_ioctl", ioctl_args, 3, 8);
+  int fsync = nm_btf_callback(&btf, ops, "fsync", sync_args, 4, 4);
+  if (native_ioctl < 0 || compat_ioctl < 0 || fsync < 0)
+    return native_ioctl < 0 ? native_ioctl : compat_ioctl < 0 ? compat_ioctl : fsync;
+  if (native_ioctl != control || compat_ioctl != control + offsetof(struct nm_file_control_ops, compat_ioctl)
+      || fsync != struct_offset.fop_release + offsetof(struct nm_file_sync_ops, fsync))
+    return -EINVAL;
+  return 0;
+}
+
 // 参数数目与宽度相同仍可能是不同对象；核对实际指针指向的命名类型。
 static int nm_btf_named_parameter(const struct kpm_btf* btf, const struct btf_type* proto, unsigned int index,
                                   const char* name) {
@@ -233,12 +255,180 @@ static const struct btf_type* nm_btf_callback_prototype(const struct kpm_btf* bt
   return btf->type_by_id(btf->data, field.type->size);
 }
 
+static int calculate_btf_symlink(bool* unavailable) {
+  struct kpm_btf btf;
+  int rc = nm_get_btf(&btf, unavailable);
+  if (rc)
+    return rc;
+  const struct btf_type* ops = kpm_btf_type(&btf, "inode_operations", 4);
+  if (!ops)
+    return -ENOENT;
+  const u8 args[] = {0x88, 0x88, 0x88};
+  int slot = nm_btf_callback(&btf, ops, "get_link", args, 3, 0x88);
+  if (slot < 0)
+    return slot;
+  if (slot != offsetof(struct nm_inode_link_ops, get_link)
+      || kpm_btf_offset(&btf, ops, "lookup", 8) != offsetof(struct nm_inode_link_ops, lookup))
+    return -EINVAL;
+  const struct btf_type* proto = nm_btf_callback_prototype(&btf, ops, "get_link");
+  const char* names[] = {"dentry", "inode", "delayed_call"};
+  for (unsigned int i = 0; i < 3; i++) {
+    rc = nm_btf_named_parameter(&btf, proto, i, names[i]);
+    if (rc)
+      return rc;
+  }
+  const u8 get_args[] = {0x88, 0x88}, read_args[] = {0x88, 0x88, 4};
+  rc = nm_btf_function(&btf, "vfs_get_link", get_args, 2, 0x88);
+  return rc ? rc : nm_btf_function(&btf, "vfs_readlink", read_args, 3, 4);
+}
+
+static int calculate_btf_link_compat(bool legacy, bool* unavailable) {
+  struct kpm_btf btf;
+  int rc = nm_get_btf(&btf, unavailable);
+  if (rc)
+    return rc;
+  const struct btf_type* ops = kpm_btf_type(&btf, "inode_operations", 4);
+  if (!ops)
+    return -ENOENT;
+  const u8 pointers[] = {0x88, 0x88, 0x88}, read_args[] = {0x88, 0x88, 4};
+  int read = nm_btf_callback(&btf, ops, "readlink", read_args, 3, 4);
+  int link = nm_btf_callback(&btf, ops, legacy ? "follow_link" : "get_link", pointers, legacy ? 2 : 3, 0x88);
+  if (read < 0 || link < 0)
+    return read < 0 ? read : link;
+  int getattr = legacy ? offsetof(struct nm_inode_follow_prefix, getattr)
+                       : offsetof(struct nm_inode_android_link_prefix, getattr);
+  if (struct_offset.permission_abi != 0 || struct_offset.iop_getattr != getattr
+      || kpm_btf_offset(&btf, ops, "getattr", 8) != getattr
+      || kpm_btf_offset(&btf, ops, "permission2", 8) != offsetof(struct nm_inode_follow_prefix, permission2)
+      || read != offsetof(struct nm_inode_follow_prefix, readlink) || link != sizeof(void*))
+    return -EINVAL;
+  if (legacy) {
+    int put = nm_btf_callback(&btf, ops, "put_link", pointers, 2, 0);
+    if (put < 0)
+      return put;
+    if (put != offsetof(struct nm_inode_follow_prefix, put_link))
+      return -EINVAL;
+  } else {
+    const struct btf_type* proto = nm_btf_callback_prototype(&btf, ops, "get_link");
+    const char* names[] = {"dentry", "inode", "delayed_call"};
+    for (unsigned int i = 0; i < 3; i++) {
+      rc = nm_btf_named_parameter(&btf, proto, i, names[i]);
+      if (rc)
+        return rc;
+    }
+    rc = nm_btf_function(&btf, "vfs_get_link", pointers, 2, 0x88);
+    if (rc)
+      return rc;
+  }
+  return nm_btf_function(&btf, "generic_readlink", read_args, 3, 4);
+}
+
+static int calculate_btf_source_readlink(int expected, bool* unavailable) {
+  struct kpm_btf btf;
+  int rc = nm_get_btf(&btf, unavailable);
+  if (rc)
+    return rc;
+  const struct btf_type* ops = kpm_btf_type(&btf, "inode_operations", 4);
+  if (!ops)
+    return -ENOENT;
+  const u8 args[] = {0x88, 0x88, 4};
+  int slot = nm_btf_callback(&btf, ops, "readlink", args, 3, 4);
+  return slot < 0 ? slot : slot == expected ? 0 : -EINVAL;
+}
+
 static int nm_btf_context_kind(const struct kpm_btf* btf, const struct btf_type* proto) {
   if (!nm_btf_named_parameter(btf, proto, 0, "user_namespace"))
     return 1;
   if (!nm_btf_named_parameter(btf, proto, 0, "mnt_idmap"))
     return 2;
   return -EOPNOTSUPP;
+}
+
+static int calculate_btf_setattr(struct nm_setattr_layout* layout, bool* unavailable) {
+  struct kpm_btf btf;
+  int rc = nm_get_btf(&btf, unavailable);
+  if (rc)
+    return rc;
+  const struct btf_type* inode = kpm_btf_type(&btf, "inode", 4);
+  const struct btf_type* ops = kpm_btf_type(&btf, "inode_operations", 4);
+  const struct btf_type* attr = kpm_btf_type(&btf, "iattr", 4);
+  const struct btf_type* rwsem = kpm_btf_type(&btf, "rw_semaphore", 4);
+  const struct btf_type* mutex = kpm_btf_type(&btf, "mutex", 4);
+  if (!inode || !ops || !attr || kpm_btf_offset(&btf, attr, "ia_valid", 4) != 0)
+    return -EINVAL;
+  struct kpm_btf_field lock;
+  int kind = 1;
+  rc = kpm_btf_member(&btf, inode, "i_rwsem", &lock, 0);
+  if (rc == -ENOENT) {
+    kind = 2;
+    rc = kpm_btf_member(&btf, inode, "i_mutex", &lock, 0);
+  }
+  if (rc)
+    return rc;
+  const struct btf_type* expected = kind == 1 ? rwsem : mutex;
+  if (!expected || lock.type != expected || lock.bits || lock.offset % 64 || lock.offset / 8 > 0x7fff || !expected->size
+      || lock.offset / 8 + expected->size > inode->size)
+    return -EINVAL;
+  int context = struct_offset.getattr_context_kind;
+  if (context < 0 || context > 2)
+    return -EOPNOTSUPP;
+  const u8 pointers[] = {0x88, 0x88, 0x88, 0x88};
+  int count = context ? 3 : 2;
+  int slot = nm_btf_callback(&btf, ops, "setattr", pointers, count, 4);
+  const struct btf_type* proto = nm_btf_callback_prototype(&btf, ops, "setattr");
+  if (slot < 0)
+    return slot;
+  if ((context && nm_btf_named_parameter(&btf, proto, 0, context == 1 ? "user_namespace" : "mnt_idmap"))
+      || nm_btf_named_parameter(&btf, proto, count - 2, "dentry")
+      || nm_btf_named_parameter(&btf, proto, count - 1, "iattr"))
+    return -EOPNOTSUPP;
+  if (struct_offset.permission_abi == 0) {
+    int second = nm_btf_callback(&btf, ops, "setattr2", pointers, 3, 4);
+    proto = nm_btf_callback_prototype(&btf, ops, "setattr2");
+    if (second != slot + 8 || nm_btf_named_parameter(&btf, proto, 0, "vfsmount")
+        || nm_btf_named_parameter(&btf, proto, 1, "dentry") || nm_btf_named_parameter(&btf, proto, 2, "iattr"))
+      return -EOPNOTSUPP;
+  }
+  const char* notify = struct_offset.permission_abi == 0 ? "notify_change2" : "notify_change";
+  int args = context || struct_offset.permission_abi == 0 ? 4 : 3;
+  rc = nm_btf_function(&btf, notify, pointers, args, 4);
+  const struct btf_type* fn = kpm_btf_type(&btf, notify, 12);
+  proto = fn ? btf.type_by_id(btf.data, fn->size) : NULL;
+  if (rc || !proto)
+    return rc ? rc : -ENOENT;
+  if ((args == 4
+       && nm_btf_named_parameter(&btf, proto, 0,
+                                 context == 1   ? "user_namespace"
+                                 : context == 2 ? "mnt_idmap"
+                                                : "vfsmount"))
+      || nm_btf_named_parameter(&btf, proto, args - 3, "dentry")
+      || nm_btf_named_parameter(&btf, proto, args - 2, "iattr"))
+    return -EOPNOTSUPP;
+  const struct btf_param* params = (const void*)(proto + 1);
+  u32 size = 0;
+  const struct btf_type* ptr = btf.type_by_id(btf.data, params[args - 1].type);
+  for (unsigned int i = 0; i < 2; i++) {
+    ptr = ptr ? btf.resolve_size(btf.data, ptr, &size) : NULL;
+    if (!ptr || IS_ERR(ptr) || ((ptr->info >> 24) & 31) != 2 || size != 8)
+      return -EOPNOTSUPP;
+    ptr = btf.type_by_id(btf.data, ptr->size);
+  }
+  ptr = ptr ? btf.resolve_size(btf.data, ptr, &size) : NULL;
+  if (ptr != inode)
+    return -EOPNOTSUPP;
+  const char* names[] = {kind == 1 ? "down_write_killable" : "mutex_lock_interruptible",
+                         kind == 1 ? "up_write" : "mutex_unlock", "__mnt_is_readonly"};
+  for (unsigned int i = 0; i < 3; i++) {
+    rc = nm_btf_function(&btf, names[i], pointers, 1, i == 0 ? 4 : i == 1 ? 0 : 1);
+    fn = kpm_btf_type(&btf, names[i], 12);
+    proto = fn ? btf.type_by_id(btf.data, fn->size) : NULL;
+    if (!rc)
+      rc = nm_btf_named_parameter(&btf, proto, 0, i == 2 ? "vfsmount" : kind == 1 ? "rw_semaphore" : "mutex");
+    if (rc)
+      return rc;
+  }
+  *layout = (struct nm_setattr_layout){lock.offset / 8, kind, slot, context};
+  return 0;
 }
 
 static int calculate_btf_inode_offsets(bool* unavailable) {
@@ -565,6 +755,60 @@ static int calculate_btf_backing_inode_abi(bool* unavailable) {
   return 0;
 }
 
+// Callback ABI is checked independently from the callable inode_permission entry.
+static int calculate_btf_owned_permission(bool* unavailable, int* slot, int* second) {
+  struct kpm_btf btf;
+  int rc = nm_get_btf(&btf, unavailable);
+  if (rc)
+    return rc;
+  const struct btf_type* ops = kpm_btf_type(&btf, "inode_operations", 4);
+  if (!ops)
+    return -ENOENT;
+  int abi = struct_offset.permission_abi;
+  if (abi < 0 || abi > 3)
+    return -EOPNOTSUPP;
+  const u8 pair[] = {0x88, 4}, triple[] = {0x88, 0x88, 4};
+  int count = abi >= 2 ? 3 : 2;
+  const u8* spec = count == 3 ? triple : pair;
+  int primary = nm_btf_callback(&btf, ops, "permission", spec, count, 4);
+  if (primary < 0)
+    return primary;
+  const struct btf_type* proto = nm_btf_callback_prototype(&btf, ops, "permission");
+  rc = nm_btf_named_parameter(&btf, proto, count - 2, "inode");
+  if (!rc && abi >= 2 && nm_btf_context_kind(&btf, proto) != abi - 1)
+    rc = -EOPNOTSUPP;
+  if (rc)
+    return rc;
+  int secondary = -1;
+  if (!abi) {
+    secondary = nm_btf_callback(&btf, ops, "permission2", triple, 3, 4);
+    if (secondary < 0)
+      return secondary;
+    proto = nm_btf_callback_prototype(&btf, ops, "permission2");
+    rc = nm_btf_named_parameter(&btf, proto, 0, "vfsmount");
+    if (!rc)
+      rc = nm_btf_named_parameter(&btf, proto, 1, "inode");
+    if (rc || secondary == primary)
+      return rc ? rc : -EINVAL;
+  }
+  rc = nm_btf_function(&btf, "generic_permission", spec, count, 4);
+  if (rc)
+    return rc;
+  const struct btf_type* fn = kpm_btf_type(&btf, "generic_permission", 12);
+  proto = fn ? btf.type_by_id(btf.data, fn->size) : NULL;
+  rc = nm_btf_named_parameter(&btf, proto, count - 2, "inode");
+  if (!rc && abi >= 2 && nm_btf_context_kind(&btf, proto) != abi - 1)
+    rc = -EOPNOTSUPP;
+  if (rc)
+    return rc;
+  // 读取原生源表的边界来自BTF类型尺寸，不是模块owned表容量。
+  if (ops->size < 8 || (u32)primary > ops->size - 8 || (secondary >= 0 && (u32)secondary > ops->size - 8))
+    return -EINVAL;
+  *slot = primary;
+  *second = secondary;
+  return 0;
+}
+
 static int calculate_btf_control_layout(bool* unavailable) {
   struct kpm_btf btf;
   int rc = nm_get_btf(&btf, unavailable);
@@ -615,4 +859,163 @@ static int calculate_btf_control_layout(bool* unavailable) {
   struct_offset.key_callbacks = callbacks;
   struct_offset.key_preparse_data = input;
   return nm_validate_control_layout();
+}
+
+// vfs入口共同负责权限/LSM/原生文件系统分派；只有已证实的签名才能接入。
+static int calculate_btf_xattr_read(int context, bool* unavailable) {
+  struct kpm_btf btf;
+  int rc = nm_get_btf(&btf, unavailable);
+  if (rc)
+    return rc;
+  const struct btf_type* get = kpm_btf_type(&btf, "vfs_getxattr", 12);
+  const struct btf_type* list = kpm_btf_type(&btf, "vfs_listxattr", 12);
+  if (!get || !list)
+    return -ENOENT;
+  const struct btf_type* proto = btf.type_by_id(btf.data, get->size);
+  if (!proto || ((proto->info >> 24) & 31) != 13 || context < 0 || context > 2)
+    return -EOPNOTSUPP;
+  unsigned int count = proto->info & 0xffff;
+  if (count != (context ? 5 : 4))
+    return -EOPNOTSUPP;
+  const u8 plain[] = {0x88, 0x88, 0x88, 8};
+  const u8 mapped[] = {0x88, 0x88, 0x88, 0x88, 8};
+  const u8 list_args[] = {0x88, 0x88, 8};
+  rc = nm_btf_prototype(&btf, proto, context ? mapped : plain, count, 8);
+  if (!rc && context)
+    rc = nm_btf_named_parameter(&btf, proto, 0, context == 1 ? "user_namespace" : "mnt_idmap");
+  if (!rc)
+    rc = nm_btf_named_parameter(&btf, proto, context ? 1 : 0, "dentry");
+  if (!rc)
+    rc = nm_btf_function(&btf, "vfs_listxattr", list_args, 3, 8);
+  if (!rc)
+    rc = nm_btf_named_parameter(&btf, btf.type_by_id(btf.data, list->size), 0, "dentry");
+  return rc ? rc : count;
+}
+
+// 新的POSIX ACL syscall支路绕过vfs_getxattr；缺席只表示该BTF中无独立入口。
+static int calculate_btf_xattr_acl(int context, bool* unavailable) {
+  struct kpm_btf btf;
+  int rc = nm_get_btf(&btf, unavailable);
+  if (rc)
+    return rc;
+  const struct btf_type* function = kpm_btf_type(&btf, "do_get_acl", 12);
+  if (!function)
+    return 0;
+  if (context != 1 && context != 2)
+    return -EOPNOTSUPP;
+  const u8 args[] = {0x88, 0x88, 0x88, 0x88, 8};
+  const struct btf_type* proto = btf.type_by_id(btf.data, function->size);
+  rc = nm_btf_prototype(&btf, proto, args, 5, 8);
+  if (!rc)
+    rc = nm_btf_named_parameter(&btf, proto, 0, context == 1 ? "user_namespace" : "mnt_idmap");
+  if (!rc)
+    rc = nm_btf_named_parameter(&btf, proto, 1, "dentry");
+  return rc ? rc : 1;
+}
+
+// 写入只能走完整VFS检查；返回是否存在独立ACL写入口。
+static int calculate_btf_xattr_write(int context, bool* unavailable) {
+  struct kpm_btf btf;
+  int rc = nm_get_btf(&btf, unavailable);
+  if (rc)
+    return rc;
+  if (context < 0 || context > 2)
+    return -EOPNOTSUPP;
+  const u8 plain[] = {0x88, 0x88, 0x88, 8, 4};
+  const u8 mapped[] = {0x88, 0x88, 0x88, 0x88, 8, 4};
+  const u8 acl_args[] = {0x88, 0x88, 0x88, 0x88, 8};
+  const u8 mount_arg[] = {0x88};
+  const char* names[] = {"vfs_setxattr", "do_set_acl", "__mnt_is_readonly"};
+  bool acl = kpm_btf_type(&btf, names[1], 12) != NULL;
+  for (unsigned int i = 0; i < 3; i++) {
+    if (i == 1 && !acl)
+      continue;
+    if (i == 1 && !context)
+      return -EOPNOTSUPP;
+    const u8* args = i == 2 ? mount_arg : i == 1 ? acl_args : context ? mapped : plain;
+    int count = i == 2 ? 1 : i == 1 ? 5 : context ? 6 : 5;
+    rc = nm_btf_function(&btf, names[i], args, count, i == 2 ? 1 : 4);
+    const struct btf_type* fn = kpm_btf_type(&btf, names[i], 12);
+    const struct btf_type* proto = fn ? btf.type_by_id(btf.data, fn->size) : NULL;
+    if (!rc)
+      rc = nm_btf_named_parameter(&btf, proto, i == 2 ? 0 : !!context, i == 2 ? "vfsmount" : "dentry");
+    if (!rc && i != 2 && context)
+      rc = nm_btf_named_parameter(&btf, proto, 0, context == 1 ? "user_namespace" : "mnt_idmap");
+    if (rc)
+      return rc;
+  }
+  return acl;
+}
+
+// 写侧沿已核对共同IO前部；新增签名核验不改变独立只读文件引擎的契约。
+static int calculate_btf_file_write(bool* unavailable) {
+  struct kpm_btf btf;
+  int rc = nm_get_btf(&btf, unavailable);
+  if (rc)
+    return rc;
+  const struct btf_type* ops = kpm_btf_type(&btf, "file_operations", 4);
+  if (!ops)
+    return -ENOENT;
+  const u8 pair[] = {0x88, 0x88};
+  rc = nm_btf_callback(&btf, ops, "write_iter", pair, 2, 8);
+  if (rc < 0)
+    return rc;
+  if (rc != offsetof(struct nm_file_io_ops, write_iter))
+    return -EINVAL;
+  const struct btf_type* proto = nm_btf_callback_prototype(&btf, ops, "write_iter");
+  rc = nm_btf_named_parameter(&btf, proto, 0, "kiocb");
+  return rc ? rc : nm_btf_named_parameter(&btf, proto, 1, "iov_iter");
+}
+
+// 独立核对删除入口，不从setxattr五/六参推断删除的二/三参原型。
+static int calculate_btf_xattr_remove(int context, bool* unavailable) {
+  struct kpm_btf btf;
+  int rc = nm_get_btf(&btf, unavailable);
+  if (rc)
+    return rc;
+  if (context < 0 || context > 2)
+    return -EOPNOTSUPP;
+  const u8 plain[] = {0x88, 0x88}, mapped[] = {0x88, 0x88, 0x88};
+  rc = nm_btf_function(&btf, "vfs_removexattr", context ? mapped : plain, context ? 3 : 2, 4);
+  const struct btf_type* fn = kpm_btf_type(&btf, "vfs_removexattr", 12);
+  const struct btf_type* proto = fn ? btf.type_by_id(btf.data, fn->size) : NULL;
+  if (!rc)
+    rc = nm_btf_named_parameter(&btf, proto, !!context, "dentry");
+  if (!rc && context)
+    rc = nm_btf_named_parameter(&btf, proto, 0, context == 1 ? "user_namespace" : "mnt_idmap");
+  return rc;
+}
+
+// syscall内部helper可能内联vfs_listxattr；其用户缓冲区/size保持原样。
+static int calculate_btf_xattr_internal_list(bool* unavailable) {
+  struct kpm_btf btf;
+  int rc = nm_get_btf(&btf, unavailable);
+  if (rc)
+    return rc;
+  const u8 args[] = {0x88, 0x88, 8};
+  rc = nm_btf_function(&btf, "listxattr", args, 3, 8);
+  const struct btf_type* fn = kpm_btf_type(&btf, "listxattr", 12);
+  const struct btf_type* proto = fn ? btf.type_by_id(btf.data, fn->size) : NULL;
+  return rc ? rc : nm_btf_named_parameter(&btf, proto, 0, "dentry");
+}
+
+// 新内核ACL删除从syscall直接进入vfs_remove_acl，不经过普通removexattr。
+static int calculate_btf_xattr_remove_acl(int context, bool* unavailable) {
+  struct kpm_btf btf;
+  int rc = nm_get_btf(&btf, unavailable);
+  if (rc)
+    return rc;
+  const struct btf_type* fn = kpm_btf_type(&btf, "vfs_remove_acl", 12);
+  if (!fn)
+    return 0;
+  if (context != 1 && context != 2)
+    return -EOPNOTSUPP;
+  const u8 args[] = {0x88, 0x88, 0x88};
+  rc = nm_btf_function(&btf, "vfs_remove_acl", args, 3, 4);
+  const struct btf_type* proto = btf.type_by_id(btf.data, fn->size);
+  if (!rc)
+    rc = nm_btf_named_parameter(&btf, proto, 0, context == 1 ? "user_namespace" : "mnt_idmap");
+  if (!rc)
+    rc = nm_btf_named_parameter(&btf, proto, 1, "dentry");
+  return rc ? rc : 1;
 }

@@ -118,6 +118,11 @@ static int nm_operation_size(enum nm_ops_kind kind) {
 
 static int nm_owned_operation_size(enum nm_ops_kind kind) {
   int size = nm_operation_size(kind);
+#ifndef CONFIG_KPM_BASELINES
+  // 动态自建表的容量门控与原表精确复制分开；已知超界不能退回清零容量。
+  if ((kind == NM_INODE_OPS || kind == NM_DENTRY_OPS || kind == NM_KEY_TYPE) && size > NM_OWNED_OPERATIONS_CAPACITY)
+    return -E2BIG;
+#endif
   if (size == -1 && nm_owned_operation_fallback
       && (kind == NM_INODE_OPS || kind == NM_DENTRY_OPS || kind == NM_KEY_TYPE))
     return NM_OWNED_OPERATIONS_CAPACITY;
@@ -157,6 +162,10 @@ static const struct nm_key_data* nm_key_preparse_input(const struct key_preparse
 
 static int nm_validate_control_layout(void) {
   int key_capacity = nm_owned_operation_size(NM_KEY_TYPE);
+#ifndef CONFIG_KPM_BASELINES
+  if (key_capacity == -E2BIG)
+    return key_capacity;
+#endif
   if (struct_offset.mutex_size < 0 || struct_offset.mutex_no_lockdep < 0 || struct_offset.key_callbacks < 0
       || struct_offset.key_preparse_data < 0)
     return -ENOENT;
@@ -255,10 +264,13 @@ static struct nm_dentry_ops_data* nm_dentry_objects(void* dentry) {
 static void* nm_dentry_lock_address(void* dentry) { return (void*)((uintptr_t)dentry + struct_offset.dentry_lock); }
 static void nm_publish_dentry_ops(void* dentry, const void* ops, bool owned) {
   struct nm_dentry_head* head = dentry;
+  unsigned int flags = head->d_flags;
   if (owned)
-    head->d_flags &= ~(0x1U | 0x2U | 0x8U | 0x10U | 0x04000000U);  // HASH / COMPARE / DELETE / PRUNE / REAL。
-  head->d_flags |= 0x4U | 0x800U;                                  // REVALIDATE / WEAK_REVALIDATE。
+    flags &= ~(0x1U | 0x2U | 0x8U | 0x10U | 0x04000000U);  // HASH / COMPARE / DELETE / PRUNE / REAL。
+  flags |= 0x4U | 0x800U;                                  // REVALIDATE / WEAK_REVALIDATE。
+  // 调用者持 d_lock；先发布操作表，再以 release 一次发布使 VFS 调用它的标志。
   __atomic_store_n(&nm_dentry_objects(dentry)->d_op, ops, __ATOMIC_RELEASE);
+  __atomic_store_n(&head->d_flags, flags, __ATOMIC_RELEASE);
 }
 static void* nm_inode_mapping(void* inode) { return nm_inode_objects(inode)->i_mapping; }
 static void* nm_inode_data(void* inode) { return (void*)((uintptr_t)inode + struct_offset.inode_data); }
@@ -310,7 +322,7 @@ static void nm_copy_backing_inode_attributes(void* inode, void* backing, u64 num
   owner->i_mode = real->i_mode;
   owner->i_uid = real->i_uid;
   owner->i_gid = real->i_gid;
-  owner->i_opflags |= 0x0004U;                 // IOP_NOFOLLOW；首轮支持普通文件和目录。
+  owner->i_opflags |= 0x0004U;                 // IOP_NOFOLLOW；链接物化在发布前清除此位。
   owner->i_flags |= 512U | 2U | 128U | 4096U;  // S_PRIVATE / NOATIME / NOCMTIME / NOSEC。
   *(u64*)((uintptr_t)inode + struct_offset.inode_number) = number;
   *(struct nm_inode_size_times*)((uintptr_t)inode + struct_offset.inode_size) =
@@ -435,7 +447,8 @@ static int nm_validate_file_offsets(const struct struct_offset* offsets) {
   }
   const int slots[] = {offsets->fop_open, offsets->fop_release, offsets->fop_mmap, offsets->fop_splice_read};
   for (unsigned int i = 0; i < sizeof(slots) / sizeof(slots[0]); i++) {
-    if (slots[i] < sizeof(struct nm_file_io_ops) || slots[i] % 8 || slots[i] + 8 > offsets->file_ops_size)
+    if (slots[i] < 0 || slots[i] < sizeof(struct nm_file_io_ops) || slots[i] % 8
+        || slots[i] + 8 > offsets->file_ops_size)
       return -EINVAL;
     for (unsigned int j = 0; j < i; j++)
       if (slots[i] == slots[j])
@@ -447,6 +460,8 @@ static int nm_validate_file_offsets(const struct struct_offset* offsets) {
 #ifndef CONFIG_KPM_BASELINES
 #include "nm_btf.c"
 
+static enum nm_operation_anchor nm_operation_anchor;
+
 static bool nm_load(uint32_t inst, int size, int rn) {
   return inst_is_ldr_imm(inst) && !bit(inst, 26) && inst_get_ldr_imm_opc(inst) == 1
          && inst_get_ldr_imm_size(inst) == size && inst_get_ldr_imm_rn(inst) == rn && inst_get_ldr_imm_rt(inst) != 31;
@@ -457,9 +472,45 @@ static bool nm_store(uint32_t inst, int size, int rn) {
          && inst_get_str_imm_rn(inst) == rn;
 }
 
+static bool nm_move(uint32_t inst, int rd, int rm) {
+  return inst_is_mov_reg(inst) && inst_get_mov_reg_sf(inst) && inst_get_mov_reg_rd(inst) == rd
+         && inst_get_mov_reg_rm(inst) == rm;
+}
+static bool nm_load_at(uint32_t inst, int rd, int rn, int offset) {
+  return nm_load(inst, 3, rn) && inst_get_ldr_imm_rt(inst) == rd && inst_get_ldr_imm_imm(inst) == offset;
+}
+static bool nm_move32(uint32_t inst, int rd, int rm) {
+  return inst_is_mov_reg(inst) && !inst_get_mov_reg_sf(inst) && inst_get_mov_reg_rd(inst) == rd
+         && inst_get_mov_reg_rm(inst) == rm;
+}
+static bool nm_add_at(uint32_t inst, int rd, int rn, int offset) {
+  return inst_is_add_imm(inst) && inst_get_add_imm_sf(inst) && inst_get_add_imm_rd(inst) == rd
+         && inst_get_add_imm_rn(inst) == rn && inst_get_add_imm_imm(inst) == offset;
+}
+static bool nm_zero64(uint32_t inst, int rd) {
+  return nm_move(inst, rd, 31)
+         || (inst_is_movz_imm(inst) && inst_get_movz_imm_sf(inst) && inst_get_movz_imm_rd(inst) == rd
+             && !inst_get_movz_imm_hw(inst) && !inst_get_movz_imm_imm16(inst));
+}
+static bool nm_store_at(uint32_t inst, int size, int rt, int rn, int offset) {
+  return nm_store(inst, size, rn) && inst_get_str_imm_rt(inst) == rt && inst_get_str_imm_imm(inst) == offset;
+}
+static bool nm_compare(uint32_t inst, int rn, int rm) {
+  return inst_is_subs_reg(inst) && inst_get_subs_reg_sf(inst) && inst_get_subs_reg_rd(inst) == 31
+         && inst_get_subs_reg_rn(inst) == rn && inst_get_subs_reg_rm(inst) == rm && !inst_get_subs_reg_shift(inst)
+         && !inst_get_subs_reg_imm6(inst);
+}
+static bool nm_pair_store_at(uint32_t inst, int rt, int rt2, int rn, int offset) {
+  return inst_is_stp(inst) && !bit(inst, 26) && inst_get_stp_size(inst) == 2 && inst_get_stp_mode(inst) == 2
+         && inst_get_stp_rt(inst) == rt && inst_get_stp_rt2(inst) == rt2 && inst_get_stp_rn(inst) == rn
+         && inst_get_stp_imm(inst) == offset;
+}
+
 // 本阶段锚点均在入口参数被改写或调用前匹配，不跟踪函数后半部。
 // full_name_hash 的入口以名字和长度寄存器区分两参／三参，不按内核版本选择。
 static int nm_find_name_hash_arguments(const uint32_t* src) {
+  if (inst_is_paciasp(src[0]))
+    src++;
   if (inst_is_movz_imm(src[0]) && inst_get_movz_imm_sf(src[0]) && inst_get_movz_imm_rd(src[0]) == 2
       && !inst_get_movz_imm_hw(src[0]) && !inst_get_movz_imm_imm16(src[0]) && inst_is_subs_imm(src[1])
       && !inst_get_subs_imm_sf(src[1]) && inst_get_subs_imm_rn(src[1]) == 1 && inst_get_subs_imm_rd(src[1]) == 31
@@ -477,6 +528,28 @@ static int nm_find_name_hash_arguments(const uint32_t* src) {
       && inst_get_subs_imm_imm12(src[4]) == 8 && inst_is_b_cond(src[5]) && inst_get_b_cond_cond(src[5]) == 3
       && inst_get_b_cond_imm19(src[5]) > 0)
     return 3;
+  // 三参hash：GCC先检查长度；Clang先将哈希清零，入口盐值x0保留到后续混合。
+  if (inst_is_cbz(src[0]) && !inst_get_cbz_sf(src[0]) && inst_get_cbz_rt(src[0]) == 2 && inst_get_cbz_label(src[0]) > 20
+      && inst_is_subs_imm(src[1]) && !inst_get_subs_imm_sf(src[1]) && inst_get_subs_imm_rd(src[1]) == 31
+      && inst_get_subs_imm_rn(src[1]) == 2 && inst_get_subs_imm_imm(src[1]) == 7 && nm_load(src[2], 3, 1)
+      && inst_get_ldr_imm_rt(src[2]) == 4 && !inst_get_ldr_imm_imm(src[2]) && inst_is_b_cond(src[3])
+      && inst_get_b_cond_cond(src[3]) == 9 && inst_get_b_cond_label(src[3]) > 4)
+    return 3;
+  if (inst_is_mov_reg(src[0]) && inst_get_mov_reg_sf(src[0]) && inst_get_mov_reg_rd(src[0]) == 8
+      && inst_get_mov_reg_rm(src[0]) == 31 && inst_is_cbz(src[1]) && !inst_get_cbz_sf(src[1])
+      && inst_get_cbz_rt(src[1]) == 2 && inst_get_cbz_label(src[1]) > 16 && inst_is_ubfm(src[2])
+      && !inst_get_ubfm_sf(src[2]) && !inst_get_ubfm_n(src[2]) && inst_get_ubfm_rd(src[2]) == 9
+      && inst_get_ubfm_rn(src[2]) == 2 && inst_get_ubfm_immr(src[2]) == 29 && inst_get_ubfm_imms(src[2]) == 28) {
+    bool padded = src[3] == 0xd503201fU;
+    unsigned int load = padded ? 4 : (nm_load(src[3], 3, 1) ? 3 : 4);
+    unsigned int sub = padded ? 6 : (load == 3 ? 4 : 3), branch = padded ? 7 : 5;
+    if ((!padded || src[5] == 0xd503201fU) && nm_load(src[load], 3, 1) && inst_get_ldr_imm_rt(src[load]) == 10
+        && !inst_get_ldr_imm_imm(src[load]) && inst_is_subs_imm(src[sub]) && !inst_get_subs_imm_sf(src[sub])
+        && inst_get_subs_imm_rd(src[sub]) == 2 && inst_get_subs_imm_rn(src[sub]) == 2
+        && inst_get_subs_imm_imm(src[sub]) == 8 && inst_is_b_cond(src[branch]) && inst_get_b_cond_cond(src[branch]) == 3
+        && inst_get_b_cond_label(src[branch]) > 4)
+      return 3;
+  }
   return -EOPNOTSUPP;
 }
 
@@ -493,6 +566,10 @@ static bool nm_rule_entry_save(uint32_t inst) {
 }
 
 static int nm_check_rule_prefixes(const uint32_t* open, const uint32_t* vfs) {
+  if (inst_is_paciasp(open[0]))
+    open++;
+  if (inst_is_paciasp(vfs[0]))
+    vfs++;
   bool mount = false;
   for (unsigned int i = 0; i < 5; i++) {
     if (nm_load(open[i], 3, 0) && inst_get_ldr_imm_rt(open[i]) != 0
@@ -535,6 +612,46 @@ static int nm_check_rule_prefixes(const uint32_t* open, const uint32_t* vfs) {
       continue;
     break;
   }
+  // 两种旧path_open入口；已验证的分支保持dentry及保存的path/file来源。
+  if (nm_rule_entry_save(vfs[0]) && nm_rule_entry_save(vfs[2]) && nm_rule_entry_save(vfs[3])) {
+    bool clang = nm_rule_entry_save(vfs[1]) && nm_move(vfs[4], 21, 0)
+                 && nm_load_at(vfs[5], 0, 0, offsetof(struct nm_path, dentry)) && nm_move(vfs[6], 19, 2)
+                 && nm_move(vfs[7], 20, 1);
+    bool gcc = nm_move(vfs[1], 3, 2) && nm_move(vfs[4], 19, 1) && nm_move(vfs[5], 20, 0)
+               && nm_load_at(vfs[6], 1, 0, offsetof(struct nm_path, dentry));
+    if (clang) {
+      // 字节标志与错误指针检查发生在path复制之前，不跨其调用。
+      if (!nm_load(vfs[8], 0, 0) || inst_get_ldr_imm_rt(vfs[8]) != 8 || inst_get_ldr_imm_imm(vfs[8]) != 3
+          || !inst_is_tbnz(vfs[9]) || inst_get_tbnz_rt(vfs[9]) != 8 || inst_get_tbnz_bit(vfs[9]) != 2
+          || inst_get_tbnz_label(vfs[9]) <= 4 || !inst_is_adds_imm(vfs[10]) || !inst_get_adds_imm_sf(vfs[10])
+          || inst_get_adds_imm_rd(vfs[10]) != 31 || inst_get_adds_imm_rn(vfs[10]) != 0
+          || inst_get_adds_imm_imm(vfs[10]) != 4095 || !inst_is_b_cond(vfs[11]) || inst_get_b_cond_cond(vfs[11]) != 2
+          || inst_get_b_cond_label(vfs[11]) <= 4 || !inst_is_ldp(vfs[12]) || bit(vfs[12], 26)
+          || inst_get_ldp_size(vfs[12]) != 2 || inst_get_ldp_mode(vfs[12]) != 2 || inst_get_ldp_rn(vfs[12]) != 21
+          || inst_get_ldp_rt(vfs[12]) != 9 || inst_get_ldp_rt2(vfs[12]) != 8 || inst_get_ldp_imm(vfs[12])
+          || !nm_zero64(vfs[13], 2) || !nm_move(vfs[14], 3, 19)
+          || !nm_pair_store_at(vfs[15], 9, 8, 20, struct_offset.file_inode_ops - sizeof(struct nm_path))
+          || !nm_load_at(vfs[16], 1, 0, offsetof(struct nm_dentry_head, d_inode)) || !nm_move(vfs[17], 0, 20))
+        return -EOPNOTSUPP;
+      return 0;
+    }
+    if (gcc) {
+      if (!nm_load(vfs[7], 2, 19) || inst_get_ldr_imm_rt(vfs[7]) != 2 || !nm_load(vfs[8], 2, 1)
+          || inst_get_ldr_imm_rt(vfs[8]) || inst_get_ldr_imm_imm(vfs[8]) || !inst_is_tbnz(vfs[9])
+          || inst_get_tbnz_rt(vfs[9]) || inst_get_tbnz_bit(vfs[9]) != 26 || inst_get_tbnz_label(vfs[9]) <= 4
+          || !inst_is_adds_imm(vfs[10]) || !inst_get_adds_imm_sf(vfs[10]) || inst_get_adds_imm_rd(vfs[10]) != 31
+          || inst_get_adds_imm_rn(vfs[10]) != 1 || inst_get_adds_imm_imm(vfs[10]) != 4096 || !nm_move32(vfs[11], 0, 1)
+          || !inst_is_b_cond(vfs[12]) || inst_get_b_cond_cond(vfs[12]) != 8 || inst_get_b_cond_label(vfs[12]) <= 4
+          || !inst_is_ldp(vfs[13]) || bit(vfs[13], 26) || inst_get_ldp_size(vfs[13]) != 2
+          || inst_get_ldp_mode(vfs[13]) != 2 || inst_get_ldp_rn(vfs[13]) != 20 || inst_get_ldp_rt(vfs[13]) != 4
+          || inst_get_ldp_rt2(vfs[13]) != 5 || inst_get_ldp_imm(vfs[13])
+          || !nm_pair_store_at(vfs[14], 4, 5, 19, struct_offset.file_inode_ops - sizeof(struct nm_path))
+          || !nm_move(vfs[15], 0, 19) || !nm_zero64(vfs[16], 2)
+          || !nm_load_at(vfs[17], 1, 1, offsetof(struct nm_dentry_head, d_inode)))
+        return -EOPNOTSUPP;
+      return 0;
+    }
+  }
   return -EOPNOTSUPP;
 }
 
@@ -557,7 +674,7 @@ static int calculate_function_rule_layout(void) {
   return 0;
 }
 
-// CFI只跟随核心代码区内一条直接B；调用点与表回调共用同一规则。
+// CFI只跟随核心代码区内一条直接B，可带一条已确认的BTI C前缀。
 static bool nm_code_matches(uintptr_t value, uintptr_t target, uintptr_t start, uintptr_t end) {
   if (!target)
     return false;
@@ -566,6 +683,12 @@ static bool nm_code_matches(uintptr_t value, uintptr_t target, uintptr_t start, 
   if (!start || end <= start || end - start < 4 || value < start || value > end - 4 || value % 4)
     return false;
   uint32_t inst = *(const uint32_t*)value;
+  if (inst_is_bti_c(inst)) {
+    if (end - value < 8)
+      return false;
+    value += 4;
+    inst = *(const uint32_t*)value;
+  }
   return inst_is_b(inst) && value + inst_get_b_label(inst) == target;
 }
 
@@ -627,6 +750,8 @@ static int nm_find_complete_object_size(const uint32_t* src, unsigned int count,
                                         uintptr_t table, unsigned int minimum) {
   if (!count || count > 8)
     return -EINVAL;
+  if (inst_is_paciasp(src[0]))
+    src++;
   int size = -1, input_kind = 0;
   uintptr_t input = 0;
   for (unsigned int i = 0; i < count; i++) {
@@ -682,6 +807,8 @@ static int nm_find_file_operations_size(const uint32_t* src, uintptr_t copy, uin
 }
 
 static int nm_find_private_fields(const uint32_t* src, struct struct_offset* next) {
+  if (inst_is_paciasp(src[0]))
+    src++;
   for (unsigned int i = 0; i + 2 < 4; i++) {
     if (nm_load(src[i], 3, 0) && inst_get_ldr_imm_rt(src[i]) != 1 && inst_is_cbz(src[i + 1])
         && inst_get_cbz_sf(src[i + 1]) && inst_get_cbz_imm19(src[i + 1]) == 2
@@ -701,6 +828,24 @@ static int nm_find_private_fields(const uint32_t* src, struct struct_offset* nex
 }
 
 static int nm_find_file_cred(const uint32_t* src) {
+  // BTI入口：cap检查及全局审计开关分支之前，x0始终为原始file。
+  if (inst_is_bti_c(src[0])) {
+    if (!inst_is_subs_imm(src[1]) || inst_get_subs_imm_sf(src[1]) || inst_get_subs_imm_rd(src[1]) != 31
+        || inst_get_subs_imm_rn(src[1]) != 2 || inst_get_subs_imm_imm(src[1]) != 41 || !inst_is_b_cond(src[2])
+        || inst_get_b_cond_cond(src[2]) != 2 || inst_get_b_cond_label(src[2]) <= 44 || !inst_is_paciasp(src[3]))
+      return -EOPNOTSUPP;
+    for (unsigned int i = 4; i <= 9; i++)
+      if (!nm_rule_entry_save(src[i]))
+        return -EOPNOTSUPP;
+    if (!inst_is_adrp(src[10]) || inst_get_adrp_rd(src[10]) != 8 || !nm_load(src[11], 3, 8)
+        || inst_get_ldr_imm_rt(src[11]) != 22 || !inst_is_cbz(src[12]) || !inst_get_cbz_sf(src[12])
+        || inst_get_cbz_rt(src[12]) != 22 || inst_get_cbz_label(src[12]) <= 4 || !nm_load(src[13], 3, 0)
+        || inst_get_ldr_imm_rt(src[13]) != 21)
+      return -EOPNOTSUPP;
+    return inst_get_ldr_imm_imm(src[13]);
+  }
+  if (inst_is_paciasp(src[0]))
+    src++;
   for (unsigned int i = 0; i < 8; i++) {
     if (nm_load(src[i], 3, 0) && inst_get_ldr_imm_rt(src[i]) == 0)
       return inst_get_ldr_imm_imm(src[i]);
@@ -723,6 +868,8 @@ static int nm_find_file_cred(const uint32_t* src) {
 }
 
 static int nm_find_file_flags(const uint32_t* src) {
+  if (inst_is_paciasp(src[0]))
+    src++;
   for (unsigned int i = 0; i + 2 < 5; i++) {
     unsigned int mask = i + 1;
     bool zero_result =
@@ -759,7 +906,10 @@ static int calculate_file_entry_offsets(void) {
   int rc = nm_find_private_fields(open, &next);
   if (rc)
     return rc;
-  int position = nm_load(seek[0], 3, 0) && inst_get_ldr_imm_rt(seek[0]) == 0 && inst_is_ret(seek[1])
+  if (inst_is_paciasp(seek[0]))
+    seek++;
+  int ret_at = inst_is_autiasp(seek[1]) ? 2 : 1;
+  int position = nm_load(seek[0], 3, 0) && inst_get_ldr_imm_rt(seek[0]) == 0 && inst_is_ret(seek[ret_at])
                      ? inst_get_ldr_imm_imm(seek[0])
                      : -ENOENT;
   int mode = nm_find_file_flags(flags), credentials = nm_find_file_cred(cred);
@@ -803,6 +953,8 @@ static bool nm_scalar_copy_step(uint32_t inst) {
 }
 
 static int nm_scalar_copy(const uint32_t* src, unsigned int count, int size, int destination) {
+  if (inst_is_paciasp(src[0]))
+    src++;
   for (unsigned int i = 0; i + 1 < count; i++) {
     if (nm_load(src[i], size, 0) && nm_store(src[i + 1], size, 1) && inst_get_ldr_imm_rt(src[i]) != 1
         && inst_get_ldr_imm_rt(src[i]) == inst_get_str_imm_rt(src[i + 1])
@@ -815,22 +967,27 @@ static int nm_scalar_copy(const uint32_t* src, unsigned int count, int size, int
 }
 
 static int nm_find_kstat_prefix(const uint32_t* src) {
-  bool first = nm_scalar_copy(src, 18, 1, offsetof(struct nm_kstat_inode_first, mode))
+  if (inst_is_paciasp(src[0]))
+    src++;
+  unsigned int count = nm_load(src[0], 3, 0) && inst_get_ldr_imm_rt(src[0]) == 7 && inst_is_add_imm(src[1]) ? 20 : 18;
+  bool first = nm_scalar_copy(src, count, 1, offsetof(struct nm_kstat_inode_first, mode))
                    == offsetof(struct nm_inode_owner_prefix, i_mode)
-               && nm_scalar_copy(src, 18, 2, offsetof(struct nm_kstat_inode_first, uid))
+               && nm_scalar_copy(src, count, 2, offsetof(struct nm_kstat_inode_first, uid))
                       == offsetof(struct nm_inode_owner_prefix, i_uid)
-               && nm_scalar_copy(src, 18, 2, offsetof(struct nm_kstat_inode_first, gid))
+               && nm_scalar_copy(src, count, 2, offsetof(struct nm_kstat_inode_first, gid))
                       == offsetof(struct nm_inode_owner_prefix, i_gid);
-  bool mask = nm_scalar_copy(src, 18, 1, offsetof(struct nm_kstat_prefix, mode))
+  bool mask = nm_scalar_copy(src, count, 1, offsetof(struct nm_kstat_prefix, mode))
                   == offsetof(struct nm_inode_owner_prefix, i_mode)
-              && nm_scalar_copy(src, 18, 2, offsetof(struct nm_kstat_prefix, uid))
+              && nm_scalar_copy(src, count, 2, offsetof(struct nm_kstat_prefix, uid))
                      == offsetof(struct nm_inode_owner_prefix, i_uid)
-              && nm_scalar_copy(src, 18, 2, offsetof(struct nm_kstat_prefix, gid))
+              && nm_scalar_copy(src, count, 2, offsetof(struct nm_kstat_prefix, gid))
                      == offsetof(struct nm_inode_owner_prefix, i_gid);
   return first != mask ? first : -EOPNOTSUPP;
 }
 
 static int nm_find_file_objects(const uint32_t* src) {
+  if (inst_is_paciasp(src[0]))
+    src++;
   for (unsigned int i = 0; i + 1 < 16; i++) {
     if (nm_load(src[i], 3, 0) && nm_load(src[i + 1], 3, inst_get_ldr_imm_rt(src[i]))
         && inst_get_ldr_imm_imm(src[i + 1]) == offsetof(struct nm_file_ops_head, llseek)) {
@@ -845,6 +1002,8 @@ static int nm_find_file_objects(const uint32_t* src) {
 }
 
 static int nm_find_mapping(const uint32_t* src) {
+  if (inst_is_paciasp(src[0]))
+    src++;
   for (unsigned int i = 0; i + 3 < 8; i++) {
     unsigned int branch = i + 3;
     if (inst_is_movn_imm(src[branch]) && !inst_get_movn_imm_sf(src[branch]) && inst_get_movn_imm_rd(src[branch]) == 2
@@ -862,6 +1021,8 @@ static int nm_find_mapping(const uint32_t* src) {
 }
 
 static int nm_find_file_objects_from_iterate(const uint32_t* src) {
+  if (inst_is_paciasp(src[0]))
+    src++;
   for (unsigned int i = 0; i + 1 < 12; i++) {
     if (inst_is_ldp(src[i]) && inst_get_ldp_size(src[i]) == 2 && inst_get_ldp_mode(src[i]) == 2
         && inst_get_ldp_rn(src[i]) == 0 && inst_get_ldp_rt(src[i]) != 31 && inst_get_ldp_rt2(src[i]) != 31
@@ -889,6 +1050,17 @@ static int nm_find_file_objects_from_iterate(const uint32_t* src) {
 }
 
 static int nm_find_superblock(const uint32_t* src, int destination) {
+  if (inst_is_paciasp(src[0]))
+    src++;
+  if (nm_load(src[0], 3, 0) && inst_get_ldr_imm_rt(src[0]) == 7 && nm_add_at(src[1], 6, 0, inst_get_add_imm_imm(src[1]))
+      && nm_add_at(src[2], 8, 1, offsetof(struct nm_kstat_inode_first_blocks, atime))
+      && nm_add_at(src[3], 5, 0, inst_get_add_imm_imm(src[1]) + sizeof(struct nm_timespec))
+      && nm_add_at(src[4], 4, 1, offsetof(struct nm_kstat_inode_first_blocks, mtime))
+      && nm_add_at(src[5], 3, 0, inst_get_add_imm_imm(src[1]) + 2 * sizeof(struct nm_timespec)) && nm_load(src[6], 2, 7)
+      && inst_get_ldr_imm_rt(src[6]) == 7 && inst_get_ldr_imm_imm(src[6]) == offsetof(struct nm_super_head, s_dev)
+      && nm_add_at(src[7], 2, 1, offsetof(struct nm_kstat_inode_first_blocks, ctime))
+      && nm_store_at(src[8], 2, 7, 1, destination))
+    return inst_get_ldr_imm_imm(src[0]);
   for (unsigned int i = 0; i + 2 < 8; i++) {
     unsigned int field = i + 1;
     if (inst_is_add_imm(src[field]) && inst_get_add_imm_sf(src[field]) && !inst_get_add_imm_rn(src[field])
@@ -909,6 +1081,8 @@ static int nm_find_superblock(const uint32_t* src, int destination) {
 }
 
 static int nm_find_nlink(const uint32_t* src, unsigned int count) {
+  if (inst_is_paciasp(src[0]))
+    src++;
   for (unsigned int i = 0; i < count; i++) {
     if (nm_load(src[i], 2, 0))
       return inst_get_ldr_imm_imm(src[i]);
@@ -929,6 +1103,8 @@ static int nm_find_nlink(const uint32_t* src, unsigned int count) {
 }
 
 static int nm_find_dentry_ops(const uint32_t* src) {
+  if (inst_is_paciasp(src[0]))
+    src++;
   // WARN_ON_ONCE(dentry->d_op) 的 GCC 入口；不穿越其告警分支。
   if (nm_load(src[0], 3, 0) && inst_get_ldr_imm_rt(src[0]) != 0 && inst_get_ldr_imm_rt(src[0]) != 1
       && inst_is_cbz(src[1]) && inst_get_cbz_sf(src[1]) && inst_get_cbz_rt(src[1]) == inst_get_ldr_imm_rt(src[0])
@@ -978,7 +1154,8 @@ static int calculate_function_offsets(void) {
   int size_position = first ? offsetof(struct nm_kstat_inode_first, size) : offsetof(struct nm_kstat_prefix, size);
   int sb = nm_find_superblock(attr, dev_position);
   int ino = nm_scalar_copy(attr, 18, 3, ino_position);
-  int size = nm_scalar_copy(attr, 18, 3, size_position);
+  int size =
+      nm_scalar_copy(attr, nm_load(attr[0], 3, 0) && inst_get_ldr_imm_rt(attr[0]) == 7 ? 23 : 18, 3, size_position);
   int nlink = nm_find_nlink(set, 8), corroboration = nm_find_nlink(inc, 16);
   nm_log_info("layout: inode sb=%d ino=%d size=%d nlink=%d/%d\n", sb, ino, size, nlink, corroboration);
   if (sb < 0 || ino < 0 || size < 0 || nlink < 0 || nlink != corroboration || sb > 0x7fff || ino > 0x7fff
@@ -1072,6 +1249,138 @@ static int nm_find_inode_storage(const uint32_t* src, uintptr_t no_open, int* da
   return nm_probe_inode_storage(src, no_open, NULL, data);
 }
 
+static bool nm_vfs_frame_save(uint32_t inst) {
+  if (nm_rule_entry_save(inst))
+    return true;
+  if (inst_is_paciasp(inst))
+    return true;
+  if (inst_is_sub_imm(inst) && inst_get_sub_imm_sf(inst) && inst_get_sub_imm_rn(inst) == 31
+      && inst_get_sub_imm_rd(inst) == 31 && inst_get_sub_imm_imm(inst) > 0 && inst_get_sub_imm_imm(inst) <= 160
+      && inst_get_sub_imm_imm(inst) % 16 == 0)
+    return true;
+  return inst_is_add_imm(inst) && inst_get_add_imm_sf(inst) && inst_get_add_imm_rn(inst) == 31
+         && inst_get_add_imm_rd(inst) == 29 && inst_get_add_imm_imm(inst) <= 160
+         && inst_get_add_imm_imm(inst) % 16 == 0;
+}
+
+// 新初始化器先将inode保存到x19，或者先写fop再建立mapping；共用声明中i_data紧随fop/flctx。
+// 只在已核对的新前缀中使用该连续片段；旧入口仍保留显式mapping交叉检查。
+static int nm_probe_saved_inode_storage(const uint32_t* src, uintptr_t no_open,
+                                        const struct nm_initial_fops_probe* probe, int* data) {
+  uintptr_t addresses[32] = {0};
+  bool inode[32] = {0};
+  inode[1] = true;
+  unsigned int first = inst_is_paciasp(src[0]) ? 1 : 0;
+  for (unsigned int i = first; i < first + 20; i++) {
+    uint32_t inst = src[i];
+    if (nm_rule_entry_save(inst)) {
+      if (inst_is_add_imm(inst)) {
+        addresses[29] = 0;
+        inode[29] = false;
+      } else if (inst_is_str_imm9(inst)) {
+        addresses[18] = 0;
+        inode[18] = false;
+      }
+      continue;
+    }
+    if (inst_is_adrp(inst) && inst_get_adrp_rd(inst) != 31 && !inode[inst_get_adrp_rd(inst)]) {
+      addresses[inst_get_adrp_rd(inst)] = ((uintptr_t)&src[i] & ~(uintptr_t)4095) + inst_get_adrp_label(inst);
+    } else if (inst_is_mov_reg(inst) && inst_get_mov_reg_sf(inst) && inst_get_mov_reg_rd(inst) != 31) {
+      int rd = inst_get_mov_reg_rd(inst), rm = inst_get_mov_reg_rm(inst);
+      inode[rd] = inode[rm];
+      addresses[rd] = addresses[rm];
+    } else if (inst_is_add_imm(inst) && inst_get_add_imm_sf(inst) && inst_get_add_imm_rd(inst) != 31
+               && !inode[inst_get_add_imm_rd(inst)]) {
+      int rd = inst_get_add_imm_rd(inst), rn = inst_get_add_imm_rn(inst);
+      addresses[rd] = addresses[rn] ? addresses[rn] + inst_get_add_imm_imm(inst) : 0;
+    } else if (inst_is_str_imm(inst) && !bit(inst, 26) && inode[inst_get_str_imm_rn(inst)]) {
+      uintptr_t table = addresses[inst_get_str_imm_rt(inst)];
+      int offset = inst_get_str_imm_imm(inst);
+      if (table && inst_get_str_imm_size(inst) == 3 && offset >= sizeof(struct nm_inode_file_locks)
+          && (no_open ? table == no_open : nm_initial_fops_matches(table, probe))) {
+        *data = offset + sizeof(struct nm_inode_file_locks);
+        return offset;
+      }
+    } else if (inst_is_ldr_imm(inst) && !bit(inst, 26) && inst_get_ldr_imm_opc(inst) == 1
+               && !inode[inst_get_ldr_imm_rt(inst)] && inst_get_ldr_imm_rt(inst) != 31) {
+      addresses[inst_get_ldr_imm_rt(inst)] = 0;
+    } else if (inst_is_movz_imm(inst) && inst_get_movz_imm_rd(inst) != 31
+               && (!inode[inst_get_movz_imm_rd(inst)] || (inst_get_movz_imm_rd(inst) == 1 && inode[19]))) {
+      int rd = inst_get_movz_imm_rd(inst);
+      inode[rd] = false;
+      addresses[rd] = 0;
+    } else
+      return -EOPNOTSUPP;
+  }
+  return -ENOENT;
+}
+
+// 原生整对象memset的内联形态：验证连续零覆盖和随后的初始化，不把单个最高成员当sizeof。
+static int nm_find_mapping_clear_size(const uint32_t* src) {
+  int size = nm_find_complete_object_size(src, 8, 0, kallsyms_lookup_name("memset"), 0, 8);
+  if (size >= 0 || size == -EINVAL)
+    return size;
+  if (inst_is_paciasp(src[0])) {
+    for (unsigned i = 1; i <= 4; i++)
+      if (!nm_rule_entry_save(src[i]))
+        return -EOPNOTSUPP;
+    if (!nm_move(src[5], 19, 0))
+      return -EOPNOTSUPP;
+    unsigned int covered = 0;
+    for (unsigned i = 6; i <= 19; i++) {
+      uint32_t inst = src[i];
+      if (inst_is_stp(inst) && !bit(inst, 26) && inst_get_stp_size(inst) == 2 && inst_get_stp_mode(inst) == 2
+          && inst_get_stp_rn(inst) == 0 && inst_get_stp_rt(inst) == 31 && inst_get_stp_rt2(inst) == 31) {
+        int offset = inst_get_stp_imm(inst);
+        if (offset < 0 || offset % 8 || offset > 240)
+          return -EINVAL;
+        covered |= 3U << (offset / 8);
+      } else if (nm_store(inst, 3, 0) && inst_get_str_imm_rt(inst) == 31) {
+        int offset = inst_get_str_imm_imm(inst);
+        if (offset % 8 || offset > 248)
+          return -EINVAL;
+        covered |= 1U << (offset / 8);
+      } else
+        return -EOPNOTSUPP;
+    }
+    // 0..223完整清零，后续首先保存对象，再初始化内部锁地址。
+    if (!nm_move(src[20], 20, 0) || !inst_is_movz_imm(src[21]) || inst_get_movz_imm_sf(src[21])
+        || inst_get_movz_imm_hw(src[21]) || inst_get_movz_imm_rd(src[21]) != 8
+        || inst_get_movz_imm_imm16(src[21]) != 33)
+      return -EOPNOTSUPP;
+    for (unsigned i = 22; i <= 23; i++) {
+      uint32_t inst = src[i];
+      if (!inst_is_str_imm9(inst) || bit(inst, 26) || inst_get_str_imm9_size(inst) != 3
+          || inst_get_str_imm9_mode(inst) != 3 || inst_get_str_imm9_rt(inst) != 31
+          || inst_get_str_imm9_rn(inst) != (i == 22 ? 0 : 20) || inst_get_str_imm9_imm9(inst) != (i == 22 ? 56 : 168))
+        return -EOPNOTSUPP;
+      covered |= 1U << (i == 22 ? 7 : 21);
+    }
+    if (covered != 0x0fffffffU || !nm_store_at(src[24], 2, 8, 19, 12) || !nm_store_at(src[25], 3, 31, 19, 16)
+        || !inst_is_bl(src[26])
+        || (uintptr_t)&src[26] + inst_get_bl_label(src[26]) != kallsyms_lookup_name("__init_rwsem"))
+      return -EINVAL;
+    return 28 * sizeof(u64);
+  }
+  // GCC将160字节memset与首个锁常量构造交错；从入口到首次调用完整匹配。
+  if (!nm_rule_entry_save(src[0]) || !inst_is_adrp(src[1]) || inst_get_adrp_rd(src[1]) != 2 || !inst_is_adrp(src[2])
+      || inst_get_adrp_rd(src[2]) != 1 || !nm_rule_entry_save(src[3]) || !nm_rule_entry_save(src[4])
+      || !nm_move(src[5], 19, 0) || !nm_pair_store_at(src[6], 31, 31, 0, 0) || !inst_is_movz_imm(src[7])
+      || inst_get_movz_imm_sf(src[7]) || inst_get_movz_imm_rd(src[7]) || inst_get_movz_imm_hw(src[7])
+      || inst_get_movz_imm_imm16(src[7]) != 32 || !nm_add_at(src[8], 2, 2, inst_get_add_imm_imm(src[8]))
+      || !inst_is_movk_imm(src[9]) || inst_get_movk_imm_sf(src[9]) || inst_get_movk_imm_rd(src[9])
+      || inst_get_movk_imm_hw(src[9]) != 1 || inst_get_movk_imm_imm16(src[9]) != 0x218
+      || !nm_add_at(src[10], 1, 1, inst_get_add_imm_imm(src[10])) || !nm_store_at(src[11], 2, 0, 19, 8)
+      || !nm_add_at(src[12], 2, 2, 264) || !nm_add_at(src[13], 0, 19, 40))
+    return -EOPNOTSUPP;
+  for (unsigned i = 14; i <= 22; i++)
+    if (!nm_pair_store_at(src[i], 31, 31, 19, (i - 13) * 16))
+      return -EOPNOTSUPP;
+  if (!inst_is_bl(src[23]) || (uintptr_t)&src[23] + inst_get_bl_label(src[23]) != kallsyms_lookup_name("__init_rwsem"))
+    return -EOPNOTSUPP;
+  return 10 * 2 * sizeof(u64);
+}
+
 static int calculate_function_inode_offsets(void) {
   const uint32_t* clear = (const void*)kallsyms_lookup_name_by_suffix("address_space_init_once");
   const uint32_t* init = (const void*)kallsyms_lookup_name_by_suffix("inode_init_always");
@@ -1084,8 +1393,12 @@ static int calculate_function_inode_offsets(void) {
     return -ENOENT;
   }
   int data = -1, file_ops;
+  bool saved_inode = inst_is_paciasp(init[0]) || nm_move(init[3], 19, 1)
+                     || (!inst_is_str_imm9(init[0]) && nm_move(init[6], 19, 1))
+                     || (inst_is_str_imm9(init[0]) && inst_is_adrp(init[6]) && inst_get_adrp_rd(init[6]) == 10);
   if (no_open) {
-    file_ops = nm_find_inode_storage(init, no_open, &data);
+    file_ops = saved_inode ? nm_probe_saved_inode_storage(init, no_open, NULL, &data)
+                           : nm_find_inode_storage(init, no_open, &data);
   } else {
     struct nm_initial_fops_probe probe = {kallsyms_lookup_name_by_suffix("no_open"), kallsyms_lookup_name("_stext"),
                                           kallsyms_lookup_name("_etext"), kallsyms_lookup_name("_end")};
@@ -1103,7 +1416,8 @@ static int calculate_function_inode_offsets(void) {
         return -ENOENT;
       }
     }
-    file_ops = nm_probe_inode_storage(init, 0, &probe, &data);
+    file_ops = saved_inode ? nm_probe_saved_inode_storage(init, 0, &probe, &data)
+                           : nm_probe_inode_storage(init, 0, &probe, &data);
     if (file_ops >= 0)
       nm_log_info("layout: inode initial file table identified by open callback\n");
   }
@@ -1111,7 +1425,7 @@ static int calculate_function_inode_offsets(void) {
     nm_log_error("layout: inode initializer pattern or geometry rejected (%d)\n", file_ops);
     return file_ops;
   }
-  int size = nm_find_complete_object_size(clear, 8, 0, kallsyms_lookup_name("memset"), 0, 8);
+  int size = nm_find_mapping_clear_size(clear);
   int first = nm_find_kstat_prefix(attr);
   if (file_ops < 0 || size < 0 || first < 0)
     return file_ops < 0 ? file_ops : size < 0 ? size : first;
@@ -1129,51 +1443,45 @@ static int calculate_function_inode_offsets(void) {
   return 0;
 }
 
-static bool nm_move(uint32_t inst, int rd, int rm) {
-  return inst_is_mov_reg(inst) && inst_get_mov_reg_sf(inst) && inst_get_mov_reg_rd(inst) == rd
-         && inst_get_mov_reg_rm(inst) == rm;
-}
-
-static bool nm_load_at(uint32_t inst, int rd, int rn, int offset) {
-  return nm_load(inst, 3, rn) && inst_get_ldr_imm_rt(inst) == rd && inst_get_ldr_imm_imm(inst) == offset;
-}
-
-static bool nm_move32(uint32_t inst, int rd, int rm) {
-  return inst_is_mov_reg(inst) && !inst_get_mov_reg_sf(inst) && inst_get_mov_reg_rd(inst) == rd
-         && inst_get_mov_reg_rm(inst) == rm;
-}
-
-static bool nm_add_at(uint32_t inst, int rd, int rn, int offset) {
-  return inst_is_add_imm(inst) && inst_get_add_imm_sf(inst) && inst_get_add_imm_rd(inst) == rd
-         && inst_get_add_imm_rn(inst) == rn && inst_get_add_imm_imm(inst) == offset;
-}
-
-static bool nm_zero64(uint32_t inst, int rd) {
-  return nm_move(inst, rd, 31)
-         || (inst_is_movz_imm(inst) && inst_get_movz_imm_sf(inst) && inst_get_movz_imm_rd(inst) == rd
-             && !inst_get_movz_imm_hw(inst) && !inst_get_movz_imm_imm16(inst));
-}
-
 static bool nm_cfi_gate(const uint32_t* src, int callback, int scratch, int skip_call) {
+  // CFI 区间检查有两种 SUB 操作数次序；输入仍须恰为回调和区间锚点。
   return inst_is_adrp(src[0]) && inst_get_adrp_rd(src[0]) == scratch && inst_is_add_imm(src[1])
          && inst_get_add_imm_sf(src[1]) && inst_get_add_imm_rn(src[1]) == scratch
          && inst_get_add_imm_rd(src[1]) == scratch && inst_is_sub_reg(src[2]) && inst_get_sub_reg_sf(src[2])
-         && inst_get_sub_reg_rd(src[2]) == scratch && inst_get_sub_reg_rn(src[2]) == callback
-         && inst_get_sub_reg_rm(src[2]) == scratch && !inst_get_sub_reg_shift(src[2]) && !inst_get_sub_reg_imm6(src[2])
-         && inst_is_extr(src[3]) && inst_get_extr_sf(src[3]) && inst_get_extr_n(src[3])
-         && inst_get_extr_rd(src[3]) == scratch && inst_get_extr_rn(src[3]) == scratch
-         && inst_get_extr_rm(src[3]) == scratch && inst_get_extr_imm6(src[3]) == 2 && inst_is_subs_imm(src[4])
-         && inst_get_subs_imm_sf(src[4]) && inst_get_subs_imm_rd(src[4]) == 31
-         && inst_get_subs_imm_rn(src[4]) == scratch && inst_get_subs_imm_imm(src[4]) > 0 && inst_is_b_cond(src[5])
-         && inst_get_b_cond_cond(src[5]) == 2 && inst_get_b_cond_label(src[5]) > skip_call;
+         && inst_get_sub_reg_rd(src[2]) == scratch
+         && ((inst_get_sub_reg_rn(src[2]) == callback && inst_get_sub_reg_rm(src[2]) == scratch)
+             || (inst_get_sub_reg_rn(src[2]) == scratch && inst_get_sub_reg_rm(src[2]) == callback))
+         && !inst_get_sub_reg_shift(src[2]) && !inst_get_sub_reg_imm6(src[2]) && inst_is_extr(src[3])
+         && inst_get_extr_sf(src[3]) && inst_get_extr_n(src[3]) && inst_get_extr_rd(src[3]) == scratch
+         && inst_get_extr_rn(src[3]) == scratch && inst_get_extr_rm(src[3]) == scratch
+         && inst_get_extr_imm6(src[3]) == 2 && inst_is_subs_imm(src[4]) && inst_get_subs_imm_sf(src[4])
+         && inst_get_subs_imm_rd(src[4]) == 31 && inst_get_subs_imm_rn(src[4]) == scratch
+         && inst_get_subs_imm_imm(src[4]) > 0 && inst_is_b_cond(src[5]) && inst_get_b_cond_cond(src[5]) == 2
+         && inst_get_b_cond_label(src[5]) > skip_call;
+}
+
+// 这里只归一化已证CFI检查的旋转步长；局部副本只做字段关系检查，不解引用PC相对地址。
+static bool nm_cfi_gate_stride(const uint32_t* src, int callback, int scratch, int skip_call) {
+  if (!inst_is_extr(src[3]) || (inst_get_extr_imm6(src[3]) != 2 && inst_get_extr_imm6(src[3]) != 3))
+    return false;
+  uint32_t gate[6];
+  for (unsigned i = 0; i < 6; i++) gate[i] = src[i];
+  gate[3] = (gate[3] & ~(63U << 10)) | (2U << 10);
+  return nm_cfi_gate(gate, callback, scratch, skip_call);
+}
+
+static bool nm_movz_value(uint32_t inst, int sf, int rd, unsigned value) {
+  return inst_is_movz_imm(inst) && inst_get_movz_imm_sf(inst) == sf && inst_get_movz_imm_rd(inst) == rd
+         && !inst_get_movz_imm_hw(inst) && inst_get_movz_imm_imm16(inst) == value;
 }
 
 // generic_drop_inode 在两个目标均内联；ext4 回调入口先检查 nlink，再检查 hlist.pprev。
 static int nm_find_inode_hash(const uint32_t* src) {
   unsigned int i = 0;
   while (i < 8
-         && (nm_rule_entry_save(src[i])
-             || (inst_is_movz_imm(src[i]) && !inst_get_movz_imm_sf(src[i]) && inst_get_movz_imm_rd(src[i]) == 21
+         && (nm_vfs_frame_save(src[i])
+             || (inst_is_movz_imm(src[i]) && !inst_get_movz_imm_sf(src[i])
+                 && (inst_get_movz_imm_rd(src[i]) == 21 || inst_get_movz_imm_rd(src[i]) == 20)
                  && !inst_get_movz_imm_hw(src[i]) && inst_get_movz_imm_imm16(src[i]) == 1)))
     i++;
   if (i + 3 >= 12 || !nm_load(src[i], 2, 0) || inst_get_ldr_imm_imm(src[i]) != struct_offset.inode_nlink)
@@ -1181,10 +1489,10 @@ static int nm_find_inode_hash(const uint32_t* src) {
   int nlink = inst_get_ldr_imm_rt(src[i++]), base = 0;
   if (nlink == 0 || nlink == 31)
     return -EOPNOTSUPP;
-  if (i < 9 && nm_move(src[i], 19, 0)) {
-    if (nlink == 19)
+  if (i < 9 && (nm_move(src[i], 19, 0) || nm_move(src[i], 20, 0))) {
+    base = inst_get_mov_reg_rd(src[i]);
+    if (nlink == base)
       return -EOPNOTSUPP;
-    base = 19;
     i++;
   }
   if (!inst_is_cbz(src[i]) || inst_get_cbz_sf(src[i]) || inst_get_cbz_rt(src[i]) != nlink
@@ -1227,7 +1535,7 @@ static int nm_check_simple_getattr(const uint32_t* src, uintptr_t fill, bool pat
 }
 
 // 只接两种已核对入口：mount/dentry/stat 为12条，path/stat/mask/flags 为29条。
-static int nm_find_getattr_layout(const uint32_t* src, const uint32_t* simple, uintptr_t fill) {
+static int nm_find_getattr_layout_legacy(const uint32_t* src, const uint32_t* simple, uintptr_t fill) {
   bool path = nm_load_at(src[0], 8, 0, offsetof(struct nm_path, dentry));
   int field;
   if (!path) {
@@ -1280,6 +1588,179 @@ static int nm_find_getattr_layout(const uint32_t* src, const uint32_t* simple, u
   return 0;
 }
 
+// 先保留既有窗口及错误语义；新形态分别止于首个实际getattr调用的11/26条。
+static int nm_find_getattr_layout_previous(const uint32_t* src, const uint32_t* simple, uintptr_t fill) {
+  int old = nm_find_getattr_layout_legacy(src, simple, fill);
+  if (!old || old == -EINVAL)
+    return old;
+  int field = -1;
+  bool path = true;
+  if (nm_rule_entry_save(src[0]) && nm_rule_entry_save(src[1])
+      && nm_load_at(src[2], 4, 0, offsetof(struct nm_path, dentry))) {
+    if (!nm_load_at(src[3], 2, 4, offsetof(struct nm_dentry_head, d_inode))
+        || !nm_load_at(src[4], 3, 2, struct_offset.inode_superblock - 8) || !nm_load(src[5], 3, 3)
+        || inst_get_ldr_imm_rt(src[5]) != 3 || !inst_is_cbz(src[6]) || !inst_get_cbz_sf(src[6])
+        || inst_get_cbz_rt(src[6]) != 3 || inst_get_cbz_label(src[6]) <= 16
+        || !nm_load_at(src[7], 0, 0, offsetof(struct nm_path, mnt)) || !nm_move(src[8], 2, 1) || !nm_move(src[9], 1, 4)
+        || !inst_is_blr(src[10]) || inst_get_blr_rn(src[10]) != 3)
+      return -EOPNOTSUPP;
+    field = inst_get_ldr_imm_imm(src[5]);
+    path = false;
+  } else if (!inst_is_str_imm9(src[0]) && !inst_is_paciasp(src[0])) {
+    for (unsigned i = 0; i < 5; i++)
+      if (!nm_rule_entry_save(src[i]))
+        return -EOPNOTSUPP;
+    if (!nm_load_at(src[5], 8, 0, offsetof(struct nm_path, dentry)) || !nm_move32(src[6], 21, 2)
+        || !nm_move(src[7], 20, 0) || !nm_move(src[8], 19, 1) || !inst_is_movz_imm(src[9])
+        || inst_get_movz_imm_sf(src[9]) || inst_get_movz_imm_rd(src[9]) != 2 || inst_get_movz_imm_hw(src[9])
+        || inst_get_movz_imm_imm16(src[9]) != sizeof(struct nm_kstat_blocks) || !nm_move(src[10], 0, 1)
+        || !nm_move32(src[11], 1, 31) || !nm_move32(src[12], 22, 3)
+        || !nm_load_at(src[13], 23, 8, offsetof(struct nm_dentry_head, d_inode)) || !inst_is_bl(src[14])
+        || (uintptr_t)&src[14] + inst_get_bl_label(src[14]) != kallsyms_lookup_name_by_suffix("memset")
+        || !nm_load(src[15], 2, 19) || inst_get_ldr_imm_rt(src[15]) != 8 || inst_get_ldr_imm_imm(src[15])
+        || !inst_is_orr_imm(src[16]) || inst_get_orr_imm_sf(src[16]) || inst_get_orr_imm_rd(src[16]) != 8
+        || inst_get_orr_imm_rn(src[16]) != 8 || inst_get_orr_imm_imm(src[16]) != 0x7ff
+        || !nm_store_at(src[17], 2, 8, 19, 0) || !nm_load(src[18], 3, 23)
+        || inst_get_ldr_imm_imm(src[18]) != struct_offset.inode_superblock - 8)
+      return -EOPNOTSUPP;
+    int cb = inst_get_ldr_imm_rt(src[18]);
+    if ((cb != 8 && cb != 9) || !nm_load(src[19], 3, cb) || inst_get_ldr_imm_rt(src[19]) != cb || !inst_is_cbz(src[20])
+        || !inst_get_cbz_sf(src[20]) || inst_get_cbz_rt(src[20]) != cb || inst_get_cbz_label(src[20]) <= 20
+        || !inst_is_and_imm(src[21]) || inst_get_and_imm_sf(src[21]) || inst_get_and_imm_rd(src[21]) != 3
+        || inst_get_and_imm_rn(src[21]) != 22 || inst_get_and_imm_imm(src[21]) != 0x6000 || !inst_is_and_imm(src[22])
+        || inst_get_and_imm_sf(src[22]) || inst_get_and_imm_rd(src[22]) != 2 || inst_get_and_imm_rn(src[22]) != 21
+        || inst_get_and_imm_imm(src[22]) != 0xfff || !nm_move(src[23], 0, 20) || !nm_move(src[24], 1, 19)
+        || !inst_is_blr(src[25]) || inst_get_blr_rn(src[25]) != cb)
+      return -EOPNOTSUPP;
+    field = inst_get_ldr_imm_imm(src[19]);
+  } else
+    return -EOPNOTSUPP;
+  int rc = nm_check_simple_getattr(simple, fill, path);
+  if (rc)
+    return rc;
+  if (field < sizeof(struct nm_inode_lookup_ops) || field % 8 || field > 0x7fff)
+    return -EINVAL;
+  struct_offset.iop_getattr = field;
+  struct_offset.getattr_callback_args = path ? 4 : 3;
+  struct_offset.getattr_function_args = path ? 4 : 2;
+  struct_offset.getattr_context_kind = 0;
+  struct_offset.fillattr_abi = 2;
+  return 0;
+}
+
+// 内联simple_getattr前11条确认path→inode和stat实参；generic_fillattr本身另证两参字段复制。
+static int nm_check_inline_simple_getattr(const uint32_t* src, const uint32_t* fill) {
+  if (!inst_is_paciasp(src[0]) || !nm_load_at(src[1], 8, 0, offsetof(struct nm_path, dentry))
+      || !nm_move32(src[2], 0, 31) || !nm_load_at(src[3], 8, 8, offsetof(struct nm_dentry_head, d_inode))
+      || !nm_load_at(src[4], 9, 8, struct_offset.inode_superblock) || !nm_load(src[5], 2, 9)
+      || inst_get_ldr_imm_rt(src[5]) != 9 || inst_get_ldr_imm_imm(src[5]) != offsetof(struct nm_super_head, s_dev)
+      || !nm_store_at(src[6], 2, 9, 1, offsetof(struct nm_kstat_prefix, dev))
+      || !nm_load_at(src[7], 9, 8, struct_offset.inode_number)
+      || !nm_store_at(src[8], 3, 9, 1, offsetof(struct nm_kstat_prefix, ino)) || !nm_load(src[9], 1, 8)
+      || inst_get_ldr_imm_rt(src[9]) != 9 || inst_get_ldr_imm_imm(src[9])
+      || !nm_store_at(src[10], 1, 9, 1, offsetof(struct nm_kstat_prefix, mode)) || nm_find_kstat_prefix(fill) != 0)
+    return -EOPNOTSUPP;
+  return 0;
+}
+
+// 两个CFI入口的属性处理分别整体核对；不以“任意未写x0”跳过未知指令。
+static int nm_find_getattr_layout(const uint32_t* src, const uint32_t* simple, uintptr_t fill) {
+  int old = nm_find_getattr_layout_previous(src, simple, fill);
+  if (!old || old == -EINVAL)
+    return old;
+  bool pac = inst_is_paciasp(src[0]);
+  int field;
+  uint32_t gate[6];
+  if (pac) {
+    src++;
+    for (unsigned i = 0; i < 4; i++)
+      if (!nm_vfs_frame_save(src[i]))
+        return -EOPNOTSUPP;
+    if (!nm_load_at(src[4], 8, 0, offsetof(struct nm_path, dentry)) || !nm_movz_value(src[5], 0, 10, 0x7ff)
+        || !nm_load_at(src[6], 9, 8, offsetof(struct nm_dentry_head, d_inode)))
+      return -EOPNOTSUPP;
+    for (unsigned i = 7; i <= 15; i++)
+      if (!nm_pair_store_at(src[i], 31, 31, 1, 128 - (i - 7) * 16))
+        return -EOPNOTSUPP;
+    if (!nm_store_at(src[16], 2, 10, 1, 0) || !nm_load_at(src[17], 8, 9, struct_offset.inode_superblock)
+        || !nm_load_at(src[18], 8, 8, offsetof(struct nm_super_head, s_flags)) || !inst_is_tst_imm(src[19])
+        || !inst_get_tst_imm_sf(src[19]) || inst_get_tst_imm_rn(src[19]) != 8 || inst_get_tst_imm_imm(src[19]) != 0x400
+        || !nm_movz_value(src[20], 0, 8, 0x7df) || !inst_is_csel(src[21]) || inst_get_csel_sf(src[21])
+        || inst_get_csel_rd(src[21]) != 8 || inst_get_csel_rn(src[21]) != 10 || inst_get_csel_rm(src[21]) != 8
+        || inst_get_csel_cond(src[21]) || !nm_store_at(src[22], 2, 8, 1, 0) || !nm_load(src[23], 0, 9)
+        || inst_get_ldr_imm_rt(src[23]) != 8
+        || inst_get_ldr_imm_imm(src[23]) != offsetof(struct nm_inode_owner_prefix, i_flags) + 1 || !inst_is_tbz(src[24])
+        || inst_get_tbz_rt(src[24]) != 8 || inst_get_tbz_bit(src[24]) != 3 || inst_get_tbz_label(src[24]) != 12
+        || !nm_movz_value(src[25], 0, 8, 0x1000) || !nm_store_at(src[26], 3, 8, 1, 16)
+        || !nm_movz_value(src[27], 0, 8, 0x1000) || !inst_is_movk_imm(src[28]) || inst_get_movk_imm_sf(src[28])
+        || inst_get_movk_imm_rd(src[28]) != 8 || inst_get_movk_imm_hw(src[28]) != 1
+        || inst_get_movk_imm_imm16(src[28]) != 32 || !nm_store_at(src[29], 3, 8, 1, 24)
+        || !nm_load_at(src[30], 8, 9, struct_offset.inode_superblock - 8) || !nm_load(src[31], 3, 8)
+        || inst_get_ldr_imm_rt(src[31]) != 8 || !inst_is_cbz(src[32]) || !inst_get_cbz_sf(src[32])
+        || inst_get_cbz_rt(src[32]) != 8 || inst_get_cbz_label(src[32]) <= 32 || !inst_is_and_imm(src[38])
+        || inst_get_and_imm_sf(src[38]) || inst_get_and_imm_rd(src[38]) != 3 || inst_get_and_imm_rn(src[38]) != 3
+        || inst_get_and_imm_imm(src[38]) != 0x6000 || !inst_is_blr(src[40]) || inst_get_blr_rn(src[40]) != 8)
+      return -EOPNOTSUPP;
+    for (unsigned i = 0; i < 5; i++) gate[i] = src[33 + i];
+    gate[5] = src[39];
+    if (!nm_cfi_gate_stride(gate, 8, 9, 4) || nm_check_inline_simple_getattr(simple, (const void*)fill))
+      return -EOPNOTSUPP;
+    field = inst_get_ldr_imm_imm(src[31]);
+  } else {
+    for (unsigned i = 0; i < 6; i++)
+      if (!nm_rule_entry_save(src[i]))
+        return -EOPNOTSUPP;
+    if (!nm_load_at(src[6], 8, 0, offsetof(struct nm_path, dentry)) || !nm_move32(src[7], 22, 2)
+        || !nm_move(src[8], 20, 0) || !nm_move(src[9], 19, 1)
+        || !nm_load_at(src[10], 23, 8, offsetof(struct nm_dentry_head, d_inode))
+        || !nm_movz_value(src[11], 0, 2, sizeof(struct nm_kstat_blocks)) || !nm_move(src[12], 0, 1)
+        || !nm_move32(src[13], 1, 31) || !nm_move32(src[14], 21, 3) || !inst_is_bl(src[15])
+        || (uintptr_t)&src[15] + inst_get_bl_label(src[15]) != kallsyms_lookup_name_by_suffix("memset")
+        || !nm_load(src[16], 2, 19) || inst_get_ldr_imm_rt(src[16]) != 8 || inst_get_ldr_imm_imm(src[16])
+        || !nm_movz_value(src[17], 0, 10, 0x401) || !inst_is_orr_imm(src[18]) || inst_get_orr_imm_sf(src[18])
+        || inst_get_orr_imm_rd(src[18]) != 8 || inst_get_orr_imm_rn(src[18]) != 8
+        || inst_get_orr_imm_imm(src[18]) != 0x7ff || !nm_store_at(src[19], 2, 8, 19, 0)
+        || !nm_load_at(src[20], 9, 23, struct_offset.inode_superblock) || !nm_load(src[21], 1, 9)
+        || inst_get_ldr_imm_rt(src[21]) != 9 || inst_get_ldr_imm_imm(src[21]) != offsetof(struct nm_super_head, s_flags)
+        || !inst_is_ands_reg(src[22]) || inst_get_ands_reg_sf(src[22]) || inst_get_ands_reg_rd(src[22]) != 31
+        || inst_get_ands_reg_rn(src[22]) != 9 || inst_get_ands_reg_rm(src[22]) != 10 || inst_get_ands_reg_shift(src[22])
+        || inst_get_ands_reg_imm6(src[22]) || !inst_is_b_cond(src[23]) || inst_get_b_cond_cond(src[23])
+        || inst_get_b_cond_label(src[23]) != 12 || !inst_is_and_imm(src[24]) || inst_get_and_imm_sf(src[24])
+        || inst_get_and_imm_rd(src[24]) != 8 || inst_get_and_imm_rn(src[24]) != 8
+        || inst_get_and_imm_imm(src[24]) != 0xffffffdf || !nm_store_at(src[25], 2, 8, 19, 0) || !nm_load(src[26], 0, 23)
+        || inst_get_ldr_imm_rt(src[26]) != 8
+        || inst_get_ldr_imm_imm(src[26]) != offsetof(struct nm_inode_owner_prefix, i_flags) + 1 || !inst_is_tbz(src[27])
+        || inst_get_tbz_rt(src[27]) != 8 || inst_get_tbz_bit(src[27]) != 3 || inst_get_tbz_label(src[27]) != 16
+        || !nm_load_at(src[28], 8, 19, 16) || !inst_is_orr_imm(src[29]) || !inst_get_orr_imm_sf(src[29])
+        || inst_get_orr_imm_rd(src[29]) != 8 || inst_get_orr_imm_rn(src[29]) != 8
+        || inst_get_orr_imm_imm(src[29]) != 0x1000 || !nm_store_at(src[30], 3, 8, 19, 16)
+        || !nm_load_at(src[31], 8, 23, struct_offset.inode_superblock - 8) || !nm_load(src[32], 3, 8)
+        || inst_get_ldr_imm_rt(src[32]) != 8 || !inst_is_cbz(src[33]) || !inst_get_cbz_sf(src[33])
+        || inst_get_cbz_rt(src[33]) != 8 || inst_get_cbz_label(src[33]) <= 52 || !inst_is_and_imm(src[38])
+        || inst_get_and_imm_sf(src[38]) || inst_get_and_imm_rd(src[38]) != 22 || inst_get_and_imm_rn(src[38]) != 22
+        || inst_get_and_imm_imm(src[38]) != 0xfff || !inst_is_and_imm(src[40]) || inst_get_and_imm_sf(src[40])
+        || inst_get_and_imm_rd(src[40]) != 21 || inst_get_and_imm_rn(src[40]) != 21
+        || inst_get_and_imm_imm(src[40]) != 0x6000 || !nm_move(src[42], 0, 20) || !nm_move(src[43], 1, 19)
+        || !nm_move32(src[44], 2, 22) || !nm_move32(src[45], 3, 21) || !inst_is_blr(src[46])
+        || inst_get_blr_rn(src[46]) != 8)
+      return -EOPNOTSUPP;
+    for (unsigned i = 0; i < 4; i++) gate[i] = src[34 + i];
+    gate[4] = src[39];
+    gate[5] = src[41];
+    if (!nm_cfi_gate_stride(gate, 8, 9, 20) || nm_check_simple_getattr(simple, fill, true))
+      return -EOPNOTSUPP;
+    field = inst_get_ldr_imm_imm(src[32]);
+  }
+  if (field < sizeof(struct nm_inode_lookup_ops) || field % 8 || field > 0x7fff)
+    return -EINVAL;
+  struct_offset.iop_getattr = field;
+  struct_offset.getattr_callback_args = 4;
+  struct_offset.getattr_function_args = 4;
+  struct_offset.getattr_context_kind = 0;
+  struct_offset.fillattr_abi = 2;
+  return 0;
+}
+
 static int calculate_function_inode_callbacks(void) {
   const uint32_t* drop = (const void*)kallsyms_lookup_name_by_suffix("ext4_drop_inode");
   const uint32_t* attr = (const void*)kallsyms_lookup_name_by_suffix("vfs_getattr_nosec");
@@ -1300,12 +1781,37 @@ static int calculate_function_inode_callbacks(void) {
   return 0;
 }
 
-static bool nm_store_at(uint32_t inst, int size, int rt, int rn, int offset) {
-  return nm_store(inst, size, rn) && inst_get_str_imm_rt(inst) == rt && inst_get_str_imm_imm(inst) == offset;
-}
-
-// 两种完整初始化最多10条，所有写入及RET均匹配；不从最高写入位置猜sizeof。
+// 已核对完整初始化最多10条，所有写入及RET均匹配；不从最高写入位置猜sizeof。
 static int nm_find_mutex_size(const uint32_t* src) {
+  if (inst_is_paciasp(src[0])) {
+    if (!nm_add_at(src[1], 8, 0, offsetof(struct nm_mutex_owner, wait_next))
+        || !nm_store_at(src[2], 3, 31, 0, offsetof(struct nm_mutex_owner, owner))
+        || !nm_store_at(src[3], 2, 31, 0, offsetof(struct nm_mutex_owner, wait_lock))
+        || !nm_store_at(src[4], 3, 8, 0, offsetof(struct nm_mutex_owner, wait_next)) || !inst_is_stp(src[5])
+        || bit(src[5], 26) || inst_get_stp_size(src[5]) != 2 || inst_get_stp_mode(src[5]) != 2
+        || inst_get_stp_rt(src[5]) != 8 || inst_get_stp_rt2(src[5]) != 31 || inst_get_stp_rn(src[5]) != 0
+        || inst_get_stp_imm(src[5]) != offsetof(struct nm_mutex_owner, wait_prev)
+        || !nm_store_at(src[6], 2, 31, 0, offsetof(struct nm_mutex_owner, osq))
+        || !nm_store_at(src[7], 3, 31, 0, offsetof(struct nm_mutex_owner_oem, oem[1])) || !inst_is_autiasp(src[8])
+        || !inst_is_ret(src[9]) || inst_get_ret_rn(src[9]) != 30)
+      return -EOPNOTSUPP;
+    return sizeof(struct nm_mutex_owner_oem);
+  }
+  // GCC将同一完整count型初始化重排；全部字段与RET仍须匹配。
+  if (nm_add_at(src[0], 1, 0, offsetof(struct nm_mutex_count, wait_next))) {
+    if (!inst_is_movz_imm(src[1]) || inst_get_movz_imm_sf(src[1]) || inst_get_movz_imm_rd(src[1]) != 2
+        || inst_get_movz_imm_hw(src[1]) || inst_get_movz_imm_imm16(src[1]) != 1
+        || !nm_store_at(src[2], 2, 2, 0, offsetof(struct nm_mutex_count, count))
+        || !nm_store_at(src[3], 3, 1, 0, offsetof(struct nm_mutex_count, wait_next))
+        || !nm_store_at(src[4], 1, 31, 0, offsetof(struct nm_mutex_count, wait_lock))
+        || !nm_store_at(src[5], 1, 31, 0, offsetof(struct nm_mutex_count, wait_lock) + 2)
+        || !nm_store_at(src[6], 3, 1, 1, sizeof(void*))
+        || !nm_store_at(src[7], 3, 31, 0, offsetof(struct nm_mutex_count, owner))
+        || !nm_store_at(src[8], 2, 31, 0, offsetof(struct nm_mutex_count, osq)) || !inst_is_ret(src[9])
+        || inst_get_ret_rn(src[9]) != 30)
+      return -EOPNOTSUPP;
+    return sizeof(struct nm_mutex_count);
+  }
   if (inst_is_movz_imm(src[0]) && !inst_get_movz_imm_sf(src[0]) && inst_get_movz_imm_rd(src[0]) == 1
       && !inst_get_movz_imm_hw(src[0]) && inst_get_movz_imm_imm16(src[0]) == 1) {
     if (!nm_store_at(src[1], 2, 1, 0, offsetof(struct nm_mutex_count, count)) || !inst_is_add_imm(src[2])
@@ -1333,17 +1839,29 @@ static int nm_find_mutex_size(const uint32_t* src) {
   return sizeof(struct nm_mutex_owner);
 }
 
-static bool nm_compare(uint32_t inst, int rn, int rm) {
-  return inst_is_subs_reg(inst) && inst_get_subs_reg_sf(inst) && inst_get_subs_reg_rd(inst) == 31
-         && inst_get_subs_reg_rn(inst) == rn && inst_get_subs_reg_rm(inst) == rm && !inst_get_subs_reg_shift(inst)
-         && !inst_get_subs_reg_imm6(inst);
-}
-
 // user_preparse 首11条在任何分配前核对datalen范围、data非空和连续布局。
-static int nm_find_key_preparse_data(const uint32_t* src) {
+static int nm_find_key_preparse_data_legacy(const uint32_t* src) {
   bool saved_prefix = nm_rule_entry_save(src[0]) && nm_rule_entry_save(src[1]) && nm_rule_entry_save(src[2])
                       && nm_rule_entry_save(src[3]);
   int length, input, data_reg;
+  // SUB/CMN 实现 0 < datalen < 32768；分支和 NULL data 共用错误出口，窗口止于第10条。
+  if (saved_prefix && inst_is_sub_imm(src[5])) {
+    if (!nm_load(src[4], 3, 0) || inst_get_ldr_imm_rt(src[4]) != 19 || !inst_get_sub_imm_sf(src[5])
+        || inst_get_sub_imm_rd(src[5]) != 8 || inst_get_sub_imm_rn(src[5]) != 19
+        || inst_get_sub_imm_imm(src[5]) != 0x8000 || !inst_is_adds_imm(src[6]) || !inst_get_adds_imm_sf(src[6])
+        || inst_get_adds_imm_rd(src[6]) != 31 || inst_get_adds_imm_rn(src[6]) != 8
+        || inst_get_adds_imm_imm(src[6]) != 0x8000 || !inst_is_b_cond(src[7]) || inst_get_b_cond_cond(src[7]) != 9
+        || inst_get_b_cond_label(src[7]) <= 8 || !nm_load(src[8], 3, 0) || inst_get_ldr_imm_rt(src[8]) != 8
+        || !inst_is_cbz(src[9]) || !inst_get_cbz_sf(src[9]) || inst_get_cbz_rt(src[9]) != 8
+        || inst_get_cbz_label(src[9]) != inst_get_b_cond_label(src[7]) - 8)
+      return -EOPNOTSUPP;
+    length = inst_get_ldr_imm_imm(src[4]);
+    input = inst_get_ldr_imm_imm(src[8]);
+    if (input < 0 || input % 8 || input > 4096 - sizeof(struct nm_key_data)
+        || length != input + offsetof(struct nm_key_data, datalen))
+      return -EINVAL;
+    return input;
+  }
   if (saved_prefix) {
     if (!nm_load(src[4], 3, 0) || inst_get_ldr_imm_rt(src[4]) != 19 || !inst_is_movn_imm(src[5])
         || !inst_get_movn_imm_sf(src[5]) || inst_get_movn_imm_rd(src[5]) != 8 || inst_get_movn_imm_hw(src[5])
@@ -1378,10 +1896,91 @@ static int nm_find_key_preparse_data(const uint32_t* src) {
   return input;
 }
 
+static int nm_find_key_preparse_data(const uint32_t* src) {
+  int old = nm_find_key_preparse_data_legacy(src);
+  if (old >= 0 || old == -EINVAL)
+    return old;
+  if (inst_is_paciasp(src[0]))
+    src++;
+  unsigned int length_at, limit_at, sub_at, cmp_at, branch_at, data_at, null_at;
+  int length_reg, limit_reg, difference, data_reg;
+  bool scs = inst_is_str_imm9(src[0]);
+  bool gcc = inst_is_movz_imm(src[1]) && inst_get_movz_imm_sf(src[1]);
+  if (scs) {
+    if (!inst_is_movz_imm(src[5]))
+      return -EOPNOTSUPP;
+    for (unsigned int i = 0; i < 4; i++)
+      if (!nm_rule_entry_save(src[i]))
+        return -EOPNOTSUPP;
+    length_at = 4;
+    limit_at = 5;
+    sub_at = 6;
+    cmp_at = 7;
+    branch_at = 8;
+    data_at = 9;
+    null_at = 11;
+    length_reg = 19;
+    limit_reg = 9;
+    difference = 8;
+    data_reg = 8;
+    if (!nm_move(src[10], 20, 0))
+      return -EOPNOTSUPP;
+  } else if (gcc) {
+    if (!nm_rule_entry_save(src[0]) || !nm_rule_entry_save(src[2]) || !nm_rule_entry_save(src[3]))
+      return -EOPNOTSUPP;
+    length_at = 4;
+    limit_at = 1;
+    sub_at = 5;
+    cmp_at = 6;
+    branch_at = 7;
+    data_at = 8;
+    null_at = 9;
+    length_reg = 20;
+    limit_reg = 1;
+    difference = 2;
+    data_reg = 1;
+  } else {
+    for (unsigned int i = 0; i < 3; i++)
+      if (!nm_rule_entry_save(src[i]))
+        return -EOPNOTSUPP;
+    length_at = 3;
+    limit_at = 4;
+    sub_at = 5;
+    cmp_at = 6;
+    branch_at = 7;
+    data_at = 8;
+    null_at = 10;
+    length_reg = 19;
+    limit_reg = 8;
+    difference = 9;
+    data_reg = 8;
+    if (!nm_move(src[9], 20, 0))
+      return -EOPNOTSUPP;
+  }
+  if (!nm_load(src[length_at], 3, 0) || inst_get_ldr_imm_rt(src[length_at]) != length_reg
+      || !inst_is_movz_imm(src[limit_at]) || inst_get_movz_imm_sf(src[limit_at]) != gcc
+      || inst_get_movz_imm_rd(src[limit_at]) != limit_reg || inst_get_movz_imm_hw(src[limit_at])
+      || inst_get_movz_imm_imm16(src[limit_at]) != 0x7ffe || !inst_is_sub_imm(src[sub_at])
+      || !inst_get_sub_imm_sf(src[sub_at]) || inst_get_sub_imm_rd(src[sub_at]) != difference
+      || inst_get_sub_imm_rn(src[sub_at]) != length_reg || inst_get_sub_imm_imm(src[sub_at]) != 1
+      || !nm_compare(src[cmp_at], difference, limit_reg) || !inst_is_b_cond(src[branch_at])
+      || inst_get_b_cond_cond(src[branch_at]) != 8 || inst_get_b_cond_label(src[branch_at]) <= 8
+      || !nm_load(src[data_at], 3, 0) || inst_get_ldr_imm_rt(src[data_at]) != data_reg || !inst_is_cbz(src[null_at])
+      || !inst_get_cbz_sf(src[null_at]) || inst_get_cbz_rt(src[null_at]) != data_reg
+      || inst_get_cbz_label(src[null_at]) != inst_get_b_cond_label(src[branch_at]) - (int)(null_at - branch_at) * 4)
+    return -EOPNOTSUPP;
+  int input = inst_get_ldr_imm_imm(src[data_at]);
+  return input >= 0 && input % 8 == 0 && input <= 4096 - sizeof(struct nm_key_data)
+                 && inst_get_ldr_imm_imm(src[length_at]) == input + offsetof(struct nm_key_data, datalen)
+             ? input
+             : -EINVAL;
+}
+
 static int calculate_function_mutex_offsets(void) {
   if (struct_offset.mutex_no_lockdep == 1
       && (struct_offset.mutex_size == sizeof(struct nm_mutex_count)
-          || struct_offset.mutex_size == sizeof(struct nm_mutex_owner)))
+          || struct_offset.mutex_size == sizeof(struct nm_mutex_owner)
+          || struct_offset.mutex_size == sizeof(struct nm_mutex_owner_oem)))
     return 0;
   const uint32_t* mutex = (const void*)kallsyms_lookup_name_by_suffix("__mutex_init");
   if (!mutex)
@@ -1423,7 +2022,7 @@ static bool nm_load_unscaled(uint32_t inst, int rt, int rn, int offset, int mode
 }
 
 // register_key_type前18／19条：原始type保存在callee-saved寄存器，name@0传给strcmp。
-static int nm_check_key_name(const uint32_t* src, uintptr_t compare) {
+static int nm_check_key_name_legacy(const uint32_t* src, uintptr_t compare) {
   // 另一种GCC保存寄存器分配；原始type与链表容器分别保留到strcmp实参。
   if (nm_move(src[7], 21, 0)) {
     if (!nm_rule_entry_save(src[0]) || !nm_rule_entry_save(src[1]) || !nm_rule_entry_save(src[2])
@@ -1470,10 +2069,108 @@ static int nm_check_key_name(const uint32_t* src, uintptr_t compare) {
   return 0;
 }
 
-static bool nm_pair_store_at(uint32_t inst, int rt, int rt2, int rn, int offset) {
-  return inst_is_stp(inst) && !bit(inst, 26) && inst_get_stp_size(inst) == 2 && inst_get_stp_mode(inst) == 2
-         && inst_get_stp_rt(inst) == rt && inst_get_stp_rt2(inst) == rt2 && inst_get_stp_rn(inst) == rn
-         && inst_get_stp_imm(inst) == offset;
+// 返回注册遍历中的link起点，并标出首次锁调用、可见的class清零调用及其对象内起点。
+// 旧入口仍执行原判据；新入口分别限23/21条，不把未知指令当作无关prologue。
+static int nm_find_key_registration(const uint32_t* src, uintptr_t compare, int* lock_call, int* class_call,
+                                    int* class_offset) {
+  *class_call = *class_offset = -1;
+  if (!nm_check_key_name_legacy(src, compare)) {
+    if (nm_move(src[7], 21, 0)) {
+      *lock_call = 10;
+      return inst_get_sub_imm_imm(src[12]);
+    }
+    if (inst_is_str_imm9(src[0])) {
+      *lock_call = 8;
+      return -inst_get_ldr_imm9_imm9(src[15]);
+    }
+    *lock_call = 9;
+    return inst_get_sub_imm_imm(src[11]);
+  }
+  // GCC：原始type在x24，name暂存在x21；链表容器x19的两次换算必须一致。
+  if (inst_is_adrp(src[3]) && inst_get_adrp_rd(src[3]) == 22 && nm_move(src[7], 24, 0)) {
+    if (!nm_rule_entry_save(src[0]) || !nm_rule_entry_save(src[1]) || !nm_rule_entry_save(src[2])
+        || !nm_rule_entry_save(src[4]) || !nm_rule_entry_save(src[6]) || !inst_is_add_imm(src[5])
+        || !inst_get_add_imm_sf(src[5]) || inst_get_add_imm_rd(src[5]) != 20 || inst_get_add_imm_rn(src[5]) != 22
+        || inst_get_add_imm_sh(src[5]) || !nm_add_at(src[8], 0, 20, 48) || !inst_is_bl(src[9])
+        || !nm_load_unscaled(src[10], 23, 20, 96, 3) || !nm_compare(src[11], 23, 20) || !inst_is_sub_imm(src[12])
+        || !inst_get_sub_imm_sf(src[12]) || inst_get_sub_imm_rd(src[12]) != 19 || inst_get_sub_imm_rn(src[12]) != 23
+        || inst_get_sub_imm_sh(src[12]) || !inst_is_b_cond(src[13]) || inst_get_b_cond_cond(src[13])
+        || inst_get_b_cond_label(src[13]) <= 12 || !nm_load_at(src[14], 21, 24, 0) || !inst_is_b(src[15])
+        || inst_get_b_label(src[15]) != 20)
+      return -EOPNOTSUPP;
+    int link = inst_get_sub_imm_imm(src[12]);
+    if (!nm_load_at(src[16], 19, 19, link) || !nm_compare(src[17], 19, 20) || !inst_is_sub_imm(src[18])
+        || !inst_get_sub_imm_sf(src[18]) || inst_get_sub_imm_rd(src[18]) != 19 || inst_get_sub_imm_rn(src[18]) != 19
+        || inst_get_sub_imm_sh(src[18]) || inst_get_sub_imm_imm(src[18]) != link || !inst_is_b_cond(src[19])
+        || inst_get_b_cond_cond(src[19]) || inst_get_b_cond_label(src[19]) <= 12 || !nm_load_at(src[20], 0, 19, 0)
+        || !nm_move(src[21], 1, 21) || !inst_is_bl(src[22])
+        || (uintptr_t)&src[22] + inst_get_bl_label(src[22]) != compare)
+      return -EOPNOTSUPP;
+    *lock_call = 9;
+    return link;
+  }
+  unsigned int name, branch, head;
+  if (inst_is_paciasp(src[0])) {
+    for (unsigned int i = 1; i <= 6; i++)
+      if (!nm_rule_entry_save(src[i]))
+        return -EOPNOTSUPP;
+    if (!nm_move(src[7], 20, 0) || !nm_page_address(&src[8], 0) || !inst_is_bl(src[10])
+        || !nm_page_address(&src[11], 22) || !nm_load_at(src[13], 19, 22, 0) || !nm_compare(src[14], 19, 22)
+        || !nm_load_at(src[16], 21, 20, 0) || !nm_move(src[17], 23, 19) || !nm_move(src[19], 1, 21))
+      return -EOPNOTSUPP;
+    *lock_call = 10;
+    name = 18;
+    branch = 15;
+    head = 23;
+  } else {
+    bool wide = nm_move(src[5], 19, 0) && nm_add_at(src[2], 29, 31, 0);
+    unsigned int saved = wide ? 5 : (inst_is_str_imm9(src[0]) ? 5 : 4);
+    // 只有class目标地址构造可触发长窗口，旧入口的截短保护页不向后扩读。
+    if (!nm_move(src[saved], 19, 0) || !inst_is_add_imm(src[saved + 1]) || !inst_get_add_imm_sf(src[saved + 1])
+        || inst_get_add_imm_rd(src[saved + 1]) || inst_get_add_imm_rn(src[saved + 1])
+        || inst_get_add_imm_sh(src[saved + 1]))
+      return -EOPNOTSUPP;
+    for (unsigned int i = 0; i < saved; i++)
+      if (!nm_rule_entry_save(src[i]))
+        return -EOPNOTSUPP;
+    if (!nm_move32(src[saved + 2], 1, 31) || !nm_zero64(src[saved + 3], 2) || !inst_is_bl(src[saved + 4])
+        || !nm_page_address(&src[saved + 5], 0) || !inst_is_bl(src[saved + 7])
+        || !nm_page_address(&src[saved + 8], wide ? 22 : 21) || !nm_load_at(src[saved + 10], 20, wide ? 22 : 21, 0)
+        || !nm_compare(src[saved + 11], 20, wide ? 22 : 21))
+      return -EOPNOTSUPP;
+    *class_offset = inst_get_add_imm_imm(src[saved + 1]);
+    *class_call = saved + 4;
+    *lock_call = saved + 7;
+    branch = saved + 12;
+    if (wide) {
+      if (!nm_load_at(src[18], 21, 19, 0) || !nm_move(src[19], 23, 20) || !nm_move(src[21], 1, 21))
+        return -EOPNOTSUPP;
+      name = 20;
+      head = 23;
+    } else {
+      name = saved + 13;
+      head = 20;
+      if (!nm_load_at(src[name + 1], 1, 19, 0))
+        return -EOPNOTSUPP;
+    }
+  }
+  if (!inst_is_b_cond(src[branch]) || inst_get_b_cond_cond(src[branch]) || inst_get_b_cond_label(src[branch]) <= 12
+      || !inst_is_ldr_imm9(src[name]) || !nm_load_unscaled(src[name], 0, head, inst_get_ldr_imm9_imm9(src[name]), 0)
+      || !inst_is_bl(src[name + 2]) || (uintptr_t)&src[name + 2] + inst_get_bl_label(src[name + 2]) != compare)
+    return -EOPNOTSUPP;
+  int link = -inst_get_ldr_imm9_imm9(src[name]);
+  return link >= NM_KEY_TYPE_PROBE_SIZE && link % 8 == 0 ? link : -EINVAL;
+}
+
+static int nm_check_key_name(const uint32_t* src, uintptr_t compare) {
+  int lock_call, class_call, class_offset;
+  int link = nm_find_key_registration(src, compare, &lock_call, &class_call, &class_offset);
+#ifndef CONFIG_KPM_BASELINES
+  // 即使完整尾部尚未覆盖，已识别的注册链表写入也必须落在自建容量内。
+  if (link >= 0 && link > NM_OWNED_OPERATIONS_CAPACITY - sizeof(struct nm_key_type_tail))
+    return -E2BIG;
+#endif
+  return link < 0 ? link : 0;
 }
 
 static bool nm_max_signed64(uint32_t inst, int rd) {
@@ -1482,24 +2179,27 @@ static bool nm_max_signed64(uint32_t inst, int rd) {
 }
 
 // key_instantiate_and_link前22／26条：从key->type核对def_datalen及preparse读取。
-static int nm_find_key_callback_slot(const uint32_t* src) {
+static int nm_find_key_callback_slot_legacy(const uint32_t* src) {
   int slot;
   if (inst_is_str_imm9(src[0])) {
+    bool reordered = nm_move(src[10], 20, 4);
     if (!nm_rule_entry_save(src[0]) || !inst_is_sub_imm(src[1]) || !inst_get_sub_imm_sf(src[1])
         || inst_get_sub_imm_rd(src[1]) != 31 || inst_get_sub_imm_rn(src[1]) != 31 || inst_get_sub_imm_imm(src[1]) != 160
         || !nm_rule_entry_save(src[2]) || !nm_rule_entry_save(src[3]) || !nm_rule_entry_save(src[4])
         || !nm_add_at(src[5], 29, 31, 112) || !inst_is_adrp(src[6]) || inst_get_adrp_rd(src[6]) != 8
         || !nm_move(src[7], 19, 0) || !nm_max_signed64(src[8], 10) || !nm_load(src[9], 3, 8)
-        || inst_get_ldr_imm_rt(src[9]) != 8 || !nm_move(src[10], 21, 4) || !nm_move(src[11], 20, 3)
-        || !nm_move(src[12], 22, 0) || !inst_is_str_imm9(src[13]) || bit(src[13], 26)
-        || inst_get_str_imm9_size(src[13]) != 3 || inst_get_str_imm9_rt(src[13]) != 8
-        || inst_get_str_imm9_rn(src[13]) != 29 || inst_get_str_imm9_mode(src[13])
+        || inst_get_ldr_imm_rt(src[9]) != 8
+        || !(reordered ? (nm_move(src[11], 21, 0) && nm_move(src[12], 22, 3))
+                       : (nm_move(src[10], 21, 4) && nm_move(src[11], 20, 3) && nm_move(src[12], 22, 0)))
+        || !inst_is_str_imm9(src[13]) || bit(src[13], 26) || inst_get_str_imm9_size(src[13]) != 3
+        || inst_get_str_imm9_rt(src[13]) != 8 || inst_get_str_imm9_rn(src[13]) != 29 || inst_get_str_imm9_mode(src[13])
         || inst_get_str_imm9_imm9(src[13]) != -8 || !inst_is_ldr_imm9(src[14])
         || !nm_load_unscaled(src[14], 8, 19, inst_get_ldr_imm9_imm9(src[14]), 3) || inst_get_ldr_imm9_imm9(src[14]) <= 0
-        || inst_get_ldr_imm9_imm9(src[14]) % 8 || !nm_pair_store_at(src[15], 31, 31, 31, 40)
-        || !nm_pair_store_at(src[16], 31, 31, 31, 56) || !nm_pair_store_at(src[17], 1, 2, 31, 72)
-        || !nm_load_at(src[18], 9, 8, offsetof(struct nm_key_type_head, def_datalen))
-        || !nm_pair_store_at(src[19], 31, 31, 31, 24) || !nm_pair_store_at(src[20], 9, 10, 31, 88)
+        || inst_get_ldr_imm9_imm9(src[14]) % 8 || !nm_pair_store_at(src[reordered ? 16 : 15], 31, 31, 31, 40)
+        || !nm_pair_store_at(src[reordered ? 17 : 16], 31, 31, 31, 56)
+        || !nm_pair_store_at(src[reordered ? 18 : 17], 1, 2, 31, 72)
+        || !nm_load_at(src[reordered ? 19 : 18], 9, 8, offsetof(struct nm_key_type_head, def_datalen))
+        || !nm_pair_store_at(src[reordered ? 15 : 19], 31, 31, 31, 24) || !nm_pair_store_at(src[20], 9, 10, 31, 88)
         || !nm_load(src[21], 3, 8) || inst_get_ldr_imm_rt(src[21]) != 8)
       return -EOPNOTSUPP;
     slot = inst_get_ldr_imm_imm(src[21]);
@@ -1524,6 +2224,120 @@ static int nm_find_key_callback_slot(const uint32_t* src) {
   if (slot < sizeof(struct nm_key_type_head) || slot + sizeof(struct nm_key_callbacks) > NM_KEY_TYPE_PROBE_SIZE)
     return -EINVAL;
   return slot;
+}
+
+// 新入口从key实参一直核对到type->def_datalen与preparse；最多30条，旧窗口不扩大。
+static int nm_find_key_callback_slot(const uint32_t* src) {
+  int slot = nm_find_key_callback_slot_legacy(src);
+  if (slot >= 0 || slot == -EINVAL)
+    return slot;
+  bool pac = inst_is_paciasp(src[0]);
+  bool sub = inst_is_sub_imm(src[pac ? 1 : 0]);
+  if (!sub) {
+    // GCC count型目标：key保存在x20，type读入x0，前24条内没有调用。
+    if (!nm_rule_entry_save(src[0]) || !nm_add_at(src[1], 29, 31, 0))
+      return -EOPNOTSUPP;
+    for (unsigned int i = 2; i <= 4; i++)
+      if (!nm_rule_entry_save(src[i]))
+        return -EOPNOTSUPP;
+    if (!nm_pair_store_at(src[5], 31, 31, 29, 128) || !nm_pair_store_at(src[6], 31, 31, 29, 112)
+        || !nm_move(src[7], 20, 0) || !nm_load(src[8], 3, 0) || inst_get_ldr_imm_rt(src[8]) != 0
+        || !inst_get_ldr_imm_imm(src[8]) || inst_get_ldr_imm_imm(src[8]) % 8 || !nm_store_at(src[9], 3, 31, 29, 144)
+        || !inst_is_adrp(src[10]) || inst_get_adrp_rd(src[10]) != 22 || !nm_store_at(src[11], 3, 1, 29, 120)
+        || !nm_move(src[12], 21, 3) || !nm_pair_store_at(src[13], 31, 31, 29, 80)
+        || !nm_pair_store_at(src[14], 31, 31, 29, 96) || !nm_store_at(src[15], 3, 2, 29, 128)
+        || !nm_move(src[16], 23, 4) || !nm_load(src[17], 3, 22) || inst_get_ldr_imm_rt(src[17]) != 1
+        || !nm_load_at(src[18], 2, 0, 8) || !nm_store_at(src[19], 3, 2, 29, 136) || !nm_max_signed64(src[20], 2)
+        || !nm_store_at(src[21], 3, 2, 29, 144) || !nm_store_at(src[22], 3, 1, 29, 152) || !nm_load(src[23], 3, 0)
+        || inst_get_ldr_imm_rt(src[23]) != 1)
+      return -EOPNOTSUPP;
+    slot = inst_get_ldr_imm_imm(src[23]);
+  } else {
+    unsigned int frame = pac ? 1 : 0;
+    if (!inst_get_sub_imm_sf(src[frame]) || inst_get_sub_imm_rd(src[frame]) != 31
+        || inst_get_sub_imm_rn(src[frame]) != 31 || inst_get_sub_imm_imm(src[frame]) != 160)
+      return -EOPNOTSUPP;
+    if (pac) {
+      for (unsigned int i = 2; i <= 6; i++)
+        if (!nm_rule_entry_save(src[i]))
+          return -EOPNOTSUPP;
+      if (!nm_add_at(src[7], 29, 31, 96) || !inst_is_adrp(src[8]) || inst_get_adrp_rd(src[8]) != 8
+          || !nm_load(src[9], 3, 8) || inst_get_ldr_imm_rt(src[9]) != 8 || !nm_max_signed64(src[10], 10)
+          || !nm_move(src[11], 20, 4) || !nm_move(src[12], 19, 0) || !nm_pair_store_at(src[14], 31, 31, 31, 8)
+          || !nm_pair_store_at(src[15], 31, 31, 31, 24) || !nm_pair_store_at(src[16], 31, 31, 31, 40)
+          || !nm_pair_store_at(src[17], 31, 31, 31, 72) || !nm_pair_store_at(src[18], 1, 2, 31, 56)
+          || !nm_load(src[19], 3, 0) || inst_get_ldr_imm_rt(src[19]) != 8 || !inst_get_ldr_imm_imm(src[19])
+          || inst_get_ldr_imm_imm(src[19]) % 8 || !nm_move(src[20], 21, 3) || !nm_load_at(src[21], 9, 8, 8)
+          || !nm_pair_store_at(src[22], 9, 10, 31, 72) || !nm_load(src[23], 3, 8) || inst_get_ldr_imm_rt(src[23]) != 22)
+        return -EOPNOTSUPP;
+      uint32_t save = src[13];
+      if (!inst_is_str_imm9(save) || bit(save, 26) || inst_get_str_imm9_size(save) != 3
+          || inst_get_str_imm9_rt(save) != 8 || inst_get_str_imm9_rn(save) != 29 || inst_get_str_imm9_mode(save)
+          || inst_get_str_imm9_imm9(save) != -8)
+        return -EOPNOTSUPP;
+      slot = inst_get_ldr_imm_imm(src[23]);
+    } else {
+      bool scs = inst_is_str_imm9(src[1]);
+      unsigned int fp = scs ? 6 : 2, page = scs ? 7 : 6;
+      for (unsigned int i = 1; i < page; i++)
+        if (i != fp && !nm_rule_entry_save(src[i]))
+          return -EOPNOTSUPP;
+      if (!nm_add_at(src[fp], 29, 31, 96) || !inst_is_adrp(src[page]) || inst_get_adrp_rd(src[page]) != 8)
+        return -EOPNOTSUPP;
+      unsigned int save, call, type, callback;
+      if (scs) {
+        if (!nm_load(src[8], 3, 8) || inst_get_ldr_imm_rt(src[8]) != 8 || !nm_move(src[9], 22, 2)
+            || !nm_move(src[10], 23, 1) || !nm_move(src[11], 19, 0) || !nm_add_at(src[12], 0, 31, 16)
+            || !inst_is_movz_imm(src[13]) || inst_get_movz_imm_sf(src[13]) || inst_get_movz_imm_rd(src[13]) != 2
+            || inst_get_movz_imm_hw(src[13]) || inst_get_movz_imm_imm16(src[13]) != 72 || !nm_move32(src[14], 1, 31)
+            || !nm_move(src[15], 21, 4) || !nm_move(src[16], 20, 3))
+          return -EOPNOTSUPP;
+        for (unsigned int i = 18; i <= 22; i++)
+          if (!nm_pair_store_at(src[i], 31, 31, 31, 72 - (i - 18) * 16))
+            return -EOPNOTSUPP;
+        if (!nm_pair_store_at(src[24], 23, 22, 31, 56) || !nm_load(src[25], 3, 19) || inst_get_ldr_imm_rt(src[25]) != 8
+            || !inst_get_ldr_imm_imm(src[25]) || inst_get_ldr_imm_imm(src[25]) % 8 || !nm_max_signed64(src[26], 10))
+          return -EOPNOTSUPP;
+        save = 17;
+        call = 23;
+        type = 25;
+        callback = 29;
+      } else {
+        if (!nm_move(src[7], 23, 2) || !nm_move(src[8], 24, 1) || !nm_move(src[9], 22, 0) || !inst_is_movz_imm(src[10])
+            || inst_get_movz_imm_sf(src[10]) || inst_get_movz_imm_rd(src[10]) != 2 || inst_get_movz_imm_hw(src[10])
+            || inst_get_movz_imm_imm16(src[10]) != 72 || !nm_add_at(src[11], 0, 31, 16) || !nm_load(src[12], 3, 8)
+            || inst_get_ldr_imm_rt(src[12]) != 8 || !nm_move32(src[13], 1, 31) || !nm_move(src[14], 21, 4)
+            || !nm_move(src[15], 20, 3) || !nm_move(src[18], 19, 22) || !nm_pair_store_at(src[19], 24, 23, 31, 56)
+            || !nm_max_signed64(src[20], 10) || !inst_is_ldr_imm9(src[21])
+            || !nm_load_unscaled(src[21], 8, 19, inst_get_ldr_imm9_imm9(src[21]), 3)
+            || inst_get_ldr_imm9_imm9(src[21]) <= 0 || inst_get_ldr_imm9_imm9(src[21]) % 8)
+          return -EOPNOTSUPP;
+        save = 16;
+        call = 17;
+        type = 21;
+        callback = 24;
+      }
+      uint32_t canary = src[save];
+      uintptr_t clear = kallsyms_lookup_name_by_suffix("memset");
+      if (!inst_is_str_imm9(canary) || bit(canary, 26) || inst_get_str_imm9_size(canary) != 3
+          || inst_get_str_imm9_rt(canary) != 8 || inst_get_str_imm9_rn(canary) != 29 || inst_get_str_imm9_mode(canary)
+          || inst_get_str_imm9_imm9(canary) != -8 || !clear || !inst_is_bl(src[call])
+          || (uintptr_t)&src[call] + inst_get_bl_label(src[call]) != clear)
+        return -EOPNOTSUPP;
+      if (scs && !nm_load_at(src[type + 2], 9, 8, offsetof(struct nm_key_type_head, def_datalen)))
+        return -EOPNOTSUPP;
+      if (!scs && !nm_load_at(src[22], 9, 8, 8))
+        return -EOPNOTSUPP;
+      unsigned int pair = scs ? 28 : 23;
+      if (!nm_pair_store_at(src[pair], 9, 10, 31, 72) || !nm_load(src[callback], 3, 8)
+          || inst_get_ldr_imm_rt(src[callback]) != (scs ? 22 : 8))
+        return -EOPNOTSUPP;
+      slot = inst_get_ldr_imm_imm(src[callback]);
+    }
+  }
+  return slot >= sizeof(struct nm_key_type_head) && slot + sizeof(struct nm_key_callbacks) <= NM_KEY_TYPE_PROBE_SIZE
+             ? slot
+             : -EINVAL;
 }
 
 static int calculate_function_key_callbacks(void) {
@@ -1571,7 +2385,151 @@ static int calculate_function_key_callbacks(void) {
   return 0;
 }
 
-static int nm_check_directory_iteration(const uint32_t* src, int slot) {
+// unregister_key_type前17条：入口type保存在x19，list_del_init写回link的两个自指针。
+// 固定形态逐条核对，BL只允许已确认的down_write和链表校验器，不跨未知clobber。
+static int nm_find_key_type_link_legacy(const uint32_t* src, uintptr_t down_write, uintptr_t list_valid) {
+  if (!src || !down_write || !list_valid)
+    return -ENOENT;
+  if (src[0] != 0xf800865eU || src[1] != 0xa9be7bfdU || src[2] != 0xa9014ff4U || src[3] != 0x910003fdU
+      || !nm_move(src[4], 19, 0) || !nm_page_address(&src[5], 0) || !inst_is_bl(src[7])
+      || (uintptr_t)&src[7] + inst_get_bl_label(src[7]) != down_write || !inst_is_add_imm(src[8])
+      || !inst_get_add_imm_sf(src[8]) || inst_get_add_imm_rd(src[8]) != 20 || inst_get_add_imm_rn(src[8]) != 19
+      || inst_get_add_imm_sh(src[8]) || !nm_move(src[9], 0, 20) || !inst_is_bl(src[10])
+      || (uintptr_t)&src[10] + inst_get_bl_label(src[10]) != list_valid || !inst_is_tbz(src[11])
+      || inst_get_tbz_rt(src[11]) || inst_get_tbz_bit(src[11]) || inst_get_tbz_label(src[11]) != 16)
+    return -EOPNOTSUPP;
+  int link = inst_get_add_imm_imm(src[8]);
+  if (link < NM_KEY_TYPE_PROBE_SIZE || link > 4096 - sizeof(struct nm_key_type_tail) || link % 8)
+    return -EINVAL;
+  uint32_t pair = src[12];
+  if (!inst_is_ldp(pair) || bit(pair, 26) || inst_get_ldp_size(pair) != 2 || inst_get_ldp_mode(pair) != 2
+      || inst_get_ldp_rt(pair) != 9 || inst_get_ldp_rt2(pair) != 8 || inst_get_ldp_rn(pair) != 19
+      || inst_get_ldp_imm(pair) != link || !nm_store_at(src[13], 3, 8, 9, 8) || !nm_store_at(src[14], 3, 9, 8, 0)
+      || !nm_store_at(src[15], 3, 20, 19, link) || !nm_store_at(src[16], 3, 20, 19, link + 8))
+    return -EINVAL;
+  return link;
+}
+
+static int nm_find_key_type_link(const uint32_t* src, uintptr_t down_write, uintptr_t list_valid) {
+  if (!src || !down_write)
+    return -ENOENT;
+  int legacy = nm_find_key_type_link_legacy(src, down_write, list_valid);
+  if (legacy >= 0 || legacy == -EINVAL)
+    return legacy;
+  // GCC内联list_del_init，不要求并不存在的独立校验器；原type始终保存在x20。
+  if (inst_is_adrp(src[3]) && inst_get_adrp_rd(src[3]) == 19 && nm_move(src[4], 20, 0)) {
+    for (unsigned int i = 0; i < 3; i++)
+      if (!nm_rule_entry_save(src[i]))
+        return -EOPNOTSUPP;
+    if (!inst_is_add_imm(src[5]) || !inst_get_add_imm_sf(src[5]) || inst_get_add_imm_rd(src[5]) != 19
+        || inst_get_add_imm_rn(src[5]) != 19 || inst_get_add_imm_sh(src[5]) || !nm_add_at(src[6], 19, 19, 48)
+        || !nm_move(src[7], 0, 19) || !inst_is_bl(src[8])
+        || (uintptr_t)&src[8] + inst_get_bl_label(src[8]) != down_write || !nm_load(src[9], 3, 20)
+        || !inst_is_add_imm(src[10]) || !inst_get_add_imm_sf(src[10]) || inst_get_add_imm_rn(src[10]) != 20
+        || inst_get_add_imm_sh(src[10]) || !nm_load(src[11], 3, 20))
+      return -EOPNOTSUPP;
+    int link = inst_get_add_imm_imm(src[10]);
+    int next = inst_get_ldr_imm_rt(src[9]), prev = inst_get_ldr_imm_rt(src[11]);
+    int node = inst_get_add_imm_rd(src[10]);
+    bool reordered = nm_move(src[12], 0, 19);
+    unsigned int at = reordered ? 13 : 12;
+    if (link < NM_KEY_TYPE_PROBE_SIZE || link > 4096 - sizeof(struct nm_key_type_tail) || link % 8
+        || (reordered ? (next != 3 || prev != 2 || node != 1) : (next != 2 || prev != 1 || node != 0))
+        || inst_get_ldr_imm_imm(src[9]) != link || inst_get_ldr_imm_imm(src[11]) != link + 8
+        || !nm_store_at(src[at], 3, prev, next, 8) || !nm_store_at(src[at + 1], 3, next, prev, 0)
+        || !nm_store_at(src[at + 2], 3, node, 20, link) || !nm_store_at(src[at + 3], 3, node, 20, link + 8))
+      return -EINVAL;
+    return link;
+  }
+  if (!list_valid)
+    return -ENOENT;
+  bool pac = inst_is_paciasp(src[0]);
+  unsigned int call, pair, store;
+  int node;
+  if (pac) {
+    for (unsigned int i = 1; i <= 5; i++)
+      if (!nm_rule_entry_save(src[i]))
+        return -EOPNOTSUPP;
+    if (!nm_page_address(&src[6], 20) || !nm_move(src[8], 19, 0) || !nm_move(src[9], 0, 20))
+      return -EOPNOTSUPP;
+    call = 10;
+    pair = 14;
+    store = 18;
+    node = 21;
+  } else {
+    for (unsigned int i = 0; i < 3; i++)
+      if (!nm_rule_entry_save(src[i]))
+        return -EOPNOTSUPP;
+    if (!nm_move(src[3], 19, 0) || !nm_page_address(&src[4], 0))
+      return -EOPNOTSUPP;
+    call = 6;
+    pair = 11;
+    store = 14;
+    node = 20;
+  }
+  if (!inst_is_bl(src[call]) || (uintptr_t)&src[call] + inst_get_bl_label(src[call]) != down_write
+      || !inst_is_add_imm(src[call + 1]) || !inst_get_add_imm_sf(src[call + 1])
+      || inst_get_add_imm_rd(src[call + 1]) != node || inst_get_add_imm_rn(src[call + 1]) != 19
+      || inst_get_add_imm_sh(src[call + 1]) || !nm_move(src[call + 2], 0, node) || !inst_is_bl(src[call + 3])
+      || (uintptr_t)&src[call + 3] + inst_get_bl_label(src[call + 3]) != list_valid)
+    return -EOPNOTSUPP;
+  int link = inst_get_add_imm_imm(src[call + 1]);
+  if (link < NM_KEY_TYPE_PROBE_SIZE || link > 4096 - sizeof(struct nm_key_type_tail) || link % 8)
+    return -EINVAL;
+  if (pac ? !nm_move(src[15], 0, 20)
+          : (!inst_is_tbz(src[10]) || inst_get_tbz_rt(src[10]) || inst_get_tbz_bit(src[10])
+             || inst_get_tbz_label(src[10]) != 16))
+    return -EOPNOTSUPP;
+  uint32_t load = src[pair];
+  if (!inst_is_ldp(load) || bit(load, 26) || inst_get_ldp_size(load) != 2 || inst_get_ldp_mode(load) != 2
+      || inst_get_ldp_rt(load) != 9 || inst_get_ldp_rt2(load) != 8 || inst_get_ldp_rn(load) != 19
+      || inst_get_ldp_imm(load) != link || !nm_store_at(src[pac ? 16 : 12], 3, 8, 9, 8)
+      || !nm_store_at(src[pac ? 17 : 13], 3, 9, 8, 0) || !nm_store_at(src[store], 3, node, 19, link)
+      || !nm_store_at(src[store + 1], 3, node, 19, link + 8))
+    return -EINVAL;
+  return link;
+}
+
+static int calculate_function_key_type_size(void) {
+  // key_type自己的注册入口验证class清零（或已核对的消除形态），不从mutex推断全局LOCKDEP。
+  // 尾部契约仍为link + 空lock_class，无额外槽或强制对齐；不可见的厂商追加字段不在证明内。
+  if (struct_offset.mutex_no_lockdep != 1 || (struct_offset.key_callbacks != 24 && struct_offset.key_callbacks != 32))
+    return -EOPNOTSUPP;
+  const uint32_t* reg = (const void*)kallsyms_lookup_name_by_suffix("register_key_type");
+  const uint32_t* unreg = (const void*)kallsyms_lookup_name_by_suffix("unregister_key_type");
+  uintptr_t compare = kallsyms_lookup_name_by_suffix("strcmp");
+  uintptr_t down_write = kallsyms_lookup_name_by_suffix("down_write");
+  uintptr_t list_valid = kallsyms_lookup_name_by_suffix("__list_del_entry_valid");
+  const uint32_t* init = (const void*)kallsyms_lookup_name_by_suffix("key_instantiate_and_link");
+  if (!reg || !unreg || !compare || !down_write || !init)
+    return -ENOENT;
+  if (nm_find_key_callback_slot(init) != struct_offset.key_callbacks)
+    return -EOPNOTSUPP;
+  int lock_call, class_call, class_offset;
+  int registered = nm_find_key_registration(reg, compare, &lock_call, &class_call, &class_offset);
+  if (registered < 0)
+    return registered;
+  if ((uintptr_t)&reg[lock_call] + inst_get_bl_label(reg[lock_call]) != down_write)
+    return -EINVAL;
+  int link = nm_find_key_type_link(unreg, down_write, list_valid);
+  if (link < 0)
+    return link;
+  if (link != registered)
+    return -EINVAL;
+  if (class_call >= 0) {
+    uintptr_t clear = kallsyms_lookup_name_by_suffix("memset");
+    if (!clear)
+      return -ENOENT;
+    if ((uintptr_t)&reg[class_call] + inst_get_bl_label(reg[class_call]) != clear
+        || class_offset != link + sizeof(struct nm_key_type_tail))
+      return -EINVAL;
+  }
+  struct_offset.key_type_size = link + sizeof(struct nm_key_type_tail);
+  nm_log_info("layout: key_type=%d (link=%d, verified no-lockdep tail contract)\n", struct_offset.key_type_size, link);
+  return 0;
+}
+
+static int nm_check_directory_iteration_legacy(const uint32_t* src, int slot) {
   for (unsigned int i = 0; i < 5; i++)
     if (!nm_rule_entry_save(src[i]))
       return -EOPNOTSUPP;
@@ -1600,8 +2558,47 @@ static int nm_check_directory_iteration(const uint32_t* src, int slot) {
   return 0;
 }
 
+// 只核对读取iterate槽之前的参数保存与f_inode/f_op共同片段；后续执行仍交原生iterate_dir。
+static int nm_check_directory_iteration(const uint32_t* src, int slot) {
+  int rc = nm_check_directory_iteration_legacy(src, slot);
+  if (!rc || rc == -EINVAL)
+    return rc;
+  if (inst_is_paciasp(src[0]))
+    src++;
+  bool scs = inst_is_str_imm9(src[0]);
+  unsigned int pair = scs ? 7 : 6;
+  for (unsigned i = 0; i < pair; i++)
+    if (!nm_rule_entry_save(src[i]))
+      return -EOPNOTSUPP;
+  bool gcc = nm_move(src[6], 22, 1) && nm_move(src[7], 19, 0);
+  if (gcc) {
+    if (!nm_load_at(src[8], 1, 0, struct_offset.file_inode_ops + offsetof(struct nm_file_inode_ops, f_op))
+        || !nm_load_at(src[9], 21, 0, struct_offset.file_inode_ops) || !nm_load_at(src[10], 2, 1, slot)
+        || !inst_is_cbz(src[11]) || !inst_get_cbz_sf(src[11]) || inst_get_cbz_rt(src[11]) != 2
+        || inst_get_cbz_label(src[11]) <= 4)
+      return -EOPNOTSUPP;
+  } else {
+    uint32_t load = src[pair];
+    int callback = inst_get_ldr_imm_rt(src[pair + 3]);
+    if (!inst_is_ldp(load) || bit(load, 26) || inst_get_ldp_size(load) != 2 || inst_get_ldp_mode(load) != 2
+        || inst_get_ldp_rt(load) != 23 || inst_get_ldp_rt2(load) != 8 || inst_get_ldp_rn(load) != 0
+        || inst_get_ldp_imm(load) != struct_offset.file_inode_ops || !nm_move(src[pair + 1], 19, 0)
+        || !(nm_move(src[pair + 2], 22, 1) || nm_move(src[pair + 2], 21, 1) || nm_move(src[pair + 2], 20, 1))
+        || (callback != 9 && callback != 22) || !nm_load_at(src[pair + 3], callback, 8, slot)
+        || !inst_is_cbz(src[pair + 4]) || !inst_get_cbz_sf(src[pair + 4]) || inst_get_cbz_rt(src[pair + 4]) != callback
+        || inst_get_cbz_label(src[pair + 4]) <= 4)
+      return -EOPNOTSUPP;
+  }
+  if (slot != offsetof(struct nm_file_iteration_ops, iterate_shared)
+      && slot != offsetof(struct nm_file_iopoll_iteration_ops, iterate_shared))
+    return -EINVAL;
+  struct_offset.fop_iterate = slot - sizeof(void*);
+  struct_offset.fop_iterate_shared = slot;
+  return 0;
+}
+
 // __dentry_kill前23／17条核对prune槽与实际调用，原生调用须保留x19。
-static int nm_find_dentry_lifecycle(const uint32_t* src, uintptr_t dead, uintptr_t start, uintptr_t end) {
+static int nm_find_dentry_lifecycle_legacy(const uint32_t* src, uintptr_t dead, uintptr_t start, uintptr_t end) {
   for (unsigned int i = 0; i < 4; i++)
     if (!nm_rule_entry_save(src[i]))
       return -EOPNOTSUPP;
@@ -1643,7 +2640,7 @@ static int nm_find_dentry_lifecycle(const uint32_t* src, uintptr_t dead, uintptr
 }
 
 // empty_dir_readdir仅枚举点项；止于首个actor返回检查，分别30／20条。
-static int nm_find_directory_actor(const uint32_t* src) {
+static int nm_find_directory_actor_legacy(const uint32_t* src) {
   if (struct_offset.file_inode_ops < (int)sizeof(struct nm_path))
     return -EINVAL;
   int dentry = struct_offset.file_inode_ops - (int)offsetof(struct nm_file_path_inode_ops, f_inode)
@@ -1696,6 +2693,177 @@ static int nm_find_directory_actor(const uint32_t* src) {
   return 0;
 }
 
+// prune以DCACHE_OP_PRUNE位4和实际dentry实参锚定，release/init来自已核对的连续片段。
+static int nm_dentry_prune_slot(int slot) {
+  int release = slot - (int)offsetof(struct nm_dentry_release_prune, d_prune);
+  if (release != sizeof(struct nm_dentry_control_ops) && release != sizeof(struct nm_dentry_control_ops) + 8)
+    return -EOPNOTSUPP;
+  struct_offset.dop_release = release;
+  struct_offset.dop_init = release == sizeof(struct nm_dentry_control_ops) ? -1 : sizeof(struct nm_dentry_control_ops);
+  return 0;
+}
+
+static int nm_find_dentry_lifecycle(const uint32_t* src, uintptr_t dead, uintptr_t start, uintptr_t end) {
+  int old = nm_find_dentry_lifecycle_legacy(src, dead, start, end);
+  if (!old || old == -EINVAL)
+    return old;
+  bool pac = inst_is_paciasp(src[0]);
+  if (pac)
+    src++;
+  // GCC把prune块放在前向TBNZ目标处；只读入口13条和目标6条，不扫描中间函数体。
+  if (nm_move(src[3], 19, 0)) {
+    for (unsigned i = 0; i < 3; i++)
+      if (!nm_rule_entry_save(src[i]))
+        return -EOPNOTSUPP;
+    if (!nm_store_at(src[4], 3, 21, 31, 32) || !nm_add_at(src[5], 21, 0, struct_offset.dentry_lock)
+        || !nm_move(src[6], 0, 21) || !nm_load_at(src[7], 20, 19, offsetof(struct nm_dentry_head, d_parent))
+        || !nm_compare(src[8], 20, 19) || !inst_is_csel(src[9]) || !inst_get_csel_sf(src[9])
+        || inst_get_csel_rd(src[9]) != 20 || inst_get_csel_rn(src[9]) != 20 || inst_get_csel_rm(src[9]) != 31
+        || inst_get_csel_cond(src[9]) != 1 || !inst_is_bl(src[10])
+        || !nm_code_matches((uintptr_t)&src[10] + inst_get_bl_label(src[10]), dead, start, end)
+        || !nm_load(src[11], 2, 19) || inst_get_ldr_imm_rt(src[11]) || inst_get_ldr_imm_imm(src[11])
+        || !inst_is_tbnz(src[12]) || inst_get_tbnz_rt(src[12]) || inst_get_tbnz_bit(src[12]) != 4)
+      return -EOPNOTSUPP;
+    long delta = inst_get_tbnz_label(src[12]);
+    uintptr_t target = (uintptr_t)&src[12] + delta;
+    if (delta < 4 || delta > 384 || target < start || target > end || end - target < 24)
+      return -EOPNOTSUPP;
+    const uint32_t* block = (const void*)target;
+    if (!nm_load_at(block[0], 1, 19, struct_offset.dentry_ops) || !nm_move(block[1], 0, 19) || !nm_load(block[2], 3, 1)
+        || inst_get_ldr_imm_rt(block[2]) != 1 || !inst_is_blr(block[3]) || inst_get_blr_rn(block[3]) != 1
+        || !nm_load(block[4], 2, 19) || inst_get_ldr_imm_rt(block[4]) || inst_get_ldr_imm_imm(block[4])
+        || !inst_is_b(block[5]) || (uintptr_t)&block[5] + inst_get_b_label(block[5]) != (uintptr_t)&src[13])
+      return -EOPNOTSUPP;
+    return nm_dentry_prune_slot(inst_get_ldr_imm_imm(block[2]));
+  }
+  bool scs = inst_is_str_imm9(src[0]);
+  unsigned p = scs ? 5 : 4;
+  for (unsigned i = 0; i < p; i++)
+    if (!nm_rule_entry_save(src[i]))
+      return -EOPNOTSUPP;
+  if (!nm_load_at(src[p], 8, 0, offsetof(struct nm_dentry_head, d_parent))
+      || !nm_add_at(src[p + 1], 20, 0, struct_offset.dentry_lock))
+    return -EOPNOTSUPP;
+  unsigned flag;
+  if (pac) {
+    if (!inst_is_ldar(src[p + 2]) || inst_get_ldar_size(src[p + 2]) != 2 || inst_get_ldar_rn(src[p + 2]) != 20
+        || inst_get_ldar_rt(src[p + 2]) != 9 || !nm_compare(src[p + 3], 8, 0) || !inst_is_csel(src[p + 4])
+        || !inst_get_csel_sf(src[p + 4]) || inst_get_csel_rd(src[p + 4]) != 22 || inst_get_csel_rn(src[p + 4]) != 31
+        || inst_get_csel_rm(src[p + 4]) != 8 || inst_get_csel_cond(src[p + 4]) || !inst_is_cbz(src[p + 5])
+        || inst_get_cbz_sf(src[p + 5]) || inst_get_cbz_rt(src[p + 5]) != 9 || inst_get_cbz_label(src[p + 5]) <= 64
+        || !nm_load(src[p + 6], 2, 0) || inst_get_ldr_imm_rt(src[p + 6]) != 8 || inst_get_ldr_imm_imm(src[p + 6])
+        || !nm_move(src[p + 7], 19, 0) || !inst_is_movn_imm(src[p + 8]) || inst_get_movn_imm_sf(src[p + 8])
+        || inst_get_movn_imm_rd(src[p + 8]) != 9 || inst_get_movn_imm_hw(src[p + 8])
+        || inst_get_movn_imm_imm16(src[p + 8]) != 127
+        || !nm_store_at(src[p + 9], 2, 9, 0, struct_offset.dentry_lock + 4))
+      return -EOPNOTSUPP;
+    flag = p + 10;
+  } else {
+    if (!nm_move(src[p + 2], 19, 0) || !nm_compare(src[p + 3], 8, 0) || !nm_move(src[p + 4], 0, 20)
+        || !inst_is_csel(src[p + 5]) || !inst_get_csel_sf(src[p + 5]) || inst_get_csel_rd(src[p + 5]) != 22
+        || inst_get_csel_rn(src[p + 5]) != 31 || inst_get_csel_rm(src[p + 5]) != 8 || inst_get_csel_cond(src[p + 5])
+        || !inst_is_bl(src[p + 6])
+        || !nm_code_matches((uintptr_t)&src[p + 6] + inst_get_bl_label(src[p + 6]), dead, start, end)
+        || !nm_load(src[p + 7], 2, 19) || inst_get_ldr_imm_rt(src[p + 7]) != 8 || inst_get_ldr_imm_imm(src[p + 7]))
+      return -EOPNOTSUPP;
+    flag = p + 8;
+  }
+  if (!inst_is_tbz(src[flag]) || inst_get_tbz_rt(src[flag]) != 8 || inst_get_tbz_bit(src[flag]) != 4
+      || !nm_load_at(src[flag + 1], 8, 19, struct_offset.dentry_ops))
+    return -EOPNOTSUPP;
+  unsigned load = flag + 2, call;
+  int cb = scs ? 21 : 8;
+  if (scs) {
+    if (!nm_load(src[load], 3, 8) || inst_get_ldr_imm_rt(src[load]) != cb
+        || !nm_cfi_gate_stride(&src[load + 1], cb, 8, 8) || !nm_move(src[load + 7], 0, 19))
+      return -EOPNOTSUPP;
+    call = load + 8;
+  } else {
+    if (!nm_move(src[load], 0, 19) || !nm_load(src[++load], 3, 8) || inst_get_ldr_imm_rt(src[load]) != cb)
+      return -EOPNOTSUPP;
+    call = load + 1;
+  }
+  if (inst_get_tbz_label(src[flag]) <= (int)(call - flag) * 4 || !inst_is_blr(src[call])
+      || inst_get_blr_rn(src[call]) != cb)
+    return -EOPNOTSUPP;
+  return nm_dentry_prune_slot(inst_get_ldr_imm_imm(src[load]));
+}
+
+static int nm_find_directory_actor(const uint32_t* src) {
+  int old = nm_find_directory_actor_legacy(src);
+  if (!old || old == -EINVAL)
+    return old;
+  if (inst_is_paciasp(src[0]))
+    src++;
+  int dentry = struct_offset.file_inode_ops - (int)offsetof(struct nm_file_path_inode_ops, f_inode)
+               + (int)offsetof(struct nm_file_path_inode_ops, f_path.dentry);
+  bool gcc = nm_move(src[4], 20, 0);
+  unsigned p = inst_is_str_imm9(src[0]) ? 6 : 4, a, call;
+  for (unsigned i = 0; i < p; i++)
+    if (!nm_rule_entry_save(src[i]))
+      return -EOPNOTSUPP;
+  if (gcc) {
+    if (!nm_move(src[5], 19, 1) || !nm_load_at(src[6], 0, 1, offsetof(struct nm_dir_context, pos))
+        || !inst_is_cbz(src[7]) || !inst_get_cbz_sf(src[7]) || inst_get_cbz_rt(src[7])
+        || inst_get_cbz_label(src[7]) != 32)
+      return -EOPNOTSUPP;
+    a = 15;
+    if (!nm_load_at(src[a], 3, 20, dentry) || !nm_move(src[a + 1], 0, 1)
+        || !nm_load_at(src[a + 2], 6, 1, offsetof(struct nm_dir_context, actor)) || !inst_is_adrp(src[a + 3])
+        || inst_get_adrp_rd(src[a + 3]) != 1 || !inst_is_add_imm(src[a + 4]) || !inst_get_add_imm_sf(src[a + 4])
+        || inst_get_add_imm_rd(src[a + 4]) != 1 || inst_get_add_imm_rn(src[a + 4]) != 1
+        || !nm_movz_value(src[a + 5], 0, 2, 1)
+        || !nm_load_at(src[a + 6], 4, 3, offsetof(struct nm_dentry_head, d_inode))
+        || !nm_movz_value(src[a + 7], 0, 5, 4) || !nm_zero64(src[a + 8], 3)
+        || !nm_load_at(src[a + 9], 4, 4, struct_offset.inode_number) || !inst_is_blr(src[a + 10])
+        || inst_get_blr_rn(src[a + 10]) != 6)
+      return -EOPNOTSUPP;
+    call = a + 10;
+  } else {
+    int file = p == 4 ? 20 : inst_get_mov_reg_rd(src[p + 2]);
+    if (!nm_load_at(src[p], 8, 1, offsetof(struct nm_dir_context, pos)) || !nm_move(src[p + 1], 19, 1)
+        || (file != 20 && file != 22) || !nm_move(src[p + 2], file, 0) || !inst_is_subs_imm(src[p + 3])
+        || !inst_get_subs_imm_sf(src[p + 3]) || inst_get_subs_imm_rd(src[p + 3]) != 31
+        || inst_get_subs_imm_rn(src[p + 3]) != 8 || inst_get_subs_imm_imm(src[p + 3]) != 1
+        || !inst_is_b_cond(src[p + 4]) || inst_get_b_cond_cond(src[p + 4]) || inst_get_b_cond_label(src[p + 4]) <= 48
+        || !inst_is_cbnz(src[p + 5]) || !inst_get_cbnz_sf(src[p + 5]) || inst_get_cbnz_rt(src[p + 5]) != 8
+        || inst_get_cbnz_label(src[p + 5]) <= 48)
+      return -EOPNOTSUPP;
+    a = p + 6;
+    if (p == 4) {
+      if (!nm_load_at(src[a], 8, file, dentry) || !inst_is_adrp(src[a + 1]) || inst_get_adrp_rd(src[a + 1]) != 1
+          || !nm_load_at(src[a + 2], 9, 19, offsetof(struct nm_dir_context, actor)) || !inst_is_add_imm(src[a + 3])
+          || !inst_get_add_imm_sf(src[a + 3]) || inst_get_add_imm_rd(src[a + 3]) != 1
+          || inst_get_add_imm_rn(src[a + 3]) != 1 || !nm_move(src[a + 4], 0, 19) || !nm_movz_value(src[a + 5], 0, 2, 1)
+          || !nm_zero64(src[a + 6], 3) || !nm_movz_value(src[a + 7], 0, 5, 4)
+          || !nm_load_at(src[a + 8], 8, 8, offsetof(struct nm_dentry_head, d_inode))
+          || !nm_load_at(src[a + 9], 4, 8, struct_offset.inode_number) || !inst_is_blr(src[a + 10])
+          || inst_get_blr_rn(src[a + 10]) != 9)
+        return -EOPNOTSUPP;
+      call = a + 10;
+    } else {
+      int cb = file == 20 ? 21 : 20;
+      if (!nm_load_at(src[a], cb, 19, offsetof(struct nm_dir_context, actor))
+          || !nm_cfi_gate_stride(&src[a + 1], cb, 8, 44) || !nm_zero64(src[a + 7], 3)
+          || !nm_load_at(src[a + 8], 8, file, dentry) || !inst_is_adrp(src[a + 9]) || inst_get_adrp_rd(src[a + 9]) != 1
+          || !inst_is_add_imm(src[a + 10]) || !inst_get_add_imm_sf(src[a + 10]) || inst_get_add_imm_rd(src[a + 10]) != 1
+          || inst_get_add_imm_rn(src[a + 10]) != 1 || !nm_movz_value(src[a + 11], 0, 2, 1)
+          || !nm_load_at(src[a + 12], 8, 8, offsetof(struct nm_dentry_head, d_inode))
+          || !nm_movz_value(src[a + 13], 0, 5, 4) || !nm_move(src[a + 14], 0, 19)
+          || !nm_load_at(src[a + 15], 4, 8, struct_offset.inode_number) || !inst_is_blr(src[a + 16])
+          || inst_get_blr_rn(src[a + 16]) != cb)
+        return -EOPNOTSUPP;
+      call = a + 16;
+    }
+    if (inst_get_b_cond_label(src[p + 4]) <= (int)(call - p - 4) * 4
+        || inst_get_cbnz_label(src[p + 5]) <= (int)(call - p - 5) * 4)
+      return -EOPNOTSUPP;
+  }
+  if (!inst_is_cbnz(src[call + 1]) || inst_get_cbnz_sf(src[call + 1]) || inst_get_cbnz_rt(src[call + 1]) != 0)
+    return -EOPNOTSUPP;
+  return 0;
+}
+
 static int calculate_function_directory_callbacks(void) {
   const uint32_t* kill = (const void*)kallsyms_lookup_name_by_suffix("__dentry_kill");
   const uint32_t* actor = (const void*)kallsyms_lookup_name_by_suffix("empty_dir_readdir");
@@ -1715,7 +2883,7 @@ static int calculate_function_directory_callbacks(void) {
 }
 
 // inode_permission包装层首7条核对NULL mount及inode/mask传递；原生入口读取x1和w2。
-static int calculate_function_permission_abi(void) {
+static int calculate_function_permission_abi_legacy(void) {
   const uint32_t* src = (const void*)kallsyms_lookup_name_by_suffix("inode_permission");
   const uint32_t* native = (const void*)kallsyms_lookup_name_by_suffix("inode_permission2");
   if (!src || !native)
@@ -1748,8 +2916,70 @@ static int calculate_function_permission_abi(void) {
   return 0;
 }
 
+// 区分原生两参入口与NULL mount的三参包装；按实参来源匹配，不按内核版本选ABI。
+static int calculate_function_permission_abi(void) {
+  int old = calculate_function_permission_abi_legacy();
+  if (!old || old == -EINVAL)
+    return old;
+  const uint32_t* src = (const void*)kallsyms_lookup_name_by_suffix("inode_permission");
+  const uint32_t* native = (const void*)kallsyms_lookup_name_by_suffix("inode_permission2");
+  if (!src)
+    return -ENOENT;
+  if (!native) {
+    unsigned int i = 0;
+    while (i < 8 && nm_vfs_frame_save(src[i])) i++;
+    if (i == 8 || !nm_move32(src[i], 19, 1) || !nm_move(src[i + 1], 20, 0) || !inst_is_tbnz(src[i + 2])
+        || inst_get_tbnz_rt(src[i + 2]) != 1 || inst_get_tbnz_bit(src[i + 2]) != 1
+        || inst_get_tbnz_label(src[i + 2]) <= 4 || !nm_load(src[i + 3], 0, 20) || inst_get_ldr_imm_rt(src[i + 3]) != 8
+        || inst_get_ldr_imm_imm(src[i + 3]) != offsetof(struct nm_inode_owner_prefix, i_opflags)
+        || !inst_is_tbz(src[i + 4]) || inst_get_tbz_rt(src[i + 4]) != 8 || inst_get_tbz_bit(src[i + 4])
+        || inst_get_tbz_label(src[i + 4]) <= 4 || !nm_move(src[i + 5], 0, 20) || !nm_move32(src[i + 6], 1, 19)
+        || !inst_is_bl(src[i + 7]))
+      return old;
+    uintptr_t target = kallsyms_lookup_name_by_suffix("generic_permission");
+    if (!target || (uintptr_t)&src[i + 7] + inst_get_bl_label(src[i + 7]) != target)
+      return -EOPNOTSUPP;
+    struct_offset.permission_abi = 1;
+    return 0;
+  }
+  unsigned int call;
+  uintptr_t call_target = (uintptr_t)native;
+  if (nm_rule_entry_save(src[0]) && nm_rule_entry_save(src[1]) && nm_move32(src[2], 2, 1) && nm_move(src[3], 1, 0)
+      && nm_zero64(src[4], 0) && inst_is_bl(src[5])) {
+    call = 5;
+    // 新三参入口：最短两条序言后检查mask，或先保存mount/inode/mask后检查。
+    if (!nm_rule_entry_save(native[0]) || !nm_rule_entry_save(native[1]))
+      return -EOPNOTSUPP;
+    bool compact = inst_is_tbnz(native[2]) && inst_get_tbnz_rt(native[2]) == 2 && inst_get_tbnz_bit(native[2]) == 1
+                   && inst_get_tbnz_label(native[2]) > 4;
+    bool saved = nm_rule_entry_save(native[2]) && nm_rule_entry_save(native[3]) && nm_move32(native[4], 19, 2)
+                 && nm_move(native[5], 20, 1) && nm_move(native[6], 8, 0) && inst_is_tbnz(native[7])
+                 && inst_get_tbnz_rt(native[7]) == 2 && inst_get_tbnz_bit(native[7]) == 1
+                 && inst_get_tbnz_label(native[7]) > 4;
+    if (!compact && !saved)
+      return -EOPNOTSUPP;
+  } else if (nm_rule_entry_save(src[0]) && nm_move32(src[1], 2, 1) && nm_move(src[2], 3, 0)
+             && nm_rule_entry_save(src[3]) && nm_load_at(src[4], 0, 0, struct_offset.inode_superblock)
+             && inst_is_tbnz(src[5]) && inst_get_tbnz_rt(src[5]) == 2 && inst_get_tbnz_bit(src[5]) == 1
+             && inst_get_tbnz_label(src[5]) > 4 && nm_zero64(src[6], 0) && nm_move(src[7], 1, 3) && inst_is_bl(src[8])
+             && nm_rule_entry_save(native[0]) && nm_rule_entry_save(native[1])
+             && nm_load_at(native[2], 3, 1, struct_offset.inode_superblock) && inst_is_tbnz(native[3])
+             && inst_get_tbnz_rt(native[3]) == 2 && inst_get_tbnz_bit(native[3]) == 1) {
+    call = 8;
+    call_target = kallsyms_lookup_name_by_suffix("__inode_permission2");
+    if (!call_target)
+      return -ENOENT;
+  } else
+    return -EOPNOTSUPP;
+  if (!nm_code_matches((uintptr_t)&src[call] + inst_get_bl_label(src[call]), call_target,
+                       kallsyms_lookup_name("_stext"), kallsyms_lookup_name("_etext")))
+    return -EOPNOTSUPP;
+  struct_offset.permission_abi = 0;
+  return 0;
+}
+
 // generic_shutdown_super固定35／25条前缀；保存的sb／s_op跨原生BL保持在x19／x20。
-static int nm_find_super_lifecycle(const uint32_t* src) {
+static int nm_find_super_lifecycle_legacy(const uint32_t* src) {
   bool saved = nm_rule_entry_save(src[0]) && inst_is_sub_imm(src[1]);
   unsigned int at;
   if (saved) {
@@ -1808,6 +3038,98 @@ static int nm_find_super_lifecycle(const uint32_t* src) {
   struct_offset.sop_drop_inode = first + offsetof(struct nm_super_lifecycle_ops, drop_inode);
   struct_offset.sop_evict_inode = first + offsetof(struct nm_super_lifecycle_ops, evict_inode);
   return 0;
+}
+
+// 新GCC/Clang入口：先证实sb/s_op的保存，再只接受不改写x19/x20的已核对前缀。
+// 最长到PAC目标的第45条；不在整个函数内搜索回调加载。
+static int nm_find_super_lifecycle(const uint32_t* src) {
+  int old = nm_find_super_lifecycle_legacy(src);
+  if (!old || old == -EINVAL)
+    return old;
+  unsigned int i = 0;
+  while (i < 6 && nm_vfs_frame_save(src[i])) i++;
+  int root;
+  unsigned int root_branch;
+  if (i == 3 && nm_move(src[i], 19, 0)) {
+    if (!nm_load(src[i + 1], 3, 0) || inst_get_ldr_imm_rt(src[i + 1]) != 1
+        || !nm_load_at(src[i + 2], 20, 0, offsetof(struct nm_super_head, s_op)))
+      return -EOPNOTSUPP;
+    root = 1;
+    i += 3;
+    if (!inst_is_cbz(src[i]) || !inst_get_cbz_sf(src[i]) || inst_get_cbz_rt(src[i]) != root
+        || inst_get_cbz_label(src[i]) <= 72)
+      return -EOPNOTSUPP;
+    root_branch = i++;
+  } else {
+    if ((i != 3 && i != 5 && i != 6) || !nm_load(src[i], 3, 0) || inst_get_ldr_imm_rt(src[i]) != 8
+        || !nm_move(src[i + 1], 19, 0) || !inst_is_cbz(src[i + 2]) || !inst_get_cbz_sf(src[i + 2])
+        || inst_get_cbz_rt(src[i + 2]) != 8 || inst_get_cbz_label(src[i + 2]) <= 80
+        || !nm_load_at(src[i + 3], 20, 19, offsetof(struct nm_super_head, s_op)))
+      return -EOPNOTSUPP;
+    root = 8;
+    root_branch = i + 2;
+    i += 4;
+  }
+  for (; i < 36; i++) {
+    uint32_t inst = src[i];
+    if (nm_load(inst, 3, 20)) {
+      int cb = inst_get_ldr_imm_rt(inst);
+      if ((cb != 1 && cb != 8) || !inst_is_cbz(src[i + 1]) || !inst_get_cbz_sf(src[i + 1])
+          || inst_get_cbz_rt(src[i + 1]) != cb)
+        return -EOPNOTSUPP;
+      unsigned int call = i + 2;
+      if (inst_is_adrp(src[call])) {
+        // CFI仅扩展为目标实际使用的2/3位旋转，其余关系与旧门禁逐项相同。
+        const uint32_t* gate = &src[call];
+        uint32_t rotate = gate[3];
+        int bits = inst_is_extr(rotate) ? inst_get_extr_imm6(rotate) : -1;
+        uint32_t normalized[6];
+        for (unsigned j = 0; j < 6; j++) normalized[j] = gate[j];
+        normalized[3] = (rotate & ~(63U << 10)) | (2U << 10);
+        if ((bits != 2 && bits != 3) || !nm_cfi_gate(normalized, cb, 9, 8))
+          return -EOPNOTSUPP;
+        call += 6;
+      }
+      if (call + 1 >= 45 || (int)root_branch * 4 + inst_get_cbz_label(src[root_branch]) <= (int)(call + 1) * 4
+          || inst_get_cbz_label(src[i + 1]) <= (int)(call - i) * 4 || !nm_move(src[call], 0, 19)
+          || !inst_is_blr(src[call + 1]) || inst_get_blr_rn(src[call + 1]) != cb)
+        return -EOPNOTSUPP;
+      int first = inst_get_ldr_imm_imm(inst) - (int)offsetof(struct nm_super_lifecycle_ops, put_super);
+      if (first < 0 || first % 8 || first > 0x7fff - sizeof(struct nm_super_lifecycle_ops))
+        return -EINVAL;
+      struct_offset.sop_drop_inode = first + offsetof(struct nm_super_lifecycle_ops, drop_inode);
+      struct_offset.sop_evict_inode = first + offsetof(struct nm_super_lifecycle_ops, evict_inode);
+      return 0;
+    }
+    if (nm_move(inst, 0, 19) || inst_is_bl(inst))
+      continue;
+    if (nm_load(inst, 3, 19) && (inst_get_ldr_imm_rt(inst) == 0 || inst_get_ldr_imm_rt(inst) == root))
+      continue;
+    if (inst_is_and_imm(inst) && inst_get_and_imm_sf(inst) && inst_get_and_imm_rd(inst) == root
+        && inst_get_and_imm_rn(inst) == root && inst_get_and_imm_imm(inst) == 0xffffffffbfffffffULL)
+      continue;
+    if (nm_store(inst, 3, 19) && inst_get_str_imm_rt(inst) == root)
+      continue;
+    if (i + 2 < 36 && inst_is_cbz(inst) && inst_get_cbz_sf(inst) && inst_get_cbz_rt(inst) == 0
+        && inst_get_cbz_label(inst) == 12 && nm_load(src[i - 1], 3, 19) && inst_get_ldr_imm_rt(src[i - 1]) == 0
+        && inst_is_bl(src[i + 1]) && nm_store_at(src[i + 2], 3, 31, 19, inst_get_ldr_imm_imm(src[i - 1]))) {
+      i += 2;
+      continue;
+    }
+    // Android静态键的两条条件调用：分支恰好跳过整个全局访问，不改动已保存对象。
+    if (i + 7 < 36 && inst_is_adrp(inst) && inst_get_adrp_rd(inst) == 8 && inst_is_add_imm(src[i + 1])
+        && inst_get_add_imm_sf(src[i + 1]) && inst_get_add_imm_rd(src[i + 1]) == 8
+        && inst_get_add_imm_rn(src[i + 1]) == 8 && inst_is_ldar(src[i + 2]) && inst_get_ldar_size(src[i + 2]) == 2
+        && inst_get_ldar_rt(src[i + 2]) == 8 && inst_get_ldar_rn(src[i + 2]) == 8 && inst_is_cbz(src[i + 3])
+        && !inst_get_cbz_sf(src[i + 3]) && inst_get_cbz_rt(src[i + 3]) == 8 && inst_get_cbz_label(src[i + 3]) == 20
+        && inst_is_bl(src[i + 4]) && inst_is_adrp(src[i + 5]) && inst_get_adrp_rd(src[i + 5]) == 8
+        && nm_load(src[i + 6], 3, 8) && inst_get_ldr_imm_rt(src[i + 6]) == 0 && inst_is_bl(src[i + 7])) {
+      i += 7;
+      continue;
+    }
+    return -EOPNOTSUPP;
+  }
+  return -EOPNOTSUPP;
 }
 
 static int calculate_function_super_callbacks(void) {
@@ -1890,7 +3212,7 @@ static int nm_find_set_acl(const uint32_t* src) {
   return inst_get_ldr_imm_imm(src[at]);
 }
 
-// super_cache_count首13／17／21条；由shrinker取得sb，再核对s_op及回调链。
+// 旧形态最坏读取27条（含CFI slowpath）；13／17／21仅是特定成功分支的消费长度。
 // nr_cached_objects和free_cached_objects连续，后者无需扫描较长的super_cache_scan。
 static int nm_find_super_cache(const uint32_t* src) {
   // shrinker入口没有flags前置检查的形态，sb来源及s_op/callback链仍完整核对。
@@ -1920,8 +3242,14 @@ static int nm_find_super_cache(const uint32_t* src) {
     return inst_get_ldr_imm_imm(src[14]);
   }
   int flag = nm_sub_from(src[0], 8, 0);
+  // 不匹配旧SUB入口时立即拒绝，不能为了判别旧CFI形态预读第21／25条。
+  if (flag < 0)
+    return -EOPNOTSUPP;
   int ops = nm_sub_from(src[11], 8, 0);
-  int sb = nm_sub_from(src[20], 22, 19);
+  if (ops < 0)
+    return -EOPNOTSUPP;
+  bool slowpath = inst_is_movk_imm(src[20]);
+  int sb = slowpath ? nm_sub_from(src[24], 0, 19) : nm_sub_from(src[20], 22, 19);
   if (flag < 0 || ops < 0 || sb < 0 || sb - ops != offsetof(struct nm_super_head, s_op) || !nm_load(src[1], 0, 8)
       || inst_get_ldr_imm_rt(src[1]) != 8 || inst_get_ldr_imm_imm(src[1]) || !inst_is_tbnz(src[2])
       || inst_get_tbnz_rt(src[2]) != 8 || inst_get_tbnz_bit(src[2]) != 5 || inst_get_tbnz_label(src[2]) != 12
@@ -1933,7 +3261,141 @@ static int nm_find_super_cache(const uint32_t* src) {
       || !inst_is_movz_imm(src[18]) || !inst_get_movz_imm_sf(src[18]) || inst_get_movz_imm_rd(src[18]) != 0
       || !nm_move(src[19], 1, 21))
     return -EOPNOTSUPP;
+  if (slowpath) {
+    if (inst_get_movz_imm_hw(src[18]))
+      return -EOPNOTSUPP;
+    for (unsigned int i = 20; i < 23; i++) {
+      if (!inst_is_movk_imm(src[i]) || !inst_get_movk_imm_sf(src[i]) || inst_get_movk_imm_rd(src[i]) != 0
+          || inst_get_movk_imm_hw(src[i]) != i - 19)
+        return -EOPNOTSUPP;
+    }
+    uintptr_t cfi = kallsyms_lookup_name_by_suffix("__cfi_slowpath");
+    if (!cfi || !inst_is_bl(src[23]) || (uintptr_t)&src[23] + inst_get_bl_label(src[23]) != cfi
+        || !nm_move(src[25], 1, 20) || !inst_is_blr(src[26]) || inst_get_blr_rn(src[26]) != 21)
+      return -EOPNOTSUPP;
+  }
   return inst_get_ldr_imm_imm(src[16]);
+}
+
+static int nm_find_set_acl_vfs(const uint32_t* src) {
+  int old = nm_find_set_acl(src);
+  if (old >= 0 || old == -EINVAL)
+    return old;
+  unsigned p = 0;
+  while (p < 9 && nm_vfs_frame_save(src[p])) p++;
+  int reg = inst_get_ldr_imm_rt(src[p]);
+  bool gcc = reg == 3;
+  if ((p != 4 && p != 5 && p != 9) || (reg != 3 && reg != 8)
+      || !nm_load_at(src[p], reg, 0, struct_offset.inode_superblock) || !nm_load(src[p + 1], gcc ? 3 : 0, reg)
+      || inst_get_ldr_imm_rt(src[p + 1]) != reg
+      || inst_get_ldr_imm_imm(src[p + 1]) != (offsetof(struct nm_super_head, s_flags) + (gcc ? 0 : 2))
+      || !inst_is_tbz(src[p + 2]) || inst_get_tbz_rt(src[p + 2]) != reg
+      || inst_get_tbz_bit(src[p + 2]) != (gcc ? 16 : 0) || inst_get_tbz_label(src[p + 2]) <= 16
+      || !nm_load_at(src[p + 3], reg, 0, struct_offset.inode_superblock - 8))
+    return -EOPNOTSUPP;
+  unsigned load = p + 4;
+  if (!gcc) {
+    if (!nm_move(src[load], 20, 0))
+      return -EOPNOTSUPP;
+    load++;
+  }
+  if (!nm_load(src[load], 3, reg) || inst_get_ldr_imm_rt(src[load]) != reg || !nm_forward_null(src[load + 1], reg))
+    return -EOPNOTSUPP;
+  return inst_get_ldr_imm_imm(src[load]);
+}
+
+static int nm_find_super_cache_vfs(const uint32_t* src) {
+  int old = nm_find_super_cache(src);
+  if (old >= 0 || old == -EINVAL)
+    return old;
+  if (inst_is_paciasp(src[0]))
+    src++;
+  if (nm_sub_from(src[1], 4, 0) > 0) {
+    if (!nm_rule_entry_save(src[0]) || !nm_rule_entry_save(src[2]) || !nm_rule_entry_save(src[3])
+        || !nm_rule_entry_save(src[4]) || !nm_move(src[5], 20, 1)
+        || !nm_load_at(src[6], 3, 4, offsetof(struct nm_super_head, s_flags)) || !inst_is_and_imm(src[7])
+        || !inst_get_and_imm_sf(src[7]) || inst_get_and_imm_rd(src[7]) != 2 || inst_get_and_imm_rn(src[7]) != 3
+        || inst_get_and_imm_imm(src[7]) != 0x20000000 || !inst_is_tbz(src[8]) || inst_get_tbz_rt(src[8]) != 3
+        || inst_get_tbz_bit(src[8]) != 29 || inst_get_tbz_label(src[8]) <= 32 || !nm_move(src[9], 21, 0)
+        || !inst_is_dmb_ishld(src[10]) || !nm_load_at(src[11], 0, 4, offsetof(struct nm_super_head, s_op))
+        || !nm_forward_null(src[12], 0) || !nm_load(src[13], 3, 0) || inst_get_ldr_imm_rt(src[13]) != 2
+        || !nm_forward_null(src[14], 2) || !nm_move(src[15], 0, 4) || !inst_is_blr(src[16])
+        || inst_get_blr_rn(src[16]) != 2)
+      return -EOPNOTSUPP;
+    return inst_get_ldr_imm_imm(src[13]);
+  }
+  unsigned p = 0;
+  while (p < 5 && nm_vfs_frame_save(src[p])) p++;
+  int flag = nm_sub_from(src[p], 8, 0), sb = nm_sub_from(src[p + 5], 20, 0);
+  if ((p != 4 && p != 5) || flag <= 0 || sb - flag != offsetof(struct nm_super_head, s_flags) + 3
+      || !nm_load(src[p + 1], 0, 8) || inst_get_ldr_imm_rt(src[p + 1]) != 8 || inst_get_ldr_imm_imm(src[p + 1])
+      || !inst_is_tbnz(src[p + 2]) || inst_get_tbnz_rt(src[p + 2]) != 8 || inst_get_tbnz_bit(src[p + 2]) != 5
+      || inst_get_tbnz_label(src[p + 2]) != 12 || !nm_zero64(src[p + 3], 0) || !inst_is_b(src[p + 4])
+      || inst_get_b_label(src[p + 4]) <= 64 || !inst_is_dmb_ishld(src[p + 6]))
+    return -EOPNOTSUPP;
+  bool moved = nm_move(src[p + 7], 19, 1);
+  if (moved ? !nm_load_at(src[p + 8], 8, 20, offsetof(struct nm_super_head, s_op))
+            : (!nm_load_at(src[p + 7], 8, 20, offsetof(struct nm_super_head, s_op)) || !nm_move(src[p + 8], 19, 1)))
+    return -EOPNOTSUPP;
+  int cb = inst_get_ldr_imm_rt(src[p + 10]);
+  if (!nm_forward_null(src[p + 9], 8) || !nm_load(src[p + 10], 3, 8) || (cb != 8 && cb != 21)
+      || !nm_forward_null(src[p + 11], cb))
+    return -EOPNOTSUPP;
+  unsigned call = p + 12;
+  if (cb == 21) {
+    if (!inst_is_movz_imm(src[call]) || !inst_get_movz_imm_sf(src[call]) || inst_get_movz_imm_rd(src[call])
+        || inst_get_movz_imm_hw(src[call]))
+      return -EOPNOTSUPP;
+    for (unsigned j = 1; j < 4; j++)
+      if (!inst_is_movk_imm(src[call + j]) || !inst_get_movk_imm_sf(src[call + j])
+          || inst_get_movk_imm_rd(src[call + j]) || inst_get_movk_imm_hw(src[call + j]) != j)
+        return -EOPNOTSUPP;
+    if (!nm_move(src[call + 4], 1, 21) || !inst_is_bl(src[call + 5])
+        || (uintptr_t)&src[call + 5] + inst_get_bl_label(src[call + 5])
+               != kallsyms_lookup_name_by_suffix("__cfi_slowpath"))
+      return -EOPNOTSUPP;
+    call += 6;
+  } else if (inst_is_adrp(src[call])) {
+    if (!nm_cfi_gate_stride(&src[call], 8, 9, 12))
+      return -EOPNOTSUPP;
+    call += 6;
+  }
+  if (!nm_move(src[call], 0, 20) || !nm_move(src[call + 1], 1, 19) || !inst_is_blr(src[call + 2])
+      || inst_get_blr_rn(src[call + 2]) != cb || inst_get_cbz_label(src[p + 9]) <= (int)(call + 2 - p - 9) * 4
+      || inst_get_cbz_label(src[p + 11]) <= (int)(call + 2 - p - 11) * 4)
+    return -EOPNOTSUPP;
+  return inst_get_ldr_imm_imm(src[p + 10]);
+}
+
+// list_lru_count_node在首5条（PAC为7条）按真正的node数组步长取最后nr_items。
+// 已核对node的自然尾部止于48字节，唯一额外对齐来自SMP_CACHE_BYTES；只接64/128。
+static int nm_find_operation_alignment(const uint32_t* src) {
+  bool pac = inst_is_paciasp(src[0]);
+  if (pac)
+    src++;
+  int shift, base;
+  if (nm_load_at(src[0], 0, 0, 0)) {
+    if (!inst_is_sbfm(src[1]) || !inst_get_sbfm_sf(src[1]) || !inst_get_sbfm_n(src[1]) || inst_get_sbfm_rd(src[1]) != 1
+        || inst_get_sbfm_rn(src[1]) != 1 || inst_get_sbfm_imms(src[1]) != 31 || !inst_is_add_reg(src[2])
+        || !inst_get_add_reg_sf(src[2]) || inst_get_add_reg_rd(src[2]) != 1 || inst_get_add_reg_rn(src[2])
+        || inst_get_add_reg_rm(src[2]) != 1 || inst_get_add_reg_shift(src[2]) || inst_get_add_reg_imm6(src[2]))
+      return -EOPNOTSUPP;
+    shift = 64 - inst_get_sbfm_immr(src[1]);
+    base = 1;
+  } else {
+    if (!nm_load_at(src[0], 8, 0, 0) || !inst_is_sbfm(src[1]) || !inst_get_sbfm_sf(src[1]) || !inst_get_sbfm_n(src[1])
+        || inst_get_sbfm_rd(src[1]) != 9 || inst_get_sbfm_rn(src[1]) != 1 || inst_get_sbfm_immr(src[1])
+        || inst_get_sbfm_imms(src[1]) != 31 || !inst_is_add_reg(src[2]) || !inst_get_add_reg_sf(src[2])
+        || inst_get_add_reg_rd(src[2]) != 8 || inst_get_add_reg_rn(src[2]) != 8 || inst_get_add_reg_rm(src[2]) != 9
+        || inst_get_add_reg_shift(src[2]))
+      return -EOPNOTSUPP;
+    shift = inst_get_add_reg_imm6(src[2]);
+    base = 8;
+  }
+  if ((shift != 6 && shift != 7) || !nm_load_at(src[3], 0, base, offsetof(struct nm_list_lru_node_members, nr_items))
+      || (pac && !inst_is_autiasp(src[4])) || !inst_is_ret(src[pac ? 5 : 4]) || inst_get_ret_rn(src[pac ? 5 : 4]) != 30)
+    return -EOPNOTSUPP;
+  return 1U << shift;
 }
 
 static int nm_find_dentry_canonical(const uintptr_t* table, uintptr_t callback, uintptr_t start, uintptr_t end) {
@@ -1948,6 +3410,64 @@ static int nm_find_dentry_canonical(const uintptr_t* table, uintptr_t callback, 
     found = slot * sizeof(void*);
   }
   return found;
+}
+
+// d_set_d_op逐项确认所有前置DCACHE_OP标志，再取DCACHE_OP_REAL的加载槽；最长47条。
+static int nm_find_dentry_real(const uint32_t* src) {
+  bool pac = inst_is_paciasp(src[0]);
+  if (pac)
+    src++;
+  bool gcc = nm_load_at(src[0], 2, 0, struct_offset.dentry_ops);
+  int flag = gcc ? 2 : 8, mask = gcc ? 3 : 9;
+  if (!nm_load_at(src[0], flag, 0, struct_offset.dentry_ops) || !inst_is_cbnz(src[1]) || !inst_get_cbnz_sf(src[1])
+      || inst_get_cbnz_rt(src[1]) != flag || inst_get_cbnz_label(src[1]) <= 160 || !nm_load(src[2], 2, 0)
+      || inst_get_ldr_imm_rt(src[2]) != flag || inst_get_ldr_imm_imm(src[2]) || !nm_movz_value(src[3], 0, mask, 0x80f)
+      || !inst_is_movk_imm(src[4]) || inst_get_movk_imm_sf(src[4]) || inst_get_movk_imm_rd(src[4]) != mask
+      || inst_get_movk_imm_hw(src[4]) != 1 || inst_get_movk_imm_imm16(src[4]) != 0x400 || !inst_is_ands_reg(src[5])
+      || inst_get_ands_reg_sf(src[5]) || inst_get_ands_reg_rd(src[5]) != 31 || inst_get_ands_reg_rn(src[5]) != flag
+      || inst_get_ands_reg_rm(src[5]) != mask || inst_get_ands_reg_shift(src[5]) || inst_get_ands_reg_imm6(src[5])
+      || !inst_is_b_cond(src[6]) || inst_get_b_cond_cond(src[6]) != 1 || inst_get_b_cond_label(src[6]) <= 144
+      || !nm_store_at(src[7], 3, 1, 0, struct_offset.dentry_ops) || !nm_forward_null(src[8], 1))
+    return -EOPNOTSUPP;
+  const int slots[] = {
+      offsetof(struct nm_dentry_control_ops, d_hash),       offsetof(struct nm_dentry_control_ops, d_compare),
+      offsetof(struct nm_dentry_control_ops, d_revalidate), offsetof(struct nm_dentry_control_ops, d_weak_revalidate),
+      offsetof(struct nm_dentry_control_ops, d_delete),     -1};
+  const unsigned flags[] = {1, 2, 4, 0x800, 8, 0x10, 0x4000000};
+  unsigned at = 9;
+  int real = -1;
+  for (unsigned j = 0; j < 7; j++) {
+    if (!nm_load(src[at], 3, 1))
+      return -EOPNOTSUPP;
+    int cb = inst_get_ldr_imm_rt(src[at]), slot = inst_get_ldr_imm_imm(src[at]);
+    if (j < 6
+        && slot
+               != (j == 5 ? struct_offset.dop_release + (int)offsetof(struct nm_dentry_release_prune, d_prune)
+                          : slots[j]))
+      return -EOPNOTSUPP;
+    if (j == 6)
+      real = slot;
+    if (!nm_forward_null(src[at + 1], cb))
+      return -EOPNOTSUPP;
+    unsigned branch = at + 1;
+    at += 2;
+    if (!(gcc && j == 0)) {
+      if (!nm_load(src[at], 2, 0) || inst_get_ldr_imm_imm(src[at]))
+        return -EOPNOTSUPP;
+      flag = inst_get_ldr_imm_rt(src[at++]);
+    }
+    if (!inst_is_orr_imm(src[at]) || inst_get_orr_imm_sf(src[at]) || inst_get_orr_imm_rd(src[at]) != flag
+        || inst_get_orr_imm_rn(src[at]) != flag || inst_get_orr_imm_imm(src[at]) != flags[j]
+        || !nm_store_at(src[at + 1], 2, flag, 0, 0))
+      return -EOPNOTSUPP;
+    at += 2;
+    if (inst_get_cbz_label(src[branch]) != (int)(at - branch) * 4)
+      return -EOPNOTSUPP;
+  }
+  if (inst_get_cbz_label(src[8]) != (int)(at - 8) * 4 || (pac && !inst_is_autiasp(src[at]))
+      || !inst_is_ret(src[at + pac]) || inst_get_ret_rn(src[at + pac]) != 30 || real < 0 || real % 8)
+    return -EOPNOTSUPP;
+  return real;
 }
 
 static int nm_tail_extent(int offset, unsigned int span, unsigned int alignment) {
@@ -1992,13 +3512,55 @@ static int nm_set_operation_extents(int acl, int cache, int canonical) {
   return 0;
 }
 
+// d_real只用于无sdcardfs路径。整套契约与原canonical路径分开，禁止跨声明拼接。
+// 该几何只覆盖已离线核对的声明，不能证明未知厂商没有额外尾部（AUD-001）。
+static int nm_set_operation_extents_real(int acl, int cache, int real) {
+  struct nm_operation_geometry {
+    int acl_from_getattr;
+    int cache_from_drop;
+    int real_from_release;
+    int init;
+    int release;
+    int evict_from_drop;
+  } actual = {acl - struct_offset.iop_getattr,  cache - struct_offset.sop_drop_inode,
+              real - struct_offset.dop_release, struct_offset.dop_init,
+              struct_offset.dop_release,        struct_offset.sop_evict_inode - struct_offset.sop_drop_inode},
+    expected = {offsetof(struct nm_inode_acl_tail, set_acl),
+                offsetof(struct nm_super_context_no_umount_end_tail, reporting.cache),
+                offsetof(struct nm_dentry_real_reserved_tail, real),
+                sizeof(struct nm_dentry_control_ops),
+                sizeof(struct nm_dentry_control_ops) + sizeof(void*),
+                sizeof(void*)};
+  if (acl < 0 || cache < 0 || real < 0 || actual.acl_from_getattr != expected.acl_from_getattr
+      || actual.cache_from_drop != expected.cache_from_drop || actual.real_from_release != expected.real_from_release
+      || actual.init != expected.init || actual.release != expected.release
+      || actual.evict_from_drop != expected.evict_from_drop)
+    return -EOPNOTSUPP;
+  int inode = nm_tail_extent(struct_offset.iop_getattr, sizeof(struct nm_inode_acl_tail), 64);
+  int super = nm_tail_extent(struct_offset.sop_drop_inode, sizeof(struct nm_super_context_no_umount_end_tail), 8);
+  int dentry = nm_tail_extent(struct_offset.dop_release, sizeof(struct nm_dentry_real_reserved_tail), 64);
+  if (inode < 0 || super < 0 || dentry < 0)
+    return -EINVAL;
+  struct_offset.inode_ops_size = inode;
+  struct_offset.super_ops_size = super;
+  struct_offset.dentry_ops_size = dentry;
+  return 0;
+}
+
 static int calculate_function_operation_sizes(void) {
+  nm_operation_anchor = NM_OPERATION_ANCHOR_NONE;
   const uint32_t* acl = (const void*)kallsyms_lookup_name_by_suffix("set_posix_acl");
   const uint32_t* count = (const void*)kallsyms_lookup_name_by_suffix("super_cache_count");
   const uintptr_t* dops = (const void*)kallsyms_lookup_name_by_suffix("sdcardfs_ci_dops");
   uintptr_t canonical = kallsyms_lookup_name_by_suffix("sdcardfs_canonical_path");
-  if (!acl || !count || !dops || !canonical)
+  if (!acl || !count || (!!dops != !!canonical))
     return -ENOENT;
+  const uint32_t* real = NULL;
+  if (!dops && !canonical) {
+    real = (const void*)kallsyms_lookup_name_by_suffix("d_set_d_op");
+    if (!real)
+      return -ENOENT;
+  }
   // 只调用字段探测，不调用要求完整尺寸的公共校验器，避免准备阶段循环依赖。
   int rc = calculate_function_inode_callbacks();
   if (!rc)
@@ -2009,19 +3571,241 @@ static int calculate_function_operation_sizes(void) {
     rc = calculate_function_directory_callbacks();
   if (rc)
     return rc;
-  int last_acl = nm_find_set_acl(acl);
-  int last_cache = nm_find_super_cache(count);
-  int last_canonical =
-      nm_find_dentry_canonical(dops, canonical, kallsyms_lookup_name("_stext"), kallsyms_lookup_name("_etext"));
-  if (last_acl < 0 || last_cache < 0 || last_canonical < 0)
-    return last_acl < 0 ? last_acl : last_cache < 0 ? last_cache : last_canonical;
-  rc = nm_set_operation_extents(last_acl, last_cache, last_canonical);
+  int last_acl = nm_find_set_acl_vfs(acl);
+  int last_cache = nm_find_super_cache_vfs(count);
+  if (last_acl < 0 || last_cache < 0)
+    return last_acl < 0 ? last_acl : last_cache;
+  // 新VFS形态还需原生node步长确认64字节类型对齐，不能将128字节目标套入旧尾部。
+  // 旧识别器已支持的声明保持原入口契约，不增加新的符号前提。
+  if (nm_find_set_acl(acl) < 0 || nm_find_super_cache(count) < 0) {
+    const uint32_t* alignment = (const void*)kallsyms_lookup_name_by_suffix("list_lru_count_node");
+    if (!alignment)
+      return -ENOENT;
+    if (nm_find_operation_alignment(alignment) != 64)
+      return -EOPNOTSUPP;
+  }
+  if (dops) {
+    nm_operation_anchor = NM_OPERATION_ANCHOR_SDCARDFS;
+    nm_log_info("layout: operation anchor=sdcardfs\n");
+    int last_canonical =
+        nm_find_dentry_canonical(dops, canonical, kallsyms_lookup_name("_stext"), kallsyms_lookup_name("_etext"));
+    if (last_canonical < 0)
+      return last_canonical;
+    rc = nm_set_operation_extents(last_acl, last_cache, last_canonical);
+  } else {
+    nm_operation_anchor = NM_OPERATION_ANCHOR_D_REAL;
+    nm_log_info("layout: operation anchor=d_set_d_op\n");
+    int last_real = nm_find_dentry_real(real);
+    if (last_real < 0)
+      return last_real;
+    rc = nm_set_operation_extents_real(last_acl, last_cache, last_real);
+  }
   if (!rc)
     nm_log_info("layout: operation extents inode/super/dentry=%d/%d/%d\n", struct_offset.inode_ops_size,
                 struct_offset.super_ops_size, struct_offset.dentry_ops_size);
   return rc;
 }
 
+// 源锁锚点：固定前缀内证明 entry dentry→inode→ADD→成对helper。
+// 只处理前向分支；合流取来源交集，未知写寄存器指令和回边均拒绝。
+struct nm_inode_lock_flow {
+  uint32_t dentry, inode;
+  int phase;
+  bool reached, branch;
+};
+
+static int nm_inode_lock_merge(struct nm_inode_lock_flow* to, struct nm_inode_lock_flow from, bool branch) {
+  if (to->reached) {
+    if (to->phase != from.phase)
+      return -EINVAL;
+    to->dentry &= from.dentry;
+    to->inode &= from.inode;
+  } else {
+    to->dentry = from.dentry;
+    to->inode = from.inode;
+    to->phase = from.phase;
+    to->reached = true;
+  }
+  to->branch |= branch;
+  return 0;
+}
+
+// 仅归一化核心代码区内的 BTI C + 单条直接B；不追未知veneer。
+static uintptr_t nm_inode_lock_body(uintptr_t at, uintptr_t start, uintptr_t end) {
+  if (!at || at % 4 || !start || end <= start || end - start < 8 || at < start || at > end - 8)
+    return 0;
+  const uint32_t* src = (const void*)at;
+  unsigned int i = inst_is_bti_c(src[0]) ? 1 : 0;
+  if (inst_is_b(src[i])) {
+    at += i * 4 + inst_get_b_label(src[i]);
+    if (at % 4 || at < start || at > end - 8)
+      return 0;
+    const uint32_t* body = (const void*)at;
+    if (inst_is_b(body[0]) || (inst_is_bti_c(body[0]) && inst_is_b(body[1])))
+      return 0;
+  }
+  return at;
+}
+
+static int nm_find_inode_lock(const uint32_t* src, unsigned int count, int dentry_arg, const uintptr_t helpers[4],
+                              uintptr_t start, uintptr_t end, int* kind) {
+  if (!src || !count || count > 43 || dentry_arg < 0 || dentry_arg > 1)
+    return -EINVAL;
+  struct nm_inode_lock_flow flow[44];
+  memset(flow, 0, sizeof(flow));
+  flow[0] = (struct nm_inode_lock_flow){.dentry = 1U << dentry_arg, .reached = true};
+  int offset = -1, selected = -1, calls = 0;
+  for (unsigned int i = 0; i < count; i++) {
+    if (!flow[i].reached)
+      continue;
+    struct nm_inode_lock_flow next = flow[i];
+    uint32_t inst = src[i], written = 0, dent = 0, inode = 0;
+    int rd = -1, delta = 0;
+    bool branch = true, conditional = true;
+    if (inst_is_b(inst)) {
+      delta = inst_get_b_label(inst);
+      conditional = false;
+    } else if (inst_is_b_cond(inst))
+      delta = inst_get_b_cond_label(inst);
+    else if (inst_is_cbz(inst))
+      delta = inst_get_cbz_label(inst);
+    else if (inst_is_cbnz(inst))
+      delta = inst_get_cbnz_label(inst);
+    else if (inst_is_tbz(inst))
+      delta = inst_get_tbz_label(inst);
+    else if (inst_is_tbnz(inst))
+      delta = inst_get_tbnz_label(inst);
+    else
+      branch = false;
+    if (branch) {
+      if (delta <= 0 || delta % 4)
+        return -EOPNOTSUPP;
+      unsigned int target = i + delta / 4;
+      if (target < count && nm_inode_lock_merge(&flow[target], next, true))
+        return -EINVAL;
+      if (!conditional)
+        continue;
+    } else if (inst_is_bl(inst)) {
+      uintptr_t target = nm_inode_lock_body((uintptr_t)&src[i] + inst_get_bl_label(inst), start, end);
+      if (!target)
+        return -EOPNOTSUPP;
+      for (int h = 0; h < 4; h++) {
+        if (!helpers[h] || target != helpers[h])
+          continue;
+        // 入参只接受紧邻ADD；跳入BL会绕过定义，必须拒绝。
+        if (!i || flow[i].branch || !inst_is_add_imm(src[i - 1]) || !inst_get_add_imm_sf(src[i - 1])
+            || inst_get_add_imm_sh(src[i - 1]) || inst_get_add_imm_rd(src[i - 1]) != 0
+            || !(flow[i - 1].inode & (1U << inst_get_add_imm_rn(src[i - 1]))))
+          return -EOPNOTSUPP;
+        int value = inst_get_add_imm_imm(src[i - 1]);
+        if (value < 0 || value > 0x7fff || value % 8 || (offset >= 0 && offset != value)
+            || (selected >= 0 && selected != h / 2) || next.phase != (h % 2))
+          return -EINVAL;
+        offset = value;
+        selected = h / 2;
+        next.phase++;
+        calls++;
+      }
+      written = 0x4007ffffU;  // AAPCS64：x0..x18、LR不跨调用保留。
+    } else if (inst_is_mov_reg(inst)) {
+      rd = inst_get_mov_reg_rd(inst);
+      int rm = inst_get_mov_reg_rm(inst);
+      if (inst_get_mov_reg_sf(inst) && rm != 31) {
+        dent = (next.dentry >> rm) & 1U;
+        inode = (next.inode >> rm) & 1U;
+      }
+    } else if (inst_is_ldr_imm(inst) && !bit(inst, 26) && inst_get_ldr_imm_opc(inst) == 1) {
+      rd = inst_get_ldr_imm_rt(inst);
+      int rn = inst_get_ldr_imm_rn(inst);
+      inode = inst_get_ldr_imm_size(inst) == 3 && rn != 31 && (next.dentry & (1U << rn))
+              && inst_get_ldr_imm_imm(inst) == offsetof(struct nm_dentry_head, d_inode);
+    } else if (inst_is_str_imm(inst)) {
+      // 无写回，不改变GP来源。
+    } else if (inst_is_str_imm9(inst)) {
+      if (inst_get_str_imm9_mode(inst) & 1)
+        written = 1U << inst_get_str_imm9_rn(inst);
+    } else if (inst_is_stp(inst)) {
+      if (inst_get_stp_mode(inst) == 1 || inst_get_stp_mode(inst) == 3)
+        written = 1U << inst_get_stp_rn(inst);
+    } else if (inst_is_add_imm(inst) || inst_is_sub_imm(inst) || inst_is_orr_imm(inst) || inst_is_adrp(inst)
+               || inst_is_movz_imm(inst) || inst_is_orr_reg(inst)) {
+      // 这些指令的目的寄存器均在低5位；只MOV保留对象来源。
+      rd = bits32(inst, 4, 0);
+    } else if (inst_is_paciasp(inst) || inst_is_bti_c(inst)) {
+      written = 1U << 30;
+    } else {
+      return -EOPNOTSUPP;
+    }
+    if (rd >= 0) {
+      written |= 1U << rd;
+      next.dentry = (next.dentry & ~written) | (dent << rd);
+      next.inode = (next.inode & ~written) | (inode << rd);
+    } else {
+      next.dentry &= ~written;
+      next.inode &= ~written;
+    }
+    next.dentry &= 0x7fffffffU;
+    next.inode &= 0x7fffffffU;
+    if (nm_inode_lock_merge(&flow[i + 1], next, false))
+      return -EINVAL;
+  }
+  if (calls != 2 || selected < 0)
+    return -ENOENT;
+  *kind = selected + 1;
+  return offset;
+}
+
+static int calculate_function_setattr(struct nm_setattr_layout* layout, int slot) {
+  // 当前前缀只确认plain/Android dentry入口；mapped接口由BTF确认。
+  if (struct_offset.getattr_context_kind || (struct_offset.permission_abi != 0 && struct_offset.permission_abi != 1))
+    return -EOPNOTSUPP;
+  uintptr_t start = kallsyms_lookup_name("_stext"), end = kallsyms_lookup_name("_etext");
+  const char* names[] = {"down_write", "up_write", "mutex_lock", "mutex_unlock"};
+  uintptr_t helpers[4];
+  for (unsigned int i = 0; i < 4; i++)
+    helpers[i] = nm_inode_lock_body(kallsyms_lookup_name_by_suffix(names[i]), start, end);
+  for (unsigned int i = 0; i < 4; i++)
+    for (unsigned int j = i + 1; j < 4; j++)
+      if (helpers[i] && helpers[i] == helpers[j])
+        return -EINVAL;
+  const char* sources[] = {"vfs_setxattr", "vfs_removexattr", "do_truncate2"};
+  // removexattr的已确认解锁最晚位于索引28，必须包含该BL而非仅含前置ADD。
+  const unsigned int windows[] = {36, 29, 43};
+  uintptr_t bodies[3] = {0};
+  int offset = -1, kind = 0, found = 0;
+  for (unsigned int i = 0; i < 3; i++) {
+    uintptr_t at = kallsyms_lookup_name_by_suffix(sources[i]);
+    if (!at)
+      continue;
+    at = nm_inode_lock_body(at, start, end);
+    if (!at || end - at < windows[i] * 4)
+      return -EOPNOTSUPP;
+    for (unsigned int j = 0; j < i; j++)
+      if (bodies[j] == at)
+        return -EINVAL;  // 同一函数体别名不能算第二个来源。
+    bodies[i] = at;
+    int current_kind = 0;
+    int current = nm_find_inode_lock((const void*)at, windows[i], i == 2 ? 1 : 0, helpers, start, end, &current_kind);
+    nm_log_info("layout: inode lock source=%s offset=%d kind=%d\n", sources[i], current, current_kind);
+    if (current < 0)
+      return current;
+    if (offset >= 0 && (offset != current || kind != current_kind))
+      return -EINVAL;
+    offset = current;
+    kind = current_kind;
+    found++;
+  }
+  if (found < 2 || !helpers[(kind - 1) * 2] || !helpers[(kind - 1) * 2 + 1])
+    return -ENOENT;
+  *layout = (struct nm_setattr_layout){offset, kind, slot, 0};
+  return 0;
+}
+
+#endif
+
+#ifndef CONFIG_KPM_BASELINES
+#include "nm_xattr_signature.c"
+#include "nm_xattr_entry_signatures.c"
 #endif
 
 static int calculate_offsets(void) {
@@ -2122,6 +3906,17 @@ static int nm_prepare_control_layout(void) {
     rc = calculate_function_control_offsets();
     if (!rc)
       rc = calculate_function_key_callbacks();
+    if (!rc && nm_owned_operation_fallback) {
+      rc = calculate_function_key_type_size();
+      // 保留既有自建容量契约；新增推导尚未覆盖的入口不改变其它目标的加载行为。
+      // 已识别的跨锚点冲突或非法范围不能以容量掩盖。
+      if (rc == -ENOENT || rc == -EOPNOTSUPP) {
+        if (nm_owned_operation_size(NM_KEY_TYPE) == -E2BIG)
+          return -E2BIG;
+        nm_log_info("layout: key_type tail not covered (%d); retaining owned zero-table capacity\n", rc);
+        rc = 0;
+      }
+    }
     if (rc)
       nm_log_error("layout: control field derivation failed (%d)\n", rc);
   }

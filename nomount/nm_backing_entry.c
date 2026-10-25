@@ -21,6 +21,7 @@ int nm_prepare_backing_queries(void) {
   if (rc) {
     nm_topology_ready = false;
     nm_backing_open_permission = NULL;
+    nm_backing_write_open_permission = NULL;
     nm_discard_directory_view();
   }
   return rc;

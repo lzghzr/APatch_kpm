@@ -171,6 +171,9 @@ static int calculate_btf_directory_offsets(bool* unavailable) { *unavailable=mod
 static int calculate_btf_backing_inode_abi(bool* unavailable) { *unavailable=mode==0; return mode==1?-EINVAL:-ENODATA; }
 static int calculate_btf_control_layout(bool* unavailable) { *unavailable=mode==0; return mode==1?-EINVAL:-ENODATA; }
 static int calculate_btf_inode_offsets(bool* unavailable) { *unavailable=mode==0; return mode==1?-EINVAL:-ENODATA; }
+static int calculate_btf_virtual_directory_abi(bool* unavailable) { *unavailable=mode==0; return mode==1?-EINVAL:-ENODATA; }
+static int calculate_btf_topology_abi(bool* unavailable) { *unavailable=mode==0; return mode==1?-EINVAL:-ENODATA; }
+static int calculate_btf_backing_directory_abi(bool* unavailable) { *unavailable=mode==0; return mode==1?-EINVAL:-ENODATA; }
 '''
     c += utils + (root / 'nomount/nm_structs.h').read_text() + prefix + functions + more + inode_validation + validation + route + inode_route + control_validation + control_route + directory_validation + directory_route
     c += 'static unsigned long kallsyms_lookup_name(const char* name) { queries++; if(missing&&!strcmp(missing,name))return 0;\n'
