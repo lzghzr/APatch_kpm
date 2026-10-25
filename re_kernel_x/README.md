@@ -1,43 +1,25 @@
 # ReKernel-X
 
-基于 [ReKernel-X](https://github.com/myflavor/ReKernel-X) 的 KernelPatch 模块移植。向配套墓碑应用发送 Binder、信号和网络事件通知，由墓碑应用决定是否解冻。模块同时按规则清理冗余的异步 Binder 消息。
+基于 [ReKernel-X](https://github.com/myflavor/ReKernel-X)，向配套墓碑应用报告应用活动，帮助它判断何时解冻，并清理重复消息；需要支持 ReKernel-X 的墓碑应用。
 
-模块管理名称为 `re_kernel_x`，使用 ReKernel-X 的消息协议。需要配套墓碑应用支持该协议。
+## 选哪个文件
 
-## 选择版本
+- `re_kernel_x.kpm`：普通版；实际文件名可能带版本号。
+- `re_kernel_x_baselines.kpm`：须由 AI 为设备准备后使用，原始模板不能直接安装。
 
-| 版本 | 文件 | 使用方式 |
-| --- | --- | --- |
-| 动态版 | `re_kernel_x.kpm` | 加载时自动获取目标内核偏移 |
-| 静态基线 | `re_kernel_x_baselines.kpm` | 根据目标内核修改偏移后加载 |
+只选一个版本。
 
-两种版本在 APatch 中都叫 `re_kernel_x`，选择一种加载即可。文件名带 `_debug` 的版本用于排查问题。
+## 安装与查看
 
-适配目标为 Android ARM64，内核 4.4～6.6。动态版优先使用 BTF；缺少必要数据或查询接口时，尝试从内核函数推导。获取失败时停止加载，具体原因见内核日志。
+1. 在 APatch 的内核模块页面为适配设备的文件选择「安装」，然后重启。
+2. 打开配套墓碑应用并连接模块，按应用说明完成设置。
 
-## 加载
+## 更新与停用
 
-在 APatch 的内核模块页面加载动态版或已移植的静态版，再由配套墓碑应用连接。网络监控 UID 和异步清理规则由墓碑应用配置。
+- 更新：确认新版适配自己的设备，替换已安装文件后重启。
+- 停用或移除：先取消嵌入或删除已安装文件，再重启。
 
-嵌入内核开机加载时，选择 `post-kernel-init`。默认的 `pre-kernel-init` 可能早于 Generic Netlink 初始化，出现 `-107`。
-
-使用 kptools 时，在该模块的 `-M <kpm>` 或 `-E <已嵌入名称>` 后指定 `-V post-kernel-init`。加载事件属于嵌入配置，修改后需要更新该配置。
-
-卸载与热重载的生命周期处理仍待验证，移除或更换模块时建议重启设备。
-
-## 静态移植
-
-准备目标设备的 `boot.img`、静态基线及同一构建的 `.kpm.json`，分析目标偏移后填写到 JSON 的 `offsets` 中。基线是移植模板，须先完成目标适配。
-
-在仓库根目录运行：
-
-```sh
-python3 patch_offsets.py patch re_kernel_x_baselines.kpm --offsets target-offsets.json --output target.kpm
-```
-
-配套布局文件应放在基线旁，命名为 `re_kernel_x_baselines.kpm.json`。替换工具只依赖 Python 标准库，用户侧无需 NDK。
-
-构建与移植细节见 [AGENTS.md](AGENTS.md)。
+适用于 Android 64 位设备，内核 4.4～6.6 须先确认设备适配。
 
 ## 更新记录
 

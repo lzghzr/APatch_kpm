@@ -6,7 +6,7 @@
 
 模块注册名、目录名与产物名前缀为 `re_kernel_x`，Generic Netlink family 为 `rekernel_x2`。模块自己的定义放 `re_kernel.h`，核对过的内核结构放 `re_structs.h`，KP 风格封装放 `re_utils.h`，公共宏放 `../kpm_utils.h`。缩进遵循仓库 `.clang-format`。
 
-README 面向使用者，保留用途、移植入口、公开控制接口和更新记录；实现细节、分析步骤与自检说明维护在本文件。静态移植方法见 [静态二进制移植技能](../.agents/skills/kpm-static-binary-port/SKILL.md)，偏移依据见 [偏移分析技能](../.agents/skills/kernel-offset-derivation/SKILL.md)。
+README 面向使用者，只写用途、文件选择、界面操作、可见状态、适用范围和更新记录；实现细节、分析步骤与自检说明维护在本文件。静态移植方法见 [静态二进制移植技能](../.agents/skills/kpm-static-binary-port/SKILL.md)，偏移依据见 [偏移分析技能](../.agents/skills/kernel-offset-derivation/SKILL.md)。
 
 ## 静态移植方式
 针对目标内核 img 离线分析结构体偏移和字段宽度，替换 `re_offsets.c` 中的固定值后构建对应 KPM；有目标 BTF 时，优先从其结构体定义取得字段偏移。模块直接使用这些固定值，偏移核对在移植阶段完成。
@@ -82,3 +82,33 @@ Genl 自检包含实际报文字节、139 字节 RPC、attribute 写入失败与
 动态模式使用本目录的 `re_btf.c` 与 `re_offsets.c`，按目标证据取得全部配置。BTF 五参数释放函数的 `off_end_offset` 与 `failed_at` 同为整数，按参数名确认语义。缺少 BTF 或原生查询接口时走固定小窗口指令推导。旧内核任务与凭据偏移使用 KP 已有计算结果；`sock_sk_net` 从 `sk_net_capable` 的短寄存器链取得。旧内核 `binder_buffer_data` 暂为 -1，缺少原生复制入口时添加清理规则返回 `-EOPNOTSUPP`，基础去重继续工作。字段初始化失败时尚未安装业务 hook。
 
 探索/候选构建须捕获共用输入：`--extra-input patch_offsets.py`。静态补丁测试入口保持 `test_static.py`；双模式入口为 `re_kernel/tools/test_modes.py`，BTF 入口为 `re_kernel/tools/test_btf.py`，旧内核入口为 `re_kernel/tools/test_dynamic_offsets.py`。目标语料必须按仓库规则先确认范围。
+
+
+## 接入、安装验证与生命周期
+
+适配目标为 Android ARM64，内核 4.4～6.6。动态版优先使用 BTF；缺少必要数据或查询接口时，尝试从内核函数推导。获取失败时停止加载，具体原因见内核日志。
+
+## 加载
+
+在 APatch 的内核模块页面加载动态版或已移植的静态版，再由配套墓碑应用连接。网络监控 UID 和异步清理规则由墓碑应用配置。
+
+### 安装方式（条件性，未实测）
+
+需要 APatch/KP 支持目录自动加载。在内核模块页选择“安装”（不是“立即加载”），安装器按管理名称将文件保存为 `/data/adb/ap/kpm/re_kernel_x/re_kernel_x.kpm`，即 `/data/adb/ap/kpm/<id>/<id>.kpm`；输入文件的版本后缀不影响此路径。启用时应无该目录下的 `disable` 标记。
+
+满足目标依赖时，重启后由 KP 在 `post-fs-data` 的 `before` 事件处理期间读取目录加载，无需设置嵌入用的 `-V`。应核对模块版本、`load_source=file`、`load_event=post-fs-data` 及对应目录加载日志 `rc=0`；仅有 `load_source=file` 也可能是手动加载，不能单独作自动加载判据。再确认 `rekernel_x2` family，由配套应用连接、订阅并配置网络 UID 和异步清理规则。模块不会补发加载或订阅前的通知。
+
+本节是基于源码机制的条件性说明，**re_kernel_x 安装方式未实测**。既有 4.19 / XQ-AT52 / KP d09 单机观察为嵌入式 `pre-kernel-init` 加载，不是安装验证；5.15 未测，不能外推。依据见 [Developer 文档口径复核]。
+
+### 嵌入方式
+
+嵌入启动镜像时，**建议**选择 `post-kernel-init`，避开 Generic Netlink 尚未就绪的窗口。本模块初始化没有 `init_net->genl_sock` 空值检查，不能套用 re_kernel 的“socket 为空即返回 `-107`”解释；family 注册失败时返回原错误码。部分目标允许在 `pre-kernel-init` 提前注册 family，但实际收发仍须 socket 就绪，是否可用须按目标验证。事后 family 存在不能反推加载瞬间已可通信。
+
+使用 kptools 时，在该模块的 `-M <kpm>` 或 `-E <已嵌入名称>` 后指定 `-V post-kernel-init`。加载事件属于嵌入配置，修改后需要更新该配置。
+
+### 更新、停用与边界
+
+- 同管理名 `re_kernel_x` 冲突返回 `-EEXIST`（-17），不会替换旧实例。嵌入/安装及静态/动态均只选一份，改文件名不能避开冲突。
+- `/data/adb/ap/kpm/re_kernel_x/disable` **只阻止目录加载**，不卸载当前实例，也不禁用嵌入副本。停用已安装文件时设置标记；嵌入件需取消嵌入，再重启并确认实际来源。
+- 不要热卸载或热换版；本模块卸载与热重载生命周期仍待验证，更换或移除须重启。替换已安装文件后当前仍运行旧版，必须重启才生效；嵌入件更新须更新启动镜像。
+- 保留 userdata 通常会保留已安装文件，但**不保证 OTA 后兼容**。新 boot 仍须带支持目录加载的 KP，并满足用户态 `before` 上报、内核导出及布局/ABI 条件；静态偏移须重新核对，重启后再确认 family、应用连接及规则配置。
