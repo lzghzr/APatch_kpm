@@ -190,7 +190,7 @@ static long calculate_offsets(void) {
     return -EINVAL;
   // 注册对象由内核写入；所有配置必须位于模块持有的存储内。
   int name_size = struct_offset.crypto_alg_driver_name - struct_offset.crypto_alg_name;
-  if (name_size < (int)sizeof("zstd-kpm")
+  if (name_size < (int)sizeof("zstd-1.5.7")
       || struct_offset.crypto_alg_flags != offsetof(struct zs_crypto_alg_prefix, cra_flags)
       || struct_offset.crypto_alg_name != offsetof(struct zs_crypto_alg_prefix, cra_name)
       || struct_offset.crypto_alg_driver_name + name_size > struct_offset.crypto_alg_compress

@@ -1,57 +1,32 @@
-> 注: 此模块完全依据项目内流程，并由 agent 完成，以此验证可行性
-
 # zram_zstd
 
-为 zram 提供 ZSTD 1.5.7。模块加载、zram 就绪后，压缩算法列表会显示 `zstd-kpm`，可以通过开机脚本或管理工具选择。它可以与内核自带的 `zstd` 一起使用。
+为手机的内存压缩（zram）增加 ZSTD 1.5.7 与 LZ4 1.10.0。
 
-已核对仓库中 4.4～6.6 的内核镜像布局。1.0.0 增加算法列表显示，支持内建 zram 和稍后加载的 `zram.ko`；新版还需由测试者完成真机验证。模块要求 zram 使用 Crypto API，不能仅凭内核版本判断是否适用。
+## 选哪个文件
 
-**嵌入后不要卸载，卸载可能导致内核崩溃。要移除模块，请取消嵌入，再重启设备。**
+- `zram_zstd.kpm`：普通版，通常选这个；实际文件名可能带版本号。
+- `zram_zstd_baselines.kpm`：须由 AI 为设备准备后使用，原始模板不能直接安装。
 
-## 用哪个文件
+只选一个版本。
 
-通常选普通动态版，一次只加载一个版本。
+## 安装与查看
 
-| 文件 | 用途 |
-| --- | --- |
-| 普通 `zram_zstd.kpm` | 加载时自动获取偏移，一般用这个 |
-| `zram_zstd_baselines.kpm` | 静态移植用，必须先按目标内核填写偏移，不能直接加载模板 |
+1. 在 APatch 的内核模块页面选择「安装」，然后重启。
+2. 还需让设备的 zram 配置使用 `zstd-kpm` 或 `lz4-kpm`，并设为开机生效。
 
-旧 KP 如果提示找不到 `kallsyms_lookup_name_by_suffix`，需要先用 Python 工具转换普通 KPM。转换和静态移植的方法见 [AGENTS.md](AGENTS.md)。
+## 更新与停用
 
-## 怎么启用
+- 更新：确认新版适配设备，替换已安装文件后重启，并重新查看算法和交换空间状态。
+- 停用或移除：先把开机配置切回设备可用的原算法，再取消嵌入或删除已安装文件并重启；不要直接卸载正在运行的模块，否则可能崩溃。
 
-1. 把 KPM 嵌入启动镜像，加载事件选 `post-kernel-init`，参数留空。这样模块能在系统配置 zram 之前加载。
-2. 在设备原有的 zram 开机脚本中，先选择压缩算法，再设置容量、启用交换空间：
-
-   ```sh
-   echo zstd-kpm > /sys/block/zram0/comp_algorithm
-   ```
-
-   这条命令要放在 zram 初始化之前。如果设备用的不是 `zram0`，换成对应编号。
-3. 重启后确认状态：
-
-   ```sh
-   cat /sys/block/zram0/comp_algorithm
-   cat /proc/crypto
-   ```
-
-   `comp_algorithm` 里出现 `[zstd-kpm]`，表示 zram 已经选用了它。`/proc/crypto` 里应能看到 `name: zstd-kpm` 和 `driver: zstd-kpm`。
-
-只加载模块不会自动切换已经初始化的 zram，还需要开机脚本完成第 2 步。
-
-编译方法和源码说明见 [AGENTS.md](AGENTS.md)。
-
-## 遇到问题
-
-- 日志里有 `registered zstd-kpm`：模块已经注册成功，再看 zram 是否选中了 `[zstd-kpm]`。
-- 日志里有 `zstd-kpm already available; skip loading`：这个算法已经注册，模块跳过重复加载。
-- 提示找不到符号：检查 KP 版本，旧 KP 可能需要转换后的 KPM。
-- 提示偏移获取失败：保存内核日志，需要针对这份内核重新适配。
-
-`zstd-kpm` 表示算法可选，`[zstd-kpm]` 表示已经选中。如果列表中没有它，但 `/proc/crypto` 已有对应条目，仍可在初始化前直接写入 `zstd-kpm`；保存内核日志，检查列表显示功能是否接入成功。
+适用于 Android 64 位设备，内核 4.4～6.6 须先确认设备适配。
 
 ## 更新记录
+
+### 1.1.0
+
+新增 `lz4-kpm`：LZ4 1.10.0 默认压缩，不含 HC<br />
+算法版本见加载日志、模块元信息与本页
 
 ### 1.0.0
 
@@ -82,3 +57,8 @@ ZSTD 升级到 1.5.7 内核分支，源码固定在子模块提交中<br />
 加入 ZSTD 压缩和解压<br />
 加载时检测内核是否已经支持 ZSTD<br />
 提供动态版和静态基线两种构建方式
+
+## 开源来源
+
+LZ4 [v1.10.0](https://github.com/lz4/lz4/releases/tag/v1.10.0) 为 BSD-2-Clause，
+源码固定于 `ebb370ca83af193212df4dcbadcc5d87bc0de2f0`；ZSTD 来源及许可证见 [NOTICE](NOTICE)。

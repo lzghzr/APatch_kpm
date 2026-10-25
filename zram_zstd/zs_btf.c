@@ -34,7 +34,7 @@ static int calculate_btf_offsets(void) {
   if (flags < 0 || compress < 0 || init < 0 || ctx < 0 || flags > 0x7fff || compress > 0x7fff || init > 0x7fff
       || ctx > 0x7fff || kpm_btf_member(&btf, alg, "cra_name", &name, 0)
       || kpm_btf_member(&btf, alg, "cra_driver_name", &driver, 0) || name.bits || driver.bits || name.offset % 8
-      || driver.offset % 8 || name.size < sizeof("zstd-kpm") || driver.size != name.size || name.offset / 8 > 0x7fff
+      || driver.offset % 8 || name.size < sizeof("zstd-1.5.7") || driver.size != name.size || name.offset / 8 > 0x7fff
       || driver.offset / 8 > 0x7fff || driver.offset != name.offset + name.size * 8)
     return -EINVAL;
   // 注册填写这些连续片段；BTF 必须确认大小、顺序与宽度。

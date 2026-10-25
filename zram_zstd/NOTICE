@@ -1,0 +1,11 @@
+zram_zstd includes:
+
+Zstandard v1.5.7-kernel
+Source: https://github.com/facebook/zstd
+Commit: 5d9fb4785030731a155a8abe159e10965d824e4b
+Licenses: BSD-3-Clause / GPL-2.0, as preserved in upstream/zstd/LICENSE and upstream/zstd/COPYING.
+
+LZ4 v1.10.0 (block codec only)
+Source: https://github.com/lz4/lz4/tree/ebb370ca83af193212df4dcbadcc5d87bc0de2f0/lib
+Commit: ebb370ca83af193212df4dcbadcc5d87bc0de2f0
+License: BSD-2-Clause, preserved in upstream/lz4/LICENSE and source headers.

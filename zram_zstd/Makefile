@@ -1,4 +1,4 @@
-MYKPM_VERSION := 1.0.0
+MYKPM_VERSION := 1.1.0
 KP_DIR ?= ../KernelPatch
 
 OS_NAME = $(shell uname | tr A-Z a-z)
@@ -28,7 +28,7 @@ CFLAGS = -Wall -O2 -fno-strict-aliasing -fno-PIC -fno-asynchronous-unwind-tables
 INCLUDE_DIRS := . include patch/include linux/include linux/arch/arm64/include linux/tools/arch/arm64/include
 INCLUDE_FLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(KP_DIR)/kernel/$(dir))
 
-ZSTD_ROOT := zstd/lib
+ZSTD_ROOT := upstream/zstd/lib
 CODEC_DIR := $(LAYOUT_DIR)/out/codec
 GENERATED_DIR := $(CODEC_DIR)/generated
 CODEC_FLAGS := -DXXH_NO_STDLIB -DXXH_STATIC_LINKING_ONLY= -Icompat -I$(GENERATED_DIR) -I$(GENERATED_DIR)/common
@@ -43,7 +43,7 @@ dynamic: $(kpm).kpm
 static: $(kpm)_baselines.kpm
 baselines: static
 
-$(GENERATED_DIR)/MANIFEST.json: tools/prepare_codec.py $(wildcard $(ZSTD_ROOT)/*.[chS] $(ZSTD_ROOT)/*/*.[chS]) zstd/contrib/freestanding_lib/freestanding.py zstd/contrib/linux-kernel/mem.h zstd/contrib/linux-kernel/zstd_deps.h
+$(GENERATED_DIR)/MANIFEST.json: tools/prepare_codec.py $(wildcard $(ZSTD_ROOT)/*.[chS] $(ZSTD_ROOT)/*/*.[chS]) upstream/zstd/contrib/freestanding_lib/freestanding.py upstream/zstd/contrib/linux-kernel/mem.h upstream/zstd/contrib/linux-kernel/zstd_deps.h
 	$(PYTHON) tools/prepare_codec.py --output $(GENERATED_DIR)
 
 $(addprefix $(GENERATED_DIR)/,$(codec_rel)): $(GENERATED_DIR)/MANIFEST.json
@@ -52,12 +52,17 @@ $(CODEC_DIR)/%.o: $(GENERATED_DIR)/%.c $(GENERATED_DIR)/MANIFEST.json $(wildcard
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(CFLAG) $(CODEC_FLAGS) -c $< -o $@
 
+LZ4_OBJ := $(CODEC_DIR)/lz4.o
+$(LZ4_OBJ): upstream/lz4/lz4.c upstream/lz4/lz4.h zs_lz4_config.h Makefile
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(CFLAG) -include zs_lz4_config.h -c $< -o $@
+
 $(kpm)_baselines.kpm: MODE_FLAGS += -DCONFIG_KPM_BASELINES
 
-$(kpms): zram_zstd.c zs_structs.h zs_offsets.c zs_btf.c zs_display.c zs_runtime.c $(codec_objs) ../kpm_utils.h ../patch_offsets.py Makefile
+$(kpms): zram_zstd.c zs_structs.h zs_offsets.c zs_btf.c zs_display.c zs_runtime.c $(codec_objs) $(LZ4_OBJ) zs_lz4_config.h ../kpm_utils.h ../patch_offsets.py Makefile
 	@mkdir -p $(OUT_DIR) $(LAYOUT_DIR)
 	@test ! -e $@
-	$(CC) $(CFLAGS) $(CFLAG) $(MODE_FLAGS) -DMYKPM_VERSION=\"$(MYKPM_VERSION)\" $(INCLUDE_FLAGS) $(CODEC_FLAGS) zram_zstd.c zs_runtime.c $(codec_objs) -r -o $@
+	$(CC) $(CFLAGS) $(CFLAG) $(MODE_FLAGS) -DMYKPM_VERSION=\"$(MYKPM_VERSION)\" $(INCLUDE_FLAGS) $(CODEC_FLAGS) zram_zstd.c zs_runtime.c $(codec_objs) $(LZ4_OBJ) -r -o $@
 	$(if $(filter %_baselines.kpm,$@),$(PYTHON) ../patch_offsets.py baseline $@ --source zs_offsets.c --output $(LAYOUT_DIR)/$(notdir $@).json)
 
 .PHONY: all dynamic static baselines

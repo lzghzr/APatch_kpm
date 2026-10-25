@@ -22,7 +22,7 @@ GENERATOR_OPTIONS = [
 
 
 def prepare(module, output):
-    upstream = module / 'zstd'
+    upstream = module / 'upstream/zstd'
     entry = subprocess.check_output(
         ['git', '-C', str(module.parent), 'ls-tree', 'HEAD', '--',
          str(upstream.relative_to(module.parent))], text=True).split()

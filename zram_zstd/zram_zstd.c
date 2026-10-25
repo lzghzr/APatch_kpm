@@ -7,13 +7,16 @@
 #include <linux/zstd.h>
 
 #include "../kpm_utils.h"
+#include "upstream/lz4/lz4.h"
 #include "zs_structs.h"
 
 KPM_NAME("zram_zstd");
 KPM_VERSION(MYKPM_VERSION);
 KPM_LICENSE("GPL v2");
+KPM_INFO(zstd_version, "1.5.7", 16);
+KPM_INFO(lz4_version, LZ4_VERSION_STRING, 16);
 KPM_AUTHOR("lzghzr");
-KPM_DESCRIPTION("ZSTD for zram. Embed for boot use; DO NOT UNLOAD.");
+KPM_DESCRIPTION("ZSTD and LZ4 for zram. Embed for boot use; DO NOT UNLOAD.");
 #ifdef CONFIG_KPM_BASELINES
 KPM_INFO(offset_mode, "static", 16);
 #else
@@ -32,15 +35,20 @@ struct zstd_ctx {
 };
 
 static unsigned char zstd_alg[1024] __attribute__((aligned(128)));
+static unsigned char lz4_alg[1024] __attribute__((aligned(128)));
 static bool registered;
+static bool algorithm_registered[2];
+
+#define ZS_ZSTD_NAME "zstd-kpm"
+#define ZS_LZ4_NAME "lz4-kpm"
 
 static int kfunc_def(crypto_has_alg)(const char* name, u32 type, u32 mask);
 static int kfunc_def(crypto_register_alg)(void* alg);
 static void* kfunc_def(vzalloc)(unsigned long size);
 static void kfunc_def(vfree)(const void* ptr);
 
-#include "zs_offsets.c"
 #include "zs_display.c"
+#include "zs_offsets.c"
 
 static struct zstd_ctx* zstd_context(struct crypto_tfm* tfm) {
   return (struct zstd_ctx*)((uintptr_t)tfm + struct_offset.crypto_tfm_ctx);
@@ -122,6 +130,84 @@ static long codec_check(void) {
   return rc;
 }
 
+// LZ4块间没有字典状态；仅压缩哈希表需要工作区，避免把约16 KiB放在内核栈上。
+struct lz4_ctx {
+  void* workspace;
+};
+
+static struct lz4_ctx* lz4_context(struct crypto_tfm* tfm) {
+  return (struct lz4_ctx*)((uintptr_t)tfm + struct_offset.crypto_tfm_ctx);
+}
+
+static int lz4_init(struct crypto_tfm* tfm) {
+  struct lz4_ctx* ctx = lz4_context(tfm);
+  ctx->workspace = kfunc(vzalloc)(LZ4_sizeofState());
+  return ctx->workspace ? 0 : -ENOMEM;
+}
+
+static void lz4_exit(struct crypto_tfm* tfm) {
+  struct lz4_ctx* ctx = lz4_context(tfm);
+  kfunc(vfree)(ctx->workspace);
+  ctx->workspace = NULL;
+}
+
+static int lz4_compress(struct crypto_tfm* tfm, const u8* src, unsigned int slen, u8* dst, unsigned int* dlen) {
+  if (slen > LZ4_MAX_INPUT_SIZE || *dlen > 0x7fffffffU)
+    return -EINVAL;
+  int size = LZ4_compress_fast_extState(lz4_context(tfm)->workspace, (const char*)src, (char*)dst, slen, *dlen, 1);
+  if (!size)
+    return -EINVAL;
+  *dlen = size;
+  return 0;
+}
+
+static int lz4_decompress(struct crypto_tfm* tfm, const u8* src, unsigned int slen, u8* dst, unsigned int* dlen) {
+  if (slen > 0x7fffffffU || *dlen > 0x7fffffffU)
+    return -EINVAL;
+  int size = LZ4_decompress_safe((const char*)src, (char*)dst, slen, *dlen);
+  if (size < 0)
+    return -EINVAL;
+  *dlen = size;
+  return 0;
+}
+
+struct zs_algorithm {
+  const char* name;
+  unsigned char* storage;
+  unsigned int ctxsize;
+  int (*compress)(struct crypto_tfm*, const u8*, unsigned int, u8*, unsigned int*);
+  int (*decompress)(struct crypto_tfm*, const u8*, unsigned int, u8*, unsigned int*);
+  int (*init)(struct crypto_tfm*);
+  void (*exit)(struct crypto_tfm*);
+};
+
+static const struct zs_algorithm algorithms[] = {
+    {ZS_ZSTD_NAME, zstd_alg, sizeof(struct zstd_ctx), zstd_compress, zstd_decompress, zstd_init, zstd_exit},
+    {ZS_LZ4_NAME, lz4_alg, sizeof(struct lz4_ctx), lz4_compress, lz4_decompress, lz4_init, lz4_exit},
+};
+
+static int prepare_algorithm(const struct zs_algorithm* codec) {
+  size_t len = strlen(codec->name) + 1;
+  int name_size = struct_offset.crypto_alg_driver_name - struct_offset.crypto_alg_name;
+  if (len > name_size)
+    return -EINVAL;
+  unsigned char* storage = codec->storage;
+  memset(storage, 0, sizeof(zstd_alg));
+  struct zs_crypto_alg_prefix* alg = (struct zs_crypto_alg_prefix*)storage;
+  alg->cra_flags = CRYPTO_ALG_TYPE_COMPRESS;
+  alg->cra_ctxsize = codec->ctxsize;
+  memcpy(storage + struct_offset.crypto_alg_name, codec->name, len);
+  memcpy(storage + struct_offset.crypto_alg_driver_name, codec->name, len);
+  struct zs_compress_alg* compress = (struct zs_compress_alg*)(storage + struct_offset.crypto_alg_compress);
+  compress->coa_compress = codec->compress;
+  compress->coa_decompress = codec->decompress;
+  struct zs_alg_lifecycle* lifecycle = (struct zs_alg_lifecycle*)(storage + struct_offset.crypto_alg_init);
+  lifecycle->cra_init = codec->init;
+  lifecycle->cra_exit = codec->exit;
+  // cra_module保持NULL；KPM不属于原生LKM，成功注册后必须常驻。
+  return 0;
+}
+
 static long zram_zstd_init(const char* args, const char* event, void* reserved) {
   if (event && !strcmp(event, "pre-kernel-init")) {
     logkm("use post-kernel-init\n");
@@ -130,9 +216,11 @@ static long zram_zstd_init(const char* args, const char* event, void* reserved) 
   kfunc_lookup_name(crypto_has_alg);
   if (!kfunc(crypto_has_alg))
     return -ENOENT;
-  if (kfunc(crypto_has_alg)("zstd-kpm", CRYPTO_ALG_TYPE_COMPRESS, CRYPTO_ALG_TYPE_MASK)) {
-    logkm("zstd-kpm already available; skip loading\n");
-    return -EEXIST;
+  for (unsigned int i = 0; i < sizeof(algorithms) / sizeof(algorithms[0]); i++) {
+    if (kfunc(crypto_has_alg)(algorithms[i].name, CRYPTO_ALG_TYPE_COMPRESS, CRYPTO_ALG_TYPE_MASK)) {
+      logkm("%s already available; skip loading\n", algorithms[i].name);
+      return -EEXIST;
+    }
   }
   kfunc_lookup_name(crypto_register_alg);
   kfunc_lookup_name(vzalloc);
@@ -145,24 +233,28 @@ static long zram_zstd_init(const char* args, const char* event, void* reserved) 
   rc = codec_check();
   if (rc)
     return rc;
-  struct zs_crypto_alg_prefix* alg = (struct zs_crypto_alg_prefix*)zstd_alg;
-  alg->cra_flags = CRYPTO_ALG_TYPE_COMPRESS;
-  alg->cra_ctxsize = sizeof(struct zstd_ctx);
-  memcpy(zstd_alg + struct_offset.crypto_alg_name, "zstd-kpm", sizeof("zstd-kpm"));
-  memcpy(zstd_alg + struct_offset.crypto_alg_driver_name, "zstd-kpm", sizeof("zstd-kpm"));
-  struct zs_compress_alg* compress = (struct zs_compress_alg*)(zstd_alg + struct_offset.crypto_alg_compress);
-  compress->coa_compress = zstd_compress;
-  compress->coa_decompress = zstd_decompress;
-  struct zs_alg_lifecycle* lifecycle = (struct zs_alg_lifecycle*)(zstd_alg + struct_offset.crypto_alg_init);
-  lifecycle->cra_init = zstd_init;
-  lifecycle->cra_exit = zstd_exit;
-  // cra_module 保持 NULL，KPM 不属于原生 LKM；算法使用期间模块必须常驻。
-  rc = kfunc(crypto_register_alg)(zstd_alg);
-  if (rc)
-    return rc;
-  registered = true;
+  for (unsigned int i = 0; i < sizeof(algorithms) / sizeof(algorithms[0]); i++) {
+    rc = prepare_algorithm(&algorithms[i]);
+    if (rc)
+      return rc;
+  }
+  // 首项失败时尚未公开资源，可以拒载；一旦注册成功，模块必须常驻。
+  for (unsigned int i = 0; i < sizeof(algorithms) / sizeof(algorithms[0]); i++) {
+    rc = kfunc(crypto_register_alg)(algorithms[i].storage);
+    if (rc) {
+      logkm("registration failed for %s: %ld\n", algorithms[i].name, rc);
+      if (!registered)
+        return rc;
+      continue;
+    }
+    algorithm_registered[i] = true;
+    registered = true;
+  }
+  // 注册即公开callback。旧Crypto API注销不会等待活跃transform，不能用回滚释放KPM。
+  // 后续算法注册失败时保持关闭，显示层只发布真正可选的名字。
   start_zram_display();
-  logkm("registered zstd-kpm 1.5.7; select zstd-kpm before zram initialization. DO NOT UNLOAD\n");
+  logkm("registration: %s=%d (ZSTD 1.5.7), %s=%d (LZ4 " LZ4_VERSION_STRING "). DO NOT UNLOAD\n", ZS_ZSTD_NAME,
+        algorithm_registered[0], ZS_LZ4_NAME, algorithm_registered[1]);
   return 0;
 }
 

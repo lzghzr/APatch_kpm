@@ -50,7 +50,7 @@ def build_fixture(args, module):
                   'crypto_alg_init', 'crypto_tfm_ctx', 'crypto_alg_driver_name')
         checks = '\n'.join(f'  assert(struct_offset.{name} == {int(reference["offsets"][name])});' for name in fields)
         fixture = re.sub(r'/\* REFERENCE_BEGIN \*/.*?/\* REFERENCE_END \*/', checks, fixture, flags=re.S)
-    return fixture, entries
+    return '#include "lz4.h"\n' + fixture, entries
 
 
 def run_fixture(args, module, fixture):
@@ -63,7 +63,9 @@ def run_fixture(args, module, fixture):
     compiled = subprocess.run(['clang', '-O1', '-g', '-Wall', '-Werror', '-Wno-unused-function',
                                '-DXXH_NO_STDLIB', '-DXXH_STATIC_LINKING_ONLY=', '-fno-strict-aliasing', '-fsanitize=address,undefined', '-fno-omit-frame-pointer',
                                '-I' + str(module / 'compat'), '-I' + str(generated),
-                               '-I' + str(generated / 'common'), str(source), *map(str, codec), '-o', str(binary)],
+                               '-I' + str(generated / 'common'), '-I' + str(module / 'upstream/lz4'),
+                               '-include', str(module / 'zs_lz4_config.h'),
+                               str(source), *map(str, codec), str(module / 'upstream/lz4/lz4.c'), '-o', str(binary)],
                               text=True, capture_output=True)
     log = args.output / 'compile.log'
     log.write_text(compiled.stdout + compiled.stderr)
@@ -106,7 +108,8 @@ def main():
         'fixture_sha256': sha(args.output / 'selfcheck.c'),
         'sources': {str(p.relative_to(root)): sha(p) for p in
                     [module / 'zram_zstd.c', module / 'zs_structs.h', module / 'zs_offsets.c', module / 'zs_btf.c', module / 'zs_display.c', root / 'kpm_utils.h', Path(__file__),
-                     module / 'tools/prepare_codec.py', module / 'tools/selfcheck_fixture.c', module / 'tools/btf_fixture.h']},
+                     module / 'tools/prepare_codec.py', module / 'tools/selfcheck_fixture.c', module / 'tools/btf_fixture.h',
+                     module / 'zs_lz4_config.h', module / 'upstream/lz4/lz4.h', module / 'upstream/lz4/lz4.c']},
     }, indent=2) + '\n')
 
 
