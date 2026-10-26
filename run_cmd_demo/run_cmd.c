@@ -66,13 +66,6 @@ struct task_struct* kfunc_def(kthread_create_on_node)(int (*threadfn)(void*), vo
 int kfunc_def(wake_up_process)(struct task_struct* task);
 void* kfunc_def(__kmalloc)(size_t size, gfp_t flags);
 void kfunc_def(kfree)(const void* ptr);
-#ifndef CONFIG_KPM_BASELINES
-struct btf* kfunc_def(bpf_get_btf_vmlinux)(void);
-int kfunc_def(btf_find_by_name_kind)(const struct btf* btf, const char* name, unsigned char kind);
-const struct btf_type* kfunc_def(btf_type_by_id)(const struct btf* btf, u32 id);
-const char* kfunc_def(btf_name_by_offset)(const struct btf* btf, u32 offset);
-const struct btf_type* kfunc_def(btf_resolve_size)(const struct btf* btf, const struct btf_type* type, u32* size);
-#endif
 struct file* kfunc_def(filp_open)(const char* filename, int flags, umode_t mode);
 int kfunc_def(replace_fd)(unsigned int fd, struct file* file, unsigned int flags);
 int kfunc_def(filp_close)(struct file* file, fl_owner_t id);
