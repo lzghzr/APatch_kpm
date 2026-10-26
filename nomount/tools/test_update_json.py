@@ -49,6 +49,7 @@ class UpdateJsonTests(unittest.TestCase):
         self.assertEqual(update, {
             "version": "v2.1.1-20261014", "versionCode": 20261014,
             "zipUrl": "https://github.com/lzghzr/APatch_kpm/releases/download/release%2F2026%2010/" + PACKAGE,
+            "changelog": "https://raw.githubusercontent.com/lzghzr/APatch_kpm/release%2F2026%2010/nomount/module/CHANGELOG.md",
         })
         self.assertIs(type(update["versionCode"]), int)
         self.assertFalse((self.release / "NoMount-kpm-changelog.md").exists())
