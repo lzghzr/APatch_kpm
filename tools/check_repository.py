@@ -79,6 +79,10 @@ class Report:
         if not ok:
             (self.warnings if warn_only else self.failures).append(f"{name}: {detail}")
 
+    def skip(self, name, detail=""):
+        """便携模式下跳过依赖本地材料（不入库）的检查。"""
+        self.checks.append((name, "SKIP", detail))
+
     def summary(self):
         width = max(len(n) for n, _, _ in self.checks) if self.checks else 10
         for name, status, detail in self.checks:
@@ -166,9 +170,16 @@ def iter_text_files():
 
 
 # ---------------------------------------------------------------- 各项检查
-def check_structure(rep):
-    problems = [f"缺少 {p}" for p in REQUIRED_PATHS if not os.path.exists(os.path.join(REPO, p))]
+PORTABLE_SKIP_PATHS = {"metadata/identity.json"}
+PORTABLE_SKIP_DIRS = {"metadata/modules", "Developer/reports"}
+
+
+def check_structure(rep, portable=False):
+    paths = [p for p in REQUIRED_PATHS if not (portable and p in PORTABLE_SKIP_PATHS)]
+    problems = [f"缺少 {p}" for p in paths if not os.path.exists(os.path.join(REPO, p))]
     for rel, suffix, least in REQUIRED_DIRS:
+        if portable and rel in PORTABLE_SKIP_DIRS:
+            continue
         path = os.path.join(REPO, rel)
         if not os.path.isdir(path):
             problems.append(f"缺少目录 {rel}")
@@ -396,10 +407,12 @@ def check_identity_hashes(rep, strict):
         rep.check("identity_hashes", False, f"无法加载 tools/identity.py: {exc}")
         return
     mismatches, missing, retained_gaps, verified, instances = [], [], [], 0, set()
+    records = 0
     for name in sorted(os.listdir(modules_dir)):
         if not name.endswith(".json"):
             continue
         record = json.load(open(os.path.join(modules_dir, name), encoding="utf-8"))
+        records += len(record.get("builds", []))
         for build in record.get("builds", []):
             iid = build.get("instance_id")
             if iid in instances:
@@ -420,7 +433,10 @@ def check_identity_hashes(rep, strict):
                 else:
                     mismatches.append(f"{iid}: {problem}")
             verified += result.get("artifacts_verified", 0)
-    detail = f"{len(record.get('builds', []))} 条构建记录 / 复算 {verified} 份产物"
+    if not records and not instances:
+        rep.check("identity_hashes", False, "metadata/modules 下没有构建记录（接手时先建登记或转入交接清单）")
+        return
+    detail = f"{records} 条构建记录 / 复算 {verified} 份产物"
     if mismatches:
         detail += "；" + "; ".join(mismatches[:3])
     if missing:
@@ -1048,10 +1064,24 @@ def check_hygiene(rep):
 def main():
     ap = argparse.ArgumentParser(description="仓库门禁")
     ap.add_argument("--strict", action="store_true", help="产物必须在场且哈希可复算")
+    ap.add_argument("--portable", action="store_true",
+                    help="便携模式：跳过依赖本地材料（metadata/、报告、产物）的检查，供克隆后自检使用")
     args = ap.parse_args()
 
     os.chdir(REPO)
     rep = Report()
+    if args.portable:
+        check_structure(rep, portable=True)
+        check_ci_markers(rep)
+        check_doc_links(rep)
+        for name in ("metadata_schema", "report_integrity", "identity_hashes", "version_consistency",
+                     "acceptance_binding", "delivery_binding", "tool_selftest", "developer_artifacts",
+                     "handoff_registration", "auditor_independence"):
+            rep.skip(name, "便携模式：依赖本地 metadata/、报告与产物，未检出")
+        check_hygiene(rep)
+        print("门禁模式：portable（克隆自检；不校验身份、验收与交付）")
+        print()
+        return rep.summary()
     check_structure(rep)
     check_ci_markers(rep)
     check_doc_links(rep)

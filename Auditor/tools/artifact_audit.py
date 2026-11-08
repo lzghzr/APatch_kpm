@@ -43,15 +43,27 @@ SHT_RELA = 4
 SHT_STRTAB = 3
 SHN_UNDEF = 0
 
-# AArch64 静态重定位类型白名单（KPM 为 ET_REL，由 KP 加载器处理）
+# AArch64 静态重定位类型白名单（按 Arm AAELF64 核对，KPM 为 ET_REL，由 KP 加载器处理）
 AARCH64_RELOC_NAMES = {
-    # 取值由审计对象自身的重定位节与 llvm-readelf 的命名交叉确认（见 Auditor/reports）
+    # Data relocations
     257: "R_AARCH64_ABS64",
     258: "R_AARCH64_ABS32",
     259: "R_AARCH64_ABS16",
     260: "R_AARCH64_PREL64",
     261: "R_AARCH64_PREL32",
     262: "R_AARCH64_PREL16",
+    # MOVW absolute
+    263: "R_AARCH64_MOVW_UABS_G0",
+    264: "R_AARCH64_MOVW_UABS_G0_NC",
+    265: "R_AARCH64_MOVW_UABS_G1",
+    266: "R_AARCH64_MOVW_UABS_G1_NC",
+    267: "R_AARCH64_MOVW_UABS_G2",
+    268: "R_AARCH64_MOVW_UABS_G2_NC",
+    269: "R_AARCH64_MOVW_UABS_G3",
+    270: "R_AARCH64_MOVW_SABS_G0",
+    271: "R_AARCH64_MOVW_SABS_G1",
+    272: "R_AARCH64_MOVW_SABS_G2",
+    # PC-relative & branch
     273: "R_AARCH64_LD_PREL_LO19",
     274: "R_AARCH64_ADR_PREL_LO21",
     275: "R_AARCH64_ADR_PREL_PG_HI21",
@@ -60,20 +72,35 @@ AARCH64_RELOC_NAMES = {
     278: "R_AARCH64_LDST8_ABS_LO12_NC",
     279: "R_AARCH64_TSTBR14",
     280: "R_AARCH64_CONDBR19",
-    281: "R_AARCH64_JUMP26",
-    282: "R_AARCH64_ADR_GOT_PAGE",
+    # 281: 保留/未分配 (Unassigned in AAELF64)，留空，触发 review 告警
+    282: "R_AARCH64_JUMP26",
     283: "R_AARCH64_CALL26",
     284: "R_AARCH64_LDST16_ABS_LO12_NC",
     285: "R_AARCH64_LDST32_ABS_LO12_NC",
     286: "R_AARCH64_LDST64_ABS_LO12_NC",
-    287: "R_AARCH64_LDST128_ABS_LO12_NC",
-    311: "R_AARCH64_MOVW_UABS_G0",
-    312: "R_AARCH64_MOVW_UABS_G0_NC",
-    313: "R_AARCH64_MOVW_UABS_G1",
-    314: "R_AARCH64_MOVW_UABS_G1_NC",
+    # MOVW PC-relative
+    287: "R_AARCH64_MOVW_PREL_G0",
+    288: "R_AARCH64_MOVW_PREL_G0_NC",
+    289: "R_AARCH64_MOVW_PREL_G1",
+    290: "R_AARCH64_MOVW_PREL_G1_NC",
+    291: "R_AARCH64_MOVW_PREL_G2",
+    292: "R_AARCH64_MOVW_PREL_G2_NC",
+    293: "R_AARCH64_MOVW_PREL_G3",
+    # LDST 128
+    299: "R_AARCH64_LDST128_ABS_LO12_NC",
+    # GOT relocations
+    307: "R_AARCH64_GOTREL64",
+    308: "R_AARCH64_GOTREL32",
+    309: "R_AARCH64_GOT_LD_PREL19",
+    310: "R_AARCH64_LD64_GOTOFF_LO15",
+    311: "R_AARCH64_ADR_GOT_PAGE",
+    312: "R_AARCH64_LD64_GOT_LO12_NC",
+    313: "R_AARCH64_LD64_GOTPAGE_LO15",
+    314: "R_AARCH64_PLT32",
 }
 R_ADR_PREL_PG_HI21 = 275
 R_ADD_ABS_LO12_NC = 277
+R_JUMP26 = 282
 R_CALL26 = 283
 LOOKUP_SYMBOLS = ("kallsyms_lookup_name_by_suffix", "kallsyms_lookup_name", "kallsyms_on_each_symbol")
 REQUIRED_INFO_FIELDS = ("name", "version", "license", "author", "description")
@@ -313,6 +340,46 @@ def corpus_symbols(roots):
     return corpus, sources
 
 
+def reloc_target_width(rtype):
+    """返回 AArch64 重定位在目标节区中占用的字节宽度（按 Arm AAELF64 规范）。
+
+    - 64 位数据重定位：257 (ABS64), 260 (PREL64), 307 (GOTREL64) 等占 8 字节；
+    - 16 位数据重定位：259 (ABS16), 262 (PREL16) 等占 2 字节；
+    - 其余类型：AArch64 指令定长为 32 位（4 字节），指令重定位（如 273~280, 282~293, 299, 311~313）
+      及 32 位数据重定位（258 ABS32, 261 PREL32, 308 GOTREL32, 314 PLT32）均占 4 字节。
+    - 未知类型默认保底按标准 4 字节。
+    """
+    if rtype in (257, 260, 307):
+        return 8
+    if rtype in (259, 262):
+        return 2
+    return 4
+
+
+def audit_relocations(relocations, num_symbols):
+    """核验重定位自洽性：统计类型分布、校验符号索引与节区边界。"""
+    reloc_types = {}
+    bad_relocs = 0
+    findings = []
+    for r in relocations:
+        reloc_types[r["type"]] = reloc_types.get(r["type"], 0) + 1
+        if r["symidx"] >= num_symbols:
+            bad_relocs += 1
+        reloc_width = reloc_target_width(r["type"])
+        if r.get("target_size") and r["offset"] + reloc_width > r["target_size"]:
+            bad_relocs += 1
+        if r["type"] not in AARCH64_RELOC_NAMES:
+            findings.append(("review", "reloc_type", f"未在预期白名单内的重定位类型 {r['type']}（{r.get('section', '?')}）"))
+    reloc_facts = {
+        "count": len(relocations),
+        "bad": bad_relocs,
+        "types": {AARCH64_RELOC_NAMES.get(t, f"type_{t}"): c for t, c in sorted(reloc_types.items())},
+    }
+    if bad_relocs:
+        findings.append(("error", "relocation_bounds", f"{bad_relocs} 条重定位越界或符号索引非法"))
+    return reloc_facts, findings
+
+
 def audit_artifact(path, record, snapshot, snapshot_path, corpus, makefile_version, expected_build_id=None):
     elf = Elf(path)
     findings = []
@@ -401,23 +468,8 @@ def audit_artifact(path, record, snapshot, snapshot_path, corpus, makefile_versi
                          f"未定义符号 {name} 不在平台符号快照中{hint}"))
 
     # 重定位自洽
-    reloc_types = {}
-    bad_relocs = 0
-    for r in elf.relocations:
-        reloc_types[r["type"]] = reloc_types.get(r["type"], 0) + 1
-        if r["symidx"] >= len(elf.symbols):
-            bad_relocs += 1
-        if r["target_size"] and r["offset"] + 8 > r["target_size"] and r["type"] not in (257,):
-            bad_relocs += 1
-        if r["type"] not in AARCH64_RELOC_NAMES:
-            findings.append(("review", "reloc_type", f"未在预期白名单内的重定位类型 {r['type']}（{r['section']}）"))
-    facts["relocations"] = {
-        "count": len(elf.relocations),
-        "bad": bad_relocs,
-        "types": {AARCH64_RELOC_NAMES.get(t, f"type_{t}"): c for t, c in sorted(reloc_types.items())},
-    }
-    if bad_relocs:
-        findings.append(("error", "relocation_bounds", f"{bad_relocs} 条重定位越界或符号索引非法"))
+    facts["relocations"], reloc_findings = audit_relocations(elf.relocations, len(elf.symbols))
+    findings.extend(reloc_findings)
 
     # 跨版本内核符号依赖：从产物字符串里取“在语料符号表中出现过的名字”
     lookups = lookup_names(elf)
@@ -565,7 +617,8 @@ def scan_artifact_dirs(dirs, index):
 
 def main():
     ap = argparse.ArgumentParser(description="KPM 产物独立审计")
-    ap.add_argument("--module", required=True)
+    ap.add_argument("--module", help="待审计模块名")
+    ap.add_argument("--selftest", action="store_true", help="运行重定位映射与边界常驻回归自检")
     ap.add_argument("--build-id", action="append", help="待审计的 Build ID（可重复指定）")
     ap.add_argument("--instance-id", action="append", help="待审计的完整实例（可重复；不指定时保留原范围）")
     ap.add_argument("--version", dest="target_version", help="待审计的构建版本（如 0.2.0）")
@@ -579,6 +632,16 @@ def main():
     ap.add_argument("--strict-unregistered", action="store_true",
                     help="存在未登记产物时返回非零（默认只报 review）")
     args = ap.parse_args()
+
+    if args.selftest:
+        try:
+            from selftest_artifact_audit import run_tests
+        except ImportError:
+            from Auditor.tools.selftest_artifact_audit import run_tests
+        return 0 if run_tests() else 1
+
+    if not args.module:
+        ap.error("the following arguments are required: --module (除非指定 --selftest)")
 
     record = None
     record_path = os.path.join(REPO, "metadata", "modules", f"{args.module}.json")

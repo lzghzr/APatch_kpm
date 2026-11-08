@@ -158,11 +158,37 @@ def check_unmarked_conversion(args, tool, tool_path, index, source):
             'pointer_import_added': added, 'metadata': 'unchanged', 'checks': 'PASS'}
 
 
+def select_sources(build, names=None):
+    if names is None:
+        sources = sorted(p for p in build.glob('*.kpm') if '_legacy' not in p.name)
+        assert len(sources) == 4
+        return sources
+    if not names or len(set(names)) != len(names):
+        raise ValueError('显式产物清单不能为空或重复')
+    if any(Path(name).name != name or not name.endswith('.kpm') or '_legacy' in name for name in names):
+        raise ValueError('显式清单必须是普通 KPM 文件名')
+    sources = [build / name for name in sorted(names)]
+    if any(not path.is_file() for path in sources):
+        raise ValueError('显式清单中的产物缺失')
+    return sources
+
+
+def layout_coverage(sources):
+    checked, not_supplied = [], []
+    for source in sources:
+        if Path(str(source) + '.json').is_file():
+            checked.append(source.name)
+        elif b'offset_mode=static' in info(source.read_bytes())[1].split(b'\0'):
+            not_supplied.append(source.name)
+    return {'checked_inputs': checked, 'static_inputs_without_layout': not_supplied}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--build', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--clang', type=Path, required=True)
+    parser.add_argument('--kpm', action='append', help='逐项指定本轮普通 KPM；省略时保留历史四件套判据')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[2]
@@ -170,8 +196,7 @@ def main():
     spec = importlib.util.spec_from_file_location('legacy_tool', tool_path)
     tool = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(tool)
-    sources = sorted(p for p in args.build.glob('*.kpm') if '_legacy' not in p.name)
-    assert len(sources) == 4
+    sources = select_sources(args.build, args.kpm)
     tagged = [add_metadata(args, source, index) for index, source in enumerate(sources)]
     augmented = add_pointer_import(args, tagged[0])
     results = [check_conversion(args, tool, tool_path, index, source)
@@ -180,13 +205,17 @@ def main():
     unmarked_pointer = add_pointer_import(args, sources[0])
     unmarked = [check_unmarked_conversion(args, tool, tool_path, index, source)
                 for index, source in enumerate([*sources, unmarked_pointer])]
+    layouts = layout_coverage(sources)
     (args.output / 'results.json').write_text(json.dumps({
         'scope': 'Developer Tier-3; original Oracle helpers unchanged', 'results': results,
         'metadata_cases': '3 byte-preserving inputs; 3 malformed inputs rejected',
         'unmarked_results': unmarked,
+        'layouts': layouts,
     }, indent=2) + '\n')
-    print('PASS: 4 ordinary KPMs + existing pointer import; original ABI Oracle; exact metadata and receipt; '
-          'static layouts; output protection; 6 metadata cases; 5 unmarked conversions')
+    print(f'PASS: {len(sources)} ordinary KPMs + existing pointer import; original ABI Oracle; exact metadata and receipt; '
+          f'static layout inputs checked={len(layouts["checked_inputs"])}, '
+          f'without layout={len(layouts["static_inputs_without_layout"])}; '
+          f'output protection; 6 metadata cases; {len(unmarked)} unmarked conversions')
 
 
 if __name__ == '__main__':

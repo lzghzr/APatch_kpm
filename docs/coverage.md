@@ -4,7 +4,7 @@
 
 ## re_kernel_x 1.6
 
-冻结源码：`52b303df659616012077bc95ed7899655295d925`。完整实例及产物哈希见 [模块登记](../metadata/modules/re_kernel_x.json)，八份 ABI3/4/5/6 release/debug 基准见 [候选登记](records/2026-10-02-re-kernel-x-1.6-registration.md)。
+冻结源码：`52b303df659616012077bc95ed7899655295d925`。完整实例及产物哈希见本地模块登记 `metadata/modules/re_kernel_x.json`；八份 ABI3/4/5/6 release/debug 基准列于该登记的 `builds[]`。
 
 | 范围 | 验证层级 | 覆盖与证据 |
 | --- | --- | --- |
@@ -19,15 +19,12 @@
 
 ## 2026-10-10 冻结候选（re_kernel 11.7 / re_kernel_x 1.6-20261008 / run_cmd_demo 1.2.0 / hosts_redirect 2.0.0 / dont_kill_freeze 1.0.2 / cgroupv2_freeze 1.0.12）
 
-冻结源码：`2257f2291e2be77c8809c266393da9d9d093d7b4`。13 份候选的完整实例、产物哈希与复算命令见
-[候选登记](records/2026-10-10-candidate-registration.md)及各模块登记（[re_kernel](../metadata/modules/re_kernel.json)、
-[re_kernel_x](../metadata/modules/re_kernel_x.json)、[run_cmd_demo](../metadata/modules/run_cmd_demo.json)、
-[hosts_redirect](../metadata/modules/hosts_redirect.json)、[dont_kill_freeze](../metadata/modules/dont_kill_freeze.json)、
-[cgroupv2_freeze](../metadata/modules/cgroupv2_freeze.json)）。
+冻结源码：`2257f2291e2be77c8809c266393da9d9d093d7b4`。13 份候选的完整实例、产物哈希与复算命令见本地模块登记：
+`metadata/modules/{re_kernel,re_kernel_x,run_cmd_demo,hosts_redirect,dont_kill_freeze,cgroupv2_freeze}.json`。
 
 | 范围 | 验证层级 | 覆盖与证据 |
 | --- | --- | --- |
-| 13 份候选身份、源码 blob 绑定、配方指纹与产物哈希 | 维护者复算 | [候选登记](records/2026-10-10-candidate-registration.md)记录逐条 candidate 核验 0 处问题；`import-manifest` 落盘前另行核验归档产物哈希 |
+| 13 份候选身份、源码 blob 绑定、配方指纹与产物哈希 | 维护者复算 | 本地候选登记记录逐条 candidate 核验 0 处问题；`import-manifest` 落盘前另行核验归档产物哈希 |
 | 构建事务、宿主自检、ELF 导入与 SDK 导出检查、离线语料回归 | 实现方自检（同源，非独立结论） | [Developer 冻结候选构建报告]，含未执行语料清单 |
 | 独立审计：重编译、字节解析、边界与安全评估 | 未覆盖 | 本轮没有 Auditor 报告 |
 | 真机：存活判据、功能与生命周期 | 未覆盖 | 本轮未执行设备测试，未接触 superkey |
@@ -36,14 +33,14 @@
 
 ## 历史身份
 
-`re_kernel_static` 已迁移为 `re_kernel_x`。其 [历史登记](../metadata/modules/re_kernel_static.json)保留原始构建与问题记录；历史产物继续按各自冻结提交和哈希核验。当前报告清理与验证范围见 [工程整理记录](records/2026-10-03-git-reorganization.md)。
+`re_kernel_static` 已迁移为 `re_kernel_x`。其 历史登记保留原始构建与问题记录；历史产物继续按各自冻结提交和哈希核验。当前报告清理与验证范围见 工程整理记录。
 
 ## zram_zstd 0.1.0（重跑轮）
 
 冻结源码：初始候选 `e6ca482ecd40f4415d17acd349bd9875c6b64356`、修复候选
 `a5e1615bdb715257b167483e3e3a6f019b4a15f0`。8 个在册实例、产物哈希、布局索引与问题单见
-[候选登记](records/2026-10-10-zram-zstd-registration.md)与 [模块登记](../metadata/modules/zram_zstd.json)；
-审计请求见 [审计请求](records/2026-10-10-zram-zstd-audit-request.md)。
+候选登记与 模块登记；
+审计请求见 审计请求。
 
 | 范围 | 验证层级 | 覆盖与证据 |
 | --- | --- | --- |
@@ -84,7 +81,7 @@
 | 静态基线可加载性、5.15+ GKI | 未覆盖 | 静态表五项偏移仍为模板 `-1`；GKI 不在本轮范围 |
 
 **形态规则**：源码/Makefile 只面向当前 KP；旧 KP 兼容只在**构建后的 KPM 字节**上做（见
-[纯净构建 + 二进制适配](records/2026-10-11-clean-build-binary-adaptation.md)），派生件不登记为编译变体、不进 Releases。
+纯净构建 + 二进制适配），派生件不登记为编译变体、不进 Releases。
 验收：4 份候选按静态/主机/独立审计层，2 份派生件含真机证据（见 `acceptances[]` 与 `binary_ports[].acceptance`）。
 
 ## 其它模块
@@ -100,7 +97,7 @@
 
 ## 2026-10-10 最终工程候选
 
-本轮六模块冻结身份、15 份产物与宿主/发布筛选核验见 [维护者工程记录](records/2026-10-10-round-finalization.md)。run_cmd_demo 1.3.0 保持验证型 demo。AUD-007 按 Auditor 原八实例复核同步关闭；历史 Linux 4.4/5.15 实机范围按原报告与各自字节保留。本轮新实例处于 candidate，等待对应独立审计与实机复验。
+本轮六模块冻结身份、15 份产物与宿主/发布筛选核验见 维护者工程记录。run_cmd_demo 1.3.0 保持验证型 demo。AUD-007 按 Auditor 原八实例复核同步关闭；历史 Linux 4.4/5.15 实机范围按原报告与各自字节保留。本轮新实例处于 candidate，等待对应独立审计与实机复验。
 
 ## 2026-10-17 APatch「安装」路径（落盘加载）
 
@@ -115,4 +112,4 @@
 | 时序 | 落盘加载约 24s，厂商首次设 zram `disksize` 约 41s，早约 17s | [只读时序勘查] |
 
 范围：以上均为**该单机**结论；**5.15 未测**；4.4（KP `0.13.4`）无目录自动加载实现，不可验证。
-设备侧变更：该机 `boot_a` 已撤销 `zram_zstd` 嵌入，回滚镜像哈希与现状见 [模块登记](../metadata/modules/zram_zstd.json) 的 `maintainer_records`。
+设备侧变更：该机 `boot_a` 已撤销 `zram_zstd` 嵌入，回滚镜像哈希与现状见 模块登记 的 `maintainer_records`。

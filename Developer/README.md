@@ -75,8 +75,8 @@ static 的偏移表须可通过二进制替换，并生成同名 `.kpm.json`；d
 
 ## 公共 BTF 查询
 
-`kpm_utils.h` 提供 `kpm_btf_type/member/offset/enum`。模块取得有效 BTF 及四个原生查询函数后初始化 `struct kpm_btf`，随后按自己的字段清单读取目标布局。嵌套成员支持点分路径和匿名 struct/union，返回 bit 偏移、位域宽度及类型尺寸；字节偏移入口拒绝位域或非整字节字段。字段清单、配置表的存储范围和函数 ABI 判定留在模块内。实现和自检见 [公共 BTF 与偏移组织记录](reports/2026-10-10-rek-shared-offsets.md)。
+`kpm_utils.h` 提供 `kpm_btf_type/member/offset/enum`。模块取得有效 BTF 及四个原生查询函数后初始化 `struct kpm_btf`，随后按自己的字段清单读取目标布局。嵌套成员支持点分路径和匿名 struct/union，返回 bit 偏移、位域宽度及类型尺寸；字节偏移入口拒绝位域或非整字节字段。字段清单、配置表的存储范围和函数 ABI 判定留在模块内。实现与自检见该模块的开发报告（本地 `Developer/reports/`）。
 
 ## 模块文件职责
 
-rek、rekx 的自有常量与协议放 `re_kernel.h`，内核定义放 `re_structs.h`，KP 风格封装放 `re_utils.h`；`struct struct_offset`、配置表、访问函数和推导放 `re_offsets.c`。通用实现以 rekx 为准核对，模块分别维护自己的协议及业务扩展。见 [头文件职责核对记录](reports/2026-10-10-rek-headers.md)。
+rek、rekx 的自有常量与协议放 `re_kernel.h`，内核定义放 `re_structs.h`，KP 风格封装放 `re_utils.h`；`struct struct_offset`、配置表、访问函数和推导放 `re_offsets.c`。通用实现以 rekx 为准核对，模块分别维护自己的协议及业务扩展。核对记录见该模块的开发报告（本地 `Developer/reports/`）。

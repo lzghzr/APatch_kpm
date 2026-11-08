@@ -174,7 +174,15 @@ local/                        日志、锁、隔离工作区、临时证据；�
 **后果**：从仓库 clone 后，`instance_id`、产物哈希、验收与问题单状态都查不到，交付无法自证。
 工具能跑（它们读工作区文件），但**复算没有依据**。
 
-**接手（新机器 / 新会话 / 他人）必须自建**，最小步骤：
+**接手（新机器 / 新会话 / 他人）必须先取得材料，再登记**：
+
+- 目录骨架与 `metadata/identity.json` 起点用 `python3 tools/bootstrap_local.py` 生成
+  （只建空目录与占位字段，不覆盖已有文件；`--submodules` 可顺带初始化子模块）；
+- **自建只在你能拿到候选产物与 `docs/records/` 记录时成立**；两者都没有时，
+  `builds[]` 的 `source_commit`、`fingerprint_sha256` 与产物哈希无从复算，必须由交出方**随交接转移**
+  （见 `docs/process/09-handoff.md`「随交接转移的材料」）。
+
+最小步骤：
 
 1. 建 `metadata/modules/<模块>.json`：按 `tools/identity.py` 的登记格式，
    从交付产物、`docs/records/` 记录与既有哈希重建 `builds[]`、`acceptances[]`、`issues[]`；

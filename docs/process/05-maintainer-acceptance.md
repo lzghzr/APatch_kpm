@@ -22,9 +22,9 @@
 [ ] 阻塞问题已独立复核关闭，或由维护者书面批准风险范围及恢复触发条件
 [ ] 未因过门禁缩小断言、用例或检查范围；判据变更有理由与复核记录
 [ ] 新验收条目追加到 acceptances[]，与实例的 commit、指纹、产物哈希一致
-[ ] 交付提交与标签签名有效，交付源码与候选构建输入一致
+[ ] 交付提交签名有效且交付源码与候选构建输入一致（不使用交付标签）
 [ ] deliveries[] 绑定已追加，指定实例通过 delivery 核验
-[ ] 绑定与回执索引保存在后续签名提交；主副本的提交、标签、对象一致
+[ ] 绑定与回执索引保存在后续签名提交；主副本的提交与对象一致
 ```
 
 ## 候选核验
@@ -74,7 +74,6 @@ shasum -a 256 <登记的 artifacts.path>     # Linux 使用 sha256sum
 
 ```bash
 git verify-commit <D>
-git verify-tag <module>-<版本>
 python3 tools/identity.py verify --module <module> --instance-id '<build_id>#<n>' --profile delivery
 python3 tools/check_repository.py --strict
 git status --short
@@ -92,5 +91,5 @@ git status --short
 问题处置：已关闭项、已批准风险、未决项与触发条件
 范围：机型/内核/功能/验证层级与未覆盖原因
 结论：接受 / 有条件接受 / 拒绝（附理由）
-签名：交付 D、记录 E、标签与验证结果
+签名：交付 D、记录 E 与验证结果
 ```

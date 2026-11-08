@@ -143,17 +143,15 @@ Tester 报告落盘后，维护者把**结论与差异**回给 Developer：判�
 ## 6. 签名交付与保存回执
 
 1. 将角色报告、问题状态、验收与覆盖矩阵纳入签名的交付提交 **D**。其模块树与登记的构建输入必须仍与候选一致。
-2. 创建指向 D 的签名标签，记录完整 D SHA，核验提交和标签签名。
+2. 核验 D 的签名；交付不使用标签，D 的完整 SHA 即交付标识（2026-11-08 决定）。
 3. `bind-delivery` 追加指向 D 的交付绑定；实例、源码、指纹、产物、祖先关系和签名均复验通过后才落盘。
 4. 针对指定实例执行 delivery 核验与 strict 门禁，保存输出到新的回执位置。
-5. 用后续签名的记录提交 **E** 保存绑定与回执索引。E 的父链包含 D；交付标签继续指向 D。
-6. 从干净 E 再核验记录，按发布授权推送 D 的标签与包含 E 的分支，并复核主工作副本的对象和标签一致。
+5. 用后续签名的记录提交 **E** 保存绑定与回执索引。E 的父链包含 D。
+6. 从干净 E 再核验记录，按发布授权推送包含 E 的分支，并复核主工作副本的对象一致。
 
 ```bash
 git commit -S -m "<module>: <版本> <交付行为>"    # D；只提交已核对的本轮文件
-git tag -s <module>-<版本> <D> -m '<instance_id> / <产物 SHA-256>'
 git verify-commit <D>
-git verify-tag <module>-<版本>
 python3 tools/identity.py bind-delivery <module> --instance-id '<build_id>#<n>' \
     --delivery-commit <D> --tag <module>-<版本> --by 维护者
 python3 tools/identity.py verify --module <module> --instance-id '<build_id>#<n>' --profile delivery

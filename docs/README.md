@@ -10,6 +10,7 @@
 - 反模式：[process/06-antipatterns.md](process/06-antipatterns.md)
 - **真机死机/卡死升级流程（Tester 必读）**：[process/07-escalation-device.md](process/07-escalation-device.md)
 - **复核经济学（成本与影响成比例：分类关闭、批量更正、先入库再引用、报告版本索引）**：[process/08-review-economics.md](process/08-review-economics.md)
+- **交接流程（接手必读）**：[process/09-handoff.md](process/09-handoff.md)
 - 角色手册：[Developer](process/developer-handbook.md) / [Auditor](process/auditor-handbook.md) / [Tester](process/tester-handbook.md)
 - 报告与问题单模板：[templates/](templates/)
 - 覆盖矩阵（模块 × 内核 × 验证层级）：[coverage.md](coverage.md)
@@ -85,4 +86,4 @@ CI 的编译和字节一致性结果不能外推为设备兼容性或实机结�
 
 ## 流程版本与维护记录
 
-当前流程版本为 1.1.0。当前模块登记与审计要求见 [ReKernel-X 1.6 工程记录](records/2026-10-02-re-kernel-x-1.6-registration.md)；问题与历史身份保存在模块元数据中。
+当前流程版本为 1.1.0。当前模块的登记与审计要求以各模块元数据（`metadata/modules/<模块>.json`，本地）为准；问题与历史身份保存在模块元数据中。
