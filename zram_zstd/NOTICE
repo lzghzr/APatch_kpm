@@ -4,8 +4,18 @@ Zstandard v1.5.7-kernel
 Source: https://github.com/facebook/zstd
 Commit: 5d9fb4785030731a155a8abe159e10965d824e4b
 Licenses: BSD-3-Clause / GPL-2.0, as preserved in upstream/zstd/LICENSE and upstream/zstd/COPYING.
+zs_zstd_deps.h derives from contrib/linux-kernel/zstd_deps.h with local memory primitive bindings.
 
 LZ4 v1.10.0 (block codec only)
 Source: https://github.com/lz4/lz4/tree/ebb370ca83af193212df4dcbadcc5d87bc0de2f0/lib
 Commit: ebb370ca83af193212df4dcbadcc5d87bc0de2f0
 License: BSD-2-Clause, preserved in upstream/lz4/LICENSE and source headers.
+
+LZ4KD 2022.03.20 (ordinary blocks, up to 4096 bytes)
+Source: https://github.com/2108282/hyperos-lz4kd/tree/e58761a19874b18c6534810212c66f3140435573/lz4kd_module
+Commit: e58761a19874b18c6534810212c66f3140435573
+Copyright: Huawei Technologies Co., Ltd. 2022, preserved in source headers.
+The encoder and decoder declare MODULE_LICENSE("Dual BSD/GPL"); this module uses the GPL option.
+The GPL v2 text is in the repository root LICENSE. The source repository supplies no standalone BSD license text.
+The original decoder is retained for host differential checks. zs_lz4kd_decode.c derives its optimized ordinary-block core with local entry and overlap-copy adaptations.
+The build generates a private header with only its memory primitives adapted; original upstream files remain unchanged.

@@ -6,10 +6,12 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+from native_entries import validate, regression
 
 
 def forbidden(mnemonic, operands):
     return (mnemonic in ('.word', '.inst', '<unknown>')
+            or bool(re.search(r'(?<!\w)\.(?:word|inst)\b|<unknown>', operands))
             or bool(re.search(r'\b(?:[bhsdqvz][0-9]+|p[0-9]+|x18|w18|fpcr|fpsr|ffr)\b', operands)))
 
 
@@ -28,6 +30,7 @@ def main():
                                ('mov', 'x18, x0'), ('mrs', 'x0, fpcr'), ('.word', '0')]:
         assert forbidden(mnemonic, operands)
     assert not forbidden('add', 'x0, x1, #8')
+    assert forbidden('9d', '6c fa 6c .word 0x6cfa6c9d')
     exports = set()
     for path in (root / 'KernelPatch/kernel').rglob('*'):
         if path.suffix in ('.c', '.h', '.S'):
@@ -43,15 +46,34 @@ def main():
         assembly = subprocess.check_output([str(args.llvm_bin / 'llvm-objdump'), '-d', '--disassemble-zeroes',
                                             '--no-show-raw-insn', str(path)], text=True)
         (args.output / (path.name + '.asm')).write_text(assembly)
-        instructions = re.findall(r'^[ \t]*[0-9a-f]+:[ \t]+(\S+)[ \t]*(.*)$', assembly, re.M)
+        typed_data = validate(path.read_bytes())
+        negative_fixtures = regression(path.read_bytes()) if typed_data else 0
+        instructions = []
+        section = None
+        observed_data = set()
+        for line in assembly.splitlines():
+            match = re.match(r'Disassembly of section (.+):', line)
+            if match:
+                section = match[1]
+            match = re.match(r'^[ \t]*([0-9a-f]+):[ \t]+(\S+)[ \t]*(.*)$', line)
+            if not match:
+                continue
+            offset, mnemonic, operands = match.groups()
+            key = (section, int(offset, 16))
+            if key in typed_data:
+                observed_data.add(key)
+            else:
+                instructions.append((mnemonic, operands))
+        assert observed_data == typed_data, 'all typed prefixes must appear in the disassembly'
         executable = sum(len(raw) for _, (entry, raw) in sections.items() if entry[2] & 4)
-        assert len(instructions) * 4 == executable, (len(instructions), executable)
+        assert len(instructions) * 4 + 4 * len(typed_data) == executable, (len(instructions), executable)
         bad = [(mnemonic, operands) for mnemonic, operands in instructions if forbidden(mnemonic, operands)]
         assert not bad, bad[:10]
         if info['info'].get('offset_mode') == 'static' and args.layout:
             artifact_gate.inspect_layout(args.layout, info, sections)
         results.append({'artifact': path.name, 'sha256': info['sha256'], 'imports': imports,
                         'instructions': len(instructions), 'executable_bytes': executable,
+                        'validated_kcfi_data_bytes': 4 * len(typed_data), 'veneer_fixture_checks': negative_fixtures,
                         'fp_simd_sve_x18': 0, 'undecoded': 0, 'result': 'PASS'})
     (args.output / 'receipt.json').write_text(json.dumps({
         'scope': 'Developer full executable-section decode and KP export check; not independent audit or device execution',

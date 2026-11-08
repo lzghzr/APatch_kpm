@@ -4,9 +4,16 @@
 
 #include "lz4.h"
 static int conflicts = -1, query_count, fail_register, calls, undone;
-static void* accepted[2];
+static void* accepted[3];
 static int allocations, frees, fail_alloc;
 static unsigned int name_length = 64;
+static uint64_t page_tcr = 2ULL << 30;
+static int page_tcr_reads;
+static uint64_t read_tcr(uint32_t el) {
+  assert(el == 1);
+  page_tcr_reads++;
+  return page_tcr;
+}
 static void* allocate(unsigned long n) {
   if (fail_alloc)
     return NULL;
@@ -24,7 +31,9 @@ static int crypto_has_alg(const char* name, u32 type, u32 mask);
 static int crypto_register_alg(void* alg);
 static void* lookup(const char* name);
 static uintptr_t kallsyms_lookup_name_by_suffix(const char* name) { return (uintptr_t)lookup(name); }
-static int hook_wrap(void* func, int args, void* before, void* after, void* data) { return 0; }
+static int hook_wrap(void* func, int args, void* before, void* after, void* data);
+static void* display_lookup(const char* name);
+static void test_display(void);
 static int compat_copy_to_user(void* dest, const void* src, int len) {
   memcpy(dest, src, len);
   return len;
@@ -34,13 +43,14 @@ static int compat_copy_to_user(void* dest, const void* src, int len) {
 /* PRODUCTION */
 static int crypto_has_alg(const char* name, u32 type, u32 mask) {
   assert(type == 2 && mask == 15);
-  assert(query_count < 2 && !strcmp(name, algorithms[query_count].name));
+  assert(query_count < 3 && !strcmp(name, algorithms[query_count].name));
   return query_count++ == conflicts;
 }
 static int crypto_register_alg(void* raw) {
-  assert(calls < 2);
+  assert(page_tcr_reads == 1);
+  assert(calls < 3);
   int index = calls++;
-  assert(index < 2 && raw == algorithms[index].storage);
+  assert(index < 3 && raw == algorithms[index].storage);
   const struct zs_algorithm* codec = &algorithms[index];
   struct zs_crypto_alg_prefix* prefix = raw;
   assert(prefix->cra_flags == 2 && prefix->cra_ctxsize == codec->ctxsize);
@@ -56,6 +66,9 @@ static int crypto_register_alg(void* raw) {
   return 0;
 }
 static void* lookup(const char* name) {
+  void* display = display_lookup(name);
+  if (display)
+    return display;
   if (!strcmp(name, "crypto_has_alg"))
     return crypto_has_alg;
   if (!strcmp(name, "crypto_register_alg"))
@@ -68,6 +81,10 @@ static void* lookup(const char* name) {
 }
 static void reset_registration(void) {
   registered = false;
+  zs_page_size = 0;
+  zs_native_seen = zs_native_ready = false;
+  page_tcr_reads = 0;
+  page_tcr = 2ULL << 30;
   conflicts = -1;
   fail_register = 0;
   calls = undone = query_count = 0;
@@ -79,34 +96,37 @@ static void reset_registration(void) {
 static void registration_tests(void) {
   reset_registration();
   assert(zram_zstd_init("", "pre-kernel-init", NULL) == -EINVAL && !query_count && !calls);
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < 3; i++) {
     reset_registration();
     conflicts = i;
     assert(zram_zstd_init("", "post-kernel-init", NULL) == -EEXIST && !calls && !undone);
     assert(query_count == i + 1 && !registered);
   }
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < 3; i++) {
     reset_registration();
     fail_register = 1 << i;
     if (i == 0) {
       assert(zram_zstd_init("", "post-kernel-init", NULL) == -EIO && !registered);
       assert(calls == 1 && !undone);
-      assert(!algorithm_registered[0] && !algorithm_registered[1]);
+      assert(!algorithm_registered[0] && !algorithm_registered[1] && !algorithm_registered[2]);
     } else {
       assert(zram_zstd_init("", "post-kernel-init", NULL) == 0 && registered);
-      assert(calls == 2 && !undone);
-      for (int j = 0; j < 2; j++) assert(algorithm_registered[j] == (i != j));
+      assert(calls == 3 && !undone);
+      for (int j = 0; j < 3; j++) assert(algorithm_registered[j] == (i != j));
     }
   }
   reset_registration();
   fail_register = 3;
   assert(zram_zstd_init("", "post-kernel-init", NULL) == -EIO && !registered && calls == 1);
-  assert(!algorithm_registered[0] && !algorithm_registered[1]);
+  assert(!algorithm_registered[0] && !algorithm_registered[1] && !algorithm_registered[2]);
   reset_registration();
-  assert(zram_zstd_init("", "post-kernel-init", NULL) == 0 && calls == 2 && !undone && registered);
+  assert(zram_zstd_init("", "post-kernel-init", NULL) == 0 && calls == 3 && !undone && registered);
   assert(!strcmp(algorithms[0].name, "zstd-kpm"));
   assert(!strcmp(algorithms[1].name, "lz4-kpm"));
-  assert(sizeof(algorithms) / sizeof(algorithms[0]) == 2);
+  assert(!strcmp(algorithms[2].name, "lz4kd-kpm"));
+  assert(algorithms[2].compress == lz4kd_compress && algorithms[2].init == lz4kd_init);
+  assert(algorithms[2].ctxsize == sizeof(struct lz4kd_ctx));
+  assert(sizeof(algorithms) / sizeof(algorithms[0]) == 3);
   assert(algorithms[0].compress == zstd_compress && algorithms[0].init == zstd_init);
   assert(algorithms[1].compress == lz4_compress && algorithms[1].init == lz4_init);
   assert(algorithms[0].ctxsize == sizeof(struct zstd_ctx));
@@ -131,14 +151,14 @@ static void display_tests(void) {
                          "\n",
                          "[zstd-kpm] lz4-kpm\n",
                          "zstd-kpm\n"};
-  const char* output[] = {"[lzo] lz4 zstd-kpm lz4-kpm\n",
-                          "[zstd-kpm] lzo lz4-kpm\n",
-                          "[lz4-kpm] zstd-kpm\n",
-                          "[zstd-kpm] lz4-kpm\n",
-                          "[lzo] zstd-kpm-extra foo[zstd-kpm] zstd-kpm lz4-kpm\n",
-                          "zstd-kpm lz4-kpm\n",
-                          "[zstd-kpm] lz4-kpm\n",
-                          "zstd-kpm lz4-kpm\n"};
+  const char* output[] = {"[lzo] lz4 zstd-kpm lz4-kpm lz4kd-kpm\n",
+                          "[zstd-kpm] lzo lz4-kpm lz4kd-kpm\n",
+                          "[lz4-kpm] zstd-kpm lz4kd-kpm\n",
+                          "[zstd-kpm] lz4-kpm lz4kd-kpm\n",
+                          "[lzo] zstd-kpm-extra foo[zstd-kpm] zstd-kpm lz4-kpm lz4kd-kpm\n",
+                          "zstd-kpm lz4-kpm lz4kd-kpm\n",
+                          "[zstd-kpm] lz4-kpm lz4kd-kpm\n",
+                          "zstd-kpm lz4-kpm lz4kd-kpm\n"};
   for (unsigned int i = 0; i < sizeof(input) / sizeof(input[0]); i++) {
     memset(page, 0x5a, sizeof(page));
     strcpy(page, input[i]);
@@ -153,13 +173,13 @@ static void display_tests(void) {
   strcpy(page, "[zstd-kpm] lzo\n");
   hook_fargs2_t partial = {.arg1 = (uintptr_t)page, .ret = strlen(page)};
   zstd_list_after(&partial, NULL);
-  assert(!strcmp(page, "[zstd-kpm] lzo lz4-kpm\n"));
+  assert(!strcmp(page, "[zstd-kpm] lzo lz4-kpm lz4kd-kpm\n"));
   algorithm_registered[0] = true;
   algorithm_registered[1] = false;
   strcpy(page, "[lzo]\n");
   partial.ret = strlen(page);
   zstd_list_after(&partial, NULL);
-  assert(!strcmp(page, "[lzo] zstd-kpm\n"));
+  assert(!strcmp(page, "[lzo] zstd-kpm lz4kd-kpm\n"));
   algorithm_registered[1] = true;
   const long bad[] = {-EINVAL, 0, 4095, 4096};
   for (unsigned int i = 0; i < sizeof(bad) / sizeof(bad[0]); i++) {
@@ -184,7 +204,7 @@ static void display_tests(void) {
   zstd_list_after(&tight_foreign_name, NULL);
   assert(!strcmp(page + 4080, "[lzo] zstd-kpm\n") && tight_foreign_name.ret == 15);
   assert(!memcmp(page, saved, sizeof(page)));
-  const char* result = "[lzo] zstd-kpm lz4-kpm\n";
+  const char* result = "[lzo] zstd-kpm lz4-kpm lz4kd-kpm\n";
   size_t required = strlen(result) + 1;
   for (int spare = 0; spare < 2; spare++) {
     size_t off = 4096 - required + spare;
@@ -292,13 +312,21 @@ static void codec_tests(const char* library, const char* zstd_library) {
   dlclose(zstd_handle);
   assert(allocations == frees);
 }
+/* DISPLAY_FIXTURE */
+/* LZ4KD_TESTS */
+/* NATIVE_ALIGNMENT_TESTS */
+/* PAGE_SIZE_TESTS */
 int main(int argc, char** argv) {
   assert(argc == 3);
   registration_tests();
   name_length = 128;
   registration_tests();
   display_tests();
+  test_display();
   codec_tests(argv[1], argv[2]);
+  native_alignment_tests();
+  lz4kd_tests();
+  page_size_tests();
   printf(
       "PASS: registrations/resident partial failure, ctx lifecycle, exact stable names/foreign token preservation, bounded lists, LZ4 "
       "independent interop; state=%d bytes\n",

@@ -35,12 +35,20 @@ def prepare(module, output):
         raise ValueError('codec 输出目录已存在；请使用新的空输出目录')
     subprocess.run([sys.executable, str(upstream / 'contrib/freestanding_lib/freestanding.py'),
                     '--source-lib', str(upstream / 'lib'), '--output-lib', str(output),
-                    '--zstd-deps', str(upstream / 'contrib/linux-kernel/zstd_deps.h'),
+                    '--zstd-deps', str(module / 'zs_zstd_deps.h'),
                     '--mem', str(upstream / 'contrib/linux-kernel/mem.h'),
                     *GENERATOR_OPTIONS], check=True)
     # 内核生成器通常转接到内核 xxHash；本模块保留自带实现的原字节。
     for name in ('xxhash.c', 'xxhash.h'):
         shutil.copyfile(upstream / 'lib/common' / name, output / 'common' / name)
+    # 只适配两项内存 primitive；不改上游编码器/头文件或普通块算法。
+    private = (module / 'upstream/lz4kd/lz4kd_private.h').read_text()
+    for before, after in (('__builtin_memcpy(dst, src, total)', 'zs_memcpy(dst, src, total)'),
+                          ('__builtin_memset(dst, value, total)', 'zs_memset(dst, value, total)')):
+        if private.count(before) != 1:
+            raise ValueError('LZ4KD primitive 模板变化；需重新核对接入位置')
+        private = private.replace(before, after)
+    (output / 'zs_lz4kd_private.h').write_text('#include "zs_memory.h"\n' + private)
     generated = {str(p.relative_to(output)): hashlib.sha256(p.read_bytes()).hexdigest()
                  for p in sorted(output.rglob('*')) if p.is_file()}
     (output / 'MANIFEST.json').write_text(json.dumps({

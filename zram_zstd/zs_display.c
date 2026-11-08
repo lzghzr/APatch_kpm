@@ -22,8 +22,8 @@ static void zstd_list_after(hook_fargs2_t* args, void* udata) {
   size_t capacity = 4096 - ((uintptr_t)buf & 4095);
   if (!buf || size <= 0 || (size_t)size >= capacity || buf[size - 1] != '\n')
     return;
-  const char* names[] = {ZS_ZSTD_NAME, ZS_LZ4_NAME};
-  bool found[2] = {false, false};
+  const char* names[] = {ZS_ZSTD_NAME, ZS_LZ4_NAME, ZS_LZ4KD_NAME};
+  bool found[ZS_CODEC_COUNT] = {false};
   size_t needed = 0;
   // 先计算完整结果；容量不足时保留原列表，不追加半个token。
   for (size_t start = 0; start < size;) {
@@ -33,14 +33,14 @@ static void zstd_list_after(hook_fargs2_t* args, void* udata) {
     size_t len = end - start;
     if (len) {
       needed += (needed != 0) + len;
-      for (unsigned int i = 0; i < 2; i++)
+      for (unsigned int i = 0; i < ZS_CODEC_COUNT; i++)
         if (display_token(buf + start, len, names[i]))
           found[i] = true;
     }
     start = end;
   }
-  for (unsigned int i = 0; i < 2; i++)
-    if (!found[i] && algorithm_registered[i])
+  for (unsigned int i = 0; i < ZS_CODEC_COUNT; i++)
+    if (!found[i] && zs_codec_selectable(i))
       needed += (needed != 0) + strlen(names[i]);
   if (needed + 2 > capacity)  // newline + NUL
     return;
@@ -59,8 +59,8 @@ static void zstd_list_after(hook_fargs2_t* args, void* udata) {
     }
     start = end;
   }
-  for (unsigned int i = 0; i < 2; i++) {
-    if (found[i] || !algorithm_registered[i])
+  for (unsigned int i = 0; i < ZS_CODEC_COUNT; i++) {
+    if (found[i] || !zs_codec_selectable(i))
       continue;
     if (written)
       buf[written++] = ' ';
@@ -86,6 +86,7 @@ static void install_zram_display(void) {
     bool ready =
         owner ? ((struct zs_module_prefix*)owner)->state == ZS_MODULE_LIVE : display_core_text((unsigned long)target);
     if (ready) {
+      zs_native_try_install(owner, target);
       int rc = hook_wrap(target, 2, NULL, zstd_list_after, NULL);
       if (!rc) {
         __atomic_store_n(&display_installed, true, __ATOMIC_RELEASE);

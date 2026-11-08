@@ -4,7 +4,7 @@
 
 ## 接入与生命周期
 
-通过 `crypto_register_alg()` 分别注册 `zstd-kpm` 与 `lz4-kpm`；cra_name/driver_name相同。算法版本由加载日志及 `zstd_version` / `lz4_version` 元信息记录。现有 zram 继续管理压缩页与 CPU 压缩流。模块不改变已经初始化的 zram，也不修改交换空间配置。
+通过 `crypto_register_alg()` 依次注册 `zstd-kpm`、`lz4-kpm`、`lz4kd-kpm`；cra_name/driver_name相同。注册前使用 SDK `read_tcr(1)` 读取一次 `TCR_EL1.TG1` 并缓存为 `zs_page_size`：2/1/3 分别为 4096/16384/65536，保留编码 0 记为未知。仅缓存为 4096 时注册 LZ4KD；其它结果只跳过该项并记录日志，ZSTD/LZ4 的 Crypto 注册保持。缓存发布前完成赋值，随后两个前端只读，不在逐页路径重复检测。算法版本由加载日志及 `zstd_version` / `lz4_version` / `lz4kd_version` 元信息记录。现有 zram 继续管理压缩页与 CPU 压缩流。模块不改变已经初始化的 zram，也不修改交换空间配置。
 
 嵌入事件使用 `post-kernel-init`，先完成原生初始化，再在 Android 用户空间配置 zram 前注册。`pre-kernel-init` 在任何 Crypto API 调用前拒绝：算法查询可能触发模块请求和原生测试，不能当作单纯只读表查询。
 
@@ -14,7 +14,35 @@
 
 算法列表显示放 `zs_display.c`。注册成功后，先 wrap `do_init_module` 的加载完成入口，再检查已有 zram；该入口在目标中保留，避免通知 dispatcher 被 LTO 内联而漏事件。成功返回后再尝试安装 `zcomp_available_show` 的 after 回调，保留原返回值；两种安装路径在原生 `module_mutex` 下串行。地址必须确认属于核内代码或 LIVE 的 LKM，不能把查到符号等同于模块已就绪。`zs_structs.h` 只复用本轮目标已核对的 module state 首字段，未使用 module 的其余布局。用户指定 zram 与 KPM 常驻，本模块的加载和显示 hook 同样常驻。
 
-列表只追加实际注册成功且未出现的两个稳定名，保留其它算法及选中括号。按完整 token 判断已有名字；先计算完整结果长度，容量不足不写；返回长度与结尾换行先检查，NUL 计入容量；写入限于缓冲区当前 4 KiB 子页的剩余空间，兼顾 `recomp_algorithm` 传入的带前缀地址和 ARM64 4/16/64 KiB 页。注册成功后，显示依赖或 hook 失败仅降级为直接写入算法名，不能返回 init 错误让 Crypto API 引用已释放的 KPM。
+列表只追加实际注册成功且未出现的三个稳定名，保留其它算法及选中括号。按完整 token 判断已有名字；先计算完整结果长度，容量不足不写；返回长度与结尾换行先检查，NUL 计入容量；写入限于缓冲区当前 4 KiB 子页的剩余空间，兼顾 `recomp_algorithm` 传入的带前缀地址和 ARM64 4/16/64 KiB 页。注册成功后，显示依赖或 hook 失败仅降级为直接写入算法名，不能返回 init 错误让 Crypto API 引用已释放的 KPM。
+
+入口的 `crypto_register_alg`、`vzalloc`、`vfree` 都通过 SDK 的编译器后缀查找解析。
+仅对已核对同 ABI 的分配入口增加 `vzalloc` → `vzalloc_noprof` 回退，旧名存在时优先旧名；
+`_noprof` 是已确认的分配 API 名，与 SDK 编译器后缀匹配分别处理；释放和注册函数继续使用已确认原名。
+必需入口仍缺失时，在分配和注册前返回 `-ENOENT`，日志按名称记录缺项而不打印地址。
+
+## 新版 zram 前端（1.3.0）
+
+`zs_native.c` 接入 `zcomp_ops`，与 Crypto 前端共用编解码核心，但使用独立的真实上下文。
+在现有 `module_mutex` / LIVE 检查内，通过 `module_kallsyms_lookup_name("zram:…")` 定位后端与两个 hook 点。
+只拦截三个完整 KPM 名字；原生名字继续走原实现。模块 BTF、完整布局、回调原型、对象归属和原生 KCFI 标签均需吻合。
+本轮新前端仅支持模块形式的 zram；旧 Crypto 前端的内建及晚加载路径保持。目标依据为 boot_405 的配套 zram.ko。
+
+`zs_native_btf.c` 校验本地结构定义；GFP 位与 CPUHP 状态由真实 base BTF 枚举取得，页大小复用注册前取得的 `zs_page_size`。未知页大小时不开放 native 后端；该路径不再单独检测。
+不能按内核版本选布局。新版 LZ4KD 仅在确认 4 KiB 页时开放；16 KiB 实验编码器不进入此候选。
+新版前端支持无字典、默认级别或明确的 ZSTD 3 / LZ4 1；其它请求返回 `-EOPNOTSUPP`。
+
+构造器分配 zcomp/per-CPU 存储，交由原生 CPUHP 回调建立每 CPU 上下文及缓冲区；成功后由原生 zcomp_destroy 回收。
+CPUHP add 失败已经回滚此前 CPU，不再 remove。先 pin 住原生 zram 模块，再安装 create/available 两个 hook；
+只有两个都成功才发布 ready，第二个失败撤回第一个并释放引用。成功后 zram 与 KPM 均常驻。
+
+`zs_native_entry.S` 提供十个带匹配 KCFI type ID、BTI c 和直接尾跳转的入口；C worker 保持 NDK 构建。
+加载时核对实际原生回调标签，不依赖 KP 的 CFI 失败处理。二进制自检精确核对入口、前缀及 JUMP26 重定位，
+只把验证通过的十个 4 字节前缀计为数据；其余可执行节仍逐条解码，拒绝未识别数据、FP/SIMD/SVE/x18。
+
+新增检查 `tools/test_native.py --btf <base> --module-btf <split> --output <新目录>`，
+执行真实 BTF 查询及生产 C，在两 CPU 宿主模型中覆盖构造、清理、参数、选择与页大小边界。
+这不替代原生 CPUHP、CFI 和交换空间压力测试。
 
 ## 文件与偏移
 
@@ -43,25 +71,70 @@
 
 ## 算法来源与验证
 
-ZSTD v1.5.7-kernel 通过 `upstream/zstd` Git 子模块固定到 `5d9fb4785030731a155a8abe159e10965d824e4b`。`tools/prepare_codec.py` 保存生成选项，准备源码时核对子模块提交与父仓库记录一致，并要求子模块工作树干净。脚本使用上游 freestanding 工具与官方 kernel `mem.h`／`zstd_deps.h`，只在新输出目录准备源码并写入生成清单。xxHash 保留子模块中的原字节，通过构建宏提供静态状态声明并禁用库内分配。KPM 从这些源码编译，宿主安装的 libzstd 仅作独立互解自检。兼容头提供类型、非对齐访问、字节交换、64 位除法与标准限值；不依赖目标内核的 ZSTD 或 xxHash 导出。
+ZSTD v1.5.7-kernel 通过 `upstream/zstd` Git 子模块固定到 `5d9fb4785030731a155a8abe159e10965d824e4b`。`tools/prepare_codec.py` 保存生成选项，准备源码时核对子模块提交与父仓库记录一致，并要求子模块工作树干净。脚本使用上游 freestanding 工具与官方 kernel `mem.h` 与本模块从官方模板派生的 `zs_zstd_deps.h`，只在新输出目录准备源码并写入生成清单。xxHash 保留子模块中的原字节，通过构建宏提供静态状态声明并禁用库内分配。KPM 从这些源码编译，宿主安装的 libzstd 仅作独立互解自检。兼容头提供类型、非对齐访问、字节交换、64 位除法与标准限值；不依赖目标内核的 ZSTD 或 xxHash 导出。
 
-压缩级别沿用该 Crypto API 封装的 3。每个原生 transform 独立持有压缩、解压工作区，创建时使用 `ZSTD_estimateCCtxSize(3)`／`ZSTD_estimateDCtxSize()` 取得单次编解码工作区大小，检查错误后分配，调用 `ZSTD_initStaticCCtx()`／`ZSTD_initStaticDCtx()` 初始化；退出时释放，热路径不分配工作区。
+压缩级别沿用原生 Crypto API 封装的 3；通过 `ZSTD_getParams(3, 0, 0)` 取得未知输入大小的显式参数，不按当前页面大小重新选一套参数。每个原生 transform 独立持有压缩、解压工作区，创建时使用 `ZSTD_estimateCCtxSize_usingCParams(params.cParams)`／`ZSTD_estimateDCtxSize()` 取得单次编解码工作区大小，检查错误后分配，调用 `ZSTD_initStaticCCtx()`／`ZSTD_initStaticDCtx()` 初始化；退出时释放，热路径不分配工作区。
+
+`zstd_encode()` 同时服务注册压缩回调和加载前自检：先 `ZSTD_CCtx_reset(..., ZSTD_reset_session_and_parameters)`，设置本块 pledged size，再用 `ZSTD_CCtx_setParams()` 写入七项压缩参数与三项 frame 参数，最后 `ZSTD_compress2()`。批量 setter 与 Linux 6.6 原生逐字段 setter 的语义由 `tools/native_alignment_fixture.h` 对照；参考来源见 `tools/references/README.md`。每次重置阻断上一个调用的参数或字典状态，编码错误保留调用方 `dlen`。
 
 加载前的页面比对只验证库，不证明注册布局或原生回调路径。`tools/selfcheck.py` 在实际目标入口字节上运行生产 C，并用目标内核页面验证编解码及独立 libzstd 互解。宿主检查不能替代原生注册、并发、内存回收和交换空间压力测试。
 
 编译产物使用新的输出目录。正式交接从冻结提交构建，探索产物不作为验收候选；已冻结资产只读。新增模块的登记与发布由维护者处理。
 
 LZ4 v1.10.0的block源码原字节位于`upstream/lz4/`，提交与BSD-2-Clause见该目录README/许可证及NOTICE。
-只编译`lz4.c`，通过`zs_lz4_config.h`启用freestanding、关闭fast decode loop和硬件bitcount路径；
+只编译`lz4.c`，通过`zs_lz4_config.h`启用freestanding、关闭fast decode loop，保留ARM64标量bitcount intrinsic（RBIT/CLZ，不使用SIMD）；
 所有代码沿用`-mgeneral-regs-only -ffixed-x18`，实际KPM必须检查零FP/SIMD/SVE、零x18。
 transform上下文只有一个工作区指针（ARM64为8字节）；压缩哈希工作区由`LZ4_sizeofState()`取得并在init分配、exit释放，
 不把约16KiB哈希表放进内核栈。extState接口每块重置状态，acceleration=1，解压不持有字典/解压上下文。
+LZ4 库对象单独追加 `-O3`，与 Linux 6.6 的 `lib/lz4/Makefile` 一致；ZSTD、LZ4KD 和模块入口保持 `-O2`。两者使用同一 NDK 与公共 ARM64 寄存器约束。宿主 sanitizer 自检也单独以 `-O3` 编译 LZ4 对象，其余继续使用原自检优化级别。
 
-先注册 ZSTD，再注册 LZ4；首项失败时尚未公开资源，直接拒载。ZSTD 成功后模块常驻，后续 LZ4 失败则关闭该项并记录日志。
+依次注册 ZSTD、LZ4、LZ4KD；首项失败时尚未公开资源，直接拒载。ZSTD 成功后模块常驻，后续 LZ4/LZ4KD 失败则关闭该项并记录日志。
 不能对已公开算法做失败回滚：旧 Crypto API 注销不等待活跃 transform，可能 BUG；显示层只追加注册成功的名字。不能热卸载。
 
 新增自检：`python3 tools/test_codecs.py --output ../local/<新目录>`（模块目录内运行），
 覆盖真实生产注册/部分失败常驻、transform释放、LZ4独立库互解与稳定名显示。
+
+## 内联内存接入与错误判定
+
+`zs_memory.h` 共用三项内存 primitive：小的编译期常量保留 builtin，动态长度与大的常量直接调用 KP 的 `kf_*` 指针。
+NDK 标量 O2 的内联选择阈值为 memcpy/memmove 128、memset 256 字节；阈值不限制合法长度，也不增加动态长度分支。
+必须在实际 ARM64 产物确认小复制保持内联、库的动态热点没有新增包装调用或小块间接调用循环。
+`zs_runtime.c` 的普通符号继续为编译器生成的剩余 libc 调用提供接入，不能直接删除。
+
+LZ4 从现有配置宏接入；ZSTD 通过本模块平台依赖模板接入，上游子模块原字节不变。
+`tools/prepare_codec.py` 同时生成只修改两项 primitive 的 LZ4KD private 头，模板不匹配就停止，清单记录生成字节。
+宿主驱动链接 `tools/host_memory.c` 为生产适配器提供真实 libc 绑定，不在生产头增加宿主分支。
+
+模块侧 `zs_zstd_config.h` 复用同版上游 `ERR_isError`，保持公开 API 的错误码语义而消除逐页外部判错调用。
+原参数 reset、级别、工作区策略及回调签名保持。测试驱动保留原断言，新增内存绑定计数/重叠语义及错误 predicate 等价检查。
+
+## LZ4KD 普通 4 KiB 块
+
+来源固定于 `upstream/lz4kd/README.md` 所记提交，版本为 2022.03.20。KPM 经 `zs_lz4kd_encode.c` 编译上游普通编码器，
+`zs_lz4kd_decode.c` 从固定上游解码器派生，保留批量复制与小偏移展开；
+`zs_lz4kd.c` 提供共用编解码适配和 Crypto API 回调；三个算法共用现有布局取得、注册与常驻机制，不增加偏移字段。
+此算法最多处理 4096 字节，供 4 KiB 内核页的 zram 使用；不增加跨页分块格式。
+
+每个 transform 分配一块 16384 字节工作区：上游 8192 字节哈希表及独立 8192 字节编码 scratch。
+热路径不分配内存。短于 32 字节的输入直接生成普通 literal-only 块；上游返回非正值时也生成该块，
+仍使用 header=0 的正式格式。调用方声明容量至少 8192 字节时直接编码到输出，跳过 scratch 复制；
+更小容量仍在 scratch 完成后核对长度、再复制，失败不改 `dlen` 或输出缓冲区。
+直接路径按 8192 字节物理容量门控，不把上游较小的逻辑 out_limit 当作宽写边界。
+不做原文冒充编码流的回退。init 分配失败不留指针，exit 清空 workspace 与 scratch。
+
+解码复用上游普通块的 16/32 字节复制与小偏移展开；只在入口检查 header=0、输入上限及输出容量，
+去掉按输入长度 8 识别 pattern 的分支，保留正常 8 字节普通块。三处可能重叠的固定 8/16 字节复制
+使用显式 builtin memmove，保持上游展开顺序并消除重叠 memcpy 的未定义行为；实际 ARM64 产物应确认其内联。
+原始参考解码器仍参与宿主差分；其 length==8 的冲突不作为该长度的参考。
+生成的 `zs_lz4kd_private.h` 仅将 `m_copy/m_set` 的内存 primitive 接入本模块内联头；
+原始编码器及 private 头字节保持，解码器继续复用同一平台头。
+上游派生解码文件保留原格式，局部差异可直接与 `upstream/lz4kd/lz4kd_decode.c` 比较。
+
+`tools/test_codecs.py` 同时复用 `selfcheck_fixture.c` 的列表/晚加载/并发安装检查，覆盖三项精确注册、
+全部注册失败组合、独立 transform、1..4096 字节四类数据、容量边界、上游参考解码及畸形流。
+新增 `tools/lz4kd_fast_fixture.h` 检查真实 8192 字节输出的直接路径、scratch 未被触及、
+与 8191 字节容量的中转路径逐字节一致，以及周期 1..32 和随机输入。
+LZ4/ZSTD 的独立库互解继续保留。测试清单迁移依据见 Developer 同轮 Oracle 记录，须 Auditor 复核。
 
 ## 控制接口与二进制转接
 
@@ -72,6 +145,8 @@ transform上下文只有一个工作区指针（ARM64为8字节）；压缩哈�
 源码与 Makefile 以当前 KernelPatch SDK 构建普通 KPM。转接仅由外部 Python 工具修改已生成的 KPM 字节；保留普通候选的完整身份、转换工具提交及哈希、转换命令、输入／输出哈希和回执，写入独立的新输出目录。
 
 普通候选使用 `--target "all"`，额外捕获 `patch_offsets.py`。Makefile 只使用其 `baseline` 子命令生成静态布局 JSON；静态偏移配置使用 `patch` 子命令，这两项与 KP 版本转接分别处理。构建结束后，单独运行 `Developer/tools/test_legacy_kp_metadata.py` 检查普通 KPM 的二进制转接；需要 Clang 与同目录的 `ld.lld`，推荐使用 NDK 工具链。自检保留历史可选字段夹具，并覆盖实际 KPM 元信息字节保持、直接调用和原名指针导入、精确修改范围、静态布局与输出保护。回执与自检结果作为同轮证据留存。
+
+统一候选构建时显式设置新的 `LAYOUT_DIR=../local/<新目录>`，让生成的 JSON/codec 源码留在 `local/`；KPM 输出仍由统一入口放在模块目录并归档。转接自检用两个 `--kpm <文件名>` 精确列出本轮普通件；不带选择器仍保留历史四件套判据。
 
 ## 源码准备与构建
 
@@ -117,7 +192,7 @@ Makefile默认只生成dynamic/static两种实际偏移模式，不生成单独d
    cat /proc/swaps
    ```
 
-   `comp_algorithm` 里出现 `[zstd-kpm]` 或 `[lz4-kpm]`，表示 zram 已经选用了它。`/proc/crypto` 里应能看到 所选主名对应的 `name` 和 `driver`，`/proc/swaps` 中应有目标 zram 交换设备。
+   `comp_algorithm` 里出现 `[zstd-kpm]`、`[lz4-kpm]` 或 `[lz4kd-kpm]`，表示 zram 已经选用了它。`/proc/crypto` 里应能看到 所选主名对应的 `name` 和 `driver`，`/proc/swaps` 中应有目标 zram 交换设备。
 
 只加载模块不会自动切换已经初始化的 zram，还需要开机脚本完成第 2 步。
 
@@ -162,4 +237,4 @@ Makefile默认只生成dynamic/static两种实际偏移模式，不生成单独d
 - 列表显示 hook 未接入时，可在初始化前直接写入已注册稳定名。
 - 找不到符号时检查KP导出，旧KP可能需要二进制派生件；偏移失败时保存日志并适配实际内核。
 
-`/proc/crypto` 保留两个稳定名注册条目；本轮字节仍需独立审计和真机验证。
+`/proc/crypto` 显示实际注册成功的稳定名；LZ4KD 仅在确认 4 KiB 页时出现。本轮字节仍需独立审计和真机验证。

@@ -6,6 +6,7 @@
 
 ## LZ4 provenance
 
+
 来源为官方 [LZ4 v1.10.0 固定提交](https://github.com/lz4/lz4/tree/ebb370ca83af193212df4dcbadcc5d87bc0de2f0)：
 `ebb370ca83af193212df4dcbadcc5d87bc0de2f0`。
 
@@ -17,3 +18,7 @@
 
 三份原始文件保持上游字节；目录内 README 是本仓库的来源记录。升级时整体替换上述固定提交的文件并复核编解码、许可证及产物指令检查。
 库配置与 KPM 适配保留在模块根目录，不修改上游原文件。共享 KernelPatch SDK 仍在仓库根目录。
+
+## LZ4KD provenance
+
+固定提交、所选普通块文件与 GPL 来源见 [lz4kd/README.md](lz4kd/README.md)。

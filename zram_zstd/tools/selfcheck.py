@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import subprocess
 from prepare_codec import prepare
+from host_native import native_source, hook_frame
 
 
 def sha(path):
@@ -31,14 +32,14 @@ def build_fixture(args, module):
         declarations.append(f'static uint32_t {name}_entry[] = {{' + ','.join(hex(w) for w in words) + '};')
         entries[name] = {'image_offset': off, 'window_bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}
     lookup = '\n'.join(f'  if (!strcmp(name, "{name}")) return {name}_entry;' for name in windows)
-    production = (module / 'zram_zstd.c').read_text().replace('#include "zs_offsets.c"', (module / 'zs_offsets.c').read_text())
+    production = native_source(module, (module / 'zram_zstd.c').read_text()).replace('#include "zs_offsets.c"', (module / 'zs_offsets.c').read_text())
     production = production.replace('#include "zs_structs.h"', (module / 'zs_structs.h').read_text())
-    for name in ('zs_btf.c', 'zs_display.c'):
+    for name in ('zs_btf.c', 'zs_display.c', 'zs_lz4kd.c'):
         production = production.replace(f'#include "{name}"', (module / name).read_text())
-    production = re.sub(r'^#include .*\n', '', production, flags=re.M)
+    production = re.sub(r'^#include (?!"zs_zstd_config.h").*\n', '', production, flags=re.M)
     production = production.replace('__attribute__((section(".data.re_offsets"), used))', '')
     utilities = (root / 'kpm_utils.h').read_text().split('// BTF\n', 1)[1].rsplit('#endif', 1)[0]
-    fixture = (module / 'tools/selfcheck_fixture.c').read_text()
+    fixture = hook_frame((module / 'tools/selfcheck_fixture.c').read_text())
     fixture = fixture.replace('/* ENTRIES */', '\n'.join(declarations)).replace('/* LOOKUP */', lookup)
     fixture = fixture.replace('/* BTF_FIXTURE */', (module / 'tools/btf_fixture.h').read_text())
     fixture = fixture.replace('/* UTILITIES */', utilities).replace('/* PRODUCTION */', production)
@@ -62,10 +63,13 @@ def run_fixture(args, module, fixture):
     codec = sorted(generated.rglob('*.c'))
     compiled = subprocess.run(['clang', '-O1', '-g', '-Wall', '-Werror', '-Wno-unused-function',
                                '-DXXH_NO_STDLIB', '-DXXH_STATIC_LINKING_ONLY=', '-fno-strict-aliasing', '-fsanitize=address,undefined', '-fno-omit-frame-pointer',
-                               '-I' + str(module / 'compat'), '-I' + str(generated),
+                               '-I' + str(module), '-I' + str(module / 'compat'), '-I' + str(generated),
                                '-I' + str(generated / 'common'), '-I' + str(module / 'upstream/lz4'),
                                '-include', str(module / 'zs_lz4_config.h'),
-                               str(source), *map(str, codec), str(module / 'upstream/lz4/lz4.c'), '-o', str(binary)],
+                               '-include', str(module / 'zs_lz4kd_config.h'),
+                               '-include', str(module / 'upstream/lz4kd/lz4kd.h'),
+                               str(source), *map(str, codec), str(module / 'upstream/lz4/lz4.c'),
+                               str(module / 'zs_lz4kd_encode.c'), str(module / 'tools/host_memory.c'), str(module / 'zs_lz4kd_decode.c'), '-o', str(binary)],
                               text=True, capture_output=True)
     log = args.output / 'compile.log'
     log.write_text(compiled.stdout + compiled.stderr)
@@ -109,7 +113,8 @@ def main():
         'sources': {str(p.relative_to(root)): sha(p) for p in
                     [module / 'zram_zstd.c', module / 'zs_structs.h', module / 'zs_offsets.c', module / 'zs_btf.c', module / 'zs_display.c', root / 'kpm_utils.h', Path(__file__),
                      module / 'tools/prepare_codec.py', module / 'tools/selfcheck_fixture.c', module / 'tools/btf_fixture.h',
-                     module / 'zs_lz4_config.h', module / 'upstream/lz4/lz4.h', module / 'upstream/lz4/lz4.c']},
+                     module / 'zs_lz4_config.h', module / 'upstream/lz4/lz4.h', module / 'upstream/lz4/lz4.c', module / 'zs_lz4kd.c', module / 'zs_lz4kd_decode.c', module / 'zs_lz4kd_encode.c', module / 'zs_memory.h', module / 'zs_zstd_config.h', module / 'zs_zstd_deps.h', module / 'zs_lz4kd_config.h',
+                     *sorted((module / 'upstream/lz4kd').glob('*.[ch]'))]},
     }, indent=2) + '\n')
 
 

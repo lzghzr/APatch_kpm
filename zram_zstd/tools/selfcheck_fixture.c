@@ -40,9 +40,10 @@ static void test_display(void);
 /* ENTRIES */
 static void* btf_lookup(const char* name);
 static int function_lookups;
+static uint64_t read_tcr(uint32_t el) { assert(el == 1); return 2ULL << 30; }
 static int registration_mode, has_own_algorithm, registration_count, algorithm_queries;
 static int query_index, conflict_query = -1;
-static void* registered_algorithms[2];
+static void* registered_algorithms[3];
 static int registration_has_alg(const char* name, u32 type, u32 mask);
 static int registration_alg(void* alg);
 static void* allocate(unsigned long n);
@@ -73,33 +74,41 @@ static int compat_copy_to_user(void* to, const void* from, int n) {
 static void* allocate(unsigned long n) { return calloc(1, n); }
 static void release(const void* p) { free((void*)p); }
 static int registration_has_alg(const char* name, u32 type, u32 mask) {
-  assert(query_index < 2);
+  assert(query_index < 3);
   algorithm_queries++;
   if (query_index == 0) {
     assert(!strcmp(name, "zstd-kpm") && type == 2 && mask == 15);
-  } else {
+  } else if (query_index == 1) {
     assert(!strcmp(name, "lz4-kpm") && type == 2 && mask == 15);
+  } else {
+    assert(!strcmp(name, "lz4kd-kpm") && type == 2 && mask == 15);
   }
   int conflicted = query_index++ == conflict_query;
   return has_own_algorithm || conflicted;
 }
 static int registration_alg(void* alg) {
-  assert(registration_count < 2);
+  assert(registration_count < 3);
   if (registration_count == 0) {
     assert(!strcmp((char*)alg + struct_offset.crypto_alg_name, "zstd-kpm"));
     assert(!strcmp((char*)alg + struct_offset.crypto_alg_driver_name, "zstd-kpm"));
-  } else {
+  } else if (registration_count == 1) {
     assert(!strcmp((char*)alg + struct_offset.crypto_alg_name, "lz4-kpm"));
     assert(!strcmp((char*)alg + struct_offset.crypto_alg_driver_name, "lz4-kpm"));
+  } else {
+    assert(!strcmp((char*)alg + struct_offset.crypto_alg_name, "lz4kd-kpm"));
+    assert(!strcmp((char*)alg + struct_offset.crypto_alg_driver_name, "lz4kd-kpm"));
   }
   assert(*(u32*)((char*)alg + struct_offset.crypto_alg_flags) == 2);
   assert(*(u32*)((char*)alg + struct_offset.crypto_alg_flags + 16) == 0);
   if (registration_count == 0) {
     assert(*(void**)((char*)alg + struct_offset.crypto_alg_init) == zstd_init);
     assert(*(void**)((char*)alg + struct_offset.crypto_alg_compress) == zstd_compress);
-  } else {
+  } else if (registration_count == 1) {
     assert(*(void**)((char*)alg + struct_offset.crypto_alg_init) == lz4_init);
     assert(*(void**)((char*)alg + struct_offset.crypto_alg_compress) == lz4_compress);
+  } else {
+    assert(*(void**)((char*)alg + struct_offset.crypto_alg_init) == lz4kd_init);
+    assert(*(void**)((char*)alg + struct_offset.crypto_alg_compress) == lz4kd_compress);
   }
   registered_algorithms[registration_count++] = alg;
   return 0;
@@ -265,14 +274,14 @@ int main(int argc, char** argv) {
   has_own_algorithm = 1;
   assert(zram_zstd_init("", "post-kernel-init", NULL) == -EEXIST && registration_count == 0);
   has_own_algorithm = 0;
-  for (conflict_query = 0; conflict_query < 2; conflict_query++) {
+  for (conflict_query = 0; conflict_query < 3; conflict_query++) {
     query_index = 0;
     assert(zram_zstd_init("", "post-kernel-init", NULL) == -EEXIST && !registration_count);
     assert(query_index == conflict_query + 1);
   }
   conflict_query = -1; query_index = 0;
-  assert(zram_zstd_init("", "post-kernel-init", NULL) == 0 && registration_count == 2 && registered);
-  assert(query_index == 2);
+  assert(zram_zstd_init("", "post-kernel-init", NULL) == 0 && registration_count == 3 && registered);
+  assert(query_index == 3);
   test_versioned_selection();
   test_display();
   registered = false; registration_mode = 0; btf_mode = 0;
@@ -408,11 +417,11 @@ static void test_display(void) {
   static char saved[4096];
   const char* cases[] = {"[lzo] lz4 \n", "[lzo]\n", "[lzo]\t\n", "\n", "[zstd-kpm] lzo \n", "[lzo] zstd-kpm \n",
                          "[lzo] zstd-kpm-extra\n", "[lzo] foo[zstd-kpm]\n"};
-  const char* expected[] = {"[lzo] lz4 zstd-kpm lz4-kpm\n", "[lzo] zstd-kpm lz4-kpm\n",
-                            "[lzo] zstd-kpm lz4-kpm\n", "zstd-kpm lz4-kpm\n",
-                            "[zstd-kpm] lzo lz4-kpm\n", "[lzo] zstd-kpm lz4-kpm\n",
-                            "[lzo] zstd-kpm-extra zstd-kpm lz4-kpm\n",
-                            "[lzo] foo[zstd-kpm] zstd-kpm lz4-kpm\n"};
+  const char* expected[] = {"[lzo] lz4 zstd-kpm lz4-kpm lz4kd-kpm\n", "[lzo] zstd-kpm lz4-kpm lz4kd-kpm\n",
+                            "[lzo] zstd-kpm lz4-kpm lz4kd-kpm\n", "zstd-kpm lz4-kpm lz4kd-kpm\n",
+                            "[zstd-kpm] lzo lz4-kpm lz4kd-kpm\n", "[lzo] zstd-kpm lz4-kpm lz4kd-kpm\n",
+                            "[lzo] zstd-kpm-extra zstd-kpm lz4-kpm lz4kd-kpm\n",
+                            "[lzo] foo[zstd-kpm] zstd-kpm lz4-kpm lz4kd-kpm\n"};
   for (unsigned int i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
     memset(buf, 0x5a, sizeof(buf)); strcpy(buf, cases[i]);
     hook_fargs2_t args = {.arg1 = (uintptr_t)buf, .ret = strlen(buf)};
@@ -429,12 +438,12 @@ static void test_display(void) {
     assert((long)args.ret == sizes[i] && !memcmp(buf, saved, sizeof(buf)));
   }
   hook_fargs2_t missing = {.ret = 1}; zstd_list_after(&missing, NULL); assert(missing.ret == 1);
-  for (int offset = 4072; offset <= 4073; offset++) {
+  for (int offset = 4062; offset <= 4063; offset++) {
     memset(buf, 0x5a, sizeof(buf)); strcpy(buf + offset, "[lzo]\n"); memcpy(saved, buf, sizeof(buf));
     hook_fargs2_t args = {.arg1 = (uintptr_t)(buf + offset), .ret = 6};
     zstd_list_after(&args, NULL);
-    if (offset == 4072) {
-      assert(!strcmp(buf + offset, "[lzo] zstd-kpm lz4-kpm\n") && args.ret == 23);
+    if (offset == 4062) {
+      assert(!strcmp(buf + offset, "[lzo] zstd-kpm lz4-kpm lz4kd-kpm\n") && args.ret == 33);
       assert(!memcmp(buf, saved, offset));
     } else assert(args.ret == 6 && !memcmp(buf, saved, sizeof(buf)));
   }
