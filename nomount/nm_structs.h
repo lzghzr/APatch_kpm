@@ -118,6 +118,16 @@ struct nm_inode_size_times {
   struct nm_timespec i_ctime;
 };
 
+// 分列的秒/纳秒共同片段。末尾有 C padding，不能整结构赋值或比较。
+struct nm_inode_split_size_times {
+  int64_t i_size;
+  int64_t seconds[3];
+  u32 nanoseconds[3];
+};
+
+enum nm_file_layout { NM_FILE_COMMON = 0, NM_FILE_FIELDS = 1 };
+enum nm_inode_times_layout { NM_TIMESPEC = 0, NM_SPLIT_TIMES = 1 };
+
 // 止于 s_op 的共同前部；不包含后续锁和文件系统私有字段。
 struct nm_super_head {
   void* list_next;
@@ -167,6 +177,15 @@ struct nm_file_ops_head {
 // 后续 iopoll、iterate 等字段会变化；只共用止于 write_iter 的片段。
 struct nm_file_io_ops {
   void* owner;
+  void* llseek;
+  void* read;
+  void* write;
+  long (*read_iter)(struct kiocb*, struct iov_iter*);
+  long (*write_iter)(struct kiocb*, struct iov_iter*);
+};
+
+// owner 后可能有原生标志字段；只共用从 llseek 开始的连续回调。
+struct nm_file_io_callbacks {
   void* llseek;
   void* read;
   void* write;

@@ -80,7 +80,7 @@ static long nm_read_iter(struct kiocb* request, struct iov_iter* iter) {
     return -EOPNOTSUPP;
   struct file* outer = iocb->ki_filp;
   struct file* backing = nm_file_private(outer);
-  const struct nm_file_io_ops* ops = backing ? nm_file_ops(backing) : NULL;
+  const struct nm_file_io_callbacks* ops = backing ? nm_file_io(nm_file_ops(backing)) : NULL;
   long (*callback)(struct kiocb*, struct iov_iter*) = ops ? ops->read_iter : NULL;
   if (!callback)
     return -EINVAL;
@@ -100,7 +100,7 @@ static long nm_write_iter(struct kiocb* request, struct iov_iter* iter) {
     return -EOPNOTSUPP;
   struct file* outer = iocb->ki_filp;
   struct file* backing = outer ? nm_file_private(outer) : NULL;
-  const struct nm_file_io_ops* ops = backing ? nm_file_ops(backing) : NULL;
+  const struct nm_file_io_callbacks* ops = backing ? nm_file_io(nm_file_ops(backing)) : NULL;
   long (*callback)(struct kiocb*, struct iov_iter*) = ops ? ops->write_iter : NULL;
   if (!callback)
     return -EINVAL;
@@ -159,8 +159,7 @@ static int nm_validate_file_control_offsets(const struct struct_offset* offsets)
   const int slots[] = {first, first + offsetof(struct nm_file_control_ops, compat_ioctl), sync};
   const int existing[] = {offsets->fop_open, offsets->fop_release, offsets->fop_mmap, offsets->fop_splice_read};
   for (unsigned int i = 0; i < sizeof(slots) / sizeof(slots[0]); i++) {
-    if (slots[i] < 0 || slots[i] < sizeof(struct nm_file_io_ops) || slots[i] % 8
-        || slots[i] + 8 > offsets->file_ops_size)
+    if (slots[i] < 0 || slots[i] < nm_file_io_end(offsets) || slots[i] % 8 || slots[i] + 8 > offsets->file_ops_size)
       return -EINVAL;
     for (unsigned int j = 0; j < sizeof(existing) / sizeof(existing[0]); j++)
       if (slots[i] == existing[j])
@@ -191,9 +190,9 @@ static void* nm_new_file_operations(void) {
   void* table = nm_new_operations(NM_FILE_OPS, NULL);
   if (IS_ERR(table))
     return table;
-  struct nm_file_io_ops* io = table;
-  io->llseek = nm_llseek;
-  io->read_iter = nm_read_iter;
+  int start = nm_file_io_start(&offsets);
+  nm_set_fop(table, start + offsetof(struct nm_file_io_callbacks, llseek), nm_llseek);
+  nm_set_fop(table, start + offsetof(struct nm_file_io_callbacks, read_iter), nm_read_iter);
   nm_set_fop(table, offsets.fop_open, nm_open);
   nm_set_fop(table, offsets.fop_release, nm_release);
   nm_set_fop(table, offsets.fop_mmap, nm_mmap);

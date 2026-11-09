@@ -92,8 +92,12 @@ static int nm_activate_xattr_reads_locked(void) {
 #endif
     // 静态共同契约限已登记的plain/userns目标；idmap先要求目标BTF。
 #ifdef CONFIG_KPM_BASELINES
-    if (context == 2)
-      return -EOPNOTSUPP;
+    if (context == 2) {
+      bool unavailable = false;
+      int checked = calculate_btf_xattr_read(context, &unavailable);
+      if (checked != count)
+        return checked < 0 ? checked : -EOPNOTSUPP;
+    }
 #else
     if (unavailable && context == 2)
       return -EOPNOTSUPP;
@@ -117,8 +121,14 @@ static int nm_activate_xattr_reads_locked(void) {
     if (!acl_shape && acl)
       return -EOPNOTSUPP;
 #else
-    if (acl)  // 独立ACL入口尚无静态签名契约，不用旧目标的接口推测它。
+    if (context == 2) {
+      bool unavailable = false;
+      int checked = calculate_btf_xattr_acl(context, &unavailable);
+      if (checked < 0 || !!checked != !!acl)
+        return checked < 0 ? checked : -EOPNOTSUPP;
+    } else if (acl) {
       return -EOPNOTSUPP;
+    }
 #endif
     nm_xattr_acl_target = acl;
     nm_xattr_context = context;

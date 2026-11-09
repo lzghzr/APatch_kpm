@@ -142,11 +142,10 @@ static int nm_setattr_context(void* outer_context, struct dentry* dentry, void* 
   if (!rc) {
     struct nm_inode_owner_prefix* owner = (void*)inode;
     const struct nm_inode_owner_prefix* real = (void*)source;
-    owner->i_mode = real->i_mode;
+    owner->i_mode = nm_virtual_mode(real->i_mode);
     owner->i_uid = real->i_uid;
     owner->i_gid = real->i_gid;
-    *(struct nm_inode_size_times*)((uintptr_t)inode + struct_offset.inode_size) =
-        *(const struct nm_inode_size_times*)((uintptr_t)source + struct_offset.inode_size);
+    nm_copy_inode_size_times(inode, source);
   }
   nm_setattr_unlock(lock);
   return rc;

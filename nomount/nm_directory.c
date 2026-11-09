@@ -399,7 +399,7 @@ static int64_t nm_directory_llseek(struct file* file, int64_t offset, int whence
   if (whence == 1 && !offset && nm_virtual_position(*nm_file_position(file), compat))
     return *nm_file_position(file);
   struct nm_directory_proxy* proxy = nm_directory_file_proxy(nm_file_ops(file));
-  const struct nm_file_io_ops* original = proxy ? proxy->original_file_ops : NULL;
+  const struct nm_file_io_callbacks* original = proxy ? nm_file_io(proxy->original_file_ops) : NULL;
   int64_t (*seek)(struct file*, int64_t, int) = original ? original->llseek : NULL;
   return seek ? seek(file, offset, whence) : -ESPIPE;
 }
@@ -448,7 +448,7 @@ static int nm_install_directory(struct inode* parent, struct nm_directory_node* 
   memcpy(proxy->tables + file_start, fops, struct_offset.file_ops_size);
   ((struct nm_inode_lookup_ops*)proxy->tables)->lookup = nm_directory_lookup;
   ((struct nm_file_io_ops*)(proxy->tables + file_start))->owner = NULL;
-  ((struct nm_file_io_ops*)(proxy->tables + file_start))->llseek = nm_directory_llseek;
+  nm_set_fop(proxy->tables + file_start, nm_file_io_start((const void*)&struct_offset), nm_directory_llseek);
   const int slots[] = {struct_offset.fop_iterate, struct_offset.fop_iterate_shared};
   for (unsigned int i = 0; i < 2; i++)
     if (slots[i] >= 0 && nm_operation_callback(fops, slots[i]))

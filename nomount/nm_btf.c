@@ -43,15 +43,23 @@ static int calculate_btf_offsets(bool* unavailable) {
   if (!file || !inode || !dentry || !ops)
     return -ENOENT;
   int objects = kpm_btf_offset(&btf, file, "f_inode", 8);
-  if (objects < 0 || objects > 0x7fff
-      || kpm_btf_offset(&btf, file, "f_op", 8) != objects + offsetof(struct nm_file_inode_ops, f_op)
+  int operations = kpm_btf_offset(&btf, file, "f_op", 8);
+  int path = kpm_btf_offset(&btf, file, "f_path", sizeof(struct nm_path));
+  int seek = kpm_btf_offset(&btf, ops, "llseek", 8);
+  if (objects < 0 || objects > 0x7fff || operations < 0 || operations > 0x7fff || path < 0 || path > 0x7fff
       || kpm_btf_offset(&btf, ops, "owner", 8) != offsetof(struct nm_file_ops_head, owner)
-      || kpm_btf_offset(&btf, ops, "llseek", 8) != offsetof(struct nm_file_ops_head, llseek)
+      || seek < offsetof(struct nm_file_ops_head, llseek) || seek > 0x7fff || seek % 8
       || kpm_btf_offset(&btf, inode, "i_mode", 2) != offsetof(struct nm_inode_owner_prefix, i_mode)
       || kpm_btf_offset(&btf, inode, "i_uid", 4) != offsetof(struct nm_inode_owner_prefix, i_uid)
       || kpm_btf_offset(&btf, inode, "i_gid", 4) != offsetof(struct nm_inode_owner_prefix, i_gid))
     return -EINVAL;
   struct_offset.file_inode_ops = objects;
+  bool common = operations == objects + offsetof(struct nm_file_inode_ops, f_op)
+                && path == objects - (int)offsetof(struct nm_file_path_inode_ops, f_inode);
+  struct_offset.file_layout = common ? NM_FILE_COMMON : NM_FILE_FIELDS;
+  struct_offset.file_operations = common ? 0 : operations;
+  struct_offset.file_path = common ? 0 : path;
+  struct_offset.fop_io_bias = seek - offsetof(struct nm_file_ops_head, llseek);
   int mapping = kpm_btf_offset(&btf, file, "f_mapping", 8);
   int sb = kpm_btf_offset(&btf, inode, "i_sb", 8);
   int number = kpm_btf_offset(&btf, inode, "i_ino", 8);
@@ -170,9 +178,9 @@ static int calculate_btf_file_offsets(bool* unavailable) {
       || kpm_btf_offset(&btf, iocb, "ki_complete", 8) != offsetof(struct nm_kiocb_head, ki_complete)
       || kpm_btf_offset(&btf, inode, "i_flags", 4) != offsetof(struct nm_inode_owner_prefix, i_flags))
     return -EINVAL;
-  const char* common[] = {"owner", "llseek", "read", "write", "read_iter", "write_iter"};
+  const char* common[] = {"llseek", "read", "write", "read_iter", "write_iter"};
   for (unsigned int i = 0; i < sizeof(common) / sizeof(common[0]); i++)
-    if (kpm_btf_offset(&btf, ops, common[i], 8) != i * 8)
+    if (kpm_btf_offset(&btf, ops, common[i], 8) != nm_file_io_start((const void*)&struct_offset) + i * 8)
       return -EINVAL;
   struct struct_offset next = struct_offset;
   const char* fields[] = {"private_data", "f_pos", "f_flags", "f_cred"};
@@ -183,8 +191,6 @@ static int calculate_btf_file_offsets(bool* unavailable) {
       return -EINVAL;
     *destinations[i] = offset;
   }
-  if (kpm_btf_offset(&btf, file, "f_mode", 4) != next.file_flags + offsetof(struct nm_file_flags_mode, f_mode))
-    return -EINVAL;
   int private = kpm_btf_offset(&btf, inode, "i_private", 8);
   if (private < 0 || private > 0x7fff)
     return -EINVAL;
@@ -458,12 +464,24 @@ static int calculate_btf_inode_offsets(bool* unavailable) {
     if (kpm_btf_offset(&btf, sb, super_fields[i], i == 0 ? 4 : i == 1 ? 1 : 8) != super_positions[i])
       return -EINVAL;
   const char* times[] = {"i_atime", "i_mtime", "i_ctime"};
+  int first_time = kpm_btf_offset(&btf, inode, times[0], sizeof(struct nm_timespec));
+  next.inode_times_layout = first_time == -ENOENT ? NM_SPLIT_TIMES : NM_TIMESPEC;
+  const char* seconds[] = {"i_atime_sec", "i_mtime_sec", "i_ctime_sec"};
+  const char* nanos[] = {"i_atime_nsec", "i_mtime_nsec", "i_ctime_nsec"};
   for (unsigned int i = 0; i < 3; i++) {
-    int offset = kpm_btf_offset(&btf, inode, times[i], sizeof(struct nm_timespec));
-    if (i == 2 && offset == -ENOENT)
-      offset = kpm_btf_offset(&btf, inode, "__i_ctime", sizeof(struct nm_timespec));
-    if (offset != next.inode_size + 8 + i * sizeof(struct nm_timespec))
-      return -EINVAL;
+    if (next.inode_times_layout == NM_SPLIT_TIMES) {
+      if (kpm_btf_offset(&btf, inode, seconds[i], 8)
+              != next.inode_size + offsetof(struct nm_inode_split_size_times, seconds) + i * sizeof(int64_t)
+          || kpm_btf_offset(&btf, inode, nanos[i], 4)
+                 != next.inode_size + offsetof(struct nm_inode_split_size_times, nanoseconds) + i * sizeof(u32))
+        return -EINVAL;
+    } else {
+      int offset = kpm_btf_offset(&btf, inode, times[i], sizeof(struct nm_timespec));
+      if (i == 2 && offset == -ENOENT)
+        offset = kpm_btf_offset(&btf, inode, "__i_ctime", sizeof(struct nm_timespec));
+      if (offset != next.inode_size + 8 + i * sizeof(struct nm_timespec))
+        return -EINVAL;
+    }
   }
   if (!data->size || data->size > 4096 || data->size % 8)
     return -EINVAL;
@@ -644,7 +662,7 @@ static int calculate_btf_virtual_directory_abi(bool* unavailable) {
   const struct btf_type* file = kpm_btf_type(&btf, "file", 4);
   if (!file
       || kpm_btf_offset(&btf, file, "f_path", sizeof(struct nm_path))
-             != struct_offset.file_inode_ops - offsetof(struct nm_file_path_inode_ops, f_inode))
+             != nm_file_path_offset((const void*)&struct_offset))
     return -EINVAL;
   const u8 pair[] = {0x88, 0x88}, one[] = {0x88}, nlink[] = {0x88, 4}, seek[] = {0x88, 8, 4};
   const u8 triple[] = {0x88, 0x88, 0x88}, masked[] = {0x88, 4, 0x88, 0x88};
@@ -960,7 +978,7 @@ static int calculate_btf_file_write(bool* unavailable) {
   rc = nm_btf_callback(&btf, ops, "write_iter", pair, 2, 8);
   if (rc < 0)
     return rc;
-  if (rc != offsetof(struct nm_file_io_ops, write_iter))
+  if (rc != nm_file_io_start((const void*)&struct_offset) + offsetof(struct nm_file_io_callbacks, write_iter))
     return -EINVAL;
   const struct btf_type* proto = nm_btf_callback_prototype(&btf, ops, "write_iter");
   rc = nm_btf_named_parameter(&btf, proto, 0, "kiocb");

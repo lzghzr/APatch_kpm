@@ -121,8 +121,14 @@ static int nm_activate_xattr_writes_locked(void) {
     }
 #else
     // 已登记plain/userns共同入口只用于拒绝；静态表未提供新写入ABI证据。
-    if (context == 2 || acl)
+    if (context == 2) {
+      bool unavailable = false;
+      int checked = calculate_btf_xattr_write(context, &unavailable);
+      if (checked < 0 || !!checked != !!acl)
+        return checked < 0 ? checked : -EOPNOTSUPP;
+    } else if (acl) {
       return -EOPNOTSUPP;
+    }
 #endif
     nm_xattr_set_context = context;
     nm_xattr_set_acl_target = acl;

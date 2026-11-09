@@ -56,7 +56,7 @@ for mod_path in "$MODULES_DIR"/*; do
         find -L "$mod_path/$partition" \( -type d -o -type c -o -name .replace -o -name .remove \) \
             -exec sh "$MODDIR/rule-paths.sh" path "$mod_path" {} + > "$NM_DATA/.paths" || fail_injection
         xargs -0 -r -n 200 "$NM_BIN" rule add --whiteout < "$NM_DATA/.paths" >> "$NM_LOG" 2>&1 || fail_injection
-        find -L "$mod_path/$partition" -name .replace \
+        find -L "$mod_path/$partition" \( -type d -o -name .replace \) \
             -exec sh "$MODDIR/rule-paths.sh" opaque "$mod_path" {} + > "$NM_DATA/.paths" || fail_injection
         xargs -0 -r -n 200 "$NM_BIN" rule add --opaque < "$NM_DATA/.paths" >> "$NM_LOG" 2>&1 || fail_injection
         find -L "$mod_path/$partition" \( -type f -o -type l \) ! -name .replace ! -name .remove \

@@ -35,7 +35,11 @@ static int nm_prepare_native(void) {
   NM_NATIVE_LOOKUP(nm_synchronize_rcu, synchronize_rcu);
   NM_NATIVE_LOOKUP(nm_call_rcu, call_rcu);
   NM_NATIVE_LOOKUP(nm_kfree, kfree);
-  NM_NATIVE_LOOKUP(nm_kmalloc, __kmalloc);
+  kfunc(nm_kmalloc) = (typeof(kfunc(nm_kmalloc)))kallsyms_lookup_name_by_suffix("__kmalloc");
+  if (!kfunc(nm_kmalloc))
+    kfunc(nm_kmalloc) = (typeof(kfunc(nm_kmalloc)))kallsyms_lookup_name_by_suffix("__kmalloc_noprof");
+  if (!kfunc(nm_kmalloc))
+    return -ENOENT;
   NM_NATIVE_LOOKUP(nm_kvfree, kvfree);
   kfunc(nm_is_vmalloc_addr) = (typeof(kfunc(nm_is_vmalloc_addr)))kallsyms_lookup_name_by_suffix("is_vmalloc_addr");
   if (!kfunc(nm_is_vmalloc_addr)) {
@@ -48,7 +52,11 @@ static int nm_prepare_native(void) {
     kfunc(nm_is_vmalloc_addr) = nm_vmalloc_address;
   }
   NM_NATIVE_LOOKUP(nm_vfree_atomic, vfree_atomic);
-  NM_NATIVE_LOOKUP(nm_vzalloc, vzalloc);
+  kfunc(nm_vzalloc) = (typeof(kfunc(nm_vzalloc)))kallsyms_lookup_name_by_suffix("vzalloc");
+  if (!kfunc(nm_vzalloc))
+    kfunc(nm_vzalloc) = (typeof(kfunc(nm_vzalloc)))kallsyms_lookup_name_by_suffix("vzalloc_noprof");
+  if (!kfunc(nm_vzalloc))
+    return -ENOENT;
   NM_NATIVE_LOOKUP(nm_capable, capable);
   NM_NATIVE_LOOKUP(nm_memdup_user, memdup_user);
   NM_NATIVE_LOOKUP(nm_vfs_setpos, vfs_setpos);

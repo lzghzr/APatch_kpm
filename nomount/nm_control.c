@@ -55,10 +55,8 @@ static int nm_control_rules(struct nm_payload* payload, bool add) {
         rc = nm_activate_xattr_reads_locked();
         if (!rc)
           rc = nm_activate_xattr_writes_locked();
-#ifndef CONFIG_KPM_BASELINES
         if (!rc)
           rc = nm_activate_xattr_extra_locked();
-#endif
         if (!rc)
           rc = nm_topology_add_locked(path, rule_header.v_len, rule, &updates);
         nm_management_unlock();

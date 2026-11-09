@@ -46,6 +46,11 @@ struct struct_offset {
   int16_t fillattr_abi;
   int16_t getattr_context_kind;
   int16_t dir_actor_abi;
+  int16_t file_layout;
+  int16_t file_operations;
+  int16_t file_path;
+  int16_t inode_times_layout;
+  int16_t fop_io_bias;
 };
 
 volatile struct struct_offset struct_offset __attribute__((section(".data.re_offsets"), used)) = {
@@ -95,6 +100,11 @@ volatile struct struct_offset struct_offset __attribute__((section(".data.re_off
     .fillattr_abi = -1,
     .getattr_context_kind = -1,
     .dir_actor_abi = -1,
+    .file_layout = -1,
+    .file_operations = -1,
+    .file_path = -1,
+    .inode_times_layout = -1,
+    .fop_io_bias = -1,
 };
 
 // 仅在确认BTF不可用后启用自建清零表容量；精确类型尺寸字段仍保持原语义。
@@ -141,15 +151,20 @@ static int nm_dir_emit(struct nm_dir_context* context, const char* name, int len
 
 static int nm_name_hash_arguments(void) { return struct_offset.name_hash_args; }
 
+// 虚拟路径不继承源挂载的 nosuid 约束，因此不暴露源 SUID/SGID。
+static u16 nm_virtual_mode(u16 mode) { return mode & ~06000U; }
+
 static void nm_set_stat_identity(struct kstat* stat, u64 ino, u32 dev) {
   if (struct_offset.kstat_inode_first == 1) {
     struct nm_kstat_inode_first* attributes = (void*)stat;
     attributes->ino = ino;
     attributes->dev = dev;
+    attributes->mode = nm_virtual_mode(attributes->mode);
   } else {
     struct nm_kstat_prefix* attributes = (void*)stat;
     attributes->ino = ino;
     attributes->dev = dev;
+    attributes->mode = nm_virtual_mode(attributes->mode);
   }
 }
 
@@ -185,8 +200,26 @@ static struct inode* nm_file_inode(const void* file) {
 }
 
 static const void* nm_file_ops(const void* file) {
-  const struct nm_file_inode_ops* objects = (const void*)((uintptr_t)file + struct_offset.file_inode_ops);
-  return objects->f_op;
+  int at = struct_offset.file_layout == NM_FILE_FIELDS
+               ? struct_offset.file_operations
+               : struct_offset.file_inode_ops + offsetof(struct nm_file_inode_ops, f_op);
+  return *(void* const*)((uintptr_t)file + at);
+}
+
+static int nm_file_path_offset(const struct struct_offset* offsets) {
+  return offsets->file_layout == NM_FILE_FIELDS
+             ? offsets->file_path
+             : offsets->file_inode_ops - (int)offsetof(struct nm_file_path_inode_ops, f_inode);
+}
+
+static int nm_file_io_start(const struct struct_offset* offsets) {
+  return offsetof(struct nm_file_io_ops, llseek) + offsets->fop_io_bias;
+}
+static int nm_file_io_end(const struct struct_offset* offsets) {
+  return nm_file_io_start(offsets) + sizeof(struct nm_file_io_callbacks);
+}
+static const struct nm_file_io_callbacks* nm_file_io(const void* table) {
+  return table ? (const void*)((uintptr_t)table + nm_file_io_start((const void*)&struct_offset)) : NULL;
 }
 
 static void* nm_file_mapping(const void* file) { return *(void* const*)((uintptr_t)file + struct_offset.file_mapping); }
@@ -203,6 +236,38 @@ static int64_t nm_inode_size(const void* inode) {
   return *(const int64_t*)((uintptr_t)inode + struct_offset.inode_size);
 }
 
+static void nm_copy_inode_size_times(void* destination, const void* source) {
+  void* target = (void*)((uintptr_t)destination + struct_offset.inode_size);
+  const void* original = (const void*)((uintptr_t)source + struct_offset.inode_size);
+  if (struct_offset.inode_times_layout == NM_SPLIT_TIMES) {
+    struct nm_inode_split_size_times* to = target;
+    const struct nm_inode_split_size_times* from = original;
+    to->i_size = from->i_size;
+    for (unsigned int i = 0; i < 3; i++) {
+      to->seconds[i] = from->seconds[i];
+      to->nanoseconds[i] = from->nanoseconds[i];
+    }
+  } else {
+    *(struct nm_inode_size_times*)target = *(const struct nm_inode_size_times*)original;
+  }
+}
+
+static bool nm_inode_size_times_equal(const void* first, const void* second) {
+  const void* a = (const void*)((uintptr_t)first + struct_offset.inode_size);
+  const void* b = (const void*)((uintptr_t)second + struct_offset.inode_size);
+  if (struct_offset.inode_times_layout == NM_SPLIT_TIMES) {
+    const struct nm_inode_split_size_times* x = a;
+    const struct nm_inode_split_size_times* y = b;
+    if (x->i_size != y->i_size)
+      return false;
+    for (unsigned int i = 0; i < 3; i++)
+      if (x->seconds[i] != y->seconds[i] || x->nanoseconds[i] != y->nanoseconds[i])
+        return false;
+    return true;
+  }
+  return !memcmp(a, b, sizeof(struct nm_inode_size_times));
+}
+
 static const void* nm_dentry_ops(const void* dentry) {
   return *(void* const*)((uintptr_t)dentry + struct_offset.dentry_ops);
 }
@@ -212,6 +277,8 @@ static struct inode* nm_dentry_inode(const void* dentry) { return ((const struct
 static u16 nm_inode_mode(const void* inode) { return ((const struct nm_inode_owner_prefix*)inode)->i_mode; }
 
 static int validate_offsets(void) {
+  if (struct_offset.file_layout != NM_FILE_COMMON && struct_offset.file_layout != NM_FILE_FIELDS)
+    return -EOPNOTSUPP;
   if (struct_offset.file_inode_ops < 0 || struct_offset.file_mapping < 0 || struct_offset.inode_superblock < 0
       || struct_offset.inode_number < 0 || struct_offset.inode_nlink < 0 || struct_offset.inode_size < 0
       || struct_offset.dentry_ops < 0)
@@ -231,9 +298,7 @@ static void nm_set_file_private(void* file, void* value) {
   *(void**)((uintptr_t)file + struct_offset.file_private) = value;
 }
 static int64_t* nm_file_position(void* file) { return (void*)((uintptr_t)file + struct_offset.file_position); }
-static u32 nm_file_flags(const void* file) {
-  return ((const struct nm_file_flags_mode*)((uintptr_t)file + struct_offset.file_flags))->f_flags;
-}
+static u32 nm_file_flags(const void* file) { return *(const u32*)((uintptr_t)file + struct_offset.file_flags); }
 static const void* nm_file_cred(const void* file) { return *(void* const*)((uintptr_t)file + struct_offset.file_cred); }
 static void* nm_fop(const void* file, int offset) {
   const void* ops = nm_file_ops(file);
@@ -296,8 +361,7 @@ static void nm_set_inode_private(void* inode, void* private) {
   __atomic_store_n((void**)((uintptr_t)inode + struct_offset.inode_private), private, __ATOMIC_RELEASE);
 }
 static const struct nm_path* nm_file_path(void* file) {
-  return (void*)((uintptr_t)file + struct_offset.file_inode_ops
-                 - (int)offsetof(struct nm_file_path_inode_ops, f_inode));
+  return (void*)((uintptr_t)file + nm_file_path_offset((const void*)&struct_offset));
 }
 
 // 新建的纯虚拟目录保留原生嵌入映射；时间继承创建时的父目录，权限为 root:root 0755。
@@ -309,9 +373,8 @@ static void nm_initialize_directory_inode(void* inode, void* parent, u64 number,
   owner->i_opflags |= 0x0004U;
   owner->i_flags |= 512U | 2U | 128U | 4096U;
   *(u64*)((uintptr_t)inode + struct_offset.inode_number) = number;
-  struct nm_inode_size_times* times = (void*)((uintptr_t)inode + struct_offset.inode_size);
-  *times = *(const struct nm_inode_size_times*)((uintptr_t)parent + struct_offset.inode_size);
-  times->i_size = 4096;
+  nm_copy_inode_size_times(inode, parent);
+  *(int64_t*)((uintptr_t)inode + struct_offset.inode_size) = 4096;
   *(u64*)((uintptr_t)inode + struct_offset.inode_blocks) = 8;
   nm_publish_inode_ops(inode, iops, fops);
 }
@@ -319,14 +382,13 @@ static void nm_initialize_directory_inode(void* inode, void* parent, u64 number,
 static void nm_copy_backing_inode_attributes(void* inode, void* backing, u64 number) {
   struct nm_inode_owner_prefix* owner = inode;
   const struct nm_inode_owner_prefix* real = backing;
-  owner->i_mode = real->i_mode;
+  owner->i_mode = nm_virtual_mode(real->i_mode);
   owner->i_uid = real->i_uid;
   owner->i_gid = real->i_gid;
   owner->i_opflags |= 0x0004U;                 // IOP_NOFOLLOW；链接物化在发布前清除此位。
   owner->i_flags |= 512U | 2U | 128U | 4096U;  // S_PRIVATE / NOATIME / NOCMTIME / NOSEC。
   *(u64*)((uintptr_t)inode + struct_offset.inode_number) = number;
-  *(struct nm_inode_size_times*)((uintptr_t)inode + struct_offset.inode_size) =
-      *(const struct nm_inode_size_times*)((uintptr_t)backing + struct_offset.inode_size);
+  nm_copy_inode_size_times(inode, backing);
   *(u64*)((uintptr_t)inode + struct_offset.inode_blocks) =
       *(const u64*)((uintptr_t)backing + struct_offset.inode_blocks);
 }
@@ -348,6 +410,8 @@ static void nm_initialize_file_inode(void* inode, void* backing, u64 number, voi
 }
 
 static int nm_validate_inode_offsets(const struct struct_offset* offsets) {
+  if (offsets->inode_times_layout != NM_TIMESPEC && offsets->inode_times_layout != NM_SPLIT_TIMES)
+    return -EOPNOTSUPP;
   if (offsets->inode_ops_size < 8 || offsets->inode_ops_size > 4096 || offsets->inode_ops_size % 8
       || offsets->super_ops_size < 8 || offsets->super_ops_size > 4096 || offsets->super_ops_size % 8)
     return -EINVAL;
@@ -363,7 +427,9 @@ static int nm_validate_inode_offsets(const struct struct_offset* offsets) {
   const int widths[] = {sizeof(struct nm_inode_ops_mapping),
                         8,
                         4,
-                        sizeof(struct nm_inode_size_times),
+                        offsets->inode_times_layout == NM_SPLIT_TIMES
+                            ? offsetof(struct nm_inode_split_size_times, nanoseconds) + 3 * sizeof(u32)
+                            : sizeof(struct nm_inode_size_times),
                         8,
                         16,
                         8,
@@ -402,7 +468,8 @@ static int nm_validate_directory_offsets(const struct struct_offset* offsets) {
     return -EOPNOTSUPP;
   if (offsets->dentry_ops < sizeof(struct nm_dentry_head) || offsets->dentry_ops % 8
       || offsets->dentry_lock < sizeof(struct nm_dentry_head) || offsets->dentry_lock % 4
-      || offsets->dentry_lock >= offsets->dentry_ops
+      || (offsets->dentry_lock < offsets->dentry_ops + sizeof(struct nm_dentry_ops_data)
+          && offsets->dentry_ops < offsets->dentry_lock + sizeof(u32))
       || offsets->dentry_ops_size < sizeof(struct nm_dentry_control_ops) + 8 || offsets->dentry_ops_size > 4096
       || offsets->dentry_ops_size % 8 || offsets->inode_ops_size < sizeof(struct nm_inode_lookup_ops))
     return -EINVAL;
@@ -412,7 +479,7 @@ static int nm_validate_directory_offsets(const struct struct_offset* offsets) {
   for (unsigned int i = 0; i < 2; i++) {
     if (slots[i] < -1
         || (slots[i] >= 0
-            && (slots[i] < sizeof(struct nm_file_io_ops) || slots[i] % 8 || slots[i] + 8 > offsets->file_ops_size)))
+            && (slots[i] < nm_file_io_end(offsets) || slots[i] % 8 || slots[i] + 8 > offsets->file_ops_size)))
       return -EINVAL;
   }
   if (slots[0] >= 0 && slots[0] == slots[1])
@@ -427,6 +494,16 @@ static int nm_validate_directory_offsets(const struct struct_offset* offsets) {
 }
 
 static int nm_validate_file_offsets(const struct struct_offset* offsets) {
+  if (offsets->file_layout != NM_FILE_COMMON && offsets->file_layout != NM_FILE_FIELDS)
+    return -EOPNOTSUPP;
+  if (offsets->fop_io_bias < 0 || offsets->fop_io_bias % 8 || nm_file_io_end(offsets) > offsets->file_ops_size)
+    return -EINVAL;
+  int file_ops = offsets->file_layout == NM_FILE_FIELDS
+                     ? offsets->file_operations
+                     : offsets->file_inode_ops + (int)offsetof(struct nm_file_inode_ops, f_op);
+  int path = nm_file_path_offset(offsets);
+  if (file_ops < 0 || file_ops % 8 || path < 0 || path % 8)
+    return -EINVAL;
   if (offsets->file_inode_ops < 0 || offsets->file_mapping < 0 || offsets->file_inode_ops % 8
       || offsets->file_mapping % 8)
     return -EINVAL;
@@ -435,20 +512,26 @@ static int nm_validate_file_offsets(const struct struct_offset* offsets) {
   for (unsigned int i = 0; i < sizeof(fields) / sizeof(fields[0]); i++)
     if (fields[i] < 0 || fields[i] % (i == 3 ? 4 : 8))
       return -EINVAL;
-  const int file_fields[] = {offsets->file_private, offsets->file_position,  offsets->file_flags,
-                             offsets->file_cred,    offsets->file_inode_ops, offsets->file_mapping};
+  const int file_fields[] = {offsets->file_private,
+                             offsets->file_position,
+                             offsets->file_flags,
+                             offsets->file_cred,
+                             offsets->file_inode_ops,
+                             offsets->file_mapping,
+                             file_ops,
+                             path};
+  const int widths[] = {8, 8, 4, 8, 8, 8, 8, sizeof(struct nm_path)};
   for (unsigned int i = 0; i < sizeof(file_fields) / sizeof(file_fields[0]); i++) {
-    int width = i == 4 ? sizeof(struct nm_file_inode_ops) : 8;
+    int width = widths[i];
     for (unsigned int j = 0; j < i; j++) {
-      int other_width = j == 4 ? sizeof(struct nm_file_inode_ops) : 8;
+      int other_width = widths[j];
       if (file_fields[i] < file_fields[j] + other_width && file_fields[j] < file_fields[i] + width)
         return -EINVAL;
     }
   }
   const int slots[] = {offsets->fop_open, offsets->fop_release, offsets->fop_mmap, offsets->fop_splice_read};
   for (unsigned int i = 0; i < sizeof(slots) / sizeof(slots[0]); i++) {
-    if (slots[i] < 0 || slots[i] < sizeof(struct nm_file_io_ops) || slots[i] % 8
-        || slots[i] + 8 > offsets->file_ops_size)
+    if (slots[i] < 0 || slots[i] < nm_file_io_end(offsets) || slots[i] % 8 || slots[i] + 8 > offsets->file_ops_size)
       return -EINVAL;
     for (unsigned int j = 0; j < i; j++)
       if (slots[i] == slots[j])
@@ -456,6 +539,11 @@ static int nm_validate_file_offsets(const struct struct_offset* offsets) {
   }
   return 0;
 }
+
+#ifdef CONFIG_KPM_BASELINES
+// 静态偏移保持表值；新接入的 idmap 控制入口仍需验证原生函数 ABI。
+#include "nm_btf.c"
+#endif
 
 #ifndef CONFIG_KPM_BASELINES
 #include "nm_btf.c"
@@ -1146,6 +1234,10 @@ static int calculate_function_offsets(void) {
     return -EINVAL;
   struct_offset.file_inode_ops = objects;
   struct_offset.file_mapping = mapping;
+  struct_offset.file_layout = NM_FILE_COMMON;
+  struct_offset.file_operations = 0;
+  struct_offset.file_path = 0;
+  struct_offset.fop_io_bias = 0;
   int first = nm_find_kstat_prefix(attr);
   if (first < 0)
     return first;
@@ -1437,6 +1529,7 @@ static int calculate_function_inode_offsets(void) {
   struct_offset.inode_file_ops = file_ops;
   struct_offset.inode_data = data;
   struct_offset.inode_data_size = size;
+  struct_offset.inode_times_layout = NM_TIMESPEC;
   struct_offset.inode_blocks = blocks;
   struct_offset.kstat_inode_first = first;
   nm_log_info("layout: inode fop=%d data=%d/%d blocks=%d kstat_first=%d\n", file_ops, data, size, blocks, first);
@@ -3952,7 +4045,7 @@ static int nm_prepare_virtual_directory_abi(void) {
     return rc;
   if (struct_offset.fillattr_abi != 2 || struct_offset.getattr_context_kind != 0)
     return -EOPNOTSUPP;
-  int path = struct_offset.file_inode_ops - (int)offsetof(struct nm_file_path_inode_ops, f_inode);
+  int path = nm_file_path_offset((const void*)&struct_offset);
   if (path < 0 || path % 8)
     return -EINVAL;
   nm_log_info("layout: BTF unavailable; using common virtual-directory native prototypes\n");

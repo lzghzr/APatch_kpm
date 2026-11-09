@@ -54,7 +54,8 @@ static bool nm_inode_matches_binding(struct inode* inode, const struct nm_path* 
   // 从调用者保活的path读取，避免evict释放info的path后解引用退役来源。
   const struct nm_inode_owner_prefix* real = (void*)nm_dentry_inode(path->dentry);
   const struct nm_inode_owner_prefix* owner = (void*)inode;
-  return real && owner->i_mode == real->i_mode && owner->i_uid == real->i_uid && owner->i_gid == real->i_gid;
+  return real && owner->i_mode == nm_virtual_mode(real->i_mode) && owner->i_uid == real->i_uid
+         && owner->i_gid == real->i_gid;
 }
 
 // 完整原生表放在 64 字节对齐的私有头部后；公开后驻留，原始表保持不动。

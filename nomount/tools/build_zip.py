@@ -68,7 +68,85 @@ def adapt_webui(js):
     for before, after in replacements.items():
         assert js.count(before) == 1, before
         js = js.replace(before, after, 1)
+    # 保留上游 UI 入口，共用有明确结束状态的规则发布/撤销脚本。
+    actions = r'''async function runModuleRules(modId, adding) {
+    const modPath = `${MOD_DIR}/${modId}`;
+    const command = adding ? `
+        find -L $valid_dirs '(' -type d -o -type c -o -name ".replace" -o -name ".remove" ')' \\
+            -exec sh "${RULE_PATHS}" path "${modPath}" {} + 2>/dev/null \\
+            | xargs -0 -r -n 200 "${NM_BIN}" rule add --whiteout
+        st=$?; [ "$st" -ne 0 ] && status=$st
+        find -L $valid_dirs '(' -type d -o -name ".replace" ')' \\
+            -exec sh "${RULE_PATHS}" opaque "${modPath}" {} + 2>/dev/null \\
+            | xargs -0 -r -n 200 "${NM_BIN}" rule add --opaque
+        st=$?; [ "$st" -ne 0 ] && status=$st
+        find -L $valid_dirs '(' -type f -o -type l ')' ! -name ".replace" ! -name ".remove" \\
+            -exec sh "${RULE_PATHS}" pair "${modPath}" {} + 2>/dev/null \\
+            | xargs -0 -r -n 200 "${NM_BIN}" rule add
+        st=$?; [ "$st" -ne 0 ] && status=$st
+    ` : `
+        find -L $valid_dirs '(' -type f -o -type l -o -type c -o -type d ')' \\
+            -exec sh "${RULE_PATHS}" del "${modPath}" {} + 2>/dev/null \\
+            | xargs -0 -r -n 200 "${NM_BIN}" rule del
+        st=$?; [ "$st" -ne 0 ] && status=$st
+    `;
+    const result = await exec(`
+        (
+            set -o pipefail || exit 1
+            cd "${modPath}" || exit 1
+            valid_dirs=""
+            for p in ${TARGET_PARTITIONS}; do [ -d "$p" ] && { [ -d "/$p" ] || [ -d "/system/$p" ]; } && valid_dirs="$valid_dirs $p"; done
+            [ -z "$valid_dirs" ] && exit 0
+            status=0
+            ${command}
+            exit "$status"
+        )
+        echo "nm_rule_status=$?" >&2
+    `);
+    const status = (result.stderr || '').match(/(?:^|\n)nm_rule_status=(\d+)\s*$/);
+    if (result.errno !== 0 || !status || Number(status[1]) !== 0)
+        throw new Error(result.stderr || 'NoMount rule operation failed');
+}
+
+async function loadModule(modId) { await runModuleRules(modId, true); }'''
+    for name, replacement in (('loadModule', actions),
+                              ('unloadModule', 'async function unloadModule(modId) { await runModuleRules(modId, false); }')):
+        pattern = r'(?ms)^async function ' + name + r'\(modId\) \{.*?^\}'
+        assert len(re.findall(pattern, js)) == 1, name
+        js = re.sub(pattern, lambda _: replacement, js, count=1)
     return js
+
+
+def adapt_rule_paths(body):
+    """回移上游非空 opaque 处理；其余路径映射保持冻结输入。"""
+    before = body[body.index('    elif [ "$kind" = opaque ]; then'):]
+    assert before.count('elif [ "$kind" = del ]; then') == 1
+    assert before.endswith('    fi\ndone\n')
+    after = r'''    elif [ "$kind" = del ]; then
+        case "${f##*/}" in
+            .replace) printf "/%s\0" "${v%/.replace}" ;;
+            .remove)  printf "/%s\0" "${v%/.remove}"  ;;
+            *)        printf "/%s\0" "$v"            ;;
+        esac
+    else
+        if [ -d "$f" ]; then
+            case "$(getfattr -n trusted.overlay.opaque "$f" 2>/dev/null)" in *"=\"y\""*) ;; *) continue;; esac
+        elif [ "${f##*/}" = ".replace" ]; then
+            f="${f%/.replace}"; v="${v%/.replace}"
+        else
+            printf "/%s\0" "${v%/.remove}"
+            continue
+        fi
+        entries=$(find "$f" -mindepth 1 ! -name '.replace' ! -name '.remove' -print -quit 2>/dev/null) || exit 1
+        if [ -n "$entries" ]; then
+            if [ "$kind" = opaque ]; then printf "/%s\0%s\0" "$v" "$f"; fi
+        elif [ "$kind" = path ]; then
+            printf "/%s\0" "$v"
+        fi
+    fi
+done
+'''
+    return body.replace(before, after, 1)
 
 
 def adapt_cli(body):
@@ -135,11 +213,14 @@ def main():
             contents['LICENSE'] = data
 
     sources['nm.c'] = adapt_cli(sources['nm.c'].decode()).encode()
+    contents['rule-paths.sh'] = ('# SPDX-License-Identifier: GPL-3.0-only\n'
+                                '# NoMount by maxsteeel; nonempty opaque handling adapted by Codex, 2026-11-08.\n'
+                                + adapt_rule_paths(contents['rule-paths.sh'].decode())).encode()
 
     # 对输出副本适配状态展示，冻结上游保持原字节。
     js = adapt_webui(contents['webroot/index.js'].decode())
     contents['webroot/index.js'] = ('// SPDX-License-Identifier: GPL-3.0-only\n'
-                                  '// NoMount by maxsteeel; connection label, empty-state face and rule path display adapted by Codex, 2026-10-14.\n' + js).encode()
+                                  '// NoMount by maxsteeel; connection, rule paths and operation status adapted by Codex, 2026-11-08.\n' + js).encode()
     for name in list(contents):
         if name.startswith('webroot/locales/') and name.endswith('.json'):
             locale = json.loads(contents[name])

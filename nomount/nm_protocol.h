@@ -5,7 +5,13 @@
 #define __NM_PROTOCOL_H
 
 #define NOMOUNT_MAGIC_SIG 0x4E4F4D4F554E54ULL
-#define NM_KPM_VERSION "2.2.0-20261022"
+#ifndef NM_KPM_VERSION
+#  ifdef MYKPM_VERSION
+#    define NM_KPM_VERSION MYKPM_VERSION
+#  else
+#    define NM_KPM_VERSION "2.2.0-20261108"
+#  endif
+#endif
 #define NM_CONTROL_VERSION "22 (KPM " NM_KPM_VERSION ")"
 
 enum nm_command {

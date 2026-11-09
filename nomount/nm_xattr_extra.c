@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* 动态版：补齐删除入口与syscall内联list路径。管理锁串行准备，驻留到重启。 */
-#ifndef CONFIG_KPM_BASELINES
+/* 删除入口与syscall内联list路径。管理锁串行准备，驻留到重启。 */
 static bool nm_xattr_extra_ready, nm_xattr_remove_installed, nm_xattr_internal_list_installed;
 static void *nm_xattr_remove_target, *nm_xattr_internal_list_target;
 static int nm_xattr_remove_context;
@@ -45,6 +44,10 @@ static void nm_xattr_internal_list3(hook_fargs3_t* args, void* unused) {
 }
 
 static int nm_activate_xattr_extra_locked(void) {
+#ifdef CONFIG_KPM_BASELINES
+  if (struct_offset.getattr_context_kind != 2)
+    return 0;  // 原静态目标保留既有能力；新 idmap 路径逐项验证 ABI。
+#endif
   if (!__atomic_load_n(&nm_xattr_resident, __ATOMIC_ACQUIRE))
     return -ENODEV;
   if (__atomic_load_n(&nm_xattr_extra_ready, __ATOMIC_ACQUIRE))
@@ -68,6 +71,9 @@ static int nm_activate_xattr_extra_locked(void) {
     bool unavailable = false;
     int rc = calculate_btf_xattr_remove(context, &unavailable);
     if (rc == -ENODATA && unavailable) {
+#ifdef CONFIG_KPM_BASELINES
+      return rc;
+#else
       // 旧follow接口的removexattr在空i_op槽直接拒绝；此时可关闭extra而保留只读规则。
       // handler型删除不能用空槽证明拒绝；独立ACL入口也仍须核验，不能一律降级。
       if (nm_setattr_status == -EOPNOTSUPP && !acl && !context && !struct_offset.permission_abi
@@ -80,13 +86,18 @@ static int nm_activate_xattr_extra_locked(void) {
       if (nm_setattr_status)
         return nm_setattr_status;
       rc = calculate_function_xattr_remove(context, &nm_setattr_layout);
+#endif
     }
     if (rc)
       return rc;
     unavailable = false;
     rc = calculate_btf_xattr_internal_list(&unavailable);
     if (rc == -ENODATA && unavailable)
+#ifdef CONFIG_KPM_BASELINES
+      return rc;
+#else
       rc = calculate_function_xattr_internal_list(context);
+#endif
     if (rc)
       return rc;
     unavailable = false;
@@ -128,4 +139,3 @@ static int nm_activate_xattr_extra_locked(void) {
   nm_log_info("xattr: remove and syscall-list entries ready\n");
   return 0;
 }
-#endif

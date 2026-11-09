@@ -148,10 +148,8 @@ static int nm_revalidate_backing_child(struct inode* parent, struct inode* inode
   rc = nm_get_security_context(source, &context);
   if (!rc) {
     // 不刷新存活 inode 的权限/标签/大小快照；变化时由 VFS 失效后重新物化。
-    const struct nm_inode_size_times* cached = (void*)((uintptr_t)inode + struct_offset.inode_size);
-    const struct nm_inode_size_times* real = (void*)((uintptr_t)source + struct_offset.inode_size);
     rc = nm_inode_matches_binding(inode, &path, directory ? info->dir_node : NULL, expected, context.secid)
-         && !memcmp(cached, real, sizeof(*cached))
+         && nm_inode_size_times_equal(inode, source)
          && *(const u64*)((uintptr_t)inode + struct_offset.inode_blocks)
                 == *(const u64*)((uintptr_t)source + struct_offset.inode_blocks)
          && (!directory || nm_inode_nlink(inode) == nm_inode_nlink(source));
@@ -190,7 +188,9 @@ static int nm_prepare_backing_inode_engine(void) {
     nm_log_info("permission: source DAC delegation unavailable (%d); retaining existing core capability\n", rc);
 #endif
   // 此时尚未发布规则/inode，完整源权限可用后才开放普通文件写回调。
-  ((struct nm_file_io_ops*)nm_inode_engine.file_ops)->write_iter = nm_write_iter;
+  nm_set_fop(nm_inode_engine.file_ops,
+             nm_file_io_start((const void*)&struct_offset) + offsetof(struct nm_file_io_callbacks, write_iter),
+             nm_write_iter);
   nm_backing_write_open_permission = nm_backing_write_permission;
   nm_backing_open_permission = nm_backing_read_permission;
   nm_inode_engine.iterate_backing = nm_iterate_backing_view;

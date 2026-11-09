@@ -25,3 +25,8 @@ Git 子模块位于 `nomount/upstream/nomount`，由父仓库 gitlink 冻结上�
 - 同步 v22 的 UID 范围、排除范围和 opaque 目录语义；规则仍使用本仓库的独立引用与进程上下文退役模型。
 - ZIP 中的 CLI 生成副本增加 v22 协议探测，并修正上游默认规则单独使用 `--uid-excluded` 时的范围检查。
   冻结子模块不修改，实际构建的适配后源码与编译脚本随 ZIP 提供。
+- 2026-11-08：选择性回移 `95cf3d013d4dfd888708df124c8a25aaf7ac2ebc` 的虚拟 inode
+  SUID/SGID 清除语义，统一新建、属性返回、setattr 同步及缓存匹配。
+  配套生成副本回移 `71883de7ab2e2468bbbaf78ef64ac44a33069531` 的非空 opaque 目录处理，
+  及 `43ddd47b9dabf30b5f8249f6d08a1cd95dcbd297` 的 WebUI 操作失败传播，并检查 find 管道失败。
+  上游 gitlink 仍冻结在上述 v2.2.0 基线，默认规则的 UID 排除行为保持。

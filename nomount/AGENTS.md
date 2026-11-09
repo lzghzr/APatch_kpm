@@ -485,3 +485,20 @@ README 仅写普通用户的文件选择、界面操作和可见状态；加载�
 - 此次 permission 决策只保留外层 security_inode_permission 一次调用；实际 inode LSM hook 随原生 S_PRIVATE 门控为 0 或 1。mmap 成功后清位的既有动作和断言不变，回调不采样该位，因此并发清位不会添加第二次 inode LSM。原 open 阶段既有完整源权限检查与 capability 的原生安全检查仍按各自契约执行。
 - 自检入口为 tools/test_dev055_permission.py 和 tools/test_dev055_permission_btf.py：1837 条旧宿主断言逐条保留，追加源 DAC、拒绝、完整动态 prepare 与 mmap 清位交错；8 份真实 BTF 追加回调/helper 的独立签名反例。宿主 ACL/capability 依赖桩和确定性交错不代替原生 syscall、CFI、SELinux 或真实并发证据。
 - O_NOATIME 封口尚未实现：仅在 security_file_fcntl 前按当前 f_flags 判断“新增”存在并发清位后重新添加的窗口。阶段性封口范围需维护者取得用户选择后再实现；不要把 DAC 委托概括成 DEV-055 全部闭环。
+
+## 2026-11-08 上游修复回移
+
+- `nm_virtual_mode` 统一清除虚拟 inode 的 SUID/SGID，保留类型、普通权限及 sticky 位；新建、setattr 成功后的属性同步、两种 kstat 和缓存比较使用相同规则。源文件本身的权限不因物化或 getattr 改写，显式 setattr 仍按原生源接口执行。
+- 上游 gitlink 保持 v2.2.0；`build_zip.py` 对冻结输入生成适配后的 rule-paths 与 WebUI，源码、许可证和来源说明随包。opaque 阶段同时扫描目录和 `.replace`；非空 opaque 建目录规则，空目录白化，内容扫描出错传播到启动撤销路径。
+- WebUI 的加载/撤销入口共用规则脚本，检查 find/xargs 管道、桥接退出码及结束标记。失败传播到现有 UI 错误处理；规则批次仍不是事务，WebUI 不清空其它模块的规则来模拟回滚。
+- 手动自检入口为 `tools/test_upstream_fixes.py`，保留 int/bool 各1891处冻结 Oracle，追加特殊权限位、实际生成 shell 和 Node VM 交互。原测试文件保持冻结；原生 exec/LSM/CFI、Android WebView 与设备启动仍需独立验证。
+- 当前静态配置回归入口为 `tools/test_static_current.py`，参数沿用 `test_static_targets.py`。仅将生成夹具的截取边界定位到包含 `nm_btf.c` 的顶层动态区，并定义静态编译模式；完整保留原 C/Python 断言、配置矩阵和 JSON/blob 往返。原入口的首次 `#ifndef` 现位于容量函数内部，不能再用作截取边界。
+
+## BTF 文件布局与分列时间
+
+- 静态表在原46项之后追加 `file_layout/file_operations/file_path/inode_times_layout/fop_io_bias`，共51项、102字节。`file_layout=0` 保留原连续共同片段，新增显式位置填0；`=1` 独立使用目标确认的 f_inode/f_op/f_path。动态版从命名BTF字段选择，不按版本号分支。f_flags只读取u32，不依赖f_mode邻接。
+- `fop_io_bias` 是 llseek 相对原位置8的增量；owner仍为0，llseek/read/write/read_iter/write_iter须为同一连续回调片段。自建表按目标槽写入，复制原生表仍用其精确尺寸。
+- `inode_times_layout=0` 保留原timespec片段；`=1` 使用i_size、三个64位秒和三个32位纳秒的44字节片段。只能逐字段复制／比较，不能整结构操作：C结构的末尾padding可能对应原生i_generation。缺字段、宽度或几何冲突拒绝。
+- `tools/migrate_layout.py` 显式迁移完整旧46项配置，新字段设为旧共同契约的0，原值与输入文件不改。新51项基线必须配新配置；旧基线继续使用其原配套布局和配置，不互换。
+- 静态版仍不推导偏移；新idmap规则入口额外使用目标BTF验证get/list/set/remove/ACL原生ABI。BTF不可用或冲突则ADD失败，规则不发布。静态set/remove写入保持EOPNOTSUPP；读取与syscall list按源path转发。既有plain/userns静态能力保持。
+- `tools/test_612_btf.py` 对选定镜像执行当前生产BTF查询及真实记录变异；`test_612_callbacks.py` 保留int/bool各1907处业务Oracle并追加独立file字段、偏移回调、分列时间和静态idmap入口检查。`test_btf_current.py` 保留8份既有BTF的126处Oracle，以bias=0保留原固定前部测试语义；偏移前部的正例另由真实目标查询覆盖。原测试文件与断言不变。

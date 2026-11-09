@@ -215,7 +215,7 @@ static int nm_prepare_virtual_directory_engine(void) {
     return -ENODEV;
   if (nm_inode_engine.directory_ops)
     return -EALREADY;
-  if (struct_offset.file_inode_ops < sizeof(struct nm_path))
+  if (nm_file_path_offset((const void*)&struct_offset) < 0)
     return -EINVAL;
 #ifndef CONFIG_KPM_BASELINES
   int rc = nm_prepare_virtual_directory_abi();
@@ -245,8 +245,9 @@ static int nm_prepare_virtual_directory_engine(void) {
     nm_discard_operations(fops);
     return status;
   }
-  ((struct nm_file_io_ops*)fops)->read = nm_virtual_directory_read;
-  ((struct nm_file_io_ops*)fops)->llseek = nm_virtual_directory_llseek;
+  int start = nm_file_io_start((const void*)&struct_offset);
+  nm_set_fop(fops, start + offsetof(struct nm_file_io_callbacks, read), nm_virtual_directory_read);
+  nm_set_fop(fops, start + offsetof(struct nm_file_io_callbacks, llseek), nm_virtual_directory_llseek);
   nm_set_operation_callback(fops, struct_offset.fop_open, nm_open);
   nm_set_operation_callback(fops, struct_offset.fop_release, nm_release);
   int iterate = struct_offset.fop_iterate_shared >= 0 ? struct_offset.fop_iterate_shared : struct_offset.fop_iterate;
