@@ -535,6 +535,32 @@ def check_version_consistency(rep):
                         notes.append(text + "（交接前在途：维护者需在验收/交付前同步 version_declared；角色不要自行改元数据）")
                     else:
                         problems.append(text)
+        # 配套模块清单（module.prop）属于独立更新的 ZIP：只要求与 ZIP 自身的
+        # `module/CHANGELOG.md` 首条版本一致，不与 KPM 版本绑定。
+        for prop_rel in (f"{module}/module/module.prop", f"{module}/module.prop"):
+            prop_path = os.path.join(REPO, prop_rel)
+            if not os.path.isfile(prop_path):
+                continue
+            prop_text = open(prop_path, encoding="utf-8", errors="replace").read()
+            prop_m = re.search(r"^version=v?(\S+)\s*$", prop_text, re.M)
+            if not prop_m:
+                problems.append(f"{module}: {prop_rel} 未找到 version 字段")
+                break
+            zip_version = normalize_version(prop_m.group(1))
+            changelog = os.path.join(os.path.dirname(prop_path), "CHANGELOG.md")
+            if not os.path.isfile(changelog):
+                problems.append(f"{module}: 缺少配套 {os.path.relpath(changelog, REPO)}")
+                break
+            headings = re.findall(r"(?m)^## v(\S+)\s*$",
+                                  open(changelog, encoding="utf-8", errors="replace").read())
+            if not headings:
+                problems.append(f"{module}: 配套 CHANGELOG.md 没有版本标题")
+                break
+            if normalize_version(headings[0]) != zip_version:
+                problems.append(f"{module}: 配套 ZIP 版本 {zip_version} 与其 CHANGELOG 首条 "
+                                f"{headings[0]} 不一致")
+            break
+
         readme_heading = normalize_version(record.get("version_sources", {}).get("readme_heading", ""))
         if readme_heading and readme_heading != declared:
             # 文档标题属提示：版本事实由 Makefile ↔ version_declared 判定，不用文档措辞卡人
