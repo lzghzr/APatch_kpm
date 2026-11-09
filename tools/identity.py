@@ -49,7 +49,10 @@ REPO = Path(__file__).resolve().parent.parent
 BUILD_INPUT_EXT = (".c", ".h", ".hpp", ".S", ".s", ".ld", ".lds", ".mk", ".py", ".sh", ".json", ".yml", ".yaml")
 BUILD_INPUT_NAMES = ("Makefile", "makefile", "Kbuild", "CMakeLists.txt")
 IGNORED_DIRS = {".git", "__pycache__", ".vscode", "node_modules", "target", "artifacts", "local", "out"}
-IGNORED_SUFFIX = (".kpm", ".o", ".i64", ".bak", ".pyc")
+# 模块目录下不参与 KPM 编译的子树：配套 ZIP 打包工具（tools）、ZIP 自身脚本（module）、
+# 上游子模块（upstream）与 WebUI（webroot）。它们只服务发布与用户态，改它们不该让 KPM 候选失效。
+NON_KPM_DIRS = {"tools", "module", "upstream", "webroot"}
+IGNORED_SUFFIX = (".kpm", ".kpm.json", ".o", ".i64", ".bak", ".pyc")
 VARIANT_SUFFIX = {"base": "", "network": "_n", "debug": "_d", "network_debug": "_nd",
                   "static": "", "dynamic": "", "static_debug": "_d", "dynamic_debug": "_d",
                   "baselines": "", "baselines_debug": "_d", "legacy": "", "legacy_debug": "_d"}
@@ -293,7 +296,7 @@ def source_files(module, mdir, extra=()):
     """全部构建输入：模块目录内源码/脚本/配置 + 仓库级共享头 + 显式追加。"""
     files = []
     for root, dirs, names in os.walk(mdir):
-        dirs[:] = [d for d in dirs if d not in IGNORED_DIRS]
+        dirs[:] = [d for d in dirs if d not in IGNORED_DIRS and d not in NON_KPM_DIRS]
         for name in names:
             if name.endswith(IGNORED_SUFFIX):
                 continue
