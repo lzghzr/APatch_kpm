@@ -111,7 +111,8 @@ def main():
 
     # 模块锁覆盖：输入快照 → 清理 → 构建 → 复核输入未变 → 登记
     with ident.module_lock(args.module):
-        extras = sorted(set((args.extra_input or []) + ["tools/build_candidate.py", "tools/identity.py"]))
+        # 身份工具不产生二进制，只作为来源信息记录在 note 中，不进构建输入指纹。
+        extras = sorted(set(args.extra_input or []))
         inputs = ident.source_files(args.module, mdir, extras)
         before_tree = ident.source_tree_sha256(inputs)
         source_commit = ident.git(["rev-parse", "HEAD"])

@@ -186,6 +186,10 @@ def git_blob_at(commit, relpath, filters=False):
     return blobs_at(commit, [relpath], filters=filters).get(relpath)
 
 
+# 身份工具：只用于产生身份信息，不参与编译产物，故不作为构建输入参与交付比对。
+TOOLING_PATHS = ("tools/identity.py", "tools/build_candidate.py")
+
+
 def blobs_at(commit, relpaths, filters=False):
     """批量取多个路径的 blob；返回 {path: bytes|None}。跨调用缓存，子模块用冻结 gitlink。"""
     if not commit:
@@ -275,6 +279,14 @@ def parse_makefile_version(mdir):
     if not m:
         die(f"Makefile 里找不到 MYKPM_VERSION: {path.relative_to(REPO)}")
     return m.group(1).strip()
+
+
+def is_build_input_path(rel):
+    """按构建输入规则判断单个仓库相对路径是否可能参与编译。"""
+    name = os.path.basename(rel)
+    if name.endswith(IGNORED_SUFFIX):
+        return False
+    return name in BUILD_INPUT_NAMES or name.endswith(BUILD_INPUT_EXT)
 
 
 def source_files(module, mdir, extra=()):
@@ -648,11 +660,8 @@ def recompute_fingerprint(entry):
 
 
 def instance_dir(instance_id):
-    """instance_id = <build_id>#<n> → 第 1 次沿用 artifacts/<build_id>/，第 n 次用 artifacts/<build_id>#n/。"""
-    build_id, _, index = instance_id.rpartition("#")
-    if not build_id:
-        return REPO / "artifacts" / instance_id
-    return REPO / "artifacts" / (build_id if index == "1" else f"{build_id}#{index}")
+    """新归档目录保留完整实例名；历史产物仍按记录中的 artifacts[].path 核验。"""
+    return REPO / "artifacts" / instance_id
 
 
 def build_entry(module, mdir, version, variant, toolchain, build_cmd, env_extra,
@@ -1036,8 +1045,18 @@ def delivery_problems(entry, binding):
     elif delivery_tree is None:
         problems.append(f"交付提交 {commit[:12]} 中不存在模块目录 {module}")
     elif source_tree != delivery_tree:
-        problems.append("交付提交中的模块树与候选源码不同")
-    paths = [src["path"] for src in entry.get("sources", [])]
+        # 模块树差异只在构建输入上构成失败：README／文档等不参与编译的文件变动仅记录，
+        # 但新增或修改任何潜在构建输入（源码/头文件/构建脚本）仍必须拒绝。
+        changed = subprocess.run(["git", "-C", str(REPO), "diff", "--name-only",
+                                  source_commit, commit, "--", module],
+                                 capture_output=True, text=True).stdout.split()
+        bad = [p for p in changed if is_build_input_path(p) and p not in TOOLING_PATHS]
+        if bad:
+            problems.append("交付提交修改或新增了构建输入：" + "；".join(bad[:4]))
+        else:
+            binding["module_tree_match"] = False
+    # 身份工具不参与产物，历史记录里若含工具路径不参与交付比对。
+    paths = [src["path"] for src in entry.get("sources", []) if src["path"] not in TOOLING_PATHS]
     before_blobs = blobs_at(source_commit, paths, filters=False) if source_commit else {}
     after_blobs = blobs_at(commit, paths, filters=False) if commit else {}
     for path in paths:

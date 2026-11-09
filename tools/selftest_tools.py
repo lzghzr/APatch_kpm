@@ -522,13 +522,30 @@ def _run_checks():
     registered = json.loads((root / "metadata/modules/mod.json").read_text())["builds"]
     repeated = (first.returncode == second.returncode == 0 and len(registered) == 2
                 and registered[0]["instance_id"] != registered[1]["instance_id"])
+    # 新目录完整保留 #1/#2，封存路径与清单逐字一致；旧路径仍可核验，坏字节仍拒绝。
+    probe = load("identity_instance_layout", root / "tools/identity.py")
+    instance_layout = repeated and all(
+        Path(art["path"]).parent == Path("artifacts") / build["instance_id"]
+        and json.loads((root / "artifacts" / build["instance_id"] / "MANIFEST.json").read_text())["artifacts"] == build["artifacts"]
+        for build in registered for art in build["artifacts"])
+    legacy_entry = json.loads(json.dumps(registered[0]))
+    legacy_path = root / "artifacts" / legacy_entry["build_id"] / legacy_entry["artifacts"][0]["name"]
+    legacy_path.parent.mkdir()
+    shutil.copy2(root / legacy_entry["artifacts"][0]["path"], legacy_path)
+    legacy_entry["artifacts"][0]["path"] = str(legacy_path.relative_to(root))
+    legacy_valid = not probe.verify_build(legacy_entry, profile="candidate")["problems"]
+    legacy_path.write_bytes(b"corrupt fixture")
+    legacy_bad = bool(probe.verify_build(legacy_entry, profile="candidate")["problems"])
+    original_valid = not probe.verify_build(registered[0], profile="candidate")["problems"]
     fixture_commit(root, "second registration")
     compiler.write_text(f"#!/bin/sh\ncp {root}/payload.bin mod_1.0.kpm\nprintf 'generated input' > new.h\n")
     fixture_commit(root, "compiler changes inputs")
     rejected = subprocess.run(command, cwd=root, capture_output=True, text=True)
     unchanged_count = len(json.loads((root / "metadata/modules/mod.json").read_text())["builds"]) == 2
-    results.append(("candidate_build_transaction", repeated and rejected.returncode != 0 and unchanged_count,
+    results.append(("candidate_build_transaction", repeated and rejected.returncode != 0 and unchanged_count
+                    and instance_layout and legacy_valid and legacy_bad and original_valid,
                     f"两次构建新实例={repeated}，输入变更拒绝登记={rejected.returncode != 0 and unchanged_count}"
+                    + f"，完整实例目录={instance_layout}，旧路径通过={legacy_valid}，坏字节拒绝={legacy_bad}，原件保持={original_valid}"
                     + ("；" + (first.stderr + second.stderr)[-500:] if not repeated else "")))
 
     # 19) 验收数组逐条核验；历史单项与新增数组同时保留。

@@ -52,7 +52,7 @@ python3 tools/identity.py record re_kernel --toolchain ndk26.3.11579264
 - `tools/identity.py record` 只**追加 `builds[]`**，Developer 可以直接运行（不会碰 `status`/`audits`/`issues`）；
   也可以 `--handoff` 只产出清单，交给维护者 `import-manifest` 导入。
 - 探索阶段允许工作树不干净；**交接候选必须从冻结提交构建**（推荐 `git worktree add ../APatch_kpm-dev <sha>`），
-  产物归档到 `artifacts/<build_id>[#n]/`，封存后不可覆盖。
+  产物归档到 `artifacts/<instance_id>/`，封存后不可覆盖。
 - 修复别人开的问题单后，在 `Developer/reports/responses/` 写修复响应并把问题单置 `fixed(待复核)`；
   由发现方复核关闭（`DEV-*` 自检问题也需另一位角色复核）。
 - 需要改别人的文件时，提补丁建议（`git format-patch`/diff + 说明）给所有者落地。

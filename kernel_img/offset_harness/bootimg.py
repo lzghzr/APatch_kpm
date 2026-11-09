@@ -161,6 +161,19 @@ def parse_boot_header(data):
     """解析 ANDROID! 头；返回 dict 或 None。"""
     if data[:len(ANDROID_MAGIC)] != ANDROID_MAGIC:
         return None
+    header_version = _u32(data, 40)
+    if header_version in (3, 4):
+        minimum = 1580 if header_version == 3 else 1584
+        header_size = _u32(data, 20)
+        if len(data) < minimum or header_size is None or not minimum <= header_size <= 4096:
+            raise ValueError("invalid Android boot v3/v4 header size")
+        return {
+            "kernel_size": _u32(data, 8),
+            "ramdisk_size": _u32(data, 12),
+            "page_size": 4096,
+            "header_version": header_version,
+            "os_version": _u32(data, 16),
+        }
     kernel_size = _u32(data, 8)
     ramdisk_size = _u32(data, 16)
     page_size = _u32(data, 36)
@@ -212,11 +225,9 @@ def unpack_bytes(data, name="<bytes>"):
             notes.append(f"头的 page_size={page} 指向 0x{off:x}，但 kernel 实际在 0x{found:x}，按实际偏移提取")
         off = found
     size = header["kernel_size"] or 0
+    if size <= 0 or off + size > len(data):
+        raise ValueError(f"{name}: kernel segment size is missing or exceeds boot image")
     blob = data[off:off + size] if size else data[off:]
-    want = _image_header_size(blob)
-    if want and want > len(blob) and off + want <= len(data):
-        notes.append(f"arm64 头声明 image_size=0x{want:x} > boot 头 kernel_size=0x{size:x}，按 image_size 扩展")
-        blob = data[off:off + want]
     body, how = _inner(blob, notes)
     detail = f"{fmt} kernel@0x{off:x} size=0x{size:x}" + (f" {how}" if how else "")
     if not is_raw_image(body):
