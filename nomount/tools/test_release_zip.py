@@ -83,12 +83,15 @@ class ZipReleaseTests(unittest.TestCase):
             merge(self.staged, self.release)
         self.assertFalse((self.release / PACKAGE).exists())
 
-    def test_different_version_rejected(self):
+    def test_independent_zip_version_allowed(self):
+        # 配套 ZIP 与 KPM 独立更新：版本不同不阻断合并。
         self.stage()
         self.build["artifacts"][0]["info"]["version"] = "0.5.2"
         self.write_build()
-        with self.assertRaisesRegex(ValueError, "版本"):
-            merge(self.staged, self.release)
+        merge(self.staged, self.release)
+        build = json.loads((self.release / "BUILD_MANIFEST.json").read_text())
+        self.assertEqual(build["companions"][0]["version"], self.manifest["version"])
+        self.assertTrue((self.release / PACKAGE).exists())
 
     def test_missing_nomount_kpm_rejected(self):
         self.stage()

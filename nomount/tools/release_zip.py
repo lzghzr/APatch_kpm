@@ -66,10 +66,11 @@ def merge(zip_directory, release):
     build = json.loads(build_path.read_text())
     if build["source_commit"] != companion["source_commit"]:
         raise ValueError("KPM 与 ZIP 来源提交不一致")
+    # ZIP 与 KPM 独立更新：只要求发布里含 NoMount KPM，不要求两者版本相同。
     versions = {item["info"]["version"] for item in build["artifacts"]
                 if item["info"]["name"] == "NoMount"}
-    if versions != {companion["version"]}:
-        raise ValueError("发布 KPM 与 ZIP 版本不一致，或缺少 NoMount KPM")
+    if not versions:
+        raise ValueError("发布缺少 NoMount KPM")
     if build.get("companions") or any((release / name).exists() for name in (PACKAGE, MANIFEST)):
         raise ValueError("发布目录已有配套 ZIP，拒绝覆盖")
     # 只修改新建发布目录的副本；构建归档及其 MANIFEST 保持原样。
