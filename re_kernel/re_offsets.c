@@ -43,6 +43,7 @@ struct struct_offset {
   int16_t sock_sk_net;
   int16_t binder_proc_is_dead;
   int16_t binder_buffer_data;
+  int16_t binder_proc_tmp_ref;
   int16_t binder_release_abi;
 };
 
@@ -93,10 +94,11 @@ volatile struct struct_offset struct_offset __attribute__((section(".data.re_off
     .sock_sk_net = 0x30,
     .binder_proc_is_dead = 0x70,
     .binder_buffer_data = -1,
+    .binder_proc_tmp_ref = -1,
     .binder_release_abi = 6,
 };
 #else
-struct struct_offset struct_offset = {};
+struct struct_offset struct_offset = {.binder_proc_tmp_ref = -1};
 #endif /* CONFIG_KPM_BASELINES */
 
 // task_comm
@@ -240,6 +242,10 @@ static long calculate_offsets() {
   int btf = calculate_btf_offsets();
   if (btf != -ENODATA)
     return btf;
+  if (!binder_proc_transaction) {
+    logkm("binder_proc_transaction unavailable for instruction offset derivation\n");
+    return -ENOENT;
+  }
 
   // 获取 binder_transaction_buffer_release 版本, 以参数数量做判断
   uint32_t* binder_transaction_buffer_release_src = (uint32_t*)binder_transaction_buffer_release;

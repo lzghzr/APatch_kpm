@@ -242,6 +242,9 @@ def main():
         table_source = table_path.read_text()
         table = re.search(r'struct struct_offset\s*\{.*?\};', table_source, re.S)[0]
         fields = re.findall(r'int16_t (\w+);', table)
+        if mode:
+            # vendor 字段由后续能力阶段取得；常规布局查询阶段须保留未配置哨兵。
+            reference = dict(reference, binder_proc_tmp_ref=-1)
         if not mode:
             assert set(REK_BTF_FIELDS).issubset(fields)
             fields = REK_BTF_FIELDS
@@ -253,7 +256,8 @@ def main():
             define = 'static bool binder_transaction_buffer_release_ver4, binder_transaction_buffer_release_ver5, binder_transaction_buffer_release_ver6;\n'
             abi = reference['binder_release_abi']
             checks += f'\n  assert(binder_transaction_buffer_release_ver4 == {int(abi == 4)});\n  assert(binder_transaction_buffer_release_ver5 == {int(abi >= 5)});\n  assert(binder_transaction_buffer_release_ver6 == {int(abi == 6)});'
-        fixture = ('#define REKERNEL_TARGET_BTF 1\n' if args.btf else '') + code + define + table + '\nstatic struct struct_offset struct_offset;\n' + common + '\n' + decl
+        initial = '{.binder_proc_tmp_ref = -1}' if mode else '{0}'
+        fixture = ('#define REKERNEL_TARGET_BTF 1\n' if args.btf else '') + code + define + table + '\nstatic struct struct_offset struct_offset = ' + initial + ';\n' + common + '\n' + decl
         fixture += 'static const u32 records[] = {' + ','.join(map(str, records)) + '};\n'
         fixture += f'static const u32 string_start = {strings}, string_length = {len(data) - strings};\n'
         fixture += HOST + 'static int rekernel_btf_release_abi' + functions

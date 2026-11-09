@@ -38,7 +38,13 @@ static inline struct sk_buff* nlmsg_new(size_t payload, gfp_t flags) {
 }
 
 extern void kfunc_def(kfree_skb)(struct sk_buff* skb);
-static inline void nlmsg_free(struct sk_buff* skb) { kfunc_call_void(kfree_skb, skb); }
+extern void kfunc_def(consume_skb)(struct sk_buff* skb);
+static inline void nlmsg_free(struct sk_buff* skb) {
+  if (kfunc(kfree_skb))
+    kfunc(kfree_skb)(skb);
+  else if (kfunc(consume_skb))
+    kfunc(consume_skb)(skb);
+}
 
 extern int kfunc_def(netlink_unicast)(struct sock* ssk, struct sk_buff* skb, u32 portid, int nonblock);
 static inline int netlink_unicast(struct sock* ssk, struct sk_buff* skb, u32 portid, int nonblock) {

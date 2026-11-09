@@ -17,7 +17,7 @@
 
 两种版本在 APatch 中都叫 `re_kernel`，选择一种加载即可。文件名带 `_debug` 的版本用于排查问题。
 
-适配目标为 Android ARM64，内核 4.4～6.6。动态版优先使用 BTF；缺少必要数据或查询接口时，尝试从内核函数推导。获取失败时停止加载，具体原因见内核日志。
+适配目标为 Android ARM64，内核 4.4～6.12，按目标能力和布局核对。动态版优先使用 BTF；缺少必要数据或查询接口时，尝试从内核函数推导。获取失败时停止加载，具体原因见内核日志。
 
 ## 加载
 
@@ -55,3 +55,47 @@ python3 patch_offsets.py patch re_kernel_baselines.kpm --offsets target-offsets.
 ```
 
 配套布局文件应放在基线旁，命名为 `re_kernel_baselines.kpm.json`。替换工具只依赖 Python 标准库，用户侧无需 NDK。
+
+
+## Binder 厂商入口与清理
+
+优先注册 `android_vh_binder_transaction_record`：完整拷贝后、入队加锁前触发，但回调仍禁止抢占。
+不能在回调内调用可能获取 mutex 的 `binder_alloc_free_buf`。动态版从目标 BTF 核对 record 的四参数
+（`__data`, `tr`, `t`, `in_reply_to`）、`binder_proc_dec_tmpref(binder_proc*) -> void` 与 signed int32
+`binder_proc.tmp_ref`，静态移植离线核对同一契约。厂商路径还要求原生 Binder 通知 tracepoint 注册成功及
+`copy_from_user_nofault`；缺少能力、ABI 不符或注册失败时，回退到独立 `binder_proc_transaction` before。
+两个清理入口都不可用则拒绝加载，不静默跳过异步清理。
+
+record 只处理非 reply、`current` 与 `tr` 均匹配的当前调用，每次调用最多摘除一条旧事务；分配失败
+不借用外层调用。按 node → inner 顺序锁内复核，至少有两条匹配旧消息才摘除最早一条，并递增模块自己的
+`tmp_ref`、递减 outstanding。`binder_transaction_after` 先脱离模块上下文链表并解锁，再释放旧事务／
+缓冲区／fixups，最后调用原生 `binder_proc_dec_tmpref` 归还引用。独立 before 路径沿用外层原生引用，
+锁外同步释放。去重仍保留带对象、FD 或额外缓冲的事务；本模块没有 rekx 的用户可配置清理策略或缓冲区读取依赖。
+
+RPC 读取优先使用 140 字节栈缓冲与 `copy_from_user_nofault`，失败跳过该次上报。旧目标缺少此 API 时保留
+`memdup_user` 路径，其 tracepoint 原子上下文风险仍待独立处理；本轮 6.12 证据不覆盖该路径。厂商入口在
+Genl 初始化成功后最后注册，失败按已安装状态撤销自有 wrap／tracepoint 与 family；热卸载仍不允许。
+
+静态表为 46 个 int16（92 字节）：原前 44 项不动，在末项 `binder_release_abi` 前增加
+`binder_proc_tmp_ref`，默认 -1（动态初始化也为 -1）。只在厂商能力验证时写入该字段；老的独立入口不要求
+它。`binder_buffer_data` 在本模块业务中未使用，动态常规 BTF 仍只查询原 38 项，不增加 rekx 的读取依赖。
+旧 45 项基线必须用旧配套 JSON；不可与本轮表混用。
+
+新分配器 `__kmalloc_noprof` 仅在 `kmalloc`／`__kmalloc` 都不可用时绑定 SDK 同 ABI 封装，此时分配、
+Genl 广播统一使用共同 `__GFP_HIGH` 位以避免旧 GFP 高位含义冲突。skb 优先 `kfree_skb`，否则
+`consume_skb`，每次只释放一个引用；两者都缺少则拒绝加载。
+
+
+## 异步清理 debug 观测
+
+两个模块各自维护 `binder_free_outdated`，公共释放顺序与完成日志保持一致。debug 在整个 native buffer／
+allocator／fixups／transaction 释放链及删除统计返回后输出一条：
+`free_outdated pid=...,uid=...,data_size=...,code=...,stage=done`。诊断值在回收前保存，不读取已释放对象；
+日志位于 Binder 锁外，厂商路径在 outer after 内执行，归还模块 proc 引用之前。release 不增加此日志或快照。
+
+一条 done 表示模块完成一次旧事务清理；不是用户态新消息送达或解冻成功。无日志不能单独认定清理次数为0，
+还需确认实际 debug 产物、日志采集窗口和过滤、冻结条件、匹配旧消息数及策略。至少已有两条匹配旧消息才删最早
+一条，每次最多一条。`re_kernel` 的29～32只约束通知上报；`re_kernel_x` 的SKIP/BY_CODE/BY_DATA策略各自保留。
+
+自检入口：`python3 Developer/tools/test_rekernel_cleanup_logs.py --output <新目录>`；同时核对两份独立函数一致、
+release静默、debug日志内容／时序、空消息和可选fixups，以及原生外层归还引用后的延迟回收。

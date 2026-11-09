@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define TF_ONE_WAY 1
 #define TF_UPDATE_TXN 0x40
@@ -40,6 +41,7 @@ struct binder_proc {
   bool is_dead;
   bool is_frozen;
   int outstanding_txns;
+  int tmp_ref;
 };
 struct binder_node {
   binder_uintptr_t ptr;
@@ -72,7 +74,24 @@ struct binder_transaction {
 struct binder_thread;
 typedef struct {
   uintptr_t arg0, arg1, arg2;
+  bool skip_origin;
 } hook_fargs3_t;
+typedef hook_fargs3_t hook_fargs5_t;
+struct binder_transaction_data {
+  int unused;
+};
+static void* current = (void*)1;
+static unsigned int context_allocations, reference_returns;
+static int rekernel_gfp_atomic;
+static bool allocation_error, in_record;
+static unsigned long rekernel_context_lock(unsigned int* guard) { return 0; }
+static void rekernel_context_unlock(unsigned int* guard, unsigned long flags) {}
+static void* kmalloc(size_t size, int flags) {
+  if (allocation_error)
+    return NULL;
+  context_allocations++;
+  return calloc(1, size);
+}
 static bool trace = true, frozen = true, freeze_on_lock;
 static unsigned int lock_level, releases, frees, fixups, transactions;
 static struct binder_buffer* released;
@@ -94,9 +113,16 @@ static void binder_inner_proc_unlock(struct binder_proc* proc) { assert(--lock_l
 static void binder_node_unlock(struct binder_node* node) { assert(--lock_level == 0); }
 static void rekernel_binder_transaction(void* data, bool reply, struct binder_transaction* t, void* node) {}
 static void atomic_inc(atomic_t* value) { (*value)++; }
-static void kfree(struct binder_transaction* t) {
-  assert(!lock_level && t == discarded && !t->buffer);
-  transactions++;
+static void kfree(void* p) {
+  if (p == discarded) {
+    struct binder_transaction* t = p;
+    assert(!lock_level && !in_record && !t->buffer);
+    transactions++;
+  } else {
+    assert(context_allocations);
+    context_allocations--;
+    free(p);
+  }
 }
 static void cleanup_fixups(struct binder_transaction* t) {
   assert(!lock_level && t == discarded && !t->buffer);
@@ -132,6 +158,12 @@ static void (*binder_transaction_buffer_release)(struct binder_proc*, struct bin
 static void (*binder_transaction_buffer_release_v6)(struct binder_proc*, struct binder_thread*, struct binder_buffer*,
                                                     binder_size_t, bool);
 
+static void binder_proc_dec_tmpref(struct binder_proc* proc) {
+  assert(!lock_level && !in_record && proc->tmp_ref == 1 && transactions == 1);
+  assert(releases == 1 && frees == 1 && proc->outstanding_txns == 1);
+  proc->tmp_ref--;
+  reference_returns++;
+}
 /* PRODUCTION_FUNCTIONS */
 
 int main(void) {
@@ -147,53 +179,90 @@ int main(void) {
   struct_offset.binder_proc_is_dead = offsetof(struct binder_proc, is_dead);
   struct_offset.binder_proc_is_frozen = offsetof(struct binder_proc, is_frozen);
   struct_offset.binder_proc_outstanding_txns = offsetof(struct binder_proc, outstanding_txns);
+  struct_offset.binder_proc_tmp_ref = offsetof(struct binder_proc, tmp_ref);
   binder_transaction_buffer_release_v3 = release3;
   binder_transaction_buffer_release_v4 = release4;
   binder_transaction_buffer_release = binder_transaction_buffer_release_v6 = release5;
   unsigned int cases = 0;
-  for (unsigned int abi = 3; abi <= 6; abi++) {
-    binder_transaction_buffer_release_ver4 = abi == 4;
-    binder_transaction_buffer_release_ver5 = abi == 5;
-    binder_transaction_buffer_release_ver6 = abi == 6;
-    for (unsigned int mode = 0; mode < 10; mode++) {
-      struct binder_proc proc = {.tsk = &proc, .outstanding_txns = 2};
-      struct binder_node node = {.ptr = 11, .cookie = 22, .has_async_transaction = true};
-      node.async_todo.next = node.async_todo.prev = &node.async_todo;
-      struct binder_buffer buffers[3];
-      struct binder_transaction txns[3];
-      for (unsigned int i = 0; i < 3; i++) {
-        buffers[i] = (struct binder_buffer){.target_node = &node, .transaction = &txns[i], .data_size = 17, .pid = 7};
-        txns[i] = (struct binder_transaction){
-            .to_proc = &proc, .buffer = &buffers[i], .code = 9, .flags = TF_ONE_WAY | TF_UPDATE_TXN};
-        txns[i].work.type = BINDER_WORK_TRANSACTION;
-        if (i < 2 && !(mode == 1 && i == 1))
-          list_add_tail(&txns[i].work.entry, &node.async_todo);
+  for (unsigned int path = 0; path < 2; path++)
+    for (unsigned int abi = 3; abi <= 6; abi++) {
+      binder_transaction_buffer_release_ver4 = abi == 4;
+      binder_transaction_buffer_release_ver5 = abi == 5;
+      binder_transaction_buffer_release_ver6 = abi == 6;
+      for (unsigned int mode = 0; mode < 10; mode++) {
+        struct binder_proc proc = {.tsk = &proc, .outstanding_txns = 2, .tmp_ref = 1};
+        struct binder_node node = {.ptr = 11, .cookie = 22, .has_async_transaction = true};
+        node.async_todo.next = node.async_todo.prev = &node.async_todo;
+        struct binder_buffer buffers[3];
+        struct binder_transaction txns[3];
+        for (unsigned int i = 0; i < 3; i++) {
+          buffers[i] = (struct binder_buffer){.target_node = &node, .transaction = &txns[i], .data_size = 17, .pid = 7};
+          txns[i] = (struct binder_transaction){
+              .to_proc = &proc, .buffer = &buffers[i], .code = 9, .flags = TF_ONE_WAY | TF_UPDATE_TXN};
+          txns[i].work.type = BINDER_WORK_TRANSACTION;
+          if (i < 2 && !(mode == 1 && i == 1))
+            list_add_tail(&txns[i].work.entry, &node.async_todo);
+        }
+        frozen = mode != 2;
+        proc.is_dead = mode == 3;
+        proc.is_frozen = mode == 4;
+        freeze_on_lock = mode == 5;
+        node.has_async_transaction = mode != 6;
+        buffers[0].offsets_size = mode == 7 ? 8 : 0;
+        buffers[2].extra_buffers_size = mode == 8 ? 8 : 0;
+        binder_free_txn_fixups = mode == 9 ? NULL : cleanup_fixups;
+        target = &proc;
+        released = &buffers[0];
+        discarded = &txns[0];
+        releases = frees = fixups = transactions = stats_deleted = 0;
+        hook_fargs3_t args = {.arg0 = (uintptr_t)&txns[2], .arg1 = (uintptr_t)&proc};
+        bool expected = mode == 0 || mode == 9;
+        reference_returns = 0;
+        if (!path) {
+          binder_proc_transaction_before(&args, NULL);
+          assert(proc.tmp_ref == 1 && !reference_returns);
+        } else {
+          struct binder_transaction_data tr;
+          hook_fargs5_t call = {.arg2 = (uintptr_t)&tr};
+          binder_transaction_before(&call, NULL);
+          in_record = true;
+          binder_vendor_transaction_record(NULL, &tr, &txns[2], &txns[1]);   // reply
+          binder_vendor_transaction_record(NULL, (void*)2, &txns[2], NULL);  // mismatch
+          current = (void*)2;
+          binder_vendor_transaction_record(NULL, &tr, &txns[2], NULL);  // another task
+          current = (void*)1;
+          assert(!binder_current_context()->outdated && proc.tmp_ref == 1);
+          binder_vendor_transaction_record(NULL, &tr, &txns[2], NULL);
+          binder_vendor_transaction_record(NULL, &tr, &txns[2], NULL);  // duplicate callback
+          assert(!releases && !frees && !transactions && proc.tmp_ref == 1 + expected);
+          in_record = false;
+          proc.tmp_ref--;  // native outer call returns its own reference first
+          binder_transaction_after(&call, NULL);
+          assert(!proc.tmp_ref && reference_returns == expected && !context_allocations);
+        }
+        bool clean = mode == 0 || mode == 9;
+        assert(!lock_level && releases == clean && frees == clean && transactions == clean);
+        assert(fixups == (mode == 0) && stats_deleted == clean);
+        assert(proc.outstanding_txns == 2 - clean);
+        assert(txns[2].buffer == &buffers[2] && buffers[2].transaction == &txns[2]);
+        assert(txns[1].buffer == &buffers[1]);
+        if (clean)
+          assert(node.async_todo.next == &txns[1].work.entry && node.async_todo.prev == &txns[1].work.entry);
+        cases++;
       }
-      frozen = mode != 2;
-      proc.is_dead = mode == 3;
-      proc.is_frozen = mode == 4;
-      freeze_on_lock = mode == 5;
-      node.has_async_transaction = mode != 6;
-      buffers[0].offsets_size = mode == 7 ? 8 : 0;
-      buffers[2].extra_buffers_size = mode == 8 ? 8 : 0;
-      binder_free_txn_fixups = mode == 9 ? NULL : cleanup_fixups;
-      target = &proc;
-      released = &buffers[0];
-      discarded = &txns[0];
-      releases = frees = fixups = transactions = stats_deleted = 0;
-      hook_fargs3_t args = {.arg0 = (uintptr_t)&txns[2], .arg1 = (uintptr_t)&proc};
-      binder_proc_transaction_before(&args, NULL);
-      bool clean = mode == 0 || mode == 9;
-      assert(!lock_level && releases == clean && frees == clean && transactions == clean);
-      assert(fixups == (mode == 0) && stats_deleted == clean);
-      assert(proc.outstanding_txns == 2 - clean);
-      assert(txns[2].buffer == &buffers[2] && buffers[2].transaction == &txns[2]);
-      assert(txns[1].buffer == &buffers[1]);
-      if (clean)
-        assert(node.async_todo.next == &txns[1].work.entry && node.async_todo.prev == &txns[1].work.entry);
-      cases++;
     }
-  }
+  // An untracked inner call cannot steal the outer context or detach resources.
+  hook_fargs5_t outer = {0}, inner = {0};
+  binder_transaction_before(&outer, NULL);
+  allocation_error = true;
+  binder_transaction_before(&inner, NULL);
+  assert(!binder_current_context());
+  binder_vendor_transaction_record(NULL, NULL, (void*)1, NULL);
+  binder_transaction_after(&inner, NULL);
+  allocation_error = false;
+  assert(binder_current_context());
+  binder_transaction_after(&outer, NULL);
+  assert(!binder_contexts && !binder_context_unavailable && !context_allocations);
   printf(
       "production before cleanup: %u ABI/state/object/release cases; incoming and newer old message retained: PASS\n",
       cases);

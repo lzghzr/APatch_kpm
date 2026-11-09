@@ -14,6 +14,37 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def dynamic_table_symbol(data):
+    """rek 动态表在普通 .data；按 ELF 对象符号取字节，不要求静态补丁节。"""
+    assert data[:6] == b"\x7fELF\x02\x01"
+    assert struct.unpack_from('<HH', data, 16) == (1, 183)
+    shoff = struct.unpack_from('<Q', data, 40)[0]
+    entsize, count = struct.unpack_from('<HH', data, 58)
+    assert entsize == 64 and shoff + count * entsize <= len(data)
+    sections = [struct.unpack_from('<IIQQQQIIQQ', data, shoff + i * entsize) for i in range(count)]
+    found = []
+    for table in sections:
+        if table[1] != 2:
+            continue
+        assert table[9] == 24 and table[5] % 24 == 0 and table[6] < count
+        strings = sections[table[6]]
+        assert strings[1] == 3 and strings[4] + strings[5] <= len(data)
+        names = data[strings[4]:strings[4] + strings[5]]
+        assert table[4] + table[5] <= len(data)
+        for at in range(table[4], table[4] + table[5], 24):
+            name, info, _, index, value, size = struct.unpack_from('<IBBHQQ', data, at)
+            assert name < len(names) and names.find(b'\0', name) >= 0
+            if names[name:names.find(b'\0', name)] != b'struct_offset':
+                continue
+            assert info & 15 == 1 and 0 < index < count
+            section = sections[index]
+            assert section[1] == 1 and section[2] & 3 == 3
+            assert value + size <= section[5] and section[4] + value + size <= len(data)
+            found.append((section[4] + value, size))
+    assert len(found) == 1
+    return found[0]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--output', type=Path, required=True)
@@ -38,7 +69,9 @@ def main():
                     assert b'task_struct_offset\0' not in data and b'cred_offset\0' not in data
                     offset, size, abi = patcher.sections(data)
                     fields = patcher.source_fields(root / module / "re_offsets.c")
-                    assert size == len(fields) * 2 == 90 and abi is None
+                    assert size == len(fields) * 2 == 92 and abi is None
+                    assert fields[-2:] == ['binder_proc_tmp_ref', 'binder_release_abi']
+                    assert struct.unpack_from('<h', data, offset + size - 4)[0] == -1
                     assert struct.unpack_from('<h', data, offset + size - 2)[0] == 6
                     for value in (3, 4, 5, 6):
                         original = data[offset:offset + size]
@@ -54,12 +87,19 @@ def main():
                         patched = output.read_bytes()
                         assert patched[:offset] == data[:offset] and patched[offset + size:] == data[offset + size:]
                         assert patched[offset:offset + size] == payload
-                elif module == 're_kernel_x':
-                    offset, size, abi = patcher.sections(data)
-                    values = struct.unpack_from('<45h', data, offset)
+                else:
+                    if module == 're_kernel':
+                        offset, size = dynamic_table_symbol(data)
+                        abi = None
+                    else:
+                        offset, size, abi = patcher.sections(data)
+                    values = struct.unpack_from('<46h', data, offset)
                     fields = patcher.source_fields(root / module / "re_offsets.c")
-                    assert values[fields.index('binder_buffer_data')] == -1
-                    assert all(v == 0 for f, v in zip(fields, values) if f != 'binder_buffer_data')
+                    assert size == len(fields) * 2 == 92 and abi is None
+                    assert fields[-2:] == ['binder_proc_tmp_ref', 'binder_release_abi']
+                    assert values[fields.index('binder_proc_tmp_ref')] == -1
+                    assert values[fields.index('binder_buffer_data')] == (-1 if module == 're_kernel_x' else 0)
+                    assert all(v == 0 for f, v in zip(fields, values) if f not in ('binder_buffer_data', 'binder_proc_tmp_ref'))
                 results.append({'file': path.name, 'sha256': sha(path), 'mode': mode})
 
     offsets = (root / 're_kernel_x/re_offsets.c').read_text()

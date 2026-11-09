@@ -45,6 +45,8 @@ typedef struct {
   unsigned long arg0, arg1, arg2;
 } hook_fargs5_t;
 static void* kf___alloc_skb = (void*)1;
+static gfp_t rekernel_gfp_atomic = GFP_ATOMIC;
+static void* kf_consume_skb;
 static void* kf_kfree_skb = (void*)1;
 static void* kf_netlink_unicast = (void*)1;
 static int hook_error, register_error, unregister_error;
@@ -88,6 +90,15 @@ static unsigned long rekernel_context_lock(unsigned int* lock) { return 0; }
 static void rekernel_context_unlock(unsigned int* lock, unsigned long flags) {}
 static int netlink_unicast(struct sock* sk, struct sk_buff* skb, u32 portid, int nonblock);
 
+static unsigned int cleanup_dispatches, reference_returns;
+static void binder_free_outdated(struct binder_proc* proc, struct binder_transaction* t) {
+  assert(proc == (void*)3 && t == (void*)4);
+  cleanup_dispatches++;
+}
+static void binder_proc_dec_tmpref(struct binder_proc* proc) {
+  assert(proc == (void*)3 && cleanup_dispatches == reference_returns + 1);
+  reference_returns++;
+}
 /* PRODUCTION_FUNCTIONS */
 
 static void* mock_put(struct sk_buff* skb, u32 portid, u32 seq, const struct genl_family* family, int flags, u8 cmd) {
@@ -316,6 +327,11 @@ int main(void) {
   assert(binder_current_transaction() == &outer);
   binder_transaction_after(&outer_call, NULL);
   assert(!binder_current_transaction() && !binder_contexts && !binder_context_unavailable && !allocations);
+  binder_transaction_before(&outer_call, NULL);
+  binder_current_context()->cleanup_proc = (void*)3;
+  binder_current_context()->outdated = (void*)4;
+  binder_transaction_after(&outer_call, NULL);
+  assert(cleanup_dispatches == 1 && reference_returns == 1 && !allocations);
   puts("Genl protocol, failure cleanup and Binder context checks passed");
   return 0;
 }

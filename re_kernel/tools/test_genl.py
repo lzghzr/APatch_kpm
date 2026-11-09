@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import subprocess
 
+from test_native_apis import function
 from test_genl_offsets import instruction_source, offset_source
 
 
@@ -28,7 +29,7 @@ def main():
     genl = genl_symbols + source[source.index("static struct genl_family* rekernel_genl_family;"):].split(
         "// Binder 调用上下文\n", 1)[0]
     context = source.split("// Binder 调用上下文\n", 1)[1].split("// binder_node_lock\n", 1)[0]
-    functions = instruction_source(root) + offset_source(module) + genl + context
+    functions = instruction_source(root) + offset_source(module) + genl + context + function(source, "binder_flush_outdated_context")
     fixture = (module / "tools/test_genl.c").read_text().replace("/* PRODUCTION_FUNCTIONS */", functions)
     (args.output / "genl-test.c").write_text(fixture)
     (args.output / "re_kernel_host.h").write_bytes((module / "re_kernel.h").read_bytes())
@@ -58,7 +59,7 @@ def main():
     frozen = source[source.index("static inline bool binder_is_frozen("):source.index("// cgroupv2_freeze")]
     flow = source[source.index("static bool binder_can_update_transaction("):source.index("static void do_send_sig_info_before(")]
     fixture = (module / "tools/test_cleanup_flow.c").read_text().replace(
-        "/* PRODUCTION_FUNCTIONS */", structure + "\n" + "\n".join(flow_getters) + "\n" + frozen + flow)
+        "/* PRODUCTION_FUNCTIONS */", structure + "\n" + "\n".join(flow_getters) + "\n" + frozen + context + flow)
     (args.output / "cleanup-flow-test.c").write_text(fixture)
     binder_from = offsets.split("  // 获取 binder_transaction->from；", 1)[1].split("  // 获取 binder_stats_deleted_addr", 1)[0]
     fixture = (module / "tools/test_binder_from.c").read_text().replace(
