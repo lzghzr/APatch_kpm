@@ -43,6 +43,7 @@ struct struct_offset {
   int16_t sock_sk_net;
   int16_t binder_proc_is_dead;
   int16_t binder_buffer_data;
+  int16_t binder_proc_tmp_ref;
   int16_t binder_release_abi;
 };
 
@@ -50,6 +51,7 @@ struct struct_offset {
 #ifndef CONFIG_KPM_BASELINES
 volatile struct struct_offset struct_offset __attribute__((section(".data.re_offsets"), used)) = {
     .binder_buffer_data = -1,
+    .binder_proc_tmp_ref = -1,
 };
 #else
 volatile struct struct_offset struct_offset __attribute__((section(".data.re_offsets"), used)) = {
@@ -97,6 +99,7 @@ volatile struct struct_offset struct_offset __attribute__((section(".data.re_off
     .sock_sk_net = 0x30,
     .binder_proc_is_dead = 0x70,
     .binder_buffer_data = -1,
+    .binder_proc_tmp_ref = -1,
     .binder_release_abi = 6,
 };
 #endif
@@ -309,6 +312,10 @@ static long calculate_offsets() {
 #endif /* CONFIG_DEBUG */
 
   // 获取 binder_proc->is_frozen, 没有就是不支持
+  if (!binder_proc_transaction) {
+    logkm("binder_proc_transaction unavailable for instruction offset derivation\n");
+    return -ENOENT;
+  }
   uint32_t* binder_proc_transaction_src = (uint32_t*)binder_proc_transaction;
   for (u32 i = 0; i < 0x70; i++) {
     if (inst_is_ret(binder_proc_transaction_src[i])) {

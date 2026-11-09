@@ -28,6 +28,7 @@
 typedef uint32_t u32, __u32;
 typedef int32_t s32;
 typedef unsigned int gfp_t;
+static gfp_t rekernel_gfp_atomic = GFP_ATOMIC;
 struct net {
   struct sock* socket;
 };
@@ -218,6 +219,7 @@ static int (*kf_nla_put)(struct sk_buff*, int, int, const void*) = native_nla_pu
 static void (*kf_skb_trim)(struct sk_buff*, unsigned int) = native_trim;
 static int (*kf_netlink_broadcast)(struct sock*, struct sk_buff*, u32, u32, gfp_t) = native_broadcast;
 static int kf___alloc_skb = 1, kf_kfree_skb = 1;
+static int kf_consume_skb;
 
 /* PRODUCTION_FUNCTIONS */
 

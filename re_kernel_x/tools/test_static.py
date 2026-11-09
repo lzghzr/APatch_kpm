@@ -131,7 +131,8 @@ def main():
         (scratch / "re_kernel_host.h").write_text(header)
         source = (module / "re_kernel.c").read_text()
         functions = []
-        for name in ("static struct binder_transaction_data* binder_current_transaction(",
+        for name in ("static struct rekernel_binder_context* binder_current_context(",
+                     "static struct binder_transaction_data* binder_current_transaction(",
                      "static void rekernel_report(", "static void binder_transaction_before(",
                      "static void binder_transaction_after("):
             start = source.index(name)
@@ -145,6 +146,14 @@ def main():
         call(args.cc, "-g", "-O1", "-pthread", "-fsanitize=address,undefined", "-fno-omit-frame-pointer", str(host_source),
              "-o", str(binary))
         print(call(str(binary)).strip())
+        nofault_harness = harness.replace("static long (*kf_copy_from_user_nofault)(void*, const void*, size_t);",
+                                         "static long (*kf_copy_from_user_nofault)(void*, const void*, size_t) = native_user_nofault;")
+        nofault_source, nofault_binary = scratch / "protocol-nofault.c", scratch / "protocol-nofault"
+        nofault_source.write_text(nofault_harness)
+        call(args.cc, "-g", "-O1", "-pthread", "-fsanitize=address,undefined", "-fno-omit-frame-pointer",
+             str(nofault_source), "-o", str(nofault_binary))
+        call(str(nofault_binary))
+        print("production RPC nofault: original mutable arguments/boundary/failure/context assertions: PASS")
 
         utils = (module / "re_utils.h").read_text()
         offsets = (module / "re_offsets.c").read_text()
@@ -184,6 +193,28 @@ def main():
              str(genl_source), "-o", str(genl_binary))
         print(call(str(genl_binary)).strip())
 
+        # 同一套报文/错误回收断言再执行生产 nlmsg_free，分别走旧入口和 consume_skb。
+        free_start = utils.index("static inline void nlmsg_free(")
+        free_end = utils.index("\n}", free_start) + 2
+        free_function = utils[free_start:free_end]
+        for release in ("kfree_skb", "consume_skb"):
+            native_fixture = fixture.replace("static void nlmsg_free(", "static void native_nlmsg_free(")
+            native_fixture = native_fixture.replace(
+                "static int kf___alloc_skb = 1, kf_kfree_skb = 1;",
+                "static int kf___alloc_skb = 1;\nstatic void (*kf_kfree_skb)(struct sk_buff*) = "
+                + ("native_nlmsg_free;" if release == "kfree_skb" else "NULL;"))
+            native_fixture = native_fixture.replace(
+                "static int kf_consume_skb;",
+                "static void (*kf_consume_skb)(struct sk_buff*) = "
+                + ("native_nlmsg_free;" if release == "consume_skb" else "NULL;") + "\n" + free_function)
+            native_source = scratch / (release + "-genl-test.c")
+            native_source.write_text(native_fixture)
+            native_binary = scratch / (release + "-genl-test")
+            call(args.cc, "-g", "-O1", "-pthread", "-fsanitize=address,undefined", "-fno-omit-frame-pointer",
+                 str(native_source), "-o", str(native_binary))
+            call(str(native_binary))
+            print(f"production nlmsg_free via {release}: original Genl wire/ownership/error assertions: PASS")
+
         cleanup_functions = []
         for text, names in (
             (offsets, ("binder_transaction_buffer", "binder_transaction_to_proc", "binder_transaction_code",
@@ -192,7 +223,9 @@ def main():
             (source, ("binder_buffer_read", "binder_buffer_data_equal", "binder_can_update_transaction", "binder_find_outdated_transaction_ilocked",
                       "outstanding_txns_dec", "binder_release_entire_buffer", "binder_stats_deleted",
                       "binder_is_frozen", "free_async_update", "free_async_lookup", "free_async_has_rules",
-                      "binder_free_async_strategy", "binder_proc_transaction_before")),
+                      "binder_free_async_decision", "binder_free_async_strategy", "binder_take_outdated", "binder_free_outdated",
+                      "binder_prepare_transaction", "binder_proc_transaction_before", "binder_vendor_transaction_record",
+                      "binder_flush_outdated_context")),
         ):
             for name in names:
                 pattern = re.compile(r"^static (?:inline )?[^\n]*?\b" + name + r"\(", re.M)

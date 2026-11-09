@@ -9,8 +9,11 @@
 #include "re_kernel_host.h"
 
 #define ENOMEM 12
+#define EFAULT 14
+#define kfunc(n) kf_##n
 #define EMSGSIZE 90
 #define GFP_ATOMIC 0
+static unsigned int rekernel_gfp_atomic = GFP_ATOMIC;
 #define MSG_DONTWAIT 1
 #define IS_ERR(p) ((uintptr_t)(p) > UINTPTR_MAX - 4096)
 #define logkm(...) ((void)0)
@@ -42,6 +45,27 @@ static int context_alloc_error, context_allocated, context_freed;
 static bool rekernel_genl_registered = true;
 static struct rekernel_event captured;
 static int sent, copy_error, frozen = 1;
+static long native_user_nofault(void* dst, const void* src, size_t len) {
+  if (copy_error)
+    return -EFAULT;
+  memcpy(dst, src, len);
+  return 0;
+}
+static long (*kf_copy_from_user_nofault)(void*, const void*, size_t);
+static int flushed_contexts;
+static void binder_flush_outdated_context(struct rekernel_binder_context* context) {
+  if (context->outdated) {
+    assert(context->cleanup_proc);
+    assert(pthread_mutex_trylock(&context_mutex) == 0);
+    for (struct rekernel_binder_context* item = binder_contexts; item; item = item->next) assert(item != context);
+    assert(pthread_mutex_unlock(&context_mutex) == 0);
+    flushed_contexts++;
+    context->outdated = NULL;
+    context->cleanup_proc = NULL;
+  } else {
+    assert(!context->cleanup_proc);
+  }
+}
 
 static bool frozen_task_group(struct task_struct* task) { return frozen && task; }
 static struct uid_value task_uid(struct task_struct* task) { return (struct uid_value){task->uid}; }
@@ -193,6 +217,28 @@ int main(void) {
   binder_transaction_after(&other, NULL);
   assert(!binder_contexts);
   current = &src;
+
+  // 当前调用移出上下文链并放开模块锁后才释放待回收物；嵌套分别交还。
+  binder_transaction_before(&call, NULL);
+  struct rekernel_binder_context* outer_context = binder_current_context();
+  assert(outer_context && !outer_context->outdated && !outer_context->cleanup_proc);
+  outer_context->outdated = (void*)1;
+  outer_context->cleanup_proc = (void*)2;
+  binder_transaction_before(&nested, NULL);
+  struct rekernel_binder_context* inner_context = binder_current_context();
+  assert(inner_context && inner_context != outer_context && !inner_context->outdated);
+  inner_context->outdated = (void*)3;
+  inner_context->cleanup_proc = (void*)4;
+  binder_transaction_after(&nested, NULL);
+  assert(flushed_contexts == 1 && binder_current_context() == outer_context);
+  context_alloc_error = 1;
+  binder_transaction_before(&nested, NULL);
+  assert(!binder_current_context());
+  binder_transaction_after(&nested, NULL);
+  context_alloc_error = 0;
+  assert(flushed_contexts == 1 && binder_current_context() == outer_context);
+  binder_transaction_after(&call, NULL);
+  assert(flushed_contexts == 2 && !binder_contexts);
 
   pthread_t threads[8];
   for (uintptr_t i = 0; i < 8; i++) assert(pthread_create(&threads[i], NULL, context_thread, (void*)(10000 + i)) == 0);

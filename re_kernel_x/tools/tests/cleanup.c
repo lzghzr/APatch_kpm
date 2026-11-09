@@ -68,6 +68,7 @@ struct binder_work {
   enum { BINDER_WORK_TRANSACTION = 1 } type;
 };
 struct binder_thread;
+struct binder_transaction_data;
 struct binder_buffer {
   bool free;
   void* kernel_data;
@@ -93,6 +94,7 @@ static struct {
   int16_t binder_transaction_buffer, binder_transaction_to_proc, binder_transaction_code, binder_transaction_flags;
   int16_t binder_node_ptr, binder_node_cookie, binder_stats_deleted_transaction, binder_buffer_data;
   int16_t binder_release_abi;
+  int16_t binder_proc_tmp_ref;
 } struct_offset = {offsetof(struct binder_proc, dead),
                    offsetof(struct binder_proc, outstanding),
                    offsetof(struct binder_proc, frozen),
@@ -109,6 +111,13 @@ typedef struct {
   uintptr_t arg0, arg1, arg2;
   int skip_origin;
 } hook_fargs3_t;
+typedef struct {
+  uintptr_t arg0, arg1, arg2, arg3, arg4;
+} hook_fargs5_t;
+static struct rekernel_binder_context* active_context;
+static struct rekernel_binder_context* binder_current_context(void) { return active_context; }
+static void native_proc_dec_tmpref(struct binder_proc* proc);
+static void (*binder_proc_dec_tmpref)(struct binder_proc*) = native_proc_dec_tmpref;
 static bool trace = true;
 static int notifications;
 static _Thread_local int node_locked, proc_locked;
@@ -393,6 +402,10 @@ static void caller_put(struct binder_proc* p) {
     p->released = true;
   pthread_mutex_unlock(&p->lock);
 }
+static void native_proc_dec_tmpref(struct binder_proc* proc) {
+  assert(!node_locked && !proc_locked && !release_phase);
+  caller_put(proc);
+}
 static void teardown(struct fixture* f) {
   assert(f->proc.tmp_ref == 1 || (!f->proc.tmp_ref && f->proc.released));
   while (f->node.todo.next != &f->node.todo) {
@@ -472,7 +485,8 @@ static void test_rule_cleanup(void) {
     if (scenario == 6)
       kf_binder_alloc_copy_from_buffer = NULL;
     invoke(&f);
-    unchanged(&f, 3);
+    assert(ids(&f, actual) == 2 && actual[0] == 1 && actual[1] == 2);
+    assert(f.proc.outstanding == 2 && releases == 1 && transaction_frees == 1 && stats.deleted.value == 1);
     teardown(&f);
   }
   char long_name[140];
@@ -488,13 +502,14 @@ static void test_rule_cleanup(void) {
   set_token(&f, long_name);
   f.incoming->buffer->data[PARCEL_OFFSET + 139 * 2] = 'x';
   assert(free_async_update("other", 7, 1, true) == 0);
+  assert(free_async_update(long_name, 7, REKERNEL_FREE_ASYNC_SKIP, true) == 0);
   invoke(&f);
-  unchanged(&f, 3);  // 不得截断后误匹配。
+  assert(ids(&f, actual) == 2 && actual[0] == 1 && actual[1] == 2);  // 不得截断命中SKIP；解析失败默认BY_CODE。
+  assert(f.proc.outstanding == 2 && releases == 1 && stats.deleted.value == 1);
   teardown(&f);
   puts(
       "production rule cleanup: copied Binder token, SKIP protects queue/counts, exact/wildcard priority, "
-      "BY_CODE oldest removed with one queued match retained, read failures/truncated/non-ASCII tokens preserve "
-      "messages: PASS");
+      "BY_CODE oldest removed with one queued match retained, RPC read/parse failures default to BY_CODE: PASS");
 }
 
 static void setup_data(struct fixture* f, int count, size_t size) {
@@ -510,6 +525,85 @@ static void setup_data(struct fixture* f, int count, size_t size) {
   }
   assert(free_async_update("android.test.IFoo", 7, REKERNEL_FREE_ASYNC_BY_DATA, true) == 0);
 }
+// DEV-084: 规则存在但RPC不可解析时也保持上游默认BY_CODE，成功匹配才覆盖。
+static void test_short_payload_strategy(void) {
+  struct fixture f;
+  int actual[32];
+  setup(&f, 3);
+  f.incoming->buffer->data_size = 4;
+  buffer_copy_error = true;  // 没有规则时基础去重不依赖token读取。
+  assert(!free_async_has_rules());
+  assert(binder_free_async_strategy(&f.proc, f.incoming->buffer, 7) == REKERNEL_FREE_ASYNC_BY_CODE);
+  invoke(&f);
+  assert(ids(&f, actual) == 2 && actual[0] == 1 && actual[1] == 2 && releases == 1);
+  teardown(&f);
+
+  setup(&f, 3);
+  f.incoming->buffer->data_size = 4;
+  assert(!free_async_update("other.rpc", 7, REKERNEL_FREE_ASYNC_BY_CODE, true));
+  assert(free_async_has_rules());
+  assert(binder_free_async_strategy(&f.proc, f.incoming->buffer, 7) == REKERNEL_FREE_ASYNC_BY_CODE);
+  invoke(&f);
+  assert(ids(&f, actual) == 2 && actual[0] == 1 && actual[1] == 2 && releases == 1);  // 有规则但解析失败，默认BY_CODE。
+  assert(!free_async_update("other.rpc", 7, 0, false));
+  assert(!free_async_has_rules());
+  assert(binder_free_async_strategy(&f.proc, f.incoming->buffer, 7) == REKERNEL_FREE_ASYNC_BY_CODE);
+  invoke(&f);
+  assert(ids(&f, actual) == 1 && actual[0] == 2 && releases == 2);
+  teardown(&f);
+
+  setup(&f, 3);
+  set_token(&f, "test.raw.IRemote");
+  assert(!free_async_update("other.rpc", 7, REKERNEL_FREE_ASYNC_SKIP, true));
+  assert(binder_free_async_strategy(&f.proc, f.incoming->buffer, 7) == REKERNEL_FREE_ASYNC_BY_CODE);
+  invoke(&f);
+  assert(ids(&f, actual) == 2 && releases == 1);  // 可解析但未匹配规则，沿用基础去重。
+  teardown(&f);
+  // 六发模型：第一条已在途，后五条进入async_todo；匹配实机收到0/4/5的队列形态。
+  for (int scenario = 0; scenario < 6; scenario++) {
+    setup(&f, 0);
+    f.proc.outstanding = 1;  // 首条在途消息由原生消费者持有，不在async_todo中。
+    if (scenario == 1 || scenario == 2)
+      assert(!free_async_update("other.rpc", 1, REKERNEL_FREE_ASYNC_SKIP, true));
+    if (scenario >= 3)
+      assert(!free_async_update("test.raw.IRemote", 1,
+                                scenario == 3   ? REKERNEL_FREE_ASYNC_SKIP
+                                : scenario == 4 ? REKERNEL_FREE_ASYNC_BY_CODE
+                                                : REKERNEL_FREE_ASYNC_BY_DATA,
+                                true));
+    for (int i = 1; i < 6; i++) {
+      struct binder_transaction* t = new_tx(&f.proc, &f.node, 1);
+      t->debug_id = i;
+      t->flags = TF_ONE_WAY | TF_UPDATE_TXN;
+      t->work.type = BINDER_WORK_TRANSACTION;
+      t->buffer->data_size = 4;
+      t->buffer->data[0] = i;
+      if (scenario >= 2) {
+        const char* rpc = "test.raw.IRemote";
+        t->buffer->data_size = PARCEL_OFFSET + (strlen(rpc) + 1) * 2;
+        for (unsigned int j = 0; rpc[j]; j++) t->buffer->data[PARCEL_OFFSET + j * 2] = rpc[j];
+      }
+      binder_prepare_transaction(t, &f.proc);
+      binder_node_lock(&f.node);
+      binder_inner_proc_lock(&f.proc);
+      __list_add(&t->work.entry, f.node.todo.prev, &f.node.todo);
+      f.proc.outstanding++;
+      binder_inner_proc_unlock(&f.proc);
+      binder_node_unlock(&f.node);
+    }
+    bool clean = scenario == 0 || scenario == 1 || scenario == 2 || scenario == 4;
+    assert(ids(&f, actual) == (clean ? 2 : 5));
+    assert(f.proc.outstanding == (clean ? 3 : 6));
+    assert(releases == (clean ? 3 : 0) && transaction_frees == releases);
+    if (clean)
+      assert(actual[0] == 4 && actual[1] == 5);
+    teardown(&f);
+  }
+  puts(
+      "DEV-084 fallback: absent/present/deleted rules and unreadable RPC use BY_CODE; explicit SKIP and BY_DATA remain "
+      "effective: PASS");
+}
+
 static void test_data_cleanup(void) {
   struct fixture f;
   int actual[32];
@@ -676,7 +770,17 @@ static void test_kernel_data_reader(void) {
   b->kernel_data = NULL;
   assert(binder_buffer_read(&f.proc.alloc, dest, b, 0, 1) == -EFAULT);
   invoke(&f);
-  unchanged(&f, 3);  // RPC 读取失败，不得误清理。
+  {  // RPC选择阶段读取失败回落BY_CODE；之后的BY_DATA读取失败用独立初态保持原断言。
+    int fallback_ids[32];
+    assert(ids(&f, fallback_ids) == 2 && fallback_ids[0] == 1 && fallback_ids[1] == 2);
+    assert(f.proc.outstanding == 2 && releases == 1 && transaction_frees == 1 && stats.deleted.value == 1);
+  }
+  teardown(&f);
+  setup_data(&f, 3, 4097);
+  b = f.incoming->buffer;
+  kf_binder_alloc_copy_from_buffer = NULL;
+  struct_offset.binder_buffer_data = offsetof(struct binder_buffer, kernel_data);
+  assert(free_async_update("legacy", 7, 1, true) == 0);
   b->kernel_data = b->data;
   struct binder_transaction* second = container_of(f.node.todo.next->next, struct binder_transaction, work.entry);
   struct binder_transaction* third = container_of(f.node.todo.prev, struct binder_transaction, work.entry);
@@ -719,7 +823,8 @@ static void test_kernel_data_reader(void) {
   assert(binder_buffer_read(&f.proc.alloc, dest, f.incoming->buffer, 0, 1) == 0);
   teardown(&f);
   puts(
-      "production legacy reader: RPC/BY_DATA, native priority, byte/page boundaries, invalid ranges/free/null, "
+      "production legacy reader: RPC default fallback/BY_DATA strict reads, native priority, byte/page boundaries, "
+      "invalid ranges/free/null, "
       "one queued match retained and shared budget: PASS");
 }
 
@@ -846,6 +951,7 @@ static void test_cleanup(void) {
   test_before_cleanup();
   test_kernel_data_reader();
   test_rule_cleanup();
+  test_short_payload_strategy();
   test_data_cleanup();
   size_t budget = REKERNEL_FREE_ASYNC_DATA_BUDGET;
   struct fixture f;
@@ -1004,11 +1110,64 @@ static void test_cleanup(void) {
       test_abi);
 }
 
+static void test_vendor_record(void) {
+  struct fixture f;
+  int actual[8];
+  setup(&f, 3);
+  trace = false;
+  struct binder_transaction_data* tr = (void*)0x1000;
+  hook_fargs5_t call = {.arg2 = (uintptr_t)tr};
+  struct rekernel_binder_context context = {.call = &call};
+  active_context = &context;
+  struct_offset.binder_proc_tmp_ref = offsetof(struct binder_proc, tmp_ref);
+  binder_proc_transaction_before(
+      &(hook_fargs3_t){.arg0 = (uintptr_t)f.incoming, .arg1 = (uintptr_t)&f.proc, .skip_origin = 1}, NULL);
+  unchanged(&f, 3);
+  assert(!notifications);
+  active_context = NULL;
+  binder_vendor_transaction_record(NULL, tr, f.incoming, NULL);
+  unchanged(&f, 3);
+  active_context = &context;
+  binder_vendor_transaction_record(NULL, NULL, f.incoming, NULL);
+  unchanged(&f, 3);
+  binder_vendor_transaction_record(NULL, tr, NULL, NULL);
+  binder_vendor_transaction_record(NULL, tr, f.incoming, f.incoming);
+  unchanged(&f, 3);
+  assert(!notifications);
+  struct binder_proc* proc = f.incoming->proc;
+  f.incoming->proc = NULL;
+  binder_vendor_transaction_record(NULL, tr, f.incoming, NULL);
+  unchanged(&f, 3);
+  f.incoming->proc = proc;
+  binder_vendor_transaction_record(NULL, tr, f.incoming, NULL);
+  assert(ids(&f, actual) == 2 && actual[0] == 1 && actual[1] == 2);
+  assert(f.proc.outstanding == 2 && f.proc.tmp_ref == 2);
+  assert(!releases && !buffer_frees && !transaction_frees && !notifications);
+  assert(context.outdated && context.cleanup_proc == &f.proc);
+  binder_vendor_transaction_record(NULL, tr, f.incoming, NULL);
+  assert(ids(&f, actual) == 2 && f.proc.tmp_ref == 2);
+  f.proc.dead = true;
+  caller_put(&f.proc);  // 原生 outer 调用返回，只交还其自己的引用。
+  assert(f.proc.tmp_ref == 1 && !f.proc.released);
+  binder_flush_outdated_context(&context);
+  assert(!context.outdated && !context.cleanup_proc && !f.proc.tmp_ref && f.proc.released);
+  assert(releases == 1 && buffer_frees == 1 && transaction_frees == 1);
+  binder_flush_outdated_context(&context);
+  assert(releases == 1);
+  assert(f.incoming->buffer->transaction == f.incoming && !node_locked && !proc_locked);
+  active_context = NULL;
+  teardown(&f);
+}
+
 int main(void) {
   for (int abi = -1; abi <= 7; abi++) {
     struct_offset.binder_release_abi = abi;
     assert(binder_release_abi_init_check() == ((abi >= 3 && abi <= 6) ? 0 : -EINVAL));
   }
   for (test_abi = 3; test_abi <= 6; test_abi++) test_cleanup();
+  for (test_abi = 3; test_abi <= 6; test_abi++) test_vendor_record();
+  puts(
+      "vendor record: reply/null isolation, proc reference across native return, deferred process cleanup, "
+      "skip_origin: PASS");
   puts("single production dispatcher: all four configured release ABIs and invalid ABI rejection: PASS");
 }

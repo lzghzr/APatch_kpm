@@ -45,6 +45,8 @@ struct rekernel_binder_context {
   struct task_struct* task;
   void* call;
   struct rekernel_binder_context* next;
+  struct binder_proc* cleanup_proc;
+  struct binder_transaction* outdated;
 };
 
 enum report_type {

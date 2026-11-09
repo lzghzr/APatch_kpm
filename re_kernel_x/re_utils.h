@@ -90,7 +90,14 @@ static inline void nlmsg_trim(struct sk_buff* skb, const void* mark) {
 static inline void nlmsg_cancel(struct sk_buff* skb, struct nlmsghdr* nlh) { nlmsg_trim(skb, nlh); }
 
 extern void kfunc_def(kfree_skb)(struct sk_buff* skb);
-static inline void nlmsg_free(struct sk_buff* skb) { kfunc_call_void(kfree_skb, skb); }
+extern void kfunc_def(consume_skb)(struct sk_buff* skb);
+// 两者均释放一个完整引用；consume_skb 只改变释放 trace 的分类。
+static inline void nlmsg_free(struct sk_buff* skb) {
+  if (kfunc(kfree_skb))
+    kfunc(kfree_skb)(skb);
+  else if (kfunc(consume_skb))
+    kfunc(consume_skb)(skb);
+}
 
 static inline int genlmsg_msg_size(int payload) { return GENL_HDRLEN + payload; }
 static inline int genlmsg_total_size(int payload) { return NLMSG_ALIGN(genlmsg_msg_size(payload)); }

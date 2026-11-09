@@ -1,4 +1,4 @@
-MYKPM_VERSION := 1.6-20261010
+MYKPM_VERSION := 1.6-20261109
 
 ifndef KP_DIR
 	KP_DIR = ../KernelPatch
@@ -37,7 +37,7 @@ INCLUDE_FLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(KP_DIR)/kernel/$(dir))
 
 objs := re_kernel.c re_runtime.c
 headers := re_kernel.h re_utils.h re_offsets.c ../kpm_utils.h ../patch_offsets.py
-headers += re_structs.h re_btf.c
+headers += re_structs.h re_btf.c re_vendor_btf.c
 
 kpm := $(OUT_DIR)/re_kernel_x_$(MYKPM_VERSION)
 kpms := $(kpm).kpm $(kpm)_debug.kpm $(kpm)_baselines.kpm $(kpm)_baselines_debug.kpm

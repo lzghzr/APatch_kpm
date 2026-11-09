@@ -15,7 +15,7 @@ README 面向使用者，只写用途、文件选择、界面操作、可见状�
 
 使用 KP SDK 的 kfunc_lookup_name/kvar_lookup_name，保留原名查找与编译器后缀查找。当前 SDK 0.13.9 的这两个宏依赖 kallsyms_lookup_name_by_suffix；该函数从 KP 0.13.6 开始导出。运行端需提供这一导出，建议更新至本轮构建使用的 KP 0.13.9。必需内核符号仍在初始化检查；旧 KP 缺少导出时会在初始化之前加载失败。
 
-偏移表单独放在 `.data.re_offsets`，使用 `volatile` 防止编译器把固定值折叠进指令。当前为 45 个小端 `int16_t`，共 90 字节；前 44 项偏移及配置的顺序保持原样，末项为 `binder_release_abi`。字段顺序、文件位置、当前释放 ABI 和 KPM SHA-256 随构建写入同名 `.kpm.json`，新布局 schema 为 2，没有固定 `.rodata.re_abi` 标记。模块直接读表。
+偏移表单独放在 `.data.re_offsets`，使用 `volatile` 防止编译器把固定值折叠进指令。当前为 46 个小端 `int16_t`，共 92 字节；前 44 项偏移及配置的顺序保持原样，随后为 `binder_proc_tmp_ref`，末项仍为 `binder_release_abi`。字段顺序、文件位置、当前释放 ABI 和 KPM SHA-256 随构建写入同名 `.kpm.json`，布局 schema 为 2，没有固定 `.rodata.re_abi` 标记。模块直接读表。45 项旧基线继续与原配套 JSON 使用，不能把它的配置直接套到新基线。
 
 下一次 Releases 发布统一的非 debug 基线及其布局 JSON，debug 和两份布局同时保存在 Actions artifacts。缺少配套 JSON 时，可用同一构建提交中仓库根目录的 `patch_offsets.py` 和 `re_kernel_x/re_offsets.c` 执行 `baseline <基准.kpm> --source re_kernel_x/re_offsets.c --output <基准.kpm.json>` 生成，无需 NDK；不能用不同提交的字段顺序代替。
 
@@ -35,15 +35,15 @@ python3 patch_offsets.py patch local/baselines-round1/re_kernel_x_1.6-20261008_b
 
 也可用 `dump <kpm> --output local/offsets.bin` 导出原始偏移表，按基准 JSON 的 `fields` 顺序修改，再用 `patch <kpm> --blob local/offsets.bin --output local/target.kpm` 替换。工具仅改配置数据段，包含释放 ABI 选择，保留代码与重定位；输出文件和伴随 JSON 均不覆盖已有文件。生成后的 JSON 会同步当前 binder_abi 与配置值。旧 schema 1 的固定 ABI 基线仍可使用其配套 JSON 做 dump/patch，不能添加调用选择字段，旧固定 ABI 标记仍不变；旧表与新表不混用。基线初始配置是模板，移植前需核对目标镜像。释放调用编号依据目标函数签名或调用点填写；结构体布局本身不能代替函数调用点分析。
 
-异步清理仍由模块自行去重：仅要求 TF_ONE_WAY，不要求低版本没有的 TF_UPDATE_TXN。binder_proc_transaction 只注册 before 回调：在 Binder 锁外取得规则策略，再按 node/inner_lock 顺序加锁扫描 async_todo。至少找到两条与新消息匹配的旧消息才摘除最早一条，只找到一条时保留。bc 加入 d 时删除 b，成功入队后成为 cd；新消息发送失败时仍留下 c。每次最多删除一条，已有积压按冗余保留，不批量压缩，也不永久保留最早消息。新事务此时尚未入队，不作为本次清理对象。
+异步清理仍由模块自行去重：仅要求 TF_ONE_WAY，不要求低版本没有的 TF_UPDATE_TXN。优先使用完整复制后、入队前的 `android_vh_binder_transaction_record`；不能满足其能力条件时，使用独立 `binder_proc_transaction` 的 before 回调。两路在 Binder 锁外取得规则策略，再按 node/inner_lock 顺序加锁扫描 async_todo。本项目约定：至少找到两条与新消息匹配的旧消息才摘除最早一条，只找到一条时保留。bc 加入 d 时删除 b，成功入队后成为 cd；新消息发送失败时仍留下 c。每次最多删除一条，已有积压按冗余保留，不批量压缩，也不永久保留最早消息。新事务此时尚未入队，不作为本次清理对象。
 
 只处理任务组已冻结、proc 未退出、未 Binder 冻结且 node 有在途 async 事务的情况，加锁后核对这些条件。带对象/FD 或额外缓冲区的事务保留。模块不缓存事务身份，不依赖 binder_proc_transaction 的旧 bool / 新 int 返回值；接收入队的返回类型与释放函数 ABI 配置无关。skip_origin 已置位时不清理。
 
-摘除时减少 outstanding_txns，解锁后清除 transaction/buffer 双向关联，同步释放 buffer 和 transaction。外层 Binder 调用方持有 target_proc 和 target_node 的临时引用直到 before 和原函数返回，保护加锁与锁外释放，模块不额外操作 tmp_ref；移植时需核对目标调用方仍有这一引用关系。ABI4/5/6 使用 is_failure=true 表示消息尚未投递；ABI3 保留原有 failed_at=NULL 签名。binder_free_txn_fixups 是可选函数：目标内核有时调用，没有时仍可清理无对象消息，不移植其内部 FD 布局。
+摘除时减少 outstanding_txns。独立函数 before 路径依赖外层仍持有的 target_proc/node 引用，解锁后同步释放，不额外操作 tmp_ref。厂商 tracepoint 回调禁止抢占，只摘除并在 inner_lock 内增加本模块的 proc.tmp_ref，把摘除物保存到当前 Binder 调用上下文；到 `binder_transaction` after 才清除双向关联、同步释放 buffer/transaction，最后经原生 `binder_proc_dec_tmpref` 交还本模块引用。原调用方此前交还其引用不会使 allocator 先释放；buffer 的原生 node 引用保留到正常释放链。上下文分配失败时本次不摘除，嵌套调用按各自上下文隔离。移植时需核对该生命周期。ABI4/5/6 使用 is_failure=true 表示消息尚未投递；ABI3 保留原有 failed_at=NULL 签名。binder_free_txn_fixups 是可选函数：目标内核有时调用，没有时仍可清理无对象消息，不移植其内部 FD 布局。
 
 原生 TF_UPDATE_TXN 可以另行清理。模块与原生在稳定的 Binder 冻结状态下互斥，但两次加锁之间若发生冻结，仍可能各摘除一条不同旧消息；不会把已从队列摘除的对象再选中。模块的“一条旧消息余量”限定在本次 before 清理后，不限制原生 UPDATE 策略或并发消费者。
 
-保留 binder_proc_is_dead 静态偏移；移除 tmp_ref 和两个 work 配置，当前配置表为 45 项。旧基准 JSON/blob 与新基准不混用。Binder 摘除与释放路径不使用 Workqueue；规则数组使用模块短临界区锁。按 code 去重的业务语义、目标锁和应用解冻后的响应仍需真机确认，卸载生命周期继续暂缓。
+保留 binder_proc_is_dead 静态偏移；新增 binder_proc_tmp_ref 仅服务厂商回调的延迟释放能力，默认 -1 为未配置。动态版在该能力的 BTF 阶段取得有符号 int 字段；静态版须离线填入并核对 record／dec_tmpref ABI，不运行 BTF。旧基准 JSON/blob 与新基准不混用。Binder 摘除与释放路径不使用 Workqueue；规则数组使用模块短临界区锁。按 code 去重的业务语义、目标锁和应用解冻后的响应仍需真机确认，卸载生命周期继续暂缓。
 
 ## 消息协议
 自定义常量、命令和事件结构体放在 `re_kernel.h`；内核定义放在 `re_structs.h`；内核调用与 KP 风格封装放在 `re_utils.h`。
@@ -56,7 +56,7 @@ python3 patch_offsets.py patch local/baselines-round1/re_kernel_x_1.6-20261008_b
 
 接收侧 hook 内核 `genl_rcv_msg`，只拦截本 family 的请求，返回值交给内核接收流程生成 ACK；设置 `NLM_F_ACK` 可获得处理结果。其它 family 保留原流程。本 family 限定 init_net，检查报文长度、版本和 UID attribute 的长度/标志，拒绝重复 UID、截断报文以及 dump 请求。`ADD_FREE_ASYNC=4` 使用 `STRATEGY=41`（u8）、`RPC_NAME=42`（NUL 结尾字符串，最多 139 字节）、`CODE=43`（小端 s32）；`DEL_FREE_ASYNC=5` 使用 RPC_NAME 和 CODE。code 从 -1 起，-1 为 RPC 通配规则，精确 code 优先。重复添加更新策略，删除不存在的规则返回成功；32 项固定数组满时返回 `-ENOSPC`，删除用尾项填补空位。
 
-清理规则支持 `SKIP=1`（保留消息）、`BY_CODE=2`（沿用原有 code 去重）、`BY_DATA=3`（code 和完整 data 都相同）。BY_DATA 先核对事务身份和 data_size，再在 Binder 锁内按 64 字节分块比较；带对象/FD 或额外缓冲区的消息仍保留。单次清理扫描共享 64 KiB 的两侧读取预算，候选比较前预扣两侧完整长度；预算不足或读取失败就停止扫描并保留事务，数据不同则继续寻找，找到第二条数据相同消息后才删除第一条匹配者。BY_CODE 不消耗此预算。无规则或没有匹配项时沿用基础去重。规则匹配在 Binder 锁外通过共用读取入口，读取已复制缓冲中固定 PARCEL_OFFSET=16 的 ASCII UTF-16 InterfaceToken，完整 NUL 终止后才匹配；读取失败、截断或非 ASCII Token 时保留消息。读取入口优先调用内核 `binder_alloc_copy_from_buffer`。旧 Binder 直接映射内核数据地址时，将 `binder_buffer_data` 配成目标 `binder_buffer.data` 的偏移，缺少原生函数时按该偏移复制；该字段默认 -1，不能填写 `user_data` 的偏移。B2N-416G 的镜像确认 `data=0x58`、`alloc.buffer=0x38`，不能沿用模板 allocator 偏移；这些是局部分析结果，完整目标配置仍需核对。既没有原生读取函数又未配置内核 data 时，添加规则返回 `-EOPNOTSUPP`，基础去重仍可使用。未注册 `genl_ops`，控制器不会公布命令列表；客户端按以上编号发送。
+清理规则支持 `SKIP=1`（保留消息）、`BY_CODE=2`（沿用原有 code 去重）、`BY_DATA=3`（code 和完整 data 都相同）。BY_DATA 先核对事务身份和 data_size，再在 Binder 锁内按 64 字节分块比较；带对象/FD 或额外缓冲区的消息仍保留。单次清理扫描共享 64 KiB 的两侧读取预算，候选比较前预扣两侧完整长度；预算不足或读取失败就停止扫描并保留事务，数据不同则继续寻找，找到第二条数据相同消息后才删除第一条匹配者。BY_CODE 不消耗此预算。无规则或没有匹配项时沿用基础去重。规则匹配在 Binder 锁外通过共用读取入口，读取已复制缓冲中固定 PARCEL_OFFSET=16 的 ASCII UTF-16 InterfaceToken，完整 NUL 终止后才匹配；RPC读取失败、截断或非ASCII Token不覆盖默认BY_CODE；只有成功识别RPC并查到规则才改变策略。读取入口优先调用内核 `binder_alloc_copy_from_buffer`。旧 Binder 直接映射内核数据地址时，将 `binder_buffer_data` 配成目标 `binder_buffer.data` 的偏移，缺少原生函数时按该偏移复制；该字段默认 -1，不能填写 `user_data` 的偏移。B2N-416G 的镜像确认 `data=0x58`、`alloc.buffer=0x38`，不能沿用模板 allocator 偏移；这些是局部分析结果，完整目标配置仍需核对。既没有原生读取函数又未配置内核 data 时，添加规则返回 `-EOPNOTSUPP`，基础去重仍可使用。未注册 `genl_ops`，控制器不会公布命令列表；客户端按以上编号发送。
 
 原有私有 Netlink unit、固定 port 100 和 `/proc/rekernel` 发现路径已移除。现有冻结判断、事件过滤和 Binder 清理匹配策略保留，因此通信格式对齐不表示所有上游业务行为已对齐。
 
@@ -75,9 +75,26 @@ Genl 自检包含实际报文字节、139 字节 RPC、attribute 写入失败与
 
 审计与实机覆盖以绑定完整提交、构建实例和产物哈希的角色报告为准；旧测试结论只绑定旧产物。
 
+分配器优先使用 `kmalloc` / `__kmalloc`，均不存在时显式查找同原型的 `__kmalloc_noprof`，
+绑定到 SDK 的 `__kmalloc` 指针。消息释放优先 `kfree_skb`，缺失时使用同为单参数、释放完整引用的
+`consume_skb`；其区别为释放 trace 分类。初始化与 `nlmsg_free` 使用同一能力条件，两个入口同时可用时只调用一个。
+入口均缺失时在启用相关资源前拒绝加载。不使用内核版本号分派，也不改变布局查询判据。
+旧入口保留原分配标志；选中 `__kmalloc_noprof` 时，模块的 Binder 上下文、Genl 分配与广播统一只传共同
+`__GFP_HIGH` 位（`0x20`），不携带直接回收位或旧 ATOMIC/KSWAPD 位。此策略允许分配失败，不要求唤醒 kswapd。
+自检入口 `python3 re_kernel_x/tools/test_native_apis.py --output <新目录>` 覆盖入口优先级、全部缺失、
+标志策略、skb 单次引用释放和 Genl 依赖拒绝；可用 `--target-symbols <已选目标符号清单>` 加入目标存在性检查。
+
+Binder 事务入口取运行端实际符号地址，不因 BTF 中有函数名字即假定可 hook。`binder_transaction` 的 before/after 保留调用上下文。
+清理优先选择 `__tracepoint_android_vh_binder_transaction_record`：要求原生报告 tracepoint、nofault 用户读取、非睡眠的原生 buffer 读取、proc 引用释放入口及注册／注销 API。
+动态版由 `re_vendor_btf.c` 核对 record 的四个参数、同型 t/in_reply_to 的参数名、dec_tmpref 单参数 void ABI，以及 tmp_ref 的有符号 int 布局；静态版依赖已移植配置。
+`android_vh_binder_proc_transaction` 和 finish 在 Binder 锁内，不使用它们运行原 before 路径。
+tracepoint 指针用于原生注册，`__traceiter_*` 的 BTF 仅用于 ABI 核验；不 hook 厂商空桩。
+厂商能力缺失、ABI 不匹配或注册失败时回退独立 `binder_proc_transaction`，两种完整清理入口都不可用时拒绝加载。
+报告 RPC 在可用时用 `copy_from_user_nofault` 写入小型栈缓冲，不在目标 tracepoint 中执行可睡眠的 memdup_user。
+
 ## 静态与动态构建
 
-`make -C re_kernel_x all debug OUT_DIR=../local/rekx-round1` 在新的空目录生成 static、dynamic、static_debug、dynamic_debug 四份 KPM。编译入口为模块自己的 `Makefile`，静态基线定义 `CONFIG_KPM_BASELINES`，动态版不定义该宏，模块信息记录 `offset_mode`。静态版生成配套 JSON；动态版的表清零，仅 `binder_buffer_data=-1`，加载时填入目标偏移。
+`make -C re_kernel_x all debug OUT_DIR=../local/rekx-round1` 在新的空目录生成 static、dynamic、static_debug、dynamic_debug 四份 KPM。编译入口为模块自己的 `Makefile`，静态基线定义 `CONFIG_KPM_BASELINES`，动态版不定义该宏，模块信息记录 `offset_mode`。静态版生成配套 JSON；动态版的表清零，`binder_buffer_data` 和 `binder_proc_tmp_ref` 初值为 -1，加载时按各自能力阶段填入目标偏移。
 
 动态模式使用本目录的 `re_btf.c` 与 `re_offsets.c`，按目标证据取得全部配置。BTF 五参数释放函数的 `off_end_offset` 与 `failed_at` 同为整数，按参数名确认语义。缺少 BTF 或原生查询接口时走固定小窗口指令推导。旧内核任务与凭据偏移使用 KP 已有计算结果；`sock_sk_net` 从 `sk_net_capable` 的短寄存器链取得。旧内核 `binder_buffer_data` 暂为 -1，缺少原生复制入口时添加清理规则返回 `-EOPNOTSUPP`，基础去重继续工作。字段初始化失败时尚未安装业务 hook。
 
@@ -112,3 +129,49 @@ Genl 自检包含实际报文字节、139 字节 RPC、attribute 写入失败与
 - `/data/adb/ap/kpm/re_kernel_x/disable` **只阻止目录加载**，不卸载当前实例，也不禁用嵌入副本。停用已安装文件时设置标记；嵌入件需取消嵌入，再重启并确认实际来源。
 - 不要热卸载或热换版；本模块卸载与热重载生命周期仍待验证，更换或移除须重启。替换已安装文件后当前仍运行旧版，必须重启才生效；嵌入件更新须更新启动镜像。
 - 保留 userdata 通常会保留已安装文件，但**不保证 OTA 后兼容**。新 boot 仍须带支持目录加载的 KP，并满足用户态 `before` 上报、内核导出及布局/ABI 条件；静态偏移须重新核对，重启后再确认 family、应用连接及规则配置。
+
+
+## 异步清理 debug 观测
+
+两个模块各自维护 `binder_free_outdated`，公共释放顺序与完成日志保持一致。debug 在整个 native buffer／
+allocator／fixups／transaction 释放链及删除统计返回后输出一条：
+`free_outdated pid=...,uid=...,data_size=...,code=...,stage=done`。诊断值在回收前保存，不读取已释放对象；
+日志位于 Binder 锁外，厂商路径在 outer after 内执行，归还模块 proc 引用之前。release 不增加此日志或快照。
+
+一条 done 表示模块完成一次旧事务清理；不是用户态新消息送达或解冻成功。无日志不能单独认定清理次数为0，
+还需确认实际 debug 产物、日志采集窗口和过滤、冻结条件、匹配旧消息数及策略。至少已有两条匹配旧消息才删最早
+一条，每次最多一条。`re_kernel` 的29～32只约束通知上报；`re_kernel_x` 的SKIP/BY_CODE/BY_DATA策略各自保留。
+
+自检入口：`python3 Developer/tools/test_rekernel_cleanup_logs.py --output <新目录>`；同时核对两份独立函数一致、
+release静默、debug日志内容／时序、空消息和可选fixups，以及原生外层归还引用后的延迟回收。
+
+
+## 策略选择 debug 诊断
+
+`free_async_strategy` 事件记录 `pid/code/data_size/rules_present/strategy/reason`。`rules_present` 表示
+本次进入策略解析时观察到规则非空，并非规则条数或输出时刻的实时状态；规则仍可由用户态并发修改。
+strategy：1=SKIP、2=BY_CODE、3=BY_DATA。reason 为 no_rules、short_payload、read_failed、empty_token、
+invalid_token 或 rpc_lookup；rpc_lookup 的策略值来自实际匹配结果（未匹配规则默认BY_CODE）。
+
+空规则直接BY_CODE，不读取payload；存在规则但payload不足、读取失败或Token不可解析时仍保持BY_CODE。
+成功解析RPC后才查规则并覆盖默认值，只有lookup明确选中SKIP才放弃清理；无匹配仍BY_CODE。此默认／覆盖契约
+固定对照上游1.6（afb5e6bc62c6b9702c823009566a58b2e53b7797）及HEAD（8c217319d7d73c40667650a43a485e9f185e3a92）
+的 `LKM-Source/rkx_binder_kp.c` 与 `rkx_free_async.c`。debug reason仍说明解析过程，不能把short_payload等reason
+单独当成SKIP，须同时看strategy值。策略日志在Binder锁外，仅debug生成。
+
+已选中BY_DATA后的内容比较读取失败／预算不足继续保留消息，不降级BY_CODE。完整NUL／ASCII识别、每次保留一条
+匹配旧消息的余量、对象保护、比较预算及KPM延迟回收保持既有实现；本轮只对齐RPC策略解析失败的默认值。
+
+自检：`python3 re_kernel_x/tools/test_strategy.py --output <新目录>` 核对实际解析器每条原因与release静默。
+`test_static.py` 新增4字节／规则增删和六发队列模型，覆盖无规则、无关规则、可解析未匹配、显式SKIP／BY_CODE，
+以及BY_DATA下各消息数据不同的保留。解析失败的旧SKIP断言与上游默认值不符，调整须经独立Oracle复核；成功规则、对象、预算、读取边界及引用断言保持。
+
+
+## 历史规则依据
+
+清理顺序以提交 `3dcd5962e6d8abe2167bfecaccf63b8ea3b5563b` 为准：至少两条匹配旧消息时删除最早一条，
+每次最多一条并留旧消息余量；不是永久保留最早者，也不是固定时间TTL。
+`Developer/reports/2026-10-08-re-kernel-cleanup-sync.md` 与 `2026-10-08-re-kernel-version-review.md` 的
+用户确认把rek基础清理对齐此策略，并明确rek保留29～32异步通知过滤、rekx不套该过滤。
+10月3日滚动合并讨论在上述提交的 `Developer/reports/2026-10-03-async-binder-cleanup-discussion.md` 中保存，
+当时明确未批准／实现，不能当成当前规则。规则选择失败的BY_CODE默认值以固定上游为依据；本轮Oracle修正只涉及该默认值。
