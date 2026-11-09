@@ -175,6 +175,26 @@ def adapt_cli(body):
     return body.replace(before, probe + before, 1)
 
 
+def zip_changelog(data, version):
+    """配套 ZIP 的更新记录取自 module/CHANGELOG.md 自身，并核对首条标题的版本。
+
+    ZIP 与 KPM 独立更新：只要求 CHANGELOG 首个二级标题等于 module.prop 的版本，
+    与 KPM 的发布版本无关。
+    """
+    text = data.decode() if isinstance(data, (bytes, bytearray)) else str(data)
+    lines = text.splitlines()
+    heading = '## v' + version
+    first = next((index for index, line in enumerate(lines) if line.startswith('## ')), None)
+    if first is None or lines[first].strip() != heading:
+        raise AssertionError('CHANGELOG release version mismatch')
+    section = [lines[first]]
+    for follow in lines[first + 1:]:
+        if follow.startswith('## '):
+            break
+        section.append(follow)
+    return ('\n'.join(section).strip() + '\n').encode()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--ndk', type=Path, required=True)
@@ -193,7 +213,7 @@ def main():
     assert not git(upstream, 'status', '--porcelain')
     inputs = {}
     contents = {}
-    for path in tree_files(root, commit, 'nomount/module', 'nomount/tools/build_zip.py', 'nomount/tools/build_nm.sh', 'nomount/README.md'):
+    for path in tree_files(root, commit, 'nomount/module', 'nomount/tools/build_zip.py', 'nomount/tools/build_nm.sh'):
         data = git(root, 'show', commit + ':' + path)
         inputs[path] = sha(data)
         if path.startswith('nomount/module/'):
@@ -231,10 +251,7 @@ def main():
     tool_hashes = {name: sha((tool_bin / name).read_bytes()) for name in ('clang', 'ld.lld')}
     fingerprint = sha(json.dumps({'inputs': inputs, 'tool_hashes': tool_hashes, 'host_tag': args.host_tag}, sort_keys=True).encode())
     version = re.search(r'(?m)^version=v([^\n]+)', contents['module.prop'].decode()).group(1)
-    readme = git(root, 'show', commit + ':nomount/README.md').decode()
-    history = readme.split('## 更新记录\n', 1)[1].strip()
-    assert history.startswith('### ' + version + '\n'), 'README release version mismatch'
-    contents['CHANGELOG.md'] = (history.split('\n### ', 1)[0].strip() + '\n').encode()
+    contents['CHANGELOG.md'] = zip_changelog(contents.get('CHANGELOG.md', b''), version)
     build_id = f'nomount-zip-{version}+g{fingerprint[:12]}.{args.toolchain}'
     output_root = root / 'artifacts/companion/nomount'
     output_root.mkdir(parents=True, exist_ok=True)
