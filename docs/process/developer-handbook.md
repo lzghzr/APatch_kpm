@@ -15,7 +15,7 @@ python3 run.py --image B2N-416G_boot.img              # 只对它跑偏移推导
 
 - 没点名而候选有多个时：**先列出候选问清楚**，不要自己挑一个，也不要默默全跑（全量只用于回归）。
 - 匹配到多个或零个时工具会报错并列候选，不会替你做决定；`--pick` 可在 TTY 下交互挑。
-- 平铺镜像第一次只能按文件名挑；提取过一次后 `local/extracted/index.json` 记住标签，之后可用 `--image 4.14`。
+- 平铺镜像第一次只能按文件名挑；提取过一次后 `local/keep/target/extracted/index.json` 记住标签，之后可用 `--image 4.14`。
 - `offsets_calc.py` 目前只覆盖 `re_kernel` 的偏移集合：为别的模块（如 `dont_kill_freeze`）移植时，
   要先把该模块用到的锚点/字段加进 `offsets_calc.py` / `re_insts.py`，否则 harness 只能做符号存在性核对。
 
@@ -53,7 +53,7 @@ python3 run.py --image B2N-416G_boot.img              # 只对它跑偏移推导
 ```bash
 cd kernel_img/offset_harness
 python3 extract_kernel.py --list                 # 列出候选
-python3 extract_kernel.py --image <目标镜像>      # 提取指定输入（写 local/extracted/）
+python3 extract_kernel.py --image <目标镜像>      # 提取指定输入（写 local/keep/target/extracted/）
 python3 run.py --image <目标镜像>                 # 目标镜像回归
 python3 run.py --kernel 4.4/4.4.192-perf+        # 只跑一个标签
 python3 run.py --trace-insn                      # 排错用，输出巨大
@@ -65,7 +65,7 @@ python3 run.py --trace-insn                      # 排错用，输出巨大
 
 ### 遵守测试基准守则（Oracle）
 
-所有测试用例与回归套件均须遵守 [respect-the-oracle](../../.agents/skills/respect-the-oracle/SKILL.md)：
+所有测试用例与回归套件均须遵守 [测试基准守则](06-antipatterns.md#测试基准与反向过拟合)：
 - **测试基准不可篡改**：已归档单测与断言视为权威 Oracle。严禁为了消除测试失败而私自修改、弱化或删除已有断言；
 - **严禁反向架构污染**：生产内核代码的设计依据必须是内核原生契约，严禁为了迁就宿主测试/Mock 框架而在生产代码中引入冗余暂存或非真实内核语义；
 - **断言变更受控**：若既有断言失真，严禁隐蔽修改，必须在开发报告中单独陈述技术依据并交由 Auditor 独立复核；

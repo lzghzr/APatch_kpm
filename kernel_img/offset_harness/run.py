@@ -7,12 +7,12 @@
 目录约定（见 layout.py）:
   kernel_img/<major>/<sub>/boot.img    用户放置的原始 img（不进 git）
   kernel_img/boot_flat.img             平铺镜像：标签按内嵌内核版本自动推导
-  local/extracted/<major>/<sub>/Image  提取出的裸 kernel（不进 git）
-  local/kernel_offset/<major>/<sub>/trace.log        与 CONFIG_DEBUG logkm 同格式的推导过程
-  local/kernel_offset/<major>/<sub>/struct_offset.c  该内核的 C 初始化器（re_vmlinux.c 格式）
-  local/kernel_offset/<major>/<sub>/<anchor>.asm     锚函数反汇编（capstone）
-  local/kernel_offset/report.md                      状态表 + ver4/5/6 判定 + 偏移矩阵
-  local/kernel_offset/offsets.json                   机器可读结果
+  local/keep/target/extracted/<major>/<sub>/Image  提取出的裸 kernel（不进 git）
+  local/keep/target/kernel_offset/<major>/<sub>/trace.log        与 CONFIG_DEBUG logkm 同格式的推导过程
+  local/keep/target/kernel_offset/<major>/<sub>/struct_offset.c  该内核的 C 初始化器（re_vmlinux.c 格式）
+  local/keep/target/kernel_offset/<major>/<sub>/<anchor>.asm     锚函数反汇编（capstone）
+  local/keep/target/kernel_offset/report.md                      状态表 + ver4/5/6 判定 + 偏移矩阵
+  local/keep/target/kernel_offset/offsets.json                   机器可读结果
 
 用法:
   python3 extract_kernel.py                      # 先提取裸 kernel 到 local/
@@ -23,7 +23,7 @@
   python3 run.py --list                          # 只列出有什么，不分析
   python3 run.py --kernel 4.9/miui --kernel 4.4  # 按标签精确挑选（等价写法）
   python3 run.py --trace-insn                    # 每条指令的 trace（巨大，排错用）
-  python3 run.py --out /tmp/offset               # 输出改到别处（默认 local/kernel_offset，属用户数据不入库）
+  python3 run.py --out /tmp/offset               # 输出改到别处（默认 local/keep/target/kernel_offset，属用户数据不入库）
 
 本 harness 与设备上的 C 代码同源：结论只算 Developer 自检，不是独立审计。
 """
@@ -128,7 +128,7 @@ def symbol_candidates(entry):
 
 
 def extract_kernel(entry, result, local_root):
-    """需要时把裸 kernel 落到 local/extracted/<label>/Image；返回 (路径, 说明)。"""
+    """需要时把裸 kernel 落到 local/keep/target/extracted/<label>/Image；返回 (路径, 说明)。"""
     if not result.extracted:
         return entry.image, "源文件本身就是裸 Image，不写 local/"
     target = layout.extracted_path(entry.label, local_root)
@@ -288,7 +288,7 @@ def main():
     ap.add_argument("--img-root", "--corpus", dest="img_root", default=str(layout.DEFAULT_IMG_ROOT),
                     help="用户放置 img 的目录（默认 kernel_img/）")
     ap.add_argument("--out", default=str(layout.DEFAULT_OUT_ROOT),
-                    help="分析输出目录（默认 local/kernel_offset；名字只是建议，输出属用户数据不进版本库）")
+                    help="分析输出目录（默认 local/keep/target/kernel_offset；名字只是建议，输出属用户数据不进版本库）")
     ap.add_argument("--local", default=str(layout.DEFAULT_LOCAL_ROOT),
                     help="本地文件目录：提取出的裸 kernel 放这里（默认仓库根 local/）")
     ap.add_argument("--kernel", action="append", help="只跑指定标签（如 4.9/miui、4.4）")

@@ -6,7 +6,7 @@
   * 本工具自带 ELF64 解析（不使用 tools/identity.py、不导入 pyelftools）；
   * 不调用 kernel_img/offset_harness，也不读模块源码里的偏移结论；
   * 平台符号快照来自 KernelPatch submodule（Auditor/tools/kp_symbols_extract.py）；
-  * 语料内核符号表来自本地输入（kernel_img/**）与 harness 输出（local/kernel_offset/**），
+  * 语料内核符号表来自本地输入（kernel_img/**）与 harness 输出（local/keep/target/kernel_offset/**），
     属**同源风险**：这些语料由使用者/Developer 提供，报告必须声明来源与是否在场。
 
 用法:

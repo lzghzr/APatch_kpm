@@ -62,9 +62,9 @@ HYGIENE_PATTERNS = [
 ]
 
 TEXT_SUFFIX = (".md", ".json", ".py", ".sh", ".yml", ".yaml")
-SCAN_ROOTS = ["AGENTS.md", "README.md", "docs", "metadata", "Auditor", "Tester", "Developer", "tools",
-              "kernel_img/README.md", "kernel_img/offset_harness"]
-SKIP_WALK_DIRS = {"__pycache__", ".git", "out"}
+# 卫生检查覆盖全仓库：模块目录（nomount/、re_kernel*/ 等）同样会被公开，不能漏扫。
+SKIP_SCAN_PREFIXES = ("local/", "artifacts/", "docs/records/")
+SKIP_WALK_DIRS = {"__pycache__", ".git", "out", "local", "artifacts", "node_modules"}
 
 
 class Report:
@@ -88,7 +88,9 @@ class Report:
         for name, status, detail in self.checks:
             print(f"[{status}] {name.ljust(width)}  {detail}")
         print()
-        print(f"门禁结果：{len(self.checks)} 项检查，{len(self.failures)} 项失败，{len(self.warnings)} 项警告")
+        skipped = sum(1 for c in self.checks if c[1] == "SKIP")
+        tail = f"，{skipped} 项跳过（不计为通过）" if skipped else ""
+        print(f"门禁结果：{len(self.checks)} 项检查，{len(self.failures)} 项失败，{len(self.warnings)} 项警告{tail}")
         for f in self.failures:
             print(f"  FAIL {f}")
         for w in self.warnings:
@@ -150,19 +152,20 @@ def _tracked_or_new_files():
     try:
         tracked = subprocess.run(["git", "-C", REPO, "ls-files"], capture_output=True, text=True,
                                  check=True).stdout.splitlines()
-    except Exception:
-        tracked = []
+    except Exception as exc:
+        raise RuntimeError(f"git ls-files 不可用，卫生检查无法确定扫描范围：{exc}") from exc
     try:
         untracked = subprocess.run(["git", "-C", REPO, "ls-files", "--others", "--exclude-standard"],
                                    capture_output=True, text=True, check=True).stdout.splitlines()
-    except Exception:
-        untracked = []
+    except Exception as exc:
+        raise RuntimeError(f"git ls-files --others 不可用：{exc}") from exc
     return [p for p in tracked + untracked if p.strip()]
 
 
 def iter_text_files():
+    """已跟踪与未忽略的新文本文件全量参与卫生检查，只跳过本地私有与归档目录。"""
     for rel in _tracked_or_new_files():
-        if not any(rel == r or rel.startswith(r.rstrip("/") + "/") for r in SCAN_ROOTS):
+        if any(rel.startswith(prefix) for prefix in SKIP_SCAN_PREFIXES):
             continue
         path = os.path.join(REPO, rel)
         if os.path.isfile(path) and _looks_text(path):
@@ -639,12 +642,19 @@ def check_tool_selftest(rep):
         selftest = load_module_from("selftest_tools.py", "dsh_selftest")   # HERE 就是 tools/
         results = selftest.run_checks()
     except Exception as exc:
+        # run_checks 自己会把"缺本地元数据"的夹具记成 None 而不会抛异常；
+        # 真抛了就是自检本身坏了，按失败处理（此处必须 return，否则 results 未定义）。
         rep.check("tool_selftest", False, f"自检无法运行: {exc}")
         return
-    failed = [(name, detail) for name, ok, detail in results if not ok]
-    rep.check("tool_selftest", not failed,
-              "; ".join(f"{n}: {d}" for n, d in failed) if failed
-              else f"{len(results)} 项工具判据回归通过")
+    # None 表示"缺输入，无法判定"：不记失败，也不记通过，单独列出。
+    failed = [(name, detail) for name, ok, detail in results if ok is False]
+    skipped = [name for name, ok, _ in results if ok is None]
+    detail = f"{len(results) - len(skipped)} 项工具判据回归通过"
+    if failed:
+        detail = "; ".join(f"{n}: {d}" for n, d in failed)
+    if skipped:
+        detail += f"；{len(skipped)} 项跳过（依赖本地元数据）：{', '.join(skipped)}"
+    rep.check("tool_selftest", not failed, detail)
 
 
 def check_delivery_binding(rep):
@@ -702,15 +712,15 @@ def check_developer_artifacts(rep):
             except Exception as exc:
                 problems.append(f"Developer/reports/handoffs/{name} 解析失败: {exc}")
     rep.check("developer_artifacts", not problems,
-              "; ".join(problems) if problems else (f"{checked} 份交接清单格式合法" if checked else "暂无交接清单"),
-              warn_only=True)
+              "; ".join(problems) if problems else (f"{checked} 份交接清单格式合法" if checked else "暂无交接清单"))
 
 
 def _handoff_target(record):
     """交接记录里的目标标识：新形态是对象，旧形态是字符串。"""
     target = record.get("target")
     if isinstance(target, dict):
-        return target.get("target") or target.get("name") or "?"
+        # 交接清单用 image/kernel 描述目标，元数据用 target 记镜像名；两种都要认。
+        return target.get("target") or target.get("name") or target.get("image") or "?"
     return target or "?"
 
 
@@ -735,6 +745,9 @@ def check_handoff_registration(rep):
             if not meta_path or not os.path.isfile(meta_path):
                 continue
             meta = json.load(open(meta_path, encoding="utf-8"))
+            if meta.get("status") == "archived":
+                # 已归档模块的产物与交接保留为历史证据，不再要求重新导入。
+                continue
             instances = {b.get("instance_id") for b in meta.get("builds", [])}
             ports = {(p.get("derived", {}).get("sha256"), _handoff_target(p))
                      for p in meta.get("binary_ports", [])}
@@ -752,8 +765,7 @@ def check_handoff_registration(rep):
                 if (sha, target) not in ports:
                     problems.append(f"{name}: 派生记录未登记 {str(sha)[:12]} @ {target}")
     rep.check("handoff_registration", not problems,
-              "; ".join(problems) if problems else f"{checked} 条交接记录均已登记",
-              warn_only=True)
+              "; ".join(problems) if problems else f"{checked} 条交接记录均已登记")
 
 
 def check_auditor_independence(rep):
@@ -1100,9 +1112,11 @@ def main():
         check_structure(rep, portable=True)
         check_ci_markers(rep)
         check_doc_links(rep)
+        check_tool_selftest(rep)
+        check_auditor_independence(rep)
         for name in ("metadata_schema", "report_integrity", "identity_hashes", "version_consistency",
-                     "acceptance_binding", "delivery_binding", "tool_selftest", "developer_artifacts",
-                     "handoff_registration", "auditor_independence"):
+                     "acceptance_binding", "delivery_binding", "developer_artifacts",
+                     "handoff_registration"):
             rep.skip(name, "便携模式：依赖本地 metadata/、报告与产物，未检出")
         check_hygiene(rep)
         print("门禁模式：portable（克隆自检；不校验身份、验收与交付）")

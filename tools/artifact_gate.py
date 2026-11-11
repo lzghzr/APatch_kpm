@@ -7,6 +7,7 @@ import hashlib
 import json
 import re
 import struct
+import pathlib
 import subprocess
 from pathlib import Path
 
@@ -137,6 +138,23 @@ def inspect_layout(path, kpm, sections):
     return {"file": path.name, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
 
+def repo_head(directory):
+    """取 directory 自己的 HEAD；它必须就是仓库根。
+
+    子模块未检出时 `git -C <sub>` 会静默落到父仓，写出"看起来完整却错"的身份字段。
+    这里先确认仓库根就是该目录，否则直接失败（AUD-030 / 见 selftest 的行为判据）。
+    """
+    directory = pathlib.Path(directory)
+    try:
+        top = subprocess.check_output(["git", "-C", str(directory), "rev-parse", "--show-toplevel"],
+                                      text=True, stderr=subprocess.DEVNULL).strip()
+    except subprocess.CalledProcessError:
+        raise SystemExit(f"artifact_gate: {directory} 不是 git 仓库（子模块未检出？），无法记录其提交")
+    if pathlib.Path(top).resolve() != directory.resolve():
+        raise SystemExit(f"artifact_gate: {directory} 的仓库根是 {top}，说明这是父仓而不是子模块（子模块未检出？）")
+    return subprocess.check_output(["git", "-C", str(directory), "rev-parse", "HEAD"], text=True).strip()
+
+
 def validate(directory, expected=()):
     files = sorted(directory.glob("*.kpm"))
     if not files:
@@ -174,9 +192,8 @@ def main():
             raise ValueError("构建模块清单为空")
         artifacts = validate(args.directory, expected)
         repo = Path(__file__).resolve().parent.parent
-        def commit(directory):
-            return subprocess.check_output(["git", "-C", str(directory), "rev-parse", "HEAD"], text=True).strip()
-        manifest = {"schema": 1, "source_commit": commit(repo), "kernelpatch_commit": commit(repo / "KernelPatch"),
+
+        manifest = {"schema": 1, "source_commit": repo_head(repo), "kernelpatch_commit": repo_head(repo / "KernelPatch"),
                     "artifacts": artifacts}
         (args.directory / "BUILD_MANIFEST.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
         names = {"BUILD_MANIFEST.json"}

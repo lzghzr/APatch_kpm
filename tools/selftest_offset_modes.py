@@ -65,6 +65,26 @@ def write_product(root, module, mode, debug=False):
 
 
 class OffsetModesTests(unittest.TestCase):
+    def _fake_gate_root(self):
+        """把 artifact_gate 复制到临时根下，并给它真实的父仓与子模块。
+
+        以前这里是 `<root>/tools -> <outer>/tools` 软链，于是 artifact_gate 的
+        `__file__.resolve()` 穿回外层仓库、靠外层 KernelPatch 才通过——那正是
+        AUD-030 指出的"靠 bug 通过"。改为自建最小仓库，夹具自洽。
+        """
+        import shutil
+        gate = self.root / 'tools'
+        gate.mkdir(exist_ok=True)
+        shutil.copy2(Path(__file__).resolve().parents[1] / 'tools' / 'artifact_gate.py', gate / 'artifact_gate.py')
+        for name in ('', 'KernelPatch'):
+            repo = self.root / name if name else self.root
+            repo.mkdir(exist_ok=True)
+            subprocess.run(['git', '-C', str(repo), 'init', '-q'], check=True)
+            (repo / 'marker').write_text('x\n')
+            for cmd in (['add', '-A'], ['-c', 'user.name=t', '-c', 'user.email=t@example.invalid',
+                                        '-c', 'commit.gpgsign=false', 'commit', '-qm', 'init']):
+                subprocess.run(['git', '-C', str(repo)] + cmd, check=True)
+        return gate
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
@@ -124,7 +144,7 @@ class OffsetModesTests(unittest.TestCase):
         target = self.root / 'target'
         target.mkdir()
         repo = Path(__file__).resolve().parents[1]
-        (self.root / 'tools').symlink_to(repo / 'tools', target_is_directory=True)
+        self._fake_gate_root()
         for module in MODULES:
             for mode in ('static', 'dynamic'):
                 for debug in (False, True):

@@ -21,6 +21,8 @@
 import importlib.util
 import json
 import os
+import pathlib
+import re
 import shutil
 import subprocess
 import contextlib
@@ -57,11 +59,48 @@ def _gate_repo(record, gate):
     return tmp
 
 
+def _artifact_gate_rejects_missing_submodule():
+    """行为判据：`artifact_gate.repo_head()` 只接受"自己就是仓库根"的目录。
+
+    以前这里是 `"--show-toplevel" in 源码`；审计把那段比较包进 `if False:` 后本判据仍报 OK
+    （AUD-032）——文本匹配守不住行为。现在直接调用被守护的函数：
+    * 正例：临时根是独立仓库 → 返回 sha；
+    * 反例：临时根位于另一个仓库内部（子模块未检出时的真实形态）→ 必须 SystemExit。
+    """
+    import tempfile
+    spec = importlib.util.spec_from_file_location("ag_under_test", REPO / "tools" / "artifact_gate.py")
+    gate_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate_mod)
+    outer = pathlib.Path(tempfile.mkdtemp(prefix="ag-guard-"))
+    subprocess.run(["git", "-C", str(outer), "init", "-q"], check=False)
+    (outer / "marker").write_text("x\n")
+    for args in (["add", "-A"],
+                 ["-c", "user.name=t", "-c", "user.email=t@example.invalid",
+                  "-c", "commit.gpgsign=false", "commit", "-qm", "init"]):
+        subprocess.run(["git", "-C", str(outer)] + args, check=True)
+    inner = outer / "KernelPatch"
+    inner.mkdir()
+    ok_positive = len(gate_mod.repo_head(outer)) == 40          # 独立仓库可用
+    try:
+        gate_mod.repo_head(inner)                              # 子模块未检出：必须拒绝
+        rejected = False
+    except SystemExit:
+        rejected = True
+    return ok_positive and rejected
+
+
 def _schema_repo(record, gate):
-    """元数据门禁夹具：合法 identity.json（去掉 docs 路径）+ 模块记录 + 可解析的提交标识。"""
+    """元数据门禁夹具：合法 identity.json（去掉 docs 路径）+ 模块记录 + 可解析的提交标识。
+
+    远程（CI）副本不含 metadata/（该目录被 gitignore）：这种情况下本夹具没有输入，
+    由调用方记为 SKIP 而不是崩掉整份自检。
+    """
+    source = REPO / "metadata" / "identity.json"
+    if not source.is_file():
+        raise FileNotFoundError(f"缺少 {source}（远程副本不含本地元数据）")
     tmp = make_tmp()
     os.makedirs(os.path.join(tmp, "metadata", "modules"))
-    payload = json.load(open(REPO / "metadata" / "identity.json", encoding="utf-8"))
+    payload = json.loads(source.read_text(encoding="utf-8"))
     payload.pop("docs", None)
     json.dump(payload, open(os.path.join(tmp, "metadata", "identity.json"), "w"))
     env = ["-c", "user.name=F", "-c", "user.email=f@example.invalid", "-c", "commit.gpgsign=false"]
@@ -313,8 +352,15 @@ def _run_checks():
     checks = {
         "timed_out 双保险": "timed_out()" in run_test and "-ge 128" in run_test,
         "无 run_to 管道": not piped_watchdog,
-        "C4 基线四项": all(key in preflight for key in ("boot_id", "uptime", "pstore", "module list")),
-        "无响应→90 回归": "90" in selftest_sh and "无响应" in selftest_sh,
+        # 基线四项必须出现在可执行行里（注释不算），键按实际代码形态匹配。
+        # 子模块未检出时不得回落父仓写身份（AUD-030/032）：这里跑真实行为，不 grep 字符串。
+        "artifact_gate 子模块守卫": _artifact_gate_rejects_missing_submodule(),
+        "C4 基线四项": all(any(needle in line and not line.strip().startswith("#")
+                               for line in preflight.splitlines())
+                           for needle in ("random/boot_id", "/proc/uptime", "/sys/fs/pstore", "kpm")),
+        "无响应→90 回归": ("escalate \"连续 ${OBS_UNRESP}" in run_test and "timed_out \"$rc\"" in run_test
+                             and re.search(r"exit 90\b", run_test) is not None
+                             and 'check_rc "run_test/设备无响应" 90' in selftest_sh),
     }
     ok = all(checks.values())
     results.append(("tester_watchdog_semantics", ok,
@@ -340,8 +386,11 @@ def _run_checks():
     bad_source = dict(_binding(entry, True), source_commit=changed)
     refused_source = bool(identity.delivery_problems(entry, bad_source))
     # 14b) 压平历史：交付提交与源码提交无祖先关系，但内容逐字节一致 → 接受（只记录 source_ancestor）
-    tree = identity.git(["rev-parse", f"{entry['source_commit']}^{{tree}}"], cwd=root)
-    flat = identity.git(["commit-tree", tree, "-m", "flattened export"], cwd=root)
+    # 显式带作者身份并用 strict：CI 容器里没有全局 git 配置，之前 commit-tree 静默失败、返回空串，
+    # 断言因此在本机通过、在 Linux 上失败（2026-11-10 act 实测）。
+    ident = ["-c", "user.name=selftest", "-c", "user.email=selftest@example.invalid", "-c", "commit.gpgsign=false"]
+    tree = identity.git(["rev-parse", f"{entry['source_commit']}^{{tree}}"], cwd=root, strict=True)
+    flat = identity.git(ident + ["commit-tree", tree, "-m", "flattened export"], cwd=root, strict=True)
     flat_binding = dict(_binding(entry, True), delivery_commit=flat)
     problems = identity.delivery_problems(entry, flat_binding)
     accepted = not problems and flat_binding.get("source_ancestor") is False
@@ -888,7 +937,10 @@ def _run_checks():
                     f"关键路径齐备通过={not ok_rep.failures}，缺 identity.json 被拒={bool(bad_rep.failures)}"))
 
     # 29) 问题单仪式：未关闭要 closure；已关闭要 resolution 或 closure
+    has_meta = (REPO / "metadata" / "identity.json").is_file()
     def schema_ok(issue):
+        if not has_meta:
+            raise FileNotFoundError("远程副本不含 metadata/identity.json")
         _, main_sha, kp_sha = _schema_repo({"module": "mod", "status": "candidate", "version_declared": "1.0",
                                             "version_sources": {"makefile": "1.0"}, "builds": [], "issues": [issue]}, gate)
         rep = gate.Report()
@@ -899,13 +951,16 @@ def _run_checks():
                   "title": "t", "evidence": "e", "closure": "c"}
     closed_base = {"id": "MNT-001", "severity": "中", "owner": "Developer", "status": "closed",
                    "title": "t", "evidence": "e", "closed_by": "维护者"}
-    closure_cases = {
-        "open 带 closure 通过": schema_ok(dict(open_issue)),
-        "open 缺 closure 被拒": not schema_ok({k: v for k, v in open_issue.items() if k != "closure"}),
-        "closed 只有 resolution 通过": schema_ok(dict(closed_base, resolution="r")),
-        "closed 两者皆无被拒": not schema_ok(dict(closed_base)),
-    }
-    results.append(("issue_closure_ceremony", all(closure_cases.values()), str(closure_cases)))
+    if not has_meta:
+        results.append(("issue_closure_ceremony", None, "跳过：远程副本不含 metadata/identity.json"))
+    else:
+        closure_cases = {
+            "open 带 closure 通过": schema_ok(dict(open_issue)),
+            "open 缺 closure 被拒": not schema_ok({k: v for k, v in open_issue.items() if k != "closure"}),
+            "closed 只有 resolution 通过": schema_ok(dict(closed_base, resolution="r")),
+            "closed 两者皆无被拒": not schema_ok(dict(closed_base)),
+        }
+        results.append(("issue_closure_ceremony", all(closure_cases.values()), str(closure_cases)))
 
     # 30) 实机复测必须绑定在册字节（事实判据，替代原先查报告 token）
     def device_ok(test):
@@ -942,15 +997,18 @@ def _run_checks():
         gate.check_metadata_schema(rep)
         return not rep.failures
 
-    device_cases = {
-        "在册绑定通过": device_ok(dict(good_test)),
-        "派生件绑定通过": port_ok("c" * 64),
-        "非本实例派生件被拒": not port_ok("d" * 64),
-        "未声明一致被拒": not device_ok(dict(good_test, tested_bytes={"sha256": "a" * 64})),
-        "哈希不在产物中被拒": not device_ok(dict(good_test, tested_bytes=dict(good_test["tested_bytes"], sha256="b" * 64))),
-        "非复测条目不检查": device_ok({"kind": "destructive-risk-verification", "instance_id": "m-1.0#1"}),
-    }
-    results.append(("device_test_binding", all(device_cases.values()), str(device_cases)))
+    if not has_meta:
+        results.append(("device_test_binding", None, "跳过：远程副本不含 metadata/identity.json"))
+    else:
+        device_cases = {
+            "在册绑定通过": device_ok(dict(good_test)),
+            "派生件绑定通过": port_ok("c" * 64),
+            "非本实例派生件被拒": not port_ok("d" * 64),
+            "未声明一致被拒": not device_ok(dict(good_test, tested_bytes={"sha256": "a" * 64})),
+            "哈希不在产物中被拒": not device_ok(dict(good_test, tested_bytes=dict(good_test["tested_bytes"], sha256="b" * 64))),
+            "非复测条目不检查": device_ok({"kind": "destructive-risk-verification", "instance_id": "m-1.0#1"}),
+        }
+        results.append(("device_test_binding", all(device_cases.values()), str(device_cases)))
 
     # 31) README 标题只作提示：版本事实由 Makefile ↔ version_declared 判定
     tmp = _gate_repo({"module": "rmod", "version_declared": "2.0",
@@ -969,7 +1027,7 @@ def _run_checks():
     tmp = make_tmp()
     subprocess.run(["git", "-C", tmp, "init", "-q"], check=True, capture_output=True)
     os.makedirs(os.path.join(tmp, "docs"), exist_ok=True)
-    filler = "中" * ((65536 - 1) // 3)          # 3 字节汉字：恰好把 65536 边界切开
+    filler = "a" * (65536 - 2) + "中"           # 三字节汉字跨在 65536 边界上，必须能切到它的中间
     absolute = "/" + "Users" + "/someone/Library/Android/sdk/ndk/26.3"
     report = Path(tmp) / "docs" / "report.md"
     report.write_text(filler + "\nANDROID_NDK=" + absolute + "\n", encoding="utf-8")
@@ -1067,10 +1125,14 @@ def main():
                          ensure_ascii=False, indent=2))
     else:
         for name, ok, detail in results:
-            print(f"[{'PASS' if ok else 'FAIL'}] {name:22s} {detail}")
-        failed = [n for n, ok, _ in results if not ok]
-        print(f"\n工具自检：{len(results) - len(failed)}/{len(results)} 通过")
-    return 0 if all(ok for _, ok, _ in results) else 1
+            mark = "SKIP" if ok is None else ("PASS" if ok else "FAIL")
+            print(f"[{mark}] {name:22s} {detail}")
+        failed = [n for n, ok, _ in results if ok is False]
+        skipped = [n for n, ok, _ in results if ok is None]
+        total = len(results) - len(skipped)
+        tail = f"，{len(skipped)} 项跳过（依赖本地元数据，不计为通过）" if skipped else ""
+        print(f"\n工具自检：{total - len(failed)}/{total} 通过{tail}")
+    return 0 if all(ok is not False for _, ok, _ in results) else 1
 
 
 if __name__ == "__main__":

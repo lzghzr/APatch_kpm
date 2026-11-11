@@ -59,7 +59,7 @@ def main():
         out = args.output / 'original' / name
         symbols = json.loads((out / 'symbols.json').read_text())
         raw = (out / 'Image').read_bytes()
-        ref = json.loads((ROOT / 'local/nomount/configs' / (name + '-v4.json')).read_text())
+        ref = json.loads((ROOT / 'nomount/local/configs' / (name + '-v4.json')).read_text())
         offsets = ref['offsets']
         def address(fn):
             return symbols[fn] if fn in symbols else symbols[next(n for n in symbols if (

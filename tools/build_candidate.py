@@ -47,7 +47,9 @@ def die(message, code=2):
 
 
 # 只清理中间产物/产物；构建输入与 Git 已跟踪文件一律保护（例如模块里的 .s 汇编源码）
-CLEAN_PATTERNS = ("*.o", "*.kpm", "*.d", "*.i", "*.gcno", "*.gcda", "*.mod", "*.mod.c")
+# *.kpm.json 是 patch_offsets.py 生成的静态配置边车：它存在时拒绝覆盖，所以必须和 .kpm 一起挪走，
+# 否则"手工 make 过一次再重建"会以 Errno 17 失败。
+CLEAN_PATTERNS = ("*.o", "*.kpm", "*.kpm.json", "*.d", "*.i", "*.gcno", "*.gcda", "*.mod", "*.mod.c")
 AMBIGUOUS_PATTERNS = ("*.s", "*.S")          # 既可能是生成的，也可能是源码：只在未跟踪且非输入时清理
 
 

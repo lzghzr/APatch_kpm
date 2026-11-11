@@ -27,7 +27,7 @@
 - `metadata/`（构建登记、`identity.json`、`checks/`、`handoffs/`）
 - `docs/records/`（裁定、授权、常驻记录）、`docs/proposals/`
 - 三方目录下的 `reports/`、`proposals/`、`patches/`
-- `local/`：目标配置（`local/nomount/configs/`）、构建产物（`artifacts/`）、原始日志与备份
+- `local/`：目标配置（`nomount/local/configs/`）、构建产物（`artifacts/`）、原始日志与备份
 
 因此克隆得到的仓库**能构建、能跑门禁、能读流程**，但**没有身份登记与历史记录**。
 
@@ -53,7 +53,7 @@
 2. **定位**：写清三件事——承担哪个角色、本轮对象（文件 / 提交 / 实例）、本轮不做的越权项。
 3. **重建本地材料**：按 `01-identity.md` 的五步自建
    `metadata/modules/*.json`、`metadata/identity.json`、`metadata/checks/`、`docs/records/`；
-   目标配置放 `local/nomount/configs/`，产物核对用 `artifacts/`。
+   目标配置放 `nomount/local/configs/`，产物核对用 `artifacts/`。
 4. **自检**：
    ```bash
    python3 tools/check_repository.py --strict
@@ -85,5 +85,5 @@ HEAD 与分支、与 origin 的关系
 - [ ] 工作树干净；`git status` 无未提交改动
 - [ ] 待签 / 待推提交已列清，签名与推送由用户执行
 - [ ] 门禁与自检输出已贴进交接记录
-- [ ] 本地材料（`metadata/`、`docs/records/`、`local/nomount/configs/`）已有备份路径
+- [ ] 本地材料（`metadata/`、`docs/records/`、`nomount/local/configs/`）已有备份路径
 - [ ] 未完成项写明触发条件与建议下一步

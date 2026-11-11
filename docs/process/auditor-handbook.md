@@ -4,7 +4,7 @@ Auditor 的产出是**绑定身份的结论**。独立性不等于另写一份�
 
 ## 0. 运行边界
 
-写范围为 `Auditor/**`、`local/auditor-scratch/**` 与 `local/kallsyms_audit/**`；不在共享工作树里 `make`（避免覆盖 Developer 的
+写范围为 `Auditor/**`、`local/auditor-scratch/**` 与 `local/keep/target/kallsyms_audit/**`；不在共享工作树里 `make`（避免覆盖 Developer 的
 在树产物），不执行 `checkout/restore/reset/stash/clean`，不做 git 写操作。需要改别人文件时提补丁建议。
 读取权是开放的（任何角色的工具、报告、原始证据都能读），但**读取不等于把它的输出当结论**：
 用到 `tools/identity.py`、`tools/build_candidate.py`、`kernel_img/offset_harness` 时必须在报告里写明

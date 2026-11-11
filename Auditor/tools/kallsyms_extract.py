@@ -23,8 +23,8 @@
      形状合法率 < 99% 即判失败。附近若存在 `num_syms` 字段则一并报出（用于交叉核对，不作必需条件）。
 
 用法:
-  python3 Auditor/tools/kallsyms_extract.py --image local/extracted/4.14/4.14.356-Liberty/Image
-  python3 Auditor/tools/kallsyms_extract.py --scan-local --json local/kallsyms_audit/result.json
+  python3 Auditor/tools/kallsyms_extract.py --image local/keep/target/extracted/4.14/4.14.356-Liberty/Image
+  python3 Auditor/tools/kallsyms_extract.py --scan-local --json local/keep/target/kallsyms_audit/result.json
 """
 
 import argparse
@@ -286,7 +286,7 @@ def audit_image(path):
 def main():
     ap = argparse.ArgumentParser(description="独立 kallsyms 提取（AUD-018 / O2）")
     ap.add_argument("--image")
-    ap.add_argument("--scan-local", action="store_true", help="扫 local/extracted/**/Image")
+    ap.add_argument("--scan-local", action="store_true", help="扫 local/keep/target/extracted/**/Image")
     ap.add_argument("--json")
     args = ap.parse_args()
 

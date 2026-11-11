@@ -54,7 +54,7 @@ bash Tester/tools/selftest_scripts.sh   # 离线自检：mock 设备驱动上面
    「需要维护者执行的物理动作」发起、维护者用「动作回执」回填（A2/A5）。
 10. **结论上限**：只对「该字节在该机型/该内核/该次加载下存活 N 秒且 X/Y 条强证据判据通过」负责（C2）。
 11. 公开文件不写设备序列号、管理器凭据/特权通道凭据、抓包原文；序列号只保留 `sha256(serial)[:8]`。
-   **原始证据**（可能含序列号的 dmesg/pstore 全文）放 `local/tester-raw/`（gitignore），入库只放脱敏摘要（A4）。
+   **原始证据**（可能含序列号的 dmesg/pstore 全文）放 `local/keep/evidence/tester-raw/`（gitignore），入库只放脱敏摘要（A4）。
 
 ## 目录
 
@@ -64,7 +64,7 @@ Tester/tools/                 preflight.sh / run_test.sh / collect_evidence.sh
 Tester/reports/environments/  环境事实 + 加载前基线
 Tester/reports/runs/          实机报告（自动判据骨架 + 人工补全）
 Tester/reports/escalations/   升级单（死机/卡死现场）
-local/tester-raw/             原始证据与离线自检产物（gitignore，不入库）
+local/keep/evidence/tester-raw/             原始证据与离线自检产物（gitignore，不入库）
 ```
 
 > `selftest_scripts.sh` 用 mock 设备验证脚本逻辑与退出码（含"设备无响应必须 90"的回归）。

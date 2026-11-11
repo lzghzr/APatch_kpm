@@ -79,12 +79,28 @@ def sha256_file(path):
     return h.hexdigest()
 
 
-def git(args, cwd=None):
+class GitError(RuntimeError):
+    """git 调用失败。调用方要么显式用 strict=True 拿到它，要么自己容错。"""
+
+
+def git(args, cwd=None, strict=False):
+    """跑 git 并返回 stdout（已 strip）。
+
+    默认仍返回空串以保持历史调用方的容错语义；**strict=True 会抛 GitError**——
+    需要「空输出绝不合法」的场合（例如创建提交）必须用 strict，
+    否则失败会被静默当成空值（2026-11-10 在 Linux 容器里因此漏掉一次 commit-tree 失败）。
+    """
     try:
         out = subprocess.run(["git", "-C", str(cwd if cwd is not None else REPO)] + args,
                              capture_output=True, text=True, check=True)
         return out.stdout.strip()
+    except subprocess.CalledProcessError as exc:
+        if strict:
+            raise GitError(f"git {' '.join(args)} 失败: {(exc.stderr or '').strip() or exc.returncode}") from exc
+        return ""
     except Exception:
+        if strict:
+            raise
         return ""
 
 

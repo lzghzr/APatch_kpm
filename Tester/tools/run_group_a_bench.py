@@ -114,7 +114,7 @@ def main():
     if not SERIAL:
         sys.exit("错误: 请设置 ANDROID_SERIAL 环境变量")
 
-    raw_dir = REPO / "local/tester-raw"
+    raw_dir = REPO / "local/keep/evidence/tester-raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Ensure synthetic corpus is in /data/local/tmp

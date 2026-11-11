@@ -144,7 +144,9 @@ artifacts/<build_id>#2/        第 2 次实例
     <产物>.kpm
     <产物>.kpm.json           静态基线变体的布局（随实例归档，不改 MANIFEST.json）
     MANIFEST.json             写入一次的构建清单
-local/                        日志、锁、隔离工作区、临时证据；不入库
+local/keep/{oracle,target,evidence}/   长期保留的本地输入（冻结 oracle、目标证据、真机日志）
+local/{build_logs,locks,stale}/        日志、锁、被移走的旧中间产物
+nomount/local/{configs,tests}/         模块专属本地输入（目标静态配置、维护者回归集）
 ```
 
 使用实例记录中的 `artifacts[].path` 定位字节。`.kpm` 在交付包或 release 分发，仓库保存身份记录与可重建源码。
@@ -159,6 +161,18 @@ local/                        日志、锁、隔离工作区、临时证据；�
 - 登记期由维护者在 `maintainer_records[].baseline_layouts` 记录 `instance_id`、归档 `path`、文件 `sha256`/`size`
   与布局内嵌的 `kpm_sha256`。布局内嵌目标 `.kpm` 的 SHA-256，是它与实例对应的独立判据。
 - 布局缺失或与实例哈希不对应时，该实例的静态移植能力视为未覆盖，不得由其它变体的布局代填。
+
+## 本地目录的三类角色（2026-11-10 定）
+
+`.gitignore` 的 `local/` 规则匹配**任意层级**，所以根 `local/` 与 `nomount/local/` 都不入库。按用途分三类：
+
+| 目录 | 角色 | 判据 |
+| --- | --- | --- |
+| `local/keep/` | 长期保留 | 删了无法重建或代价很高：冻结 oracle、目标提取与符号表、真机原始日志。清单与可再生性见 `local/keep/README.md` |
+| `<模块>/local/` | 模块专属输入 | 该模块的静态配置与维护者回归测试；换模块不通用 |
+| `local/{build_logs,locks,stale}/` | 过程产物 | 随构建产生，可随时清 |
+
+克隆者只需前两类里**自己能重建的部分**：从自己的 boot 镜像提取内核与符号；冻结 oracle 不可再生，因此不在公共仓库内。完整建立步骤见 [12-local-bootstrap.md](12-local-bootstrap.md)。
 
 ## 身份登记不入库：接手时自建（2026-10-25 定）
 

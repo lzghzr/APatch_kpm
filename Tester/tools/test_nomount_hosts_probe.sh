@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 #
+# 注意：本脚本是**操作记录**（打印命令与退出码），不产出 PASS/FAIL 判据，
+#       不得作为验收依据；判据由对应请求单的 run_test 轮次承担。
 # Tester/tools/test_nomount_hosts_probe.sh
 #
 # 依据请求单: docs/records/2026-10-26-nomount-hosts-redirect-replacement-request.md

@@ -9,8 +9,8 @@
     python3 extract_kernel.py --force                # 覆盖已提取的文件
 
 提取结果:
-    local/extracted/<label>/Image      裸 arm64 Image
-    local/extracted/index.json         标签 → 源 img / 版本 / 哈希 的索引
+    local/keep/target/extracted/<label>/Image      裸 arm64 Image
+    local/keep/target/extracted/index.json         标签 → 源 img / 版本 / 哈希 的索引
 
 注意: 原始 img 与提取出的裸 kernel 都不进版本库；`local/` 整体被 .gitignore 忽略。
 """

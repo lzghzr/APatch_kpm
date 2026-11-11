@@ -344,7 +344,7 @@ def main():
         # Default to first device, preserving original behavior
         devices = [all_devs[0]]
 
-    raw_dir = REPO / "local/tester-raw/zram-throughput"
+    raw_dir = REPO / "local/keep/evidence/tester-raw/zram-throughput"
     build_dir = raw_dir / "build"
     gen_dir = raw_dir / "codec/generated"
 

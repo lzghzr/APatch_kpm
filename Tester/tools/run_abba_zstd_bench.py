@@ -27,8 +27,8 @@ INSTANCE_A = "zram_zstd-1.3.0+gfc2728b60004.re62ca92a.kpb51197a.ndk26.3.11579264
 COMMIT_B = "251240cf7e530ae7224141b552a39f808c59fcb8"
 INSTANCE_B = "zram_zstd-1.3.0+g1b12e49c5159.rf073d150.kpb51197a.ndk26.3.11579264#1"
 
-BENCH_DIR = REPO / "local/tester-raw/abba_bench"
-CORPUS_DIR = REPO / "local/tester-raw/zram-throughput/corpus"
+BENCH_DIR = REPO / "local/keep/evidence/tester-raw/abba_bench"
+CORPUS_DIR = REPO / "local/keep/evidence/tester-raw/zram-throughput/corpus"
 BIN_A = BENCH_DIR / "build_a/zram_codec_bench_a"
 BIN_B = BENCH_DIR / "build_b/zram_codec_bench_b"
 

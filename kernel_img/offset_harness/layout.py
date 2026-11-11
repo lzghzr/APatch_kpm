@@ -15,7 +15,7 @@ kernel_img/                    用户放置原始 img / 符号表（不进 git�
 local/                         运行产生的本地文件（不进 git）
   extracted/<major>/<sub>/Image
   extracted/index.json
-local/kernel_offset/           分析输出（不进 git；与提取产物一起放在 local/）
+local/keep/target/kernel_offset/           分析输出（不进 git；与提取产物一起放在 local/）
   <major>/<sub>/{trace.log,struct_offset.c,*.asm}
   report.md  offsets.json
 ```
@@ -35,7 +35,9 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_IMG_ROOT = HERE.parent              # kernel_img/
-DEFAULT_LOCAL_ROOT = HERE.parent.parent / "local"
+# 本地输入统一放 local/keep/target/（extracted/、kernel_offset/ 等），与 local/keep/README.md 一致；
+# 早期版本指向仓库根的 local/，导致同名目录分裂成两处。
+DEFAULT_LOCAL_ROOT = HERE.parent.parent / "local" / "keep" / "target"
 DEFAULT_OUT_ROOT = DEFAULT_LOCAL_ROOT / "kernel_offset"   # 输出也算用户数据；名字只是建议，--out 可改
 
 IMAGE_SUFFIXES = {".img", ".image", ".bin", ".kernel"}
@@ -53,7 +55,7 @@ class Entry:
     image: Path | None = None  # 原始 img / 裸 Image
     symbols: list = field(default_factory=list)   # 用户提供的符号表
     labels_hint: str = ""      # 说明文字，进报告
-    aliases: set = field(default_factory=set)     # 来自 local/extracted/index.json 的别名（如 4.14/4.14.356-Liberty）
+    aliases: set = field(default_factory=set)     # 来自 local/keep/target/extracted/index.json 的别名（如 4.14/4.14.356-Liberty）
 
     @property
     def is_flat(self):
@@ -176,7 +178,7 @@ def pick(entries, prompt="选择要处理的镜像编号: "):
 
 
 def load_index(local_root=None):
-    """读取 local/extracted/index.json（若存在）：[{label, source, kernel_path, release, ...}]。"""
+    """读取 local/keep/target/extracted/index.json（若存在）：[{label, source, kernel_path, release, ...}]。"""
     path = Path(local_root or DEFAULT_LOCAL_ROOT) / "extracted" / "index.json"
     if not path.is_file():
         return []
@@ -208,7 +210,7 @@ def annotate_from_index(entries, local_root=None):
 
 
 def extracted_path(label, local_root=None):
-    """裸 kernel 的本地落点：local/extracted/<label>/Image。"""
+    """裸 kernel 的本地落点：local/keep/target/extracted/<label>/Image。"""
     root = Path(local_root or DEFAULT_LOCAL_ROOT)
     return root / "extracted" / label / "Image"
 

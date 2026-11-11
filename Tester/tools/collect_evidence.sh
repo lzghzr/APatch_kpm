@@ -111,4 +111,9 @@ EOF
 
 echo
 echo "证据目录：$DEST"
+# 采集过程中任何一步失败都记在 $FAILED 里；有失败则以非零退出，避免被当成“证据已采到”。
+if [ "${FAILED:-0}" -ne 0 ] || [ ! -d "$DEST" ] || [ -z "$(ls -A "$DEST" 2>/dev/null)" ]; then
+  echo "run: 证据采集不完整（失败 $((FAILED + 0)) 项或目录为空）" >&2
+  exit 1
+fi
 echo "下一步：写升级单并通知维护者（不要继续重试）"

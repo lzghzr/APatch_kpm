@@ -330,17 +330,32 @@ MANAGER_PKG="$(adb_out "pm list packages -U 2>/dev/null | grep -E 'me\.bmax\.apa
 MANAGER_UID="$(printf '%s' "$MANAGER_PKG" | grep -oE 'uid:[0-9]+' | cut -d: -f2)"
 [ -n "$MANAGER_UID" ] || { echo "未检测到 APatch Manager UID，无法加载模块（特权通道不可用）" >&2; exit 2; }
 
-for candidate in /data/local/tmp/kpatch /data/adb/ap/bin/kpatch /data/adb/kpatch; do
-  if [ "$(adb_out "su -c 'test -x $candidate && su $MANAGER_UID -c \"$candidate su hello\" 2>/dev/null'")" = "hello1158" ]; then
-    KP_BIN="$candidate"
-    break
-  fi
-done
-[ -n "$KP_BIN" ] || KP_BIN="/data/local/tmp/kpatch"
+# 新版 APatch 不再单独安装 kpatch，也没有 superkey：控制程序是 APK 里的
+# lib/arm64/libkpatch.so，必须以 Manager UID 调用（见 hosts_redirect/README.md 的 CLI 示例）。
+KP_BIN="$(adb_out "su -c 'find /data/app -type f -path \"*/me.bmax.apatch-*/lib/arm64/libkpatch.so\" 2>/dev/null | head -1'")"
+KP_BIN="$(printf '%s' "$KP_BIN" | tr -d '\r' | head -1)"
+if [ -z "$KP_BIN" ]; then
+  for candidate in /data/local/tmp/kpatch /data/adb/ap/bin/kpatch /data/adb/kpatch; do
+    [ "$(adb_out "su -c 'test -x $candidate && echo ok'")" = "ok" ] && { KP_BIN="$candidate"; break; }
+  done
+fi
+# mock 设备不提供真实 APK：脚本自检只验证判据逻辑，握手在 mock 下跳过。
+if [ -n "${MOCK_SCEN:-}" ]; then
+  [ -n "$KP_BIN" ] || KP_BIN="/data/local/tmp/kpatch"
+elif [ -n "$KP_BIN" ] && [ "$(adb_out "su $MANAGER_UID -c \"\"$KP_BIN\" su hello\" 2>/dev/null")" != "hello1158" ]; then
+  log "候选控制程序 $KP_BIN 未通过 hello1158 握手"
+  KP_BIN=""
+fi
+[ -n "$KP_BIN" ] || { echo "run_test: 找不到可用的 kpatch（APK 内的 libkpatch.so 未找到或握手失败），无法加载模块" >&2; exit 2; }
 
 BOOT0="$(adb_out 'cat /proc/sys/kernel/random/boot_id')"
 UPTIME0="$(adb_out 'cat /proc/uptime')"
-PSTORE_RAW="$(adb_out 'ls -A /sys/fs/pstore/ 2>&1')"
+# pstore 在 Android 上通常只对 root 可读；先走特权通道，取不到再退回普通 shell。
+PSTORE_RAW="$(adb_out "su -c 'ls -A /sys/fs/pstore/ 2>&1'")"
+case "$PSTORE_RAW" in
+  # 空输出就是干净；只有特权通道本身不可用时才退回普通 shell。
+  *"not found"*|*"inaccessible"*|*"only root"*) PSTORE_RAW="$(adb_out 'ls -A /sys/fs/pstore/ 2>&1')" ;;
+esac
 BASE_LIST="$(kpm_run "list")"
 
 # pstore 基线判定：空 → 干净；有文件名 → 旧崩溃残留；含错误文本 → 未采集
@@ -384,7 +399,7 @@ printf '%s\n' "$LOAD_OUT" | tee -a "$LOG"
 timed_out "$LOAD_RC" && escalate "module load 超时未返回" 1
 
 # ---------------------------------------------------------------- 2. 观察窗口（存活=强证据，dmesg=弱证据）
-OBS_BOOT_SAME=1; OBS_UPTIME_MONO=1; OBS_CRASH=0; OBS_UNRESP=0
+OBS_BOOT_SAME=1; OBS_UPTIME_MONO=1; OBS_CRASH=0; OBS_UNRESP=0; OBS_SAMPLES=0
 observe() {  # $1 阶段名（仅用于日志）
   local phase="$1" prev="${UPTIME0%% *}" elapsed=0 up rc cur boot dmesg
   OBS_UNRESP=0
@@ -398,7 +413,9 @@ observe() {  # $1 阶段名（仅用于日志）
     fi
     OBS_UNRESP=0
     boot="$(adb_out 'cat /proc/sys/kernel/random/boot_id')"
+    OBS_SAMPLES=$((OBS_SAMPLES+1))
     if [ -n "$BOOT0" ] && [ -n "$boot" ] && [ "$boot" != "$BOOT0" ]; then
+      OBS_BOOT_SAME=0
       escalate "检测到重启（boot_id 变化，${phase}）" 0
     fi
     cur="${up%% *}"
@@ -463,7 +480,7 @@ judge() {  # judge <证据强度> <名称> <0/1>
 
 # 存活判据：观察窗口内无 adb 连续超时、boot_id 不变、uptime 单调
 # （任一不成立时 observe()/escalate() 已经以 90 退出；能走到这里即成立）
-judge "强" "设备存活（整轮：adb 持续响应 + boot_id 不变 + uptime 单调）" "$( [ "$OBS_BOOT_SAME" -eq 1 ] && [ "$OBS_UPTIME_MONO" -eq 1 ] && echo 0 || echo 1 )"
+judge "强" "设备存活（整轮：${OBS_SAMPLES} 次采样均响应 + boot_id 不变 + uptime 单调）" "$( [ "$OBS_SAMPLES" -ge 1 ] && [ "$OBS_UNRESP" -eq 0 ] && [ "$OBS_BOOT_SAME" -eq 1 ] && [ "$OBS_UPTIME_MONO" -eq 1 ] && echo 0 || echo 1 )"
 judge "强" "加载成功（rc=0 且无失败特征 且 module list 出现模块）" "$( [ "$LOAD_RC" -eq 0 ] && ! fail_text "$LOAD_OUT" && [ "$LOADED_LISTED" -eq 1 ] && echo 0 || echo 1 )"
 if [ "$NO_UNLOAD" -eq 1 ]; then
   judge "强" "常驻存活（--no-unload：维持运行且在 module list 中）" "$( [ "$RESIDENT_LISTED" -eq 1 ] && echo 0 || echo 1 )"

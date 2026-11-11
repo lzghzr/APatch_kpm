@@ -11,6 +11,7 @@
 - **真机死机/卡死升级流程（Tester 必读）**：[process/07-escalation-device.md](process/07-escalation-device.md)
 - **复核经济学（成本与影响成比例：分类关闭、批量更正、先入库再引用、报告版本索引）**：[process/08-review-economics.md](process/08-review-economics.md)
 - **交接流程（接手必读）**：[process/09-handoff.md](process/09-handoff.md)
+- **从克隆到可开发（本地环境建立）**：[process/12-local-bootstrap.md](process/12-local-bootstrap.md)
 - 角色手册：[Developer](process/developer-handbook.md) / [Auditor](process/auditor-handbook.md) / [Tester](process/tester-handbook.md)
 - 报告与问题单模板：[templates/](templates/)
 - 覆盖矩阵（模块 × 内核 × 验证层级）：[coverage.md](coverage.md)

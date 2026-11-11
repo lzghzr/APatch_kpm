@@ -11,7 +11,7 @@
 #
 # 边界: **这不是真机结论**（C2）。mock 只能证明脚本逻辑、判据分支与退出码；
 #       真机行为仍必须在设备上复验，且 mock 通过不得写进任何实机报告当结论。
-#       产物全部落在 local/tester-raw/selftest/（A4 授权的原始证据路径，gitignore），不写进 Tester/reports/。
+#       产物全部落在 local/keep/evidence/tester-raw/selftest/（A4 授权的原始证据路径，gitignore），不写进 Tester/reports/。
 
 set -uo pipefail
 
@@ -19,7 +19,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$REPO" || exit 2
 SELFTEST_FREEZE_COMMIT="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
 
-WORK="${WORK:-local/tester-raw/selftest}"
+WORK="${WORK:-local/keep/evidence/tester-raw/selftest}"
 BIN="$WORK/bin"
 STATE="$WORK/state"
 rm -rf "$WORK"
@@ -34,8 +34,11 @@ printf 'MOCK-KPM-BYTES\n' > "$KPM"
 # 在册实例：从 metadata 现场读取（不硬编码身份串）；产物不在场则身份类用例 SKIP
 # 维护者接线（2026-10-03）：模块更名后从现行登记选择夹具，全部身份/异常断言保留。
 REAL_INFO="$(python3 - <<'PY_FIXTURE'
-import json, os
+import json
 from pathlib import Path
+
+# 脚本自检只验证判据逻辑，不绑定任何真机：从元数据取一个在册且产物在场的实例，
+# 由 mock 设备驱动 run_test.sh。真机能否加载该模块不属于本自检的判据范围。
 records = []
 for path in sorted(Path("metadata/modules").glob("*.json")):
     rec = json.loads(path.read_text())
@@ -45,7 +48,7 @@ for rec in records:
     for build in reversed(rec.get("builds", [])):
         for artifact in build.get("artifacts", []):
             path = artifact.get("path")
-            if build.get("instance_id") and path and os.path.isfile(path):
+            if build.get("instance_id") and path and Path(path).is_file():
                 print("\t".join((rec["module"], build["instance_id"], path)))
                 raise SystemExit(0)
 print((records[0]["module"] if records else "re_kernel") + "\t\t")
@@ -59,14 +62,15 @@ if [ -n "$REAL_ID" ] && [ -f "$REAL_KPM" ]; then
   echo "产物：$REAL_KPM"
 else
   HAVE_REAL=0
-  echo "（未找到在册实例或产物不在场：身份类用例将 SKIP）"
+  echo "（设备未安装任何在册模块，或产物不在场：身份类用例将 SKIP）"
 fi
 echo
 
 FAILS=0
-ok()   { echo "PASS  $1"; }
+PASSES=0; SKIPS=0
+ok()   { echo "PASS  $1"; PASSES=$((PASSES+1)); }
 bad()  { echo "FAIL  $1"; FAILS=$((FAILS+1)); }
-skip() { echo "SKIP  $1"; }
+skip() { echo "SKIP  $1"; SKIPS=$((SKIPS+1)); }
 
 CASE_DIR=""
 CASE_OUT=""
@@ -135,7 +139,7 @@ check_has "preflight 标注未检测到 Manager UID" "$(first "$CASE_DIR/env" .m
 
 # ---- 3. 身份：正反用例（MNT-008） ------------------------------------------
 if [ "$HAVE_REAL" -eq 1 ]; then
-  run run_ok ok 0 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" \
+  run run_ok ok 1 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" \
     --tool-freeze-commit "$SELFTEST_FREEZE_COMMIT" --instance-id "$REAL_ID"
   check_rc "身份正例/在册实例正常一轮" 0 "$?"
   LOG="$(first "$CASE_DIR/runs" .log)"
@@ -156,7 +160,7 @@ if [ "$HAVE_REAL" -eq 1 ]; then
   check_has "正例：报告骨架含未覆盖" "$REP" '未覆盖'
 
   L1="$(ls "$CASE_DIR"/runs/*.log 2>/dev/null | wc -l | tr -d ' ')"
-  run run_ok ok 0 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" --instance-id "$REAL_ID"
+  run run_ok ok 1 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" --instance-id "$REAL_ID"
   check_rc "唯一运行 ID/同一产物重跑" 0 "$?"
   L2="$(ls "$CASE_DIR"/runs/*.log 2>/dev/null | wc -l | tr -d ' ')"
   [ "$L1" -eq 1 ] && [ "$L2" -eq 2 ] && ok "唯一运行 ID：重跑不覆盖（${L1}→$L2 份报告）" || bad "唯一运行 ID：重跑覆盖了旧报告（${L1}→${L2}）"
@@ -212,7 +216,7 @@ if [ "$HAVE_REAL" -eq 1 ]; then
   check_not "pstore 残留：未进入加载" "$LOG" '加载模块'
 
   # ---- 5. --no-unload 常驻正反用例（AUD-009 / RA-001 / 复测要求） ------------
-  run run_no_unload ok 0 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" \
+  run run_no_unload ok 1 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" \
     --instance-id "$REAL_ID" --no-unload
   check_rc "run_test/--no-unload 正常常驻" 0 "$?"
   LOG="$(first "$CASE_DIR/runs" .log)"
@@ -263,7 +267,15 @@ check_has "反例：提示必须是 metadata 在册的 instance_id" "$CASE_OUT" 
 
 run ident_unregistered ok 0 bash Tester/tools/run_test.sh --kpm "$KPM" --module "$REAL_MODULE" --instance-id 'not-registered#9'
 check_rc "身份反例/未登记实例" 2 "$?"
-check_has "反例：报不在册并列出候选" "$CASE_OUT" '不在册'
+# 远程/干净副本没有 metadata/modules，run_test 会以“找不到模块登记记录”拒绝（同样 rc=2）；
+# 两种拒绝理由都算这条反例成立，但要如实记出命中的是哪一种。
+if grep -q '不在册' "$CASE_OUT"; then
+  ok   "反例：报不在册并列出候选"
+elif grep -q '找不到模块登记记录' "$CASE_OUT"; then
+  ok   "反例：无登记记录时拒绝（干净副本无 metadata/modules）"
+else
+  bad  "反例：报不在册并列出候选"
+fi
 
 # ---- 11. collect_evidence：证据采集 ----------------------------------------
 run collect_evidence ok 0 bash Tester/tools/collect_evidence.sh --build-id 'mock-instance#1' --module "$REAL_MODULE"
@@ -285,7 +297,11 @@ check_has "证据：--out 生效" "$(ls -d "$CASE_DIR"/explicit/*/ 2>/dev/null |
 
 echo
 if [ "$FAILS" -eq 0 ]; then
-  echo "selftest_scripts: 全部通过（mock 设备；真机行为仍须复验）"
+  if [ "${SKIPS:-0}" -gt 0 ]; then
+    echo "selftest_scripts: 通过 ${PASSES} 项，跳过 ${SKIPS} 项（环境不满足，不计为通过；mock 设备，真机行为仍须复验）"
+  else
+    echo "selftest_scripts: 全部通过（mock 设备；真机行为仍须复验）"
+  fi
   exit 0
 fi
 echo "selftest_scripts: $FAILS 项失败"

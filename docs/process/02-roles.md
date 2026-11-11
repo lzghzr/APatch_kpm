@@ -20,7 +20,7 @@
 | 共享工具机制适配（标准授权） | **机制归需要它的角色**：让共享工具支持模块的合法结构变化（子模块迁移/改名、新增产物元信息字段、转换支持等）**无需逐次请示**，由该角色直接实现 | 五个条件：① 不改变任何判据/阈值/检查范围；② 在维护者自检文件（`tools/selftest_tools.py`／`tools/selftest_artifact_gate.py`）补正反夹具；③ 同轮留下提案记录（patch + 说明 + 复现证据）；④ 维护者同轮逐字节复核并采纳或回退；⑤ 一旦涉及判据即回到上一条。**本条本身即是授权，用户不必逐次批准** |
 | 读取权 | **所有角色都可以读任何角色的工具、报告与原始证据**（用于本地诊断、复现问题、准备修复） | 读取不等于修改：修改权、结论权、真机设备操作权仍分别归属；引用他人结论时必须标注来源与是否独立复现 |
 | Auditor 隔离构建 | 可在 `local/auditor-scratch/`（已被 `.gitignore` 覆盖）或仓库外工作树里独立重编译 | 不在共享工作树内 `make`；产物不回写 `re_kernel/` 与 `artifacts/`；不清理 `local/stale/` |
-| Auditor 自建语料 | 可自建**独立**的 kallsyms 提取（不得调用 `kernel_img/offset_harness`），用于降低「语料由 Developer 提供」的同源风险 | 提取产物放 `local/kallsyms_audit/`；报告里要说明提取器与实现方无关、并声明残余同源风险 |
+| Auditor 自建语料 | 可自建**独立**的 kallsyms 提取（不得调用 `kernel_img/offset_harness`），用于降低「语料由 Developer 提供」的同源风险 | 提取产物放 `local/keep/target/kallsyms_audit/`；报告里要说明提取器与实现方无关、并声明残余同源风险 |
 | 语料范围 | 以使用者当前放在 `kernel_img/` 的镜像/符号表为准；harness 取不到符号表时按 **SKIP（未覆盖）** 记录，不算失败、也不算缺陷 | **不得把"本 harness 提取失败"写成"内核不含 kallsyms"**，定性需独立提取器；结论要写明实际语料清单 |
 | Auditor 只读网络 | 可以为上游核对（KernelPatch 导出符号、内核源码）拉取公开仓库与文档 | 仅读；不上传、不外发语料/设备数据；引用外部结论要标 URL 与访问时间 |
 | 角色检查点提交 | 三角色在**自己拥有的路径**内可创建**无签名检查点提交**：`git add <自己的文件> && git commit --no-gpg-sign -m "checkpoint(<角色>): <产物>"`；报告/回执/交接清单一产出即提交（见 [08-review-economics.md](08-review-economics.md) R8） | 只允许无签名检查点；不得 `tag`/`push`、不得 `checkout/restore/reset/stash/clean`、不得提交他人拥有的文件；交付级签名提交 D 与标签仍只由维护者产出 |
@@ -45,7 +45,7 @@ CI 构建规则（`.github/workflows/build-kpm.yml`）：**只构建「有 Makef
 
 | 约束 | 内容 |
 | --- | --- |
-| C1 写范围 | 仅 `Auditor/**`、`local/auditor-scratch/**`、`local/kallsyms_audit/**`；其余路径只读 |
+| C1 写范围 | 仅 `Auditor/**`、`local/auditor-scratch/**`、`local/keep/target/kallsyms_audit/**`；其余路径只读 |
 | C2 版本控制 | 不 `git add/commit/tag/push`；改他人文件走 `format-patch` 补丁建议 |
 | C3 共享工作树 | 不在共享树内构建；不执行 `checkout/restore/reset/stash/clean`；不清 `local/stale/` |
 | C4 结论来源自律 | `tools/identity.py`、`tools/build_candidate.py`、`kernel_img/offset_harness` 的输出不得进结论；运行过必须在报告标注「仅用于定位，未作依据」 |
@@ -62,7 +62,7 @@ CI 构建规则（`.github/workflows/build-kpm.yml`）：**只构建「有 Makef
 | A1 | 设备操作**黑名单**（禁止） | `fastboot flash/erase/-w`、`adb shell rm -rf`、清 pstore、改 superkey、卸载/重装 APatch、刷机、进 recovery 清数据 |
 | A2 | 自主 `adb reboot` 作为死机恢复 | **有条件批准**：① 已记录四项基线且基线 pstore 为空，仅用于无响应类异常；② **只允许一次**，之后停止重试并升级；③ 当前出现崩溃特征或发现 pstore 非空时保留现场交维护者；④ 先尽力采集可读证据并通知维护者，记录恢复时间、动作与结果；⑤ 重启可能改变现场，恢复后立即采证 |
 | A3 | Manager UID 免密特权通道 | 通过 APatch Manager UID 走 `kpatch su kpm` 通道；未获取特权通道时 `kpm list/load/unload` 不可执行，按 A6 记为未执行 |
-| A4 | 原始证据落库位置 | 原始 dmesg/pstore 全文（可能含序列号）放 `local/tester-raw/`（已 gitignore）：入库只放**脱敏摘要**，序列号一律换成设备指纹哈希 |
+| A4 | 原始证据落库位置 | 原始 dmesg/pstore 全文（可能含序列号）放 `local/keep/evidence/tester-raw/`（已 gitignore）：入库只放**脱敏摘要**，序列号一律换成设备指纹哈希 |
 | A5 | 物理动作请求单 | 需要人手时用 [escalation 模板](../templates/escalation.md) 的「需要维护者执行的物理动作」发起，维护者按「动作回执」回填（时间/动作/结果） |
 | A6 | 「无设备 / 未授权 ⇒ 未执行」 | 是**合法状态**（沿用 `not-run` 先例），不算失败；但必须写明未执行的原因与未覆盖清单 |
 | C1 | 崩溃判据改**存活判据** | 主判据 = `boot_id` 不变 + `uptime` 单调 + adb 持续响应；`dmesg` 无崩溃特征标注为**弱证据**，只能写"未观察到" |
@@ -72,7 +72,7 @@ CI 构建规则（`.github/workflows/build-kpm.yml`）：**只构建「有 Makef
 | C3 | 加载人在环 + 零重试 | 加载类操作必须维护者在线；死机后**零重试**，含脚本之外与跨会话的重试 |
 | C4 | 加载前基线 | 必录 `boot_id`、`uptime`、**pstore 是否残留旧崩溃**、当前已加载模块；pstore 非空先停下问维护者 |
 | C5 | 判据脚本绑定 | 判据脚本的路径 + hash（或脚本 commit）必须写进报告；脚本变更后旧结论不自动继承 |
-| C6 | 写范围 | 仅 `Tester/**` 与 `local/tester-raw/**`；`docs/`、`metadata/`、`tools/`、模块源码只提补丁建议 |
+| C6 | 写范围 | 仅 `Tester/**` 与 `local/keep/evidence/tester-raw/**`；`docs/`、`metadata/`、`tools/`、模块源码只提补丁建议 |
 | C7 | 「采不到」必须写原因 | 未采集项逐项写原因，不允许留空或空格占位 |
 
 ## Developer

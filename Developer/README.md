@@ -5,7 +5,7 @@ Developer 拥有「让功能在目标内核上跑起来」的全部工作：内�
 - 手册：`docs/process/developer-handbook.md`
 - 偏移方法论（必读）：`.agents/skills/kernel-offset-derivation/SKILL.md`
 - KPM 编码规范：`.agents/skills/kpm-development/SKILL.md`
-- 测试基准守则（必读）：`.agents/skills/respect-the-oracle/SKILL.md`
+- 测试基准守则（必读）：[docs/process/06-antipatterns.md](../docs/process/06-antipatterns.md#测试基准与反向过拟合)
 - 开发报告模板：`docs/templates/developer-report.md`
 
 ## 偏移获取的默认范围（2026-10-09）
@@ -36,7 +36,7 @@ Developer 拥有「让功能在目标内核上跑起来」的全部工作：内�
 ```bash
 make -C re_kernel all debug                                   # 构建 static/dynamic 及各自 debug
 cd kernel_img/offset_harness
-python3 extract_kernel.py                                     # img -> local/extracted/<标签>/Image
+python3 extract_kernel.py                                     # img -> local/keep/target/extracted/<标签>/Image
 python3 run.py                                                # 全镜像偏移矩阵（自检）
 python3 tools/identity.py manifest re_kernel --toolchain ndk26.3.11579264
 python3 tools/identity.py record re_kernel --toolchain ndk26.3.11579264

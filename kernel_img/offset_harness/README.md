@@ -13,14 +13,14 @@
 ```text
 kernel_img/<major>/<sub>/boot.img      用户放置的原始 img（不进 git，见 ../README.md）
 kernel_img/<major>/<sub>/kallsyms.txt  可选：相对 _text 的真实地址符号表
-local/extracted/<major>/<sub>/Image    提取出的裸 kernel（不进 git，仓库根 local/）
-local/extracted/index.json             标签 → 源 img / 版本 / sha256 索引
-local/kernel_offset/<major>/<sub>/trace.log      与 CONFIG_DEBUG logkm 同格式的推导过程
-local/kernel_offset/<major>/<sub>/struct_offset.c   该内核的 C 初始化器（re_vmlinux.c 输出格式）
-local/kernel_offset/<major>/<sub>/<anchor>.asm   锚函数反汇编（capstone）
-local/kernel_offset/<major>/<sub>/kallsyms_extracted.txt  内嵌提取的符号表（若有）
-local/kernel_offset/report.md                    状态表 + ver4/5/6 判定标志 + 偏移矩阵
-local/kernel_offset/offsets.json                 机器可读结果
+local/keep/target/extracted/<major>/<sub>/Image    提取出的裸 kernel（不进 git，仓库根 local/）
+local/keep/target/extracted/index.json             标签 → 源 img / 版本 / sha256 索引
+local/keep/target/kernel_offset/<major>/<sub>/trace.log      与 CONFIG_DEBUG logkm 同格式的推导过程
+local/keep/target/kernel_offset/<major>/<sub>/struct_offset.c   该内核的 C 初始化器（re_vmlinux.c 输出格式）
+local/keep/target/kernel_offset/<major>/<sub>/<anchor>.asm   锚函数反汇编（capstone）
+local/keep/target/kernel_offset/<major>/<sub>/kallsyms_extracted.txt  内嵌提取的符号表（若有）
+local/keep/target/kernel_offset/report.md                    状态表 + ver4/5/6 判定标志 + 偏移矩阵
+local/keep/target/kernel_offset/offsets.json                 机器可读结果
 ```
 
 标签（label）由输入位置推导：目录里的镜像用**目录路径**当标签（`4.9/miui`），平铺文件用**镜像内嵌版本**
@@ -47,7 +47,7 @@ re_kernel 运行时的偏移推导是纯指令模式匹配：通过 kallsyms 找
 cd kernel_img/offset_harness
 
 python3 extract_kernel.py --list          # 有什么（文件名 → 标签，含上次提取的标签）
-python3 extract_kernel.py                 # 提取全部：裸 kernel 写到 local/extracted/<标签>/Image
+python3 extract_kernel.py                 # 提取全部：裸 kernel 写到 local/keep/target/extracted/<标签>/Image
 python3 extract_kernel.py --image B2N-416G_boot.img   # 只提取点名的那个（文件名/stem/标签/子串）
 python3 extract_kernel.py --pick          # 多个镜像时交互式挑一个（仅 TTY）
 python3 extract_kernel.py --img ../x.img --label 4.9/miui   # 单个文件、显式标签
@@ -59,7 +59,7 @@ python3 run.py --image B2N-416G_boot.img  # 只处理点名的镜像
 python3 run.py --image 4.14               # 也可以按上次提取出的标签挑（4.14/4.14.356-Liberty）
 python3 run.py --kernel 4.9/miui          # 按标签精确挑选（等价写法）
 python3 run.py --pick                     # 多个镜像时交互式挑一个（仅 TTY）
-python3 run.py --out /tmp/offset          # 输出改到别处（默认 local/kernel_offset）
+python3 run.py --out /tmp/offset          # 输出改到别处（默认 local/keep/target/kernel_offset）
 python3 run.py --trace-insn               # 每条指令的 trace（巨大，排错用）
 ```
 
@@ -70,7 +70,7 @@ zstd/lz4 压缩的内核需要 `zstandard` / `lz4`，gzip/xz 用标准库。
 
 "为 `B2N-416G_boot.img` 移植 `dont_kill_freeze`" 这类需求的工作方式：
 
-1. `extract_kernel.py --image B2N-416G_boot.img` 把它的裸 kernel 解到 `local/extracted/`；
+1. `extract_kernel.py --image B2N-416G_boot.img` 把它的裸 kernel 解到 `local/keep/target/extracted/`；
 2. `run.py --image B2N-416G_boot.img` 看**该模块用到的锚点/偏移**在这个内核上的取值
    （注意 `offsets_calc.py` 目前只覆盖 re_kernel 的偏移集合：为别的模块移植时，先在
    `offsets_calc.py` / `re_insts.py` 里补上该模块用到的锚点与字段，再跑）；
@@ -93,8 +93,8 @@ zstd/lz4 压缩的内核需要 `zstandard` / `lz4`，gzip/xz 用标准库。
 
 ## 输出与命名
 
-- 报告与矩阵在 `local/kernel_offset/report.md`，机器可读结果在 `local/kernel_offset/offsets.json`；
-- 每个标签一个子目录 `local/kernel_offset/<major>/<sub>/`，与 `local/extracted/` 一一对应；
+- 报告与矩阵在 `local/keep/target/kernel_offset/report.md`，机器可读结果在 `local/keep/target/kernel_offset/offsets.json`；
+- 每个标签一个子目录 `local/keep/target/kernel_offset/<major>/<sub>/`，与 `local/keep/target/extracted/` 一一对应；
 - 输出与提取产物都属**用户数据**，统一放在 `local/` 下（`.gitignore` 已忽略，不会公开）；
 - 报告里的 `kernel sha256` 是**提取出的裸 kernel** 的哈希，可用于把结论绑定到具体字节。
 

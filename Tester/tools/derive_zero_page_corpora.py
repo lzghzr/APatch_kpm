@@ -35,13 +35,13 @@ def main():
     parser.add_argument(
         "--src",
         type=Path,
-        default=Path("local/tester-raw/corpus_real_256m.bin"),
+        default=Path("local/keep/evidence/tester-raw/corpus_real_256m.bin"),
         help="Path to source real corpus (256 MiB)",
     )
     parser.add_argument(
         "--out-dir",
         type=Path,
-        default=Path("local/tester-raw"),
+        default=Path("local/keep/evidence/tester-raw"),
         help="Output directory for derived corpora",
     )
     args = parser.parse_args()

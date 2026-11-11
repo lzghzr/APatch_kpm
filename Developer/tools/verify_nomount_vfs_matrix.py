@@ -119,7 +119,7 @@ for name in args.images:
  log=subprocess.check_output([str(args.kptools.resolve()),'-d','-i',str(image)],text=True,stderr=subprocess.STDOUT)
  (out/'symbols.log').write_text(log)
  syms={n:(int(o,16),t) for o,t,n in re.findall(r'(?m)^0x([0-9a-f]+) ([A-Za-z]) (\S+)$',log)};s={n:o for n,(o,t) in syms.items()}
- ref=json.loads((root/'local/nomount/configs'/(name+'-v4.json')).read_text());offsets=ref['offsets']
+ ref=json.loads((root/'nomount/local/configs'/(name+'-v4.json')).read_text());offsets=ref['offsets']
  assert hashlib.sha256(raw).hexdigest()==ref['kernel_sha256']
  prepared,native,reloc=relocate_key_prefix(raw,s,log,offsets)
  if native is None:

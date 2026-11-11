@@ -406,7 +406,7 @@ def main():
             devices = [(args.device, default_labels[0])]
 
     timestamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
-    raw_dir = REPO / 'local/tester-raw/lz4kd16-bench'
+    raw_dir = REPO / 'local/keep/evidence/tester-raw/lz4kd16-bench'
     raw_dir.mkdir(parents=True, exist_ok=True)
 
     print("Step 1: Check source files SHA-256")

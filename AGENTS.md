@@ -53,7 +53,7 @@ python3 run.py --image B2N-416G_boot.img               # 只对它跑偏移推�
 - **真机不可靠，死机不自救**：测试中遇到死机/卡死/无响应，**立即停止一切重试**，按 [docs/process/07-escalation-device.md](docs/process/07-escalation-device.md) 采集证据并**通知维护者**。禁止自行改偏移、反复加载、反复重启。
 - **产不可覆盖**：同一 Build ID 的产物不得重建覆盖；重建使用新的空输出目录并产生新 Build ID。
 - **公开文件不写本机信息**：不写本机绝对路径、设备序列号、superkey、抓包内容（测试报告用设备指纹哈希代替序列号）。
-- **遵守测试 Oracle 与防反向过拟合**：基准测试套件视为只读 Oracle。严禁为了通过测试而私自修改、弱化或删除已有断言；严禁为了迁就宿主单测/Mock 而扭曲生产代码架构；确需变更断言时必须在报告中单独说明技术依据并由 Auditor 独立复核（详见 [.agents/skills/respect-the-oracle/SKILL.md](.agents/skills/respect-the-oracle/SKILL.md)）。
+- **遵守测试 Oracle 与防反向过拟合**：基准测试套件视为只读 Oracle。严禁为了通过测试而私自修改、弱化或删除已有断言；严禁为了迁就宿主单测/Mock 而扭曲生产代码架构；确需变更断言时必须在报告中单独说明技术依据并由 Auditor 独立复核（[规范条文](docs/process/06-antipatterns.md#测试基准与反向过拟合)）。
 - **不为了过门禁而放宽断言**：断言、用例、检查范围的任何缩小都要在报告中写明并给出理由。
 - **判据与机制分流**：什么算合格（身份语义、命名契约、检查范围、阈值）归维护者；让共享工具支持模块的合法结构变化（子模块迁移/改名、产物元信息新字段、转换支持）**归需要它的角色直接实现**，条件是补维护者自检里的正反夹具 + 同轮提案记录 + 维护者逐字节复核采纳，且不改判据。**这是标准授权，不必逐次请示或逐次批准**（见 [docs/process/08-review-economics.md](docs/process/08-review-economics.md) R11）。
 
@@ -73,7 +73,7 @@ python3 run.py --image B2N-416G_boot.img               # 只对它跑偏移推�
 
 ```bash
 cd kernel_img/offset_harness && python3 extract_kernel.py --list                # Developer：先看 kernel_img/ 里有什么
-cd kernel_img/offset_harness && python3 extract_kernel.py --image <名字> && python3 run.py --image <名字>   # 指定镜像：img -> 裸 kernel -> 偏移矩阵（输出在 local/kernel_offset）
+cd kernel_img/offset_harness && python3 extract_kernel.py --image <名字> && python3 run.py --image <名字>   # 指定镜像：img -> 裸 kernel -> 偏移矩阵（输出在 local/keep/target/kernel_offset）
 make -C re_kernel all debug                        # Developer：探索构建（需 NDK）
 python3 tools/identity.py manifest re_kernel       # Developer/维护者：源树哈希、Build ID 与配方指纹
 python3 tools/build_candidate.py re_kernel --toolchain ndk26.3.11579264 --target "all debug"   # 冻结输入→构建→登记（脏树拒绝）

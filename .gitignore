@@ -36,7 +36,7 @@ artifacts/
 __pycache__/
 
 # 本地运行文件：提取出的裸 kernel、harness 输出、锁文件、缓存（见 kernel_img/README.md）
-/local/
+local/
 *.lock
 
 # kernel_img：用户放置的原始 img 与符号表不进版本库，只保留说明、archive 标记与工具

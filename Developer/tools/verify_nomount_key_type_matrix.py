@@ -230,8 +230,8 @@ def declared_extent(probe, image, cfg, out, llvm):
     if 'windows' not in probe or cfg is None or any(cfg.values()):
         return {'status': 'not-covered'}
     headers = {
-        'B2N-416G_boot.img': 'local/nomount-control-20261013/native/v4.4/include/linux/key-type.h',
-        'boot_los23.2.img': 'local/nomount-control-20261013/native/target/include/linux/key-type.h',
+        'B2N-416G_boot.img': 'local/keep/oracle/kernel-facts/native/v4.4/include/linux/key-type.h',
+        'boot_los23.2.img': 'local/keep/oracle/kernel-facts/native/target/include/linux/key-type.h',
     }
     header = ROOT / headers.get(image, 'local/nomount-extension-20261015-01/source-headers-01/' + image + '/include/linux/key-type.h')
     if not header.exists():
@@ -292,7 +292,7 @@ def main():
             if symbols:
                 symbols = {name: at for at, kind, name in symbols}
                 refname = 'B2N-416G' if image.name == 'B2N-416G_boot.img' else image.name.removesuffix('.img')
-                reference = json.loads((ROOT / 'local/nomount/configs' / (refname + '-v4.json')).read_text())
+                reference = json.loads((ROOT / 'nomount/local/configs' / (refname + '-v4.json')).read_text())
                 assert reference['kernel_sha256'] == unpacked.kernel_sha256
                 log = (out / 'kptools.log').read_text() if (out / 'kptools.log').exists() else ''
                 prepared, base, relocation = relocate_key_prefix(raw, symbols, log, reference['offsets'])
@@ -308,7 +308,7 @@ def main():
                     assert row['declared_extent']['status'] == 'reference-contract'
                     assert row['declared_extent']['size'] == observed['key_type_size']
                     row['reference_comparison'] = {'status': 'matched', 'fields': observed,
-                                                   'reference': 'local/nomount/configs/' + refname + '-v4.json'}
+                                                   'reference': 'nomount/local/configs/' + refname + '-v4.json'}
 
             else:
                 row['probe'] = {'status': 'SKIP', 'reason': 'neither extractor covered the image'}

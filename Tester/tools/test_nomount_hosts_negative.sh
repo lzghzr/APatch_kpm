@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 #
+# 注意：本脚本是**操作记录**（打印命令与退出码），不产出 PASS/FAIL 判据，
+#       不得作为验收依据；判据由对应请求单的 run_test 轮次承担。
 # Tester/tools/test_nomount_hosts_negative.sh
 #
 # 依据请求单: docs/records/2026-10-26-nomount-hosts-uid-scope-and-label-request.md
@@ -37,7 +39,7 @@ run_cmd() {
   return $rc
 }
 
-RAW_DIR="$REPO/local/tester-raw"
+RAW_DIR="$REPO/local/keep/evidence/tester-raw"
 mkdir -p "$RAW_DIR"
 
 RPATH_A="/data/local/tmp/nomount_probe_hosts_a.txt"
@@ -101,7 +103,7 @@ run_cmd "B1 观测: netd 触发解析 (ping example.com)" "$ADB -s $SERIAL shell
 run_cmd "B1 观测: HTTP 连通性测试 (curl example.com)" "$ADB -s $SERIAL shell \"curl -I -m 2 http://example.com 2>&1 || true\""
 
 run_cmd "采集 netd SELinux denial 原始日志" "$ADB -s $SERIAL shell \"su -c 'dmesg | grep -E \\\"avc:  denied.*netd\\\"'\""
-# 保存原始 SELinux denial 到 local/tester-raw/
+# 保存原始 SELinux denial 到 local/keep/evidence/tester-raw/
 $ADB -s $SERIAL shell "su -c 'dmesg | grep -E \"avc:  denied.*netd\"'" > "$RAW_DIR/2026-10-26-hosts-selinux-denial.raw.txt" 2>&1 || true
 
 run_cmd "注销 B1 规则" "$ADB -s $SERIAL shell \"su -c 'nm rule del /system/etc/hosts'\""

@@ -30,7 +30,7 @@ kernel_img/
 | 只有符号表没有镜像 | 保留为 SKIP 项，可用于跨版本符号核对（不推导偏移） |
 
 > 标签只在**处理之后**才确定（平铺镜像要解包才知道版本），所以第一次只能按**文件名**挑；
-> 提取过一次后，`local/extracted/index.json` 会记住"文件名 ↔ 标签"，之后就能用 `--image 4.14` 这样挑。
+> 提取过一次后，`local/keep/target/extracted/index.json` 会记住"文件名 ↔ 标签"，之后就能用 `--image 4.14` 这样挑。
 
 想固定标签时用显式参数：`python3 extract_kernel.py --img ../x.img --label 4.9/miui`。
 
@@ -61,8 +61,8 @@ harness 取不到符号表时该内核会被标为 **SKIP（未覆盖）**，不
 
 ```bash
 cd kernel_img/offset_harness
-python3 extract_kernel.py                 # 提取裸 kernel 到 local/extracted/<标签>/Image
-python3 run.py                            # 推导偏移，输出到 local/kernel_offset/<标签>/
+python3 extract_kernel.py                 # 提取裸 kernel 到 local/keep/target/extracted/<标签>/Image
+python3 run.py                            # 推导偏移，输出到 local/keep/target/kernel_offset/<标签>/
 python3 run.py --kernel 4.9/miui          # 只跑指定标签（也可以直接写源文件名）
 ```
 
@@ -76,8 +76,8 @@ python3 run.py --kernel 4.9/miui          # 只跑指定标签（也可以直接
 | --- | --- | --- |
 | 用户放置的原始 `img` | `kernel_img/**`（`README.md` 与 `offset_harness/` 除外） | **否** |
 | 用户放置的符号表 | `kernel_img/**/*.kallsyms`、`kallsyms_*.txt` | **否** |
-| 提取出的裸 kernel、索引 | `local/extracted/**` | **否** |
-| 分析输出（报告/反汇编/矩阵） | `local/kernel_offset/**` | **否** |
+| 提取出的裸 kernel、索引 | `local/keep/target/extracted/**` | **否** |
+| 分析输出（报告/反汇编/矩阵） | `local/keep/target/kernel_offset/**` | **否** |
 | 工具与说明 | `kernel_img/README.md`、`kernel_img/offset_harness/**` | 是 |
 
 约定：**运行产生的本地文件都放仓库根的 `local/`**（`.gitignore` 整体忽略该目录），主目录保持干净。
@@ -85,5 +85,5 @@ python3 run.py --kernel 4.9/miui          # 只跑指定标签（也可以直接
 
 ```bash
 git status --short          # 不应出现 *.img 或 local/ 下的条目
-git check-ignore -v kernel_img/4.9/default/boot.img local/extracted/x/Image local/kernel_offset/report.md
+git check-ignore -v kernel_img/4.9/default/boot.img local/keep/target/extracted/x/Image local/keep/target/kernel_offset/report.md
 ```
