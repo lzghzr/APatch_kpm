@@ -2,6 +2,18 @@
 
 本文件适用于 `re_kernel_x/`，结合仓库根目录 `AGENTS.md` 与 `docs/` 的角色规则执行。模块源码、移植工具和实现方自检由 Developer 维护；审计与真机结论分别引用独立角色报告。
 
+## 与上游的既定差异
+
+以下偏离是**有意决定**，不是缺陷；审计、测试与维护者复查都不得按上游语义判为错误。
+
+- **同步与回复事件直接放行**：不参与 code／RPC 名判断，因此这类上报里 `code=0`、`rpc_name` 为空。
+- **同 UID 事件不上报**：应用自己拉起自己的场景会产生误导性事件，由维护者决定抑制。
+- **异步清理只要求 `TF_ONE_WAY`，不要求 `TF_UPDATE_TXN`**：与 ReKernel-X 上游一致，上游本就不要求该标志。
+- **RPC 名称上限 139 字符，且禁止截断后匹配**：本地按“字符数”读取 `PARCEL_OFFSET + 140*2` 字节，规则结构同样按 140 字符定义；上游 `RKX_INTERFACETOKEN_BUFF_SIZE (140)` 按“字节数”使用，实际最多 62 字符。Token 截断、无 NUL、空名称或非 ASCII UTF-16 一律保留消息，不当作完整名称匹配。
+  由来见 `Developer/reports/2026-10-02-re-kernel-static-free-async.md`。
+- **容量固定 32 项**：规则与监控 UID 使用数组而非哈希表，满时返回 `-ENOSPC`；为 KPM 移植形态与查找性能考虑，不用上游的无上限链表。
+- **控制命令仅接受 UID 1000**：已与上游作者确认，LKM 形态不会出现越权调用，KPM 形态需要显式约束；UID 0 同样拒绝。
+
 ## 文件约定
 
 模块注册名、目录名与产物名前缀为 `re_kernel_x`，Generic Netlink family 为 `rekernel_x2`。模块自己的定义放 `re_kernel.h`，核对过的内核结构放 `re_structs.h`，KP 风格封装放 `re_utils.h`，公共宏放 `../kpm_utils.h`。缩进遵循仓库 `.clang-format`。
@@ -100,7 +112,6 @@ tracepoint 指针用于原生注册，`__traceiter_*` 的 BTF 仅用于 ABI 核�
 
 探索/候选构建须捕获共用输入：`--extra-input patch_offsets.py`。静态补丁测试入口保持 `test_static.py`；双模式入口为 `re_kernel/tools/test_modes.py`，BTF 入口为 `re_kernel/tools/test_btf.py`，旧内核入口为 `re_kernel/tools/test_dynamic_offsets.py`。目标语料必须按仓库规则先确认范围。
 
-
 ## 接入、安装验证与生命周期
 
 适配目标为 Android ARM64，内核 4.4～6.6。动态版优先使用 BTF；缺少必要数据或查询接口时，尝试从内核函数推导。获取失败时停止加载，具体原因见内核日志。
@@ -130,7 +141,6 @@ tracepoint 指针用于原生注册，`__traceiter_*` 的 BTF 仅用于 ABI 核�
 - 不要热卸载或热换版；本模块卸载与热重载生命周期仍待验证，更换或移除须重启。替换已安装文件后当前仍运行旧版，必须重启才生效；嵌入件更新须更新启动镜像。
 - 保留 userdata 通常会保留已安装文件，但**不保证 OTA 后兼容**。新 boot 仍须带支持目录加载的 KP，并满足用户态 `before` 上报、内核导出及布局/ABI 条件；静态偏移须重新核对，重启后再确认 family、应用连接及规则配置。
 
-
 ## 异步清理 debug 观测
 
 两个模块各自维护 `binder_free_outdated`，公共释放顺序与完成日志保持一致。debug 在整个 native buffer／
@@ -144,7 +154,6 @@ allocator／fixups／transaction 释放链及删除统计返回后输出一条�
 
 自检入口：`python3 Developer/tools/test_rekernel_cleanup_logs.py --output <新目录>`；同时核对两份独立函数一致、
 release静默、debug日志内容／时序、空消息和可选fixups，以及原生外层归还引用后的延迟回收。
-
 
 ## 策略选择 debug 诊断
 
@@ -166,7 +175,6 @@ invalid_token 或 rpc_lookup；rpc_lookup 的策略值来自实际匹配结果�
 `test_static.py` 新增4字节／规则增删和六发队列模型，覆盖无规则、无关规则、可解析未匹配、显式SKIP／BY_CODE，
 以及BY_DATA下各消息数据不同的保留。解析失败的旧SKIP断言与上游默认值不符，调整须经独立Oracle复核；成功规则、对象、预算、读取边界及引用断言保持。
 
-
 ## 历史规则依据
 
 清理顺序以提交 `3dcd5962e6d8abe2167bfecaccf63b8ea3b5563b` 为准：至少两条匹配旧消息时删除最早一条，
@@ -175,3 +183,4 @@ invalid_token 或 rpc_lookup；rpc_lookup 的策略值来自实际匹配结果�
 用户确认把rek基础清理对齐此策略，并明确rek保留29～32异步通知过滤、rekx不套该过滤。
 10月3日滚动合并讨论在上述提交的 `Developer/reports/2026-10-03-async-binder-cleanup-discussion.md` 中保存，
 当时明确未批准／实现，不能当成当前规则。规则选择失败的BY_CODE默认值以固定上游为依据；本轮Oracle修正只涉及该默认值。
+

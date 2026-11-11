@@ -2,6 +2,16 @@
 
 本目录由 Developer 维护，遵循仓库根目录及 docs/ 的角色与身份规则。README 面向普通用户；加载机制、协议、移植和排查细节在本文件维护。更新记录在 README 保留原文。
 
+## 与上游的既定差异
+
+以下偏离是**有意决定**，不是缺陷；审计、测试与维护者复查都不得按上游语义判为错误。
+
+- **同步与回复事件直接放行**：不参与 code／RPC 名判断，因此这类上报里 `code=0`、`rpc_name` 为空。
+- **同 UID 事件不上报**：应用自己拉起自己的场景会产生误导性事件，由维护者决定抑制。
+- **异步清理只要求 `TF_ONE_WAY`，不要求 `TF_UPDATE_TXN`**：为兼容 5.4 等缺少该标志的内核而定的取舍；代价是普通同 code 异步消息也会被清理。
+- **容量固定 32 项**：规则与监控 UID 使用数组而非哈希表，满时返回 `-ENOSPC`；为 KPM 移植形态与查找性能考虑，不用上游的无上限链表。
+- **控制命令仅接受 UID 1000**：已与上游作者确认，LKM 形态不会出现越权调用，KPM 形态需要显式约束；UID 0 同样拒绝。
+
 ## 接入、排查与静态移植
 
 基于 Re:Kernel 的 KernelPatch 移植，向配套墓碑应用发送 Binder、信号和网络事件通知，由应用决定是否解冻；模块同时清理冗余异步 Binder 消息。
@@ -56,7 +66,6 @@ python3 patch_offsets.py patch re_kernel_baselines.kpm --offsets target-offsets.
 
 配套布局文件应放在基线旁，命名为 `re_kernel_baselines.kpm.json`。替换工具只依赖 Python 标准库，用户侧无需 NDK。
 
-
 ## Binder 厂商入口与清理
 
 优先注册 `android_vh_binder_transaction_record`：完整拷贝后、入队加锁前触发，但回调仍禁止抢占。
@@ -85,7 +94,6 @@ Genl 初始化成功后最后注册，失败按已安装状态撤销自有 wrap�
 Genl 广播统一使用共同 `__GFP_HIGH` 位以避免旧 GFP 高位含义冲突。skb 优先 `kfree_skb`，否则
 `consume_skb`，每次只释放一个引用；两者都缺少则拒绝加载。
 
-
 ## 异步清理 debug 观测
 
 两个模块各自维护 `binder_free_outdated`，公共释放顺序与完成日志保持一致。debug 在整个 native buffer／
@@ -99,3 +107,4 @@ allocator／fixups／transaction 释放链及删除统计返回后输出一条�
 
 自检入口：`python3 Developer/tools/test_rekernel_cleanup_logs.py --output <新目录>`；同时核对两份独立函数一致、
 release静默、debug日志内容／时序、空消息和可选fixups，以及原生外层归还引用后的延迟回收。
+

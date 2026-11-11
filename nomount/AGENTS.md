@@ -14,7 +14,7 @@
 ## 本地静态适配数据
 
 用户静态适配以本次提供的 boot 镜像重新取证，绑定镜像身份生成结果；不按机型或内核版本套用旧表。
-目标配置与回归输入放在仓库根目录的 `local/nomount/configs/`，由已有 `/local/` 规则忽略，不进入源码或默认构建。
+目标配置与回归输入放在仓库根目录的 `nomount/local/configs/`，由已有 `/local/` 规则忽略，不进入源码或默认构建。
 该目录目前保留22份历史配置，其中12份v4用于既有回归；文件内容不因移动而改变。
 依赖这些输入的自检须先备齐原目标证据，缺文件应报未就绪，不能把空配置矩阵算作通过。
 
@@ -32,8 +32,8 @@ git archive <迁移前提交> nomount/configs | tar -x -C local
 
 - `nomount.c`：KPM 元信息、完整初始化、状态查询和驻留诊断入口。
 - `Makefile`：dynamic / static 两种产物，静态版附带布局 JSON。
-- `local/nomount/configs/boot_los23.2.json`：首轮目标的38项配置及镜像、源码和证据绑定。
-- `local/nomount/configs/B2N-416G.json`／`local/nomount/configs/boot_los23.2-v2.json`：0.2.0 的42项静态配置。原0.1.0配置与候选保持原样。
+- `nomount/local/configs/boot_los23.2.json`：首轮目标的38项配置及镜像、源码和证据绑定。
+- `nomount/local/configs/B2N-416G.json`／`nomount/local/configs/boot_los23.2-v2.json`：0.2.0 的42项静态配置。原0.1.0配置与候选保持原样。
 - `nm_layout.c`：布局获取层的编译入口；当前只构建对象文件。
 - `nm_native_entry.c`：布局、操作表尺寸和原生封装的联合编译入口。
 - `nm_rules_entry.c`：规则核心的独立编译入口；与其他临时入口分别编译。
@@ -147,7 +147,43 @@ git archive <迁移前提交> nomount/configs | tar -x -C local
 - 规则数组和子项数组的 build / publish 分开，拓扑层备齐全部输入后再发布；原有 set/insert/remove 接口继续共用同一构造器。失败保持旧数组，输入规则引用保留给调用者。
 - 规范路径允许裁掉尾部斜线；拒绝根目录规则、空分量、点分量和超长名称。只有 ENOENT 被当作缺失父目录；其他原生解析错误保留。原生 d_hash_and_lookup 的错误在发布前处理，成功后对缓存目标 d_drop/dput，并调用 shrink_dcache_parent。
 
+
+> **读法说明**：本文件中提到、但仓库里不存在的 `test_*.py`（如 `test_612_btf.py`、`test_612_callbacks.py`、`test_btf_current.py`、`test_cache_reuse.py`、`test_cfi_layout_shapes.py`、`test_dentry_publication.py` 等）都属于已移出的维护者回归集，位置在 **`nomount/local/tests/`**（`nomount/local/` 已 gitignore，不入库）。这些描述保留原样作为历史依据；公共仓库里实际存在的是 §验证 开头列出的 12 个入口。
+
+## 工具与测试的去留（2026-11-10）
+
+**不再使用的工具和测试必须移除，不要留着占位。**「存在但从不运行」的脚本比没有更糟：它让人以为有覆盖。
+
+移除判据（命中任一条即应删除，删除时在本文件记一行理由）：
+
+| 判据 | 例子 |
+| --- | --- |
+| **跑不动**：与生产代码长期漂移，从未运行过 | `test_native_memory.py` —— 引入日志宏的提交里就把桩落下了，自创建起从未编译通过 |
+| **重复**：别的测试已覆盖同一断言 | 同上，缺符号拒绝已由 `tools/test_native.py` 覆盖 |
+| **无引用**：改结构后没有任何入口调用、也没有文档要求运行 | 9 个链式自检（0.4.x 单翻译单元快照） |
+| **只有数据没有检查**：只记录地址/偏移，不断言任何东西 | 按目标列符号地址，用 `inspect_target.py` 现生成即可 |
+
+**改生产接口必须同一次改夹具**：新增/重命名日志宏、改变函数签名或把函数改成 `static`（联合入口可见性变化）时，凡引用它的测试夹具必须在**同一个提交**里同步；跑一遍再提交。跑不动就按上表删掉，不要留「下次再修」。
+
+**不做的事情**：不为提高覆盖率新建门禁项；已移出的回归集不回填公共仓库（克隆者路径见 [docs/process/12-local-bootstrap.md](../docs/process/12-local-bootstrap.md)）。
+
+**与测试基准守则的边界**（见 [规范条文](../docs/process/06-antipatterns.md#测试基准与反向过拟合)）：该守则冻结的是「**已随候选提交、版本发布归档**的测试套件」中的断言。它保护的是**曾经对着某个交付候选真正跑过的判据**，因此：
+
+| 对象 | 处置 | 依据 |
+| --- | --- | --- |
+| 已发布候选的测试断言、冻结 Oracle 输出 | 只许追加，禁止改写／放宽 | 守则「篡改基准测试」 |
+| 从未运行过、或与其它测试重复覆盖的整份测试 | 可删除，但须在本文件留一行技术依据 | 本文件上表 |
+| 同一目标中间世代的 oracle 目录（如 `layout-01…05`） | 可直接移除，最终世代原地保留 | `local/keep/README.md` §代际规则 |
+
+**删除或改写仍在使用的断言，一律按守则「隐蔽削弱断言」走**：开发报告单独列「断言调整范围与技术依据」，交 Auditor 独立复核，且不得与业务功能混在同一提交——删除整份测试同样适用。维护者代为执行时，只做机械删除，结论仍归复核方。
+
+**维护者本地回归集（`nomount/local/tests/`）不在仓库内，Auditor 无法从 git 复核。** 因此：其中任一断言被改动，必须把改动摘要与输入哈希写进开发报告；若该测试要用于某个交付候选的判据，必须把相关测试随该候选提交回仓库，否则不得作为 Tier-2 证据引用。
+
 ## 验证
+
+**公共仓库只保留克隆者可用的工具。** 生成器（`inspect_target.py`、`kernel_img/offset_harness/`、根 `patch_offsets.py`、`check_target_calls.py`）与不依赖本地材料的测试留在本目录，共 12 个：`test_inspect_target.py`、`test_release_zip.py`、`test_update_json.py`、`test_vfs_window_scan.py`、`test_zip_metadata.py`、`test_file.py`、`test_file_layout.py`、`test_function_file_layout.py`、`test_inode_code_bounds.py`、`test_layout.py`、`test_native.py`、`test_rules.py`。
+
+其余 89 个针对已取证目标的回归测试需要 `local/keep/` 下的冻结 Oracle、符号表或目标配置，**已移出仓库**，现在在 `nomount/local/tests/`（`nomount/local/` 已 gitignore），维护者在本机按需运行。它们不进公开发布，也不作为克隆者的验证入口；克隆者更新模块的路径是：自己的 boot 镜像 → `extract_kernel.py` → `inspect_target.py` → 推导偏移 → 构建 → 真机验证。
 
 v22 候选冻结前，Developer 显式运行 `tools/test_v22_sync.py --oracle-output <冻结 contracts 目录> --output <新目录>` 与 `tools/test_v22_module.py --output <新目录>`。前者重放双 ABI 业务夹具并贯通实际 CLI 字节与控制处理，后者重放安装/启动及 WebUI Node VM 用例。生成副本的协议迁移见 `Developer/proposals/2026-10-22-nomount-v22/README.md`；原 Oracle 文件保持不变，迁移待独立复核。这两项未接共享门禁，宿主自检不覆盖浏览器渲染或真实内核并发。
 
@@ -157,7 +193,7 @@ v22 候选冻结前，Developer 显式运行 `tools/test_v22_sync.py --oracle-ou
 
 `tools/test_rules.py` 执行生产规则代码，覆盖 UID 回退、哈希碰撞、替换/删除、失败后旧状态保持、路径引用和 UID 分页。其原生接口夹具只检查调用契约；不证明并发、目录接管或应用扫描。
 
-`tools/test_rule_layout.py` 用合成 BTF 执行规则层的共同前部核对。静态版的共同前部需要目标源码/访存证据；动态版先核对 BTF，缺必要类型或布局不一致时停止该层准备。
+
 
 `tools/compare_structs.py` 对保存的上游 fs.h 和目标 fs.h 编译核对共同片段；范围限于片段及未重排配置，不证明完整类型或所有厂商布局。
 
@@ -165,43 +201,30 @@ v22 候选冻结前，Developer 显式运行 `tools/test_v22_sync.py --oracle-ou
 
 `tools/test_file.py` 执行实际只读文件回调，检查原生接口、写/异步请求拒绝、位置同步、错误返回、映射契约及完整表构造。其夹具不证明 native VMA、页缓存或冻结行为。
 
-`tools/test_inode_layout.py` 比较 inode 操作表／映射、size／时间和 superblock 前部的共同声明；执行 BTF 必要字段和回调 ABI 拒绝边界。只有片段匹配才直接访问，后续回调 ABI 不匹配时停止准备。
 
-`tools/test_inode.py` 执行实际普通文件物化、完整 super_operations 复制、发布竞争和回收路径，核对 backing 生命周期及失败清理。原生接口夹具不证明文件系统私有析构或 RCU 并发；这些还需独立审计和真机事实。
 
-`tools/test_directory_layout.py` 比较七组 dcache 共同片段，核对目录回调 ABI、可选 iterate/d_init、release 槽和必要字段拒绝边界。4.4 的 dentry_operations 没有 d_init，release 槽不能放进共同片段。
 
-`tools/test_directory.py` 完整运行已有 inode Oracle，并追加原生父目录查找、UID 缓存重验证、快照复用、原生 release 保存、枚举过滤与 cookie 恢复检查。其合成 SDK 输入只检查生产宏的调用契约，不代表目标上的 task/cred 偏移值；不证明原生文件系统、并发或 Android 扫描。
 
-`tools/test_virtual_directory.py` 完整运行目录及 inode Oracle，再追加纯虚拟目录的新建／命中、创建与 splice 失败、别名返回、子项查找、点项续读、UID 筛选和引用回收。原生 inode 缓存由接口夹具代替，不能据此给出原生并发结论。
 
-`tools/test_virtual_directory_layout.py` 比较七组 f_path 共同片段，编译匹配目标的五个函数声明，并执行生产 BTF 的外层及 iget test/set 嵌套回调 ABI 拒绝边界。动态 ABI 不匹配时停止准备。
 
-`tools/test_topology.py` 完整执行虚拟目录／目录／inode Oracle，再检查自动建树、首次接管和缓存复用时的分配失败、规则升级与多 UID 删除、空目录裁剪、原生 anchor 保留、存活 inode 的空视图及路径引用平衡。路径和原生 inode 缓存使用接口夹具，不证明真实挂载命名空间或管理并发。
 
-`tools/test_topology_layout.py` 保留既有虚拟目录布局 Oracle，编译核对匹配目标的缓存接口声明，并执行生产 BTF 的函数原型拒绝边界。
 
-`tools/test_backing_directory.py` 完整执行既有拓扑 Oracle，再检查 backing 子路径引用、原生错误、名称边界、递归拒绝、点项编号、规则过滤、UID、缓冲区续读和 cookie／seek。另覆盖 file 已保存模块表而 inode 表仍为原生的发布窗口。接口夹具不证明目标权限、原生锁或并发。
 
-`tools/test_backing_directory_layout.py` 保留既有拓扑布局 Oracle，编译核对目标 namei.h 的 vfs_path_lookup 声明，并执行生产 BTF 的参数数量、宽度、返回类型和缺符号拒绝边界。
 
-`tools/test_backing_inode.py` 完整执行 backing Oracle，再检查真实共用目录回调的物化／缓存命中、alias、源读取权限、递归查找、显式覆盖、源替换／删除／新增后的重查、分配失败、普通文件 read_iter 转交及路径退役。初始化失败清理函数也执行检查。接口夹具不证明原生 ACL、CFI 或并发。
 
-`tools/test_backing_inode_layout.py` 保留既有 backing 布局 Oracle，编译核对目标 inode_permission2 声明，并执行生产 BTF 的参数数量、宽度、返回类型和缺符号拒绝边界。
 
-`tools/test_backing_subtree.py` 读取同一源码状态下 test_backing_inode.py 已生成的 Oracle 输出，先校验其工具与源码回执，再完整执行已有 Oracle，并接入子目录阶段。覆盖多个 UID 的来源继承、显式规则／缓存搜索权限拒绝、源暂缺／类型错误／原生错误、规则替换、自动父链分配失败、裁剪与引用释放、显式目录撤销后恢复来源。使用新的空输出目录；已有测试脚本保持原样。原生接口仍由宿主夹具代替，结果不证明真实 ACL、VFS 并发或实机。
 
-`tools/test_control.py` 复用并完整执行匹配源码的子目录 Oracle，追加原生管理锁和 key_type 注册调用契约、权限／快照／短拷贝拒绝、32/64 位载荷、批次第一错误与截断游标、UID 命令、规则分页及导出清空后恢复。成功注册对象仅在宿主夹具结束时释放；生产成功路径驻留。此工具不编译联合入口的初始化函数，实际包含顺序由 ARM64 联合对象编译检查。
 
-`tools/test_control_layout.py` 编译核对 4.4／首轮目标／5.15／6.6 的 keyring 连续片段，并从目标 mutex／spinlock／osq 声明与配置取得完整尺寸。ARM64 编译确认尺寸与位置；生产 BTF 检查字段连续性、数据类型、回调／函数 ABI、尺寸与 lockdep 拒绝边界。这些声明比较不是对应版本已完成适配的结论。
 
-`tools/test_kpm.py` 校验并完整执行匹配源码的控制 Oracle，再执行实际 KPM 入口与控制构造器的加载阶段、注册冲突、七个分配失败点、状态拷贝和驻留退出。原生依赖准备及动态 BTF 在宿主中由接口夹具代替；真实 ARM64 ELF 的元信息、导入和寄存器另行检查。静态 JSON／blob 往返必须只修改76字节配置段并能还原原字节。
+**另删 `test_native_memory.py`（2026-11-10）**：它与生产日志宏的漂移从引入起就存在——`git log -S"nm_log_error" -- nm_native.c` 只命中 `202108b`，即创建该测试的同一个提交，说明它自创建起从未编译通过、从未运行；其唯一有效断言（缺原生符号即返回 `-ENOENT`）已由公共仓库的 `tools/test_native.py` 覆盖（`missing = names[i]; assert(nm_prepare_native() == -ENOENT)`），其余内容是按目标记录符号存在性，属数据而非检查。需要该普查结果时用 `inspect_target.py` 现生成，不再保留脚本。
 
-`tools/test_load_events.py` 复用冻结0.3.0的挂载上下文Oracle并保留621条断言，追加实际KPM入口在pre、post及手动加载下的成功、依赖／BTF错误、注册冲突、分配失败、状态查询与驻留行为。旧test_kpm.py的pre拒绝断言对应历史要求，保持原脚本；本轮加载契约另由新工具验证，须独立审计。宿主夹具不证明实际开机时原生依赖、CFI或BTF已就绪。
+**链式自检已移除（2026-11-10）**：`test_inode.py`、`test_directory.py`、`test_virtual_directory.py`、`test_topology.py`、`test_backing_directory.py`、`test_backing_inode.py`、`test_backing_subtree.py`、`test_control.py`、`test_kpm.py` 这 9 个入口已从仓库删除。它们内嵌的是 0.4.x 单翻译单元快照，停在静态基线缺 `file_layout`／`fop_io_bias` 等处，**永远跑不出结果**；而每次生产结构变动都要求同步迁移它们的字段与断言，属纯维护成本。需要复查或重生母本时从 Git 历史取回（删除前最后版本见提交 `8dfb0b9` 的父提交）。冻结的 Oracle 输出仍保留，`test_inode_binding.py`、`test_v22_sync.py`、`test_upstream_fixes.py` 等回放工具照常可用。**不得把这些入口的“未执行”当作通过**——它们已不存在。
+
+
 
 0.2.0 静态基线42项均为待填写值；表长84字节。新增 getattr_callback_args、getattr_function_args、kstat_inode_first、name_hash_args 四项独立选择，分别绑定回调原型、原生函数原型、共同属性片段及哈希函数原型；不按内核版本选择。必要值未取得或不受支持时停止初始化。BTF 按真实字段及函数原型填入，查询代码仍与短函数推导分开。
 
-`tools/test_call_abis.py` 从冻结0.1.0控制 Oracle 的已登记输出取得完整断言，更新受影响的生产片段，显式补齐已核对的4.19夹具 ABI 输入，再追加两参函数／三参回调、属性字段字节边界及未知选择拒绝。原 assert 表达式逐项保持；原测试脚本保持原样。此夹具迁移不证明真实原生调用或动态 BTF 成功。
+
 
 `tools/check_target_calls.py` 在 B2N 镜像的指定有界片段中核对字段与调用寄存器。其窗口和寄存器模式只覆盖已核对的目标；完整表尺寸另需目标配置／声明证据，不能把脚本通过当作通用布局保证。
 
@@ -226,7 +249,7 @@ Android boot 输入按 boot 头的 kernel 段长度截取后解压。arm64 头�
 
 - 默认加载事件、配套ZIP与署名／许可改动登记为0.3.1，原0.3.0第一组候选和独立结论保留。Makefile、控制协议版本与ZIP module.prop同步，ZIP versionCode为301。
 - 版本调整不改变45项偏移表、目标配置或加载实现。重新构建四基础件、14条目标派生记录及配套ZIP；审计和测试按新commit、实例及产物哈希绑定。
-- 既有Oracle及历史报告保持冻结，版本／身份变更通过新记录交接，不改写旧结论。
+- 既有Oracle及历史报告保持冻结，版本／身份变更通过新记录交接，不改写旧结论。**该冻结只针对“发布级 Oracle”**——即绑定某个已交付候选验收结论的那一份；纯测试输入（不被 `metadata` 的 build／acceptance 引用）可以**原地重生成**，代际由 receipt 里的 `tool_sha256`／`config_sha256`／`sources` 自证，不要为每次工具更新新建 `-01/-02` 目录。判据见 `local/keep/README.md` §oracle 的代际规则；断言层面的冻结与变更协议见 [测试基准守则](../docs/process/06-antipatterns.md#测试基准与反向过拟合) —— 冻结范围限于「已随候选提交／版本发布归档」的测试套件，中间世代目录与从未运行的脚本不受该条保护。
 
 ## 0.4.0 目录回调
 
@@ -337,7 +360,7 @@ Android boot 输入按 boot 头的 kernel 段长度截取后解压。arm64 头�
 - 已知声明几何不能证明隐蔽的未使用厂商尾部不存在；`AUD-001`仍开放，候选发布前由独立审计评估这一支持契约及key新建容量边界。
 - `tools/test_operation_extents.py`在原动态准备夹具生成后追加新窗口和用例，原工具及原断言保持；验证两目标三项尺寸、后续全部布局准备、BTF路由、冲突拒绝及112字节保护页边界。宿主准备通过不等于原生注册或完整初始化通过。
 
-`tools/test_inode_storage_lookup.py` 在已执行原断言的操作表尺寸夹具上，追加真实局部符号名称用例。核对两个目标的 inode 存储字段、缺符号／边界／回调时拒绝、初始化器未知指令与保护页边界；它只执行布局准备，不证明原生注册、CFI 调用或真机加载。
+
 
 ## 代码区间符号
 
@@ -346,7 +369,7 @@ Android boot 输入按 boot 头的 kernel 段长度截取后解压。arm64 头�
 
 ## 新增镜像适配
 
-- `local/nomount/configs/kernel_mi6-4.4-v4.json` 绑定米6镜像；其三类操作表符合已有4.4尾部契约。厂商声明用于解释共同片段；不同于目标指令的字段逐项记录，不能把参考源码称为准确构建源码。`tty_default_fops` 的完整复制／清零长度优先于参考声明的大小。完整复制范围仍待核对的目标只保留本地草稿，不能按版本号或build-id填值后交接。
+- `nomount/local/configs/kernel_mi6-4.4-v4.json` 绑定米6镜像；其三类操作表符合已有4.4尾部契约。厂商声明用于解释共同片段；不同于目标指令的字段逐项记录，不能把参考源码称为准确构建源码。`tty_default_fops` 的完整复制／清零长度优先于参考声明的大小。完整复制范围仍待核对的目标只保留本地草稿，不能按版本号或build-id填值后交接。
 - 米6的两种新增GCC形态分别读取register_key_type前19条、super_cache_count前13条。原始type、链表容器、shrinker→sb→s_op及回调实参链均须确认；`test_gcc_layout_shapes.py` 使用真实窗口及保护页核对。
 - 原生is_vmalloc_addr不存在时，`nm_offsets.c` 从kvfree首14条核对保留x0的入口、两次无符号地址比较、完整范围常量和原生vfree／kfree分派。范围同时用于两种模式的私有分配释放，不写入结构体偏移表；未知形态仍拒绝。RCU回调继续把vmalloc对象交给vfree_atomic，slab对象交给kfree。`test_vmalloc_range.py` 覆盖独立函数、内联范围、缺依赖和保护页。
 - 新增目标的静态配置和动态准备覆盖分别记录在开发报告；静态件可用不代表动态解析已经覆盖同一编译形态。
@@ -358,7 +381,7 @@ Android boot 输入按 boot 头的 kernel 段长度截取后解压。arm64 头�
 - 完整尺寸按“目标锚点偏移 + 含锚点的连续尾部宽度，再按类型要求向上对齐”计算。源码只提供锚点之后的指针、预留槽、空 lock_class_key 和最终对齐；条件宏必须与目标 IKCONFIG 核对。未知尾部声明停止分析。最高已访问成员自身仍只给出下界。
 - 米8、米9的参考 cache 宏链为128字节，米10、米11和Android12-5.10为64字节，并核对目标原生表地址。米8／米9的 inode_operations 因此为256字节；不能沿用统一64字节对齐模型得到的192。原生地址对齐只能交叉核对要求，不能单独证明完整尺寸。
 - `nm_directory_proxy`／`nm_dentry_proxy` 的表头按128字节对齐。第二份快照的位移仍按目标完整表尺寸取整；128字节要求的目标，其表尺寸也为128的倍数。分配、反查私有头部和完整快照由 `test_proxy_alignment.py` 追加验证；历史断言保留。
-- 米8、米9、米10、米11、Android12-5.10 的 `local/nomount/configs/*-v4.json` 是离线静态适配；动态模式尚未覆盖这些目标的完整无BTF编译形态。其余八份目标的动态覆盖边界沿用本轮之前的记录。
+- 米8、米9、米10、米11、Android12-5.10 的 `nomount/local/configs/*-v4.json` 是离线静态适配；动态模式尚未覆盖这些目标的完整无BTF编译形态。其余八份目标的动态覆盖边界沿用本轮之前的记录。
 - `test_tail_derivation.py` 用真实短窗口及断链、错标志、未知尾部反例检查解析；参考尾部仍是支持契约，隐藏厂商追加字段不能仅凭这些窗口排除，独立审计与实机验证继续分别记录。
 
 
@@ -472,9 +495,10 @@ README 仅写普通用户的文件选择、界面操作和可见状态；加载�
 - `nm_offsets.c`在`vfs_setxattr`／`vfs_removexattr`／`do_truncate2`的固定36／29／43条前缀内，追踪入口dentry→共同d_inode→锁入参。来源只经64位MOV保留；BL清caller-saved，访存写回清基址，未知指令拒绝。前向分支合流取来源交集并检查锁阶段，不接回边。
 - 紧邻BL的`ADD x0, xN, #imm`必须来自已确认inode。调用目标按核心代码区内单跳CFI／BTI归一化，与具名`down_write/up_write`或`mutex_lock/mutex_unlock`匹配，不能凭两个地址不同判断锁类型。同函数的lock/unlock先一致，再要求至少两个不同函数体的偏移与锁类型一致；存在的第三来源冲突或不能确认时也拒绝，不投票。
 - `nm_prepare_setattr`仅在BTF返回`-ENODATA && unavailable`时调用该推导；有效BTF错误原样保留。新锚点限plain／Android接口，mapped接口继续要求BTF。新锁证据缺失只保留可选写回调的EOPNOTSUPP，读入口不因它失败；成功仍要求killable／interruptible锁、unlock、readonly及notify符号齐全。
-- 静态46项表和MODE／UID／GID与SIZE复合拒绝保持原样。`setxattr`由原生VFS自己取锁，不依赖`nm_setattr_layout`；其独立写入ABI的BTF门保持原契约，补源锁不等于开放无BTF的xattr写入。
+- 静态配置表（当前为 51 个 int16 字段＝102 字节，见 `nm_offsets.c` 的配置表与实际构建产物的 `table_bytes`）和MODE／UID／GID与SIZE复合拒绝保持原样。`setxattr`由原生VFS自己取锁，不依赖`nm_setattr_layout`；其独立写入ABI的BTF门保持原契约，补源锁不等于开放无BTF的xattr写入。
 - 1505条基础宿主入口为`tools/test_inode_lock.py`，读取1433条int／bool Oracle并逐条保留，更新实际prepare及宿主命名副本，再追加真实目标窗口回放、合成mutex／其它合法偏移、冲突／别名／来源破坏／分支／保护页／BTF路由及非BTF准备后的setter调用。测试只在给定本地Image上执行生产推导，不执行目标机器码；原生ABI、LSM／CFI和并发安全须独立审计与真机确认。
 - 设备真实`cip135-st19`的`vfs_removexattr`解锁位于索引28；29条固定窗口完整包含该调用，原28条仅覆盖其前置ADD。`tools/test_inode_lock_device.py`保留1505条Oracle，追加真实设备的截短／完整窗口对照与新增尾字的正反夹具；追踪器来源、控制流、阶段及多源接受条件不变。
+- 宿主入口`tools/test_inode_lock.py`不再自带窗口副本：生成夹具的`il_windows[]`直接取自生产的`windows[]`常量，两者不再各自维护一份数值，避免"夹具把过短窗口当参数传入"从而测不到窗口回归。**证据窗口必须与生产窗口等长**（本 Image 为 36／29／43 字），长度用相等断言；"被改写的 lock／unlock 位点落在窗口内"是另一条独立断言，不能替代长度相等。此前允许"只覆盖位点且不超过上界"的口径已废弃（AUD-020）。
 
 ## DEV-055：按能力启用的动态 DAC 委托
 

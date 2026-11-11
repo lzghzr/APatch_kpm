@@ -123,9 +123,8 @@ static int nm_setattr_context(void* outer_context, struct dentry* dentry, void* 
     if (context != outer_context)
       return -EXDEV;  // iattr已按外层idmap转换；本轮不重解释跨映射的UID/GID。
   }
-  if (!nm_setattr_lock || !nm_setattr_unlock || !nm_setattr_readonly
-      || (nm_setattr_layout.context || struct_offset.permission_abi == 0 ? !nm_notify_context : !nm_notify_plain))
-    return -ENOENT;
+  // 四个原生入口与notify分支在nm_prepare_setattr中一次确定：status==0时它们已全部非空且已选定，
+  // 这里重复判定不可能成立，故不再保留第二个-ENOENT出口。
   void* lock = (void*)((uintptr_t)source + nm_setattr_layout.lock_offset);
   // VFS调用者持外层inode锁与外层写引用；顺序为outer→source。
   // A档不在回调重取mount写引用：同sb递归freeze读锁会与freezer互等。

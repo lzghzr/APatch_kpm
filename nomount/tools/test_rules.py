@@ -19,7 +19,7 @@ def main():
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     symbols = {name: kind for _, kind, name in json.loads(args.symbols.read_text())}
-    dependencies = ('kern_path', 'path_put', 'full_name_hash')
+    dependencies = ('kern_path', 'path_put', 'path_get', 'full_name_hash')
     assert all(symbols.get(name) in ('T', 't') for name in dependencies)
     files = ('nomount/nm_structs.h', 'nomount/nm_protocol.h', 'nomount/nm_rules.h',
              'nomount/nm_rules.c', 'nomount/nm_offsets.c')
@@ -46,7 +46,17 @@ static void* host_alloc(unsigned long);
 static void host_free(const void*);
 static void* (*kf_nm_vzalloc)(unsigned long) = host_alloc;
 static void (*kf_nm_vfree)(const void*) = host_free;
+static void* memory_slab_miss(unsigned long size,unsigned int flags){assert(size>=64&&size<=1024&&!flags);return NULL;}
+static void memory_vmap_free(const void* p){kf_nm_vfree(p);}
+static bool memory_vmap(const void* p){(void)p;return true;}
+static void* (*kf_nm_kmalloc)(unsigned long,unsigned int)=memory_slab_miss;
+static void (*kf_nm_kvfree)(const void*)=memory_vmap_free;
+static bool (*kf_nm_is_vmalloc_addr)(const void*)=memory_vmap;
+static void (*kf_nm_vfree_atomic)(const void*)=memory_vmap_free;
+static void memory_unexpected_slab_free(const void* p){(void)p;assert(0);}
+static void (*memory_native_kfree)(const void*)=memory_unexpected_slab_free;
 static unsigned long kallsyms_lookup_name_by_suffix(const char*);
+#define nm_log_info(...) ((void*)0)
 static void nm_rcu_read_lock(void);
 static void nm_rcu_read_unlock(void);
 static void nm_rcu_synchronize(void);
@@ -57,7 +67,12 @@ static void nm_rcu_call(struct rcu_head*, void (*)(struct rcu_head*));
         source += (root / name).read_text()
     offsets = (root / files[4]).read_text()
     accessors = offsets.split('static struct inode* nm_dentry_inode', 1)[1].split('static int validate_offsets', 1)[0]
+    # 偏移表本身及名字哈希参数访问器在切片之外；按生产原文补入，不改动任何断言。
+    source += offsets.split('static bool nm_owned_operation_fallback', 1)[0].replace(
+        '__attribute__((section(".data.re_offsets"), used))', '')
+    source += offsets[offsets.index('static int nm_name_hash_arguments'):offsets.index('\n', offsets.index('static int nm_name_hash_arguments')) + 1]
     source += 'static struct inode* nm_dentry_inode' + accessors
+    source += (root / 'nomount/nm_memory.c').read_text().replace('kfunc(nm_kfree)', 'memory_native_kfree') + '\n'
     source += (root / files[3]).read_text()
     source += r'''
 static int allocated, released, fail_next, depth, syncs, path_refs, path_puts, path_error;
@@ -96,6 +111,10 @@ static int host_path(const char* name, unsigned int flags, struct nm_path* resul
   else return -ENOENT;
   path_refs++; return 0;
 }
+static void host_path_get(const struct nm_path* path) {
+  assert(path->mnt == (void*)123 && path->dentry && !depth);
+  path_refs++;
+}
 static void host_path_put(const struct nm_path* path) {
   assert(path->mnt == (void*)123 && path->dentry && path_refs > 0 && !depth);
   path_refs--; path_puts++;
@@ -112,6 +131,7 @@ static unsigned long kallsyms_lookup_name_by_suffix(const char* name) {
   if (missing && !strcmp(missing, name)) return 0;
   if (!strcmp(name, "kern_path")) return (uintptr_t)host_path;
   if (!strcmp(name, "path_put")) return (uintptr_t)host_path_put;
+  if (!strcmp(name, "path_get")) return (uintptr_t)host_path_get;
   if (!strcmp(name, "full_name_hash")) return (uintptr_t)host_hash;
   return 0;
 }
@@ -127,7 +147,7 @@ static void check_rule_paths(void) {
   assert(PTR_ERR(nm_alloc_rule(NULL, 0, 0, 0)) == -EINVAL);
   assert(PTR_ERR(nm_alloc_rule("relative", 8, 0, 0)) == -EINVAL);
   assert(PTR_ERR(nm_alloc_rule("/data\0file", 10, 0, 0)) == -EINVAL);
-  assert(PTR_ERR(nm_alloc_rule("/data/file", 10, 8, 0)) == -EINVAL);
+  assert(PTR_ERR(nm_alloc_rule("/data/file", 10, NM_FLAG_OPAQUE, 0)) == -ENOTDIR);
   assert(PTR_ERR(nm_alloc_rule(NULL, 0, NM_FLAG_VIRTUAL_DIR, 0)) == -EINVAL);
   assert(PTR_ERR(nm_alloc_rule(NULL, 0, NM_FLAG_IS_DIR|NM_FLAG_VIRTUAL_DIR|NM_FLAG_WHITEOUT, 0)) == -EINVAL);
   struct nomount_rule* rule = nm_alloc_rule("/data/dir///", 12, 0, 1000);
@@ -259,8 +279,10 @@ static void check_uids(void) {
   nm_uid_clear(); assert(!nomount_uids); flush_callbacks();
 }
 int main(void) {
-  const char* deps[] = {"kern_path", "path_put", "full_name_hash"};
-  for (unsigned int i = 0; i < 3; i++) { missing = deps[i]; assert(nm_prepare_rule_functions() == -ENOENT); }
+  // 本目标的full_name_hash为三参数形式（与ops／inode参考的ABI取值一致）。
+  struct_offset.name_hash_args = 3;
+  const char* deps[] = {"kern_path", "path_put", "path_get", "full_name_hash"};
+  for (unsigned int i = 0; i < 4; i++) { missing = deps[i]; assert(nm_prepare_rule_functions() == -ENOENT); }
   missing = NULL; assert(!nm_prepare_rule_functions());
   file_dentry.d_inode = (struct inode*)&file_inode; dir_dentry.d_inode = (struct inode*)&dir_inode;
   assert(PTR_ERR(nm_alloc_rule("/data/negative", 14, 0, 0)) == -ENOENT && !path_refs);

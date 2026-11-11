@@ -28,7 +28,7 @@ def main():
     deps = ('dentry_open', 'fput', 'vfs_llseek', 'generic_file_readonly_mmap')
     assert all(symbols.get(name) in ('t', 'T') for name in deps)
     files = ('nomount/nm_structs.h', 'nomount/nm_rules.h', 'nomount/nm_offsets.c',
-             'nomount/nm_operations.c', 'nomount/nm_file.c')
+             'nomount/nm_memory.c', 'nomount/nm_operations.c', 'nomount/nm_file.c')
     source = r'''
 #include <assert.h>
 #include <errno.h>
@@ -49,14 +49,28 @@ typedef uint8_t u8; typedef uint16_t u16; typedef uint32_t u32; typedef uint64_t
 struct rcu_head { struct rcu_head* next; void (*func)(struct rcu_head*); };
 static void* host_alloc(unsigned long);
 static void host_free(const void*);
+static int failures;
+// failures 对应一次逻辑分配；slab 拒绝后仍由 vzalloc 消耗这次失败。
+static void* host_kmalloc(unsigned long size, unsigned int flags) {
+  (void)flags;
+  return failures ? NULL : host_alloc(size);
+}
+static bool host_is_vmalloc(const void* pointer) { (void)pointer; return false; }
+static void* (*kf_nm_kmalloc)(unsigned long, unsigned int) = host_kmalloc;
 static void* (*kf_nm_vzalloc)(unsigned long) = host_alloc;
-static void (*kf_nm_vfree)(const void*) = host_free;
+static void (*kf_nm_kvfree)(const void*) = host_free;
+static bool (*kf_nm_is_vmalloc_addr)(const void*) = host_is_vmalloc;
+static void (*kf_nm_vfree_atomic)(const void*) = host_free;
+static void (*kf_nm_kfree)(const void*) = host_free;
 static unsigned long kallsyms_lookup_name_by_suffix(const char*);
 '''
     source += (root / files[0]).read_text() + (root / files[1]).read_text()
-    source += (root / files[2]).read_text().split('#ifndef CONFIG_KPM_BASELINES', 1)[0]
+    # 只取完整的布局访问器；后面的静态 BTF ABI 查询不属于文件回调夹具。
+    offsets = (root / files[2]).read_text()
+    before_btf = offsets[:offsets.index('#include "nm_btf.c"')]
+    source += before_btf[:before_btf.rindex('#ifdef CONFIG_KPM_BASELINES')]
     source = source.replace('__attribute__((section(".data.re_offsets"), used))', '')
-    source += (root / files[3]).read_text() + (root / files[4]).read_text()
+    source += ''.join((root / name).read_text() for name in files[3:])
     mapping = {'file_private': 'file.private_data', 'file_position': 'file.f_pos', 'file_flags': 'file.f_flags',
                'file_cred': 'file.f_cred', 'fop_open': 'file_operations.open', 'fop_release': 'file_operations.release',
                'fop_mmap': 'file_operations.mmap', 'fop_splice_read': 'file_operations.splice_read'}
@@ -71,7 +85,7 @@ static _Alignas(8) unsigned char outer_storage[512], backing_storage[512], inode
 static struct file* outer = (void*)outer_storage;
 static struct file* backing = (void*)backing_storage;
 static struct inode* inode = (void*)inode_storage;
-static int failures, allocations, frees, opens, put_calls, reads, seeks, maps, splices;
+static int allocations, frees, opens, put_calls, reads, seeks, maps, splices;
 static int open_error, io_result = 7, mmap_error, shared_write;
 static const char* missing;
 static void* host_alloc(unsigned long size) { if (failures) { failures = 0; return NULL; } allocations++; return calloc(1,size); }
@@ -113,8 +127,8 @@ int main(void) {
   const char* deps[] = {"dentry_open","fput","vfs_llseek","generic_file_readonly_mmap"};
   for (unsigned int i = 0; i < 4; i++) { missing = deps[i]; assert(nm_prepare_file_functions() == -ENOENT); }
   missing = NULL; assert(!nm_prepare_file_functions());
-  struct nomount_rule rule = {.r_path = {(void*)2,(void*)1}};
-  struct nm_inode_info info = {.rule = &rule}; void* pointer = &info;
+  // 非空但不需要真实对象：:130／:132 要走到 dentry_open，:133 由 flags 走虚拟目录短路。
+  struct nm_inode_info info = {.r_path = {(void*)2, (void*)1}}; void* pointer = &info;
   memcpy(inode_storage + struct_offset.inode_private, &pointer, 8);
   pointer = (void*)123; memcpy(outer_storage + struct_offset.file_cred, &pointer, 8);
   u32 flags = 01000000|0100|0200|0400; memcpy(outer_storage + struct_offset.file_flags,&flags,4);
@@ -130,7 +144,7 @@ int main(void) {
   assert(!nm_open(inode,outer) && nm_file_private(outer) == backing && opens == 1);
   open_error = -EACCES; nm_set_file_private(outer,NULL);
   assert(nm_open(inode,outer) == -EACCES && !nm_file_private(outer)); open_error = 0;
-  rule.flags = NM_FLAG_VIRTUAL_DIR; assert(!nm_open(inode,outer) && !nm_file_private(outer)); rule.flags = 0;
+  info.flags = NM_FLAG_VIRTUAL_DIR; assert(!nm_open(inode,outer) && !nm_file_private(outer)); info.flags = 0;
   pointer = NULL; memcpy(inode_storage + struct_offset.inode_private,&pointer,8);
   assert(nm_open(inode,outer) == -ENODEV); pointer = &info; memcpy(inode_storage + struct_offset.inode_private,&pointer,8);
   nm_set_file_private(outer,backing);

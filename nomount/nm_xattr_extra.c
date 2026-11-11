@@ -78,8 +78,10 @@ static int nm_activate_xattr_extra_locked(void) {
       // handler型删除不能用空槽证明拒绝；独立ACL入口也仍须核验，不能一律降级。
       if (nm_setattr_status == -EOPNOTSUPP && !acl && !context && !struct_offset.permission_abi
           && struct_offset.iop_getattr == offsetof(struct nm_inode_follow_prefix, getattr)) {
+        // 只有prepare在推导错误处提前返回（status仍为-EOPNOTSUPP）或保持-ENODATA默认时才到这里；
+        // 两条路径的结果都非零，原`? : -EINVAL`没有可达取值。
         if (nm_setattr_derivation_status != -EOPNOTSUPP && nm_setattr_derivation_status != -ENOENT)
-          return nm_setattr_derivation_status ? nm_setattr_derivation_status : -EINVAL;
+          return nm_setattr_derivation_status;
         nm_log_info("xattr: extra entries unavailable without source lock evidence; writes remain closed\n");
         return 0;
       }
