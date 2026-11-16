@@ -42,3 +42,7 @@ python3 tools/build_candidate.py hosts_redirect --toolchain ndk26.3.11579264 --t
 自检覆盖路径匹配、UID、disable、调用参数传递、前后指针恢复、ctl0 以及初始化失败和退出。
 ARM64编译使用`-mgeneral-regs-only -ffixed-x18`；新增行遵循 clang-format；枚举全部未定义符号并核对 SDK 导出。Developer 自检为 Tier-3，
 独立审计和真机验证分别由 Auditor、Tester 完成。
+
+## 临时 SELinux 配置
+
+临时策略直接列在 README 中，允许 netd 遍历 `adb_data_file` 目录并读取同类型文件。使用前确认目标文件实际标签；该授权按类型生效，范围不限于 hosts 路径。

@@ -5,6 +5,16 @@
 例如执行 `su -c 'U=$(stat -c %u /data/data/me.bmax.apatch) && L=$(find /data/app -type f -path "*/me.bmax.apatch-*/lib/arm64/libkpatch.so") && [ -x "$L" ] && su "$U" -c "\"$L\" su kpm ctl0 hosts_redirect adblock"'` 重定向到 `/data/adb/hosts/adblock`<br />
 设置为 `disable` 时禁用重定向
 
+## SELinux 临时配置
+
+受 KernelPatch 上游接口变更影响，原 SELinux 绕过实现编译后无法加载，因此暂时移除，并通过以下策略补足访问权限。
+
+添加 `sepolicy.rule`
+```
+allow netd adb_data_file dir search
+allow netd adb_data_file file { read open getattr }
+```
+
 ## 更新记录
 
 ### 2.0.2
