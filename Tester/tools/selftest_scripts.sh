@@ -118,6 +118,21 @@ check_has "MNT-010/run_test 接入仪器冻结 helper" Tester/tools/run_test.sh 
 check_not "MNT-010/run_test 不再按报告与 metadata 的整体 Git 状态判定" \
   Tester/tools/run_test.sh 'git status --porcelain -- Tester tools docs metadata'
 
+# ---- TST-002: timed_out 函数判定正反夹具（C1.1） -----------------------------
+eval "$(sed -n '/^timed_out() {/,/^}/p' Tester/tools/run_test.sh)"
+timed_out 124 && ok "TST-002/函数判据: 124 判定为看门狗超时（->90）" \
+  || bad "TST-002/函数判据: 124 未判定为超时"
+timed_out 137 && ok "TST-002/函数判据: 137 (SIGKILL) 判定为真实信号（->90）" \
+  || bad "TST-002/函数判据: 137 未判定为真实信号"
+timed_out 143 && ok "TST-002/函数判据: 143 (SIGTERM) 判定为真实信号（->90）" \
+  || bad "TST-002/函数判据: 143 未判定为真实信号"
+timed_out 255 && bad "TST-002/函数判据: 255 误判为超时/信号（应为判据 FAIL ->1）" \
+  || ok "TST-002/函数判据: 255 判定为 CLI 错误码（->1）"
+timed_out 1 && bad "TST-002/函数判据: 1 误判为超时/信号（应为判据 FAIL ->1）" \
+  || ok "TST-002/函数判据: 1 判定为 CLI 错误码（->1）"
+timed_out 128 && bad "TST-002/函数判据: 128 误判为真实信号（无对应信号码）" \
+  || ok "TST-002/函数判据: 128 正确排除（->1）"
+
 # ---- 1. 预检：正常 ----------------------------------------------------------
 run preflight_ok ok 0 bash Tester/tools/preflight.sh
 check_rc "preflight/正常" 0 "$?"
@@ -173,11 +188,32 @@ if [ "$HAVE_REAL" -eq 1 ]; then
   check_has "反例：报产物哈希与登记不一致" "$CASE_OUT" '产物哈希与登记不一致'
 
   # ---- 4. 场景用例（都用在册实例 + 其真实产物） -----------------------------
+  # TST-002 场景正反用例：124/137/143 -> 90; 255/1 -> 1
   run run_load_fail load_fail 0 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" --instance-id "$REAL_ID"
   check_rc "run_test/加载失败" 1 "$?"
   LOG="$(first "$CASE_DIR/runs" .log)"
   check_has "加载失败：加载判据 FAIL" "$LOG" '[FAIL]（强）加载成功'
   check_has "加载失败：保留原始输出" "$LOG" 'unknown symbol: kf_get_task_ext'
+  [ -z "$(first "$CASE_DIR/esc" .md)" ] && ok "加载失败 rc=1：未误生成升级单" || bad "加载失败 rc=1：误生成升级单"
+
+  run run_load_fail_255 load_fail_255 0 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" --instance-id "$REAL_ID"
+  check_rc "run_test/加载返回 255 (TST-002: CLI 错误码判 FAIL)" 1 "$?"
+  LOG="$(first "$CASE_DIR/runs" .log)"
+  check_has "加载 255：加载判据 FAIL" "$LOG" '[FAIL]（强）加载成功'
+  check_has "加载 255：保留原始输出" "$LOG" 'failed with (null) error: -22'
+  [ -z "$(first "$CASE_DIR/esc" .md)" ] && ok "加载 255：未误生成升级单（不走 90 升级）" || bad "加载 255：误生成升级单"
+
+  run run_load_timeout load_timeout 0 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" --instance-id "$REAL_ID"
+  check_rc "run_test/加载超时 124 升级" 90 "$?"
+  check_has "加载 124：升级单写明超时" "$(first "$CASE_DIR/esc" .md)" 'module load 超时未返回'
+
+  run run_load_sigkill load_sigkill 0 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" --instance-id "$REAL_ID"
+  check_rc "run_test/加载被 SIGKILL 137 升级" 90 "$?"
+  check_has "加载 137：升级单写明超时/信号" "$(first "$CASE_DIR/esc" .md)" 'module load 超时未返回'
+
+  run run_load_sigterm load_sigterm 0 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" --instance-id "$REAL_ID"
+  check_rc "run_test/加载被 SIGTERM 143 升级" 90 "$?"
+  check_has "加载 143：升级单写明超时/信号" "$(first "$CASE_DIR/esc" .md)" 'module load 超时未返回'
 
   run run_unload_fail unload_fail 0 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" --instance-id "$REAL_ID"
   check_rc "run_test/卸载失败" 1 "$?"
@@ -230,6 +266,43 @@ if [ "$HAVE_REAL" -eq 1 ]; then
   LOG="$(first "$CASE_DIR/runs" .log)"
   check_has "--no-unload 反例：常驻判据判 FAIL" "$LOG" '[FAIL]（强）常驻存活（--no-unload：维持运行且在 module list 中）'
 
+  # ---- 6. TST-003：--load-args 参数透传正反夹具 -------------------------------
+  # 正例 1：不带参数（默认），验证 mock 接收到的 load 命令不含附加参数
+  run run_load_default ok 1 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" \
+    --instance-id "$REAL_ID"
+  check_rc "TST-003/正例：不带参数加载" 0 "$?"
+  LOG="$(first "$CASE_DIR/runs" .log)"
+  REP="$(first "$CASE_DIR/runs" .md)"
+  check_has "TST-003/正例不带参数：日志显示常规加载" "$LOG" '加载模块'
+  check_not "TST-003/正例不带参数：日志不含参数字样" "$LOG" '加载模块（参数:'
+  check_not "TST-003/正例不带参数：报告骨架无加载参数项" "$REP" '| 加载参数 |'
+
+  # 正例 2：带参数（如策略路径）
+  run run_load_args ok 1 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" \
+    --instance-id "$REAL_ID" --load-args "policy=/data/adb/hma_guard/stock.policy"
+  check_rc "TST-003/正例：带参数加载" 0 "$?"
+  LOG="$(first "$CASE_DIR/runs" .log)"
+  REP="$(first "$CASE_DIR/runs" .md)"
+  check_has "TST-003/正例带参数：日志记录参数" "$LOG" '加载模块（参数: policy=/data/adb/hma_guard/stock.policy）'
+  check_has "TST-003/正例带参数：报告骨架记录参数" "$REP" '| 加载参数 | `policy=/data/adb/hma_guard/stock.policy` |'
+  check_has "TST-003/正例带参数：mock 实际收到参数" "$STATE/last_load_cmd" 'policy=/data/adb/hma_guard/stock.policy'
+
+  # 正例 3：参数含空格（多个空格分隔参数与值含空格）
+  run run_load_args_space ok 1 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" \
+    --instance-id "$REAL_ID" --load-args "policy=/data/adb/hma_guard/stock.policy uid=on"
+  check_rc "TST-003/正例：参数含空格（多参数）" 0 "$?"
+  LOG="$(first "$CASE_DIR/runs" .log)"
+  check_has "TST-003/正例多参数：mock 收到完整参数串" "$STATE/last_load_cmd" 'policy=/data/adb/hma_guard/stock.policy uid=on'
+  check_has "TST-003/正例多参数：日志完整记录" "$LOG" '加载模块（参数: policy=/data/adb/hma_guard/stock.policy uid=on）'
+
+  # 反例 1：带参数加载失败场景（确认错误捕获机制不受参数影响）
+  run run_load_args_fail load_fail 0 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" \
+    --instance-id "$REAL_ID" --load-args "policy=/data/adb/hma_guard/stock.policy"
+  check_rc "TST-003/反例：带参数加载失败仍报 FAIL" 1 "$?"
+  LOG="$(first "$CASE_DIR/runs" .log)"
+  check_has "TST-003/反例带参数加载失败：判据 FAIL" "$LOG" '[FAIL]（强）加载成功'
+  check_has "TST-003/反例带参数加载失败：mock 仍收到参数" "$STATE/last_load_cmd" 'policy=/data/adb/hma_guard/stock.policy'
+
   # ---- MNT-008 独立复核回归：升级目录已有同名 #1，运行目录为空，不得覆盖旧升级单 ----
   rm -rf "$STATE"; mkdir -p "$STATE"
   CASE_DIR="$WORK/cases/esc_collision"; mkdir -p "$CASE_DIR/runs" "$CASE_DIR/esc"
@@ -276,6 +349,11 @@ elif grep -q '找不到模块登记记录' "$CASE_OUT"; then
 else
   bad  "反例：报不在册并列出候选"
 fi
+
+# TST-003 反例：--load-args 缺少参数值
+run load_args_missing ok 0 bash Tester/tools/run_test.sh --kpm "$KPM" --module "$REAL_MODULE" --instance-id "${REAL_ID:-dummy#1}" --load-args
+check_rc "TST-003/反例：--load-args 缺少参数值" 2 "$?"
+check_has "TST-003/反例：提示缺少参数值" "$CASE_OUT" '--load-args 缺少参数值'
 
 # ---- 11. collect_evidence：证据采集 ----------------------------------------
 run collect_evidence ok 0 bash Tester/tools/collect_evidence.sh --build-id 'mock-instance#1' --module "$REAL_MODULE"

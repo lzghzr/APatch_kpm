@@ -32,7 +32,7 @@ rek（`re_kernel`）与 rekx（`re_kernel_x`）分别提供动态普通版 `<模
 
 偏移集中于 `.data.re_offsets`，使用 `volatile` 防止编译器折叠成指令立即数。配置段必须可写、无重定位，不存运行时地址。复用已经核对的共同布局，只把变化字段放入表中。
 
-编译环境由开发者或 GitHub Actions 准备，用户侧只下载与替换。各模块的 `all debug` 生成动态/静态普通版与两份 debug，`baselines` 只生成静态普通/debug 两份。发布规范为 Releases 保留各模块两种普通 KPM 及静态 JSON，四份 KPM 与静态布局都保留在 Actions artifacts。公开基线必须能取得配套 JSON 和同版本补丁工具。实际 CI 状态先核对工作流；双模式发布的 [维护者补丁建议](../../../Developer/proposals/2026-10-10-kpm-modes/README.md) 尚待接入，流程改动由维护者落地。
+编译环境由开发者或 GitHub Actions 准备，用户侧只下载与替换。各模块的 `all debug` 生成动态/静态普通版与两份 debug，`baselines` 只生成静态普通/debug 两份。发布规范为 Releases 保留各模块两种普通 KPM 及静态 JSON，四份 KPM 与静态布局都保留在 Actions artifacts。公开基线必须能取得配套 JSON 和同版本补丁工具。实际 CI 状态先核对工作流；双模式发布的维护者补丁建议（本地 `Developer/proposals/2026-10-10-kpm-modes/README.md`）尚待接入，流程改动由维护者落地。
 
 ```bash
 make -C re_kernel_x baselines OUT_DIR=../local/baselines-round1

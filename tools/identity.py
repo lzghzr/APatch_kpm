@@ -801,7 +801,11 @@ def record_locked(args):
             entry = build_entry(args.module, mdir, version, variant, args.toolchain, args.build_cmd,
                                 args.env, commit, kp_commit, args.extra_input or [], kind=args.kind,
                                 prepared_recipe=getattr(args, "prepared_recipe", None))
-            entry["recorded_by"] = args.by
+            if args.handoff is not None:
+                entry["built_by"] = args.by
+                entry["built_at"] = entry.pop("recorded_at")
+            else:
+                entry["recorded_by"] = args.by
             transaction = getattr(args, "build_transaction", None)
             if transaction:
                 entry["build_transaction"] = transaction
@@ -947,8 +951,12 @@ def cmd_import_manifest(args):
             if reason:
                 problems.append(reason)
                 continue
-            entry["imported_by"] = args.by
-            entry["imported_at"] = utcnow()
+            # 旧清单把生成者写作 recorded_by；导入时保留来源，登记者取实际执行者。
+            if "built_by" not in entry and "recorded_by" in entry:
+                entry["built_by"] = entry["recorded_by"]
+                entry["built_at"] = entry.get("recorded_at")
+            entry["recorded_by"] = entry["imported_by"] = args.by
+            entry["recorded_at"] = entry["imported_at"] = utcnow()
             entry["handoff_manifest"] = str(path.relative_to(REPO)) if str(path).startswith(str(REPO)) else str(path)
             builds.append(entry)          # 保留原 instance_id 与 artifacts[].path
             imported += 1
@@ -957,7 +965,8 @@ def cmd_import_manifest(args):
                 print(f"error: {problem}", file=sys.stderr)
             print("未写入任何记录（先校验后落盘）", file=sys.stderr)
             return 3
-        write_record(module, record, args.by)
+        if imported:
+            write_record(module, record, args.by)
     print(f"导入 {imported} 条（跳过重复 {skipped} 条）-> {records_path(module).relative_to(REPO)}")
     return 0
 

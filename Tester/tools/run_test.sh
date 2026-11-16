@@ -33,6 +33,7 @@ POLL="${POLL:-10}"
 ADB="${ADB:-adb}"
 RECOVER=0
 NO_UNLOAD=0
+LOAD_ARGS="${LOAD_ARGS:-}"
 COMMIT="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
 
 while [ $# -gt 0 ]; do
@@ -45,7 +46,10 @@ while [ $# -gt 0 ]; do
     --tool-freeze-commit) TOOL_FREEZE_COMMIT="$2"; shift 2 ;;
     --recover) RECOVER=1; shift ;;
     --no-unload) NO_UNLOAD=1; shift ;;
-    *) echo "用法: run_test.sh --kpm <path> --module <name> [--timeout N] [--observe N] [--tool-freeze-commit SHA] [--instance-id ID] [--recover] [--no-unload]" >&2; exit 2 ;;
+    --load-args)
+      [ $# -ge 2 ] || { echo "run_test: --load-args 缺少参数值" >&2; exit 2; }
+      LOAD_ARGS="$2"; shift 2 ;;
+    *) echo "用法: run_test.sh --kpm <path> --module <name> [--load-args <args>] [--timeout N] [--observe N] [--tool-freeze-commit SHA] [--instance-id ID] [--recover] [--no-unload]" >&2; exit 2 ;;
   esac
 done
 
@@ -86,8 +90,15 @@ adb_out() {
   return $rc
 }
 
-# 超时判定：124 = 看门狗杀死；>=128 = 进程被信号终结（看门狗兜底，防止标记失效）
-timed_out() { [ "$1" -eq 124 ] 2>/dev/null || [ "$1" -ge 128 ] 2>/dev/null; }
+# 超时与真实信号终结判定（C1.1）：
+#   124: 看门狗超时杀死（与 timeout(1) 约定一致）
+#   128+信号码（129..192）：真实信号终结（如 137=SIGKILL、143=SIGTERM；Linux 信号范围 1..64）
+#   通用错误码（如 1、255 等）属 CLI/命令按状态返回非 0，判定为判据 FAIL（退出码 1），不得判定为超时/信号（退出码 90）
+# 保持 "-ge 128" 兼顾既有回归断言，同时排除 128 与 >192（如 255）
+timed_out() {
+  local rc="${1:-0}"
+  [ "$rc" -eq 124 ] 2>/dev/null || { [ "$rc" -ge 128 ] 2>/dev/null && [ "$rc" -ne 128 ] 2>/dev/null && [ "$rc" -le 192 ] 2>/dev/null; }
+}
 
 FAIL_PAT='unknown symbol|hook .* error|error:|Error|failed|Failed|not found|No such file|Permission denied|Operation not permitted|Invalid argument|denied'
 fail_text() { printf '%s' "$1" | grep -Eq "$FAIL_PAT"; }
@@ -96,7 +107,8 @@ MANAGER_UID=""
 KP_BIN=""
 kpm_run() {
   local subcmd="$1"
-  adb_out "su -c 'su $MANAGER_UID -c \"$KP_BIN su kpm $subcmd\"'"
+  local escaped_subcmd="${subcmd//\"/\\\"}"
+  adb_out "su -c 'su $MANAGER_UID -c \"$KP_BIN su kpm $escaped_subcmd\"'"
 }
 
 # ---------------------------------------------------------------- 候选身份绑定（MNT-008）
@@ -392,8 +404,14 @@ REMOTE="/data/local/tmp/$(basename "$KPM")"
 log "推送 $KPM -> $REMOTE"
 run_to "$((TIMEOUT*3))" "$ADB" push "$KPM" "$REMOTE" >>"$LOG" 2>&1 || escalate "adb push 失败/超时（设备可能已无响应）" 1
 
-log "加载模块"
-LOAD_OUT="$(kpm_run "load $REMOTE")"
+LOAD_CMD="load $REMOTE"
+if [ -n "${LOAD_ARGS}" ]; then
+  log "加载模块（参数: ${LOAD_ARGS}）"
+  LOAD_CMD="load $REMOTE ${LOAD_ARGS}"
+else
+  log "加载模块"
+fi
+LOAD_OUT="$(kpm_run "$LOAD_CMD")"
 LOAD_RC=$?
 printf '%s\n' "$LOAD_OUT" | tee -a "$LOG"
 timed_out "$LOAD_RC" && escalate "module load 超时未返回" 1
@@ -502,6 +520,9 @@ REPORT_HEAD="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
   echo "- 模块登记记录 sha256: \`$REGISTRY_SHA\`"
   echo "- 产物: \`$KPM\`"
   echo "- 产物 SHA-256: \`$BLOB_SHA\`"
+  if [ -n "${LOAD_ARGS}" ]; then
+    echo "- 加载参数: \`${LOAD_ARGS}\`"
+  fi
   echo "- 判据脚本: \`Tester/tools/run_test.sh\` \`sha256=$SCRIPT_SHA\`"
   echo "- 强证据判据通过 $PASS / 失败 ${FAIL}；弱证据（dmesg）崩溃特征命中：$OBS_CRASH"
   echo
@@ -531,6 +552,9 @@ REPORT_HEAD="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
   echo "| 模块登记记录 sha256 | \`$REGISTRY_SHA\` |"
   echo "| 产物 | \`$KPM\` |"
   echo "| 产物 sha256 | \`$BLOB_SHA\` |"
+  if [ -n "${LOAD_ARGS}" ]; then
+    echo "| 加载参数 | \`${LOAD_ARGS}\` |"
+  fi
   echo "| 判据脚本 | \`Tester/tools/run_test.sh\` \`sha256=$SCRIPT_SHA\` |"
   echo
   echo "## 环境事实"

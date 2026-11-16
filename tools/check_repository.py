@@ -285,6 +285,53 @@ def check_doc_links(rep):
     rep.check("doc_links", not broken, "; ".join(broken) if broken else f"{total} 个相对链接全部可解析")
 
 
+SESSION_WORDING = ("待发布", "尚未发布", "本轮", "这一轮", "本期")
+
+SUBMODULE_PATHS = ("KernelPatch/", "nomount/upstream/nomount/", "zram_zstd/upstream/zstd/")
+
+
+def deliverable_paths():
+    """交付树里的路径：已跟踪但**不**是被忽略却跟踪的那些（后者是压平时要剔除的报告）。"""
+    def ls(*extra):
+        return [p for p in subprocess.run(["git", "ls-files", "-z", *extra], cwd=REPO,
+                                          capture_output=True).stdout.decode().split("\0") if p]
+    return set(ls()) - set(ls("-i", "-c", "--exclude-standard"))
+
+
+def check_deliverable_links(rep):
+    """克隆即可开箱使用：交付文档里的相对链接不得指向不随仓库发布或根本不存在的文件。"""
+    delivered = deliverable_paths()
+    broken, total = [], 0
+    link_re = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+    for rel in sorted(p for p in delivered if p.endswith(".md")):
+        path = os.path.join(REPO, rel)
+        try:
+            text = open(path, encoding="utf-8", errors="replace").read()
+        except OSError:
+            broken.append(f"{rel}（读不到内容）")
+            continue
+        for raw in link_re.findall(text):
+            target = raw.strip()
+            if not target or re.match(r"^[a-z]+:", target) or target.startswith(("#", "/", "<")):
+                continue
+            total += 1
+            base = target.split("#")[0]
+            if not base:
+                continue
+            resolved = os.path.normpath(os.path.join(os.path.dirname(rel), base)).replace(os.sep, "/")
+            while resolved.startswith("../"):     # 越过仓库根的相对路径按仓库根解析
+                resolved = resolved[3:]
+            if resolved in delivered or resolved.startswith(SUBMODULE_PATHS):
+                continue
+            if os.path.exists(os.path.join(REPO, resolved)):
+                broken.append(f"{rel} -> {base}（存在但不随仓库发布）")
+            else:
+                broken.append(f"{rel} -> {base}（不存在）")
+    detail = (f"{total} 个相对链接均指向交付文件" if not broken
+              else f"{len(broken)} 条不可用：" + "; ".join(broken[:8]) + (" …" if len(broken) > 8 else ""))
+    rep.check("deliverable_links", not broken, detail)
+
+
 def check_metadata_schema(rep):
     problems = []
     identity_path = os.path.join(REPO, "metadata", "identity.json")
@@ -554,14 +601,21 @@ def check_version_consistency(rep):
             if not os.path.isfile(changelog):
                 problems.append(f"{module}: 缺少配套 {os.path.relpath(changelog, REPO)}")
                 break
-            headings = re.findall(r"(?m)^## v(\S+)\s*$",
-                                  open(changelog, encoding="utf-8", errors="replace").read())
+            changelog_text = open(changelog, encoding="utf-8", errors="replace").read()
+            headings = re.findall(r"(?m)^## v(\S+)\s*$", changelog_text)
             if not headings:
                 problems.append(f"{module}: 配套 CHANGELOG.md 没有版本标题")
                 break
             if normalize_version(headings[0]) != zip_version:
                 problems.append(f"{module}: 配套 ZIP 版本 {zip_version} 与其 CHANGELOG 首条 "
                                 f"{headings[0]} 不一致")
+            # 发布件里的版本记录按已交付口吻写：首条正文不得含会话期措辞（只查首条，技术文档不受影响）
+            first_entry = re.split(r"(?m)^## ", changelog_text)[1] if len(re.split(r"(?m)^## ", changelog_text)) > 1 else ""
+            for word in SESSION_WORDING:
+                if word in first_entry:
+                    problems.append(f"{module}: CHANGELOG 首条含会话期措辞「{word}」"
+                                    f"（{os.path.relpath(changelog, REPO)} 应描述已交付行为）")
+                    break
             break
 
         readme_heading = normalize_version(record.get("version_sources", {}).get("readme_heading", ""))
@@ -918,6 +972,29 @@ def referenced_paths(record):
     return {p for p in found if not p.startswith(("artifacts/", "local/", "/"))}
 
 
+ARCHIVE_LOOKUPS = {}
+
+
+def historical_blob(relpath):
+    """返回 (commit, sha256)：该路径最后一次入库的字节；从未入库返回 None。
+
+    交付链按策展压平，`.gitignore` 覆盖的报告不会进入交付树，压平后它们从工作树消失，
+    但字节仍在开发链提交里。引用是否「已归档」因此按**工作树或提交历史**任一处成立来判定。
+    """
+    if relpath in ARCHIVE_LOOKUPS:
+        return ARCHIVE_LOOKUPS[relpath]
+    found = subprocess.run(["git", "-C", REPO, "log", "--all", "--format=%H",
+                            "--diff-filter=AM", "-1", "--", relpath], capture_output=True)
+    commit = found.stdout.decode(errors="replace").strip().splitlines()
+    entry = None
+    if commit:
+        blob = commit_blob(commit[0], relpath)
+        if blob is not None:
+            entry = (commit[0], hashlib.sha256(blob).hexdigest())
+    ARCHIVE_LOOKUPS[relpath] = entry
+    return entry
+
+
 def report_binding_hashes(record, path):
     """收集绑定到某报告字节身份的哈希：字段与路径**精确配对**，避免互相误判。"""
     pairs = {"report": ("report_sha256", "archived_report_sha256"),
@@ -952,10 +1029,13 @@ def check_report_integrity(rep, strict):
     硬判据（两种模式都失败）：版本索引最新版＝工作树字节、原文只追加、追加段哈希吻合、
     版本引用可解析、索引哈希属已知版本（软）；`unarchived_versions[]` 说明与历史缺提交同属软判据
     （常规提示、严格失败）；字节改写、追加链与非登记索引哈希为硬判据（两种模式都失败）。
-    软判据（常规提示、验收/交付失败）：被引用报告必须已入库且与工作树一致。
+    软判据（常规提示、验收/交付失败）：被引用报告要么在工作树中入库且未被改动，
+    要么能在提交历史里找到同字节（压平交付会让受 `.gitignore` 覆盖的报告离开交付树，
+    字节仍留在开发链提交中；有登记哈希时必须逐字节相符）。
     """
     modules_dir = os.path.join(REPO, "metadata", "modules")
-    problems, soft, uncovered, reports, versions = [], [], [], 0, 0
+    ARCHIVE_LOOKUPS.clear()          # 每次运行重新查历史，避免同进程内夹具互相污染
+    problems, soft, uncovered, reports, versions, archived_refs = [], [], [], 0, 0, []
     tracked, dirty = tracked_and_dirty()
     for name in sorted(os.listdir(modules_dir)) if os.path.isdir(modules_dir) else []:
         if not name.endswith(".json"):
@@ -1048,12 +1128,31 @@ def check_report_integrity(rep, strict):
                 if bound not in known:
                     problems.append(f"{name}: {path} 索引哈希 {bound[:12]} 不在报告版本表中")
         for path in sorted(referenced_paths(record)):
-            if not os.path.isfile(repo_file(path)):
-                soft.append(f"{name}:{path}（不存在）")
-            elif path not in tracked:
-                soft.append(f"{name}:{path}（未入库）")
-            elif path in dirty:
-                soft.append(f"{name}:{path}（入库后已修改，未提交）")
+            recorded = report_binding_hashes(record, path)
+            present = os.path.isfile(repo_file(path))
+            if present:
+                # 工作树里就有：按原判据走，**不得**用历史字节替它背书——
+                # 否则未提交改动或未入库的新报告会被旧提交掩盖（AUD 复核 2026-11-15 反例）。
+                if path not in tracked:
+                    # 唯一例外：压平交付后文件仍在工作树但不再被跟踪，且字节与提交逐字节相同。
+                    # 这时的身份就是提交里的字节，不是「新报告」。
+                    archived = historical_blob(path)
+                    on_disk = hashlib.sha256(open(repo_file(path), "rb").read()).hexdigest()
+                    if archived and on_disk == archived[1] and (not recorded or archived[1] in recorded):
+                        archived_refs.append(f"{path}@{archived[0][:7]}")
+                        continue
+                    soft.append(f"{name}:{path}（未入库，且工作树字节与提交不一致）")
+                elif path in dirty:
+                    soft.append(f"{name}:{path}（入库后已修改，未提交）")
+                continue
+            archived = historical_blob(path)
+            if archived and (not recorded or archived[1] in recorded):
+                archived_refs.append(f"{path}@{archived[0][:7]}")
+                continue
+            if archived:
+                soft.append(f"{name}:{path}（工作树缺失，提交 {archived[0][:7]} 的字节与登记哈希不符）")
+            else:
+                soft.append(f"{name}:{path}（工作树与提交历史均无此文件）")
     # 新表示的引用必须完整；展开后由原导入入口核验全部身份，不允许悬空引用蒙混过关。
     for directory in ("Developer/reports/handoffs", "metadata/handoffs"):
         full = os.path.join(REPO, directory)
@@ -1075,9 +1174,14 @@ def check_report_integrity(rep, strict):
                     problems.append(f"{directory}/{name}: 共享输入校验失败: {exc}")
     hard_ok = not problems
     soft_note = "; ".join(soft)
+    archived_note = ""
+    if archived_refs:
+        sample = "、".join(sorted(archived_refs)[:3])
+        archived_note = f"；{len(archived_refs)} 份引用以提交归档（如 {sample}）"
     detail = "; ".join(problems) if problems else (
         f"{reports} 份报告字节身份一致（原文只追加、追加已登记，{versions} 个版本引用提交）"
-        + (f"；引用未归档：{soft_note}" if soft else "；被引用路径均已入库且与工作树一致"))
+        + (f"；引用未归档：{soft_note}" if soft else "；被引用路径均已入库且与工作树一致")
+        + archived_note)
     if uncovered:
         detail += f"；{len(uncovered)} 个历史模块记录未纳入报告版本索引（保持原形态）：{', '.join(uncovered)}"
     # 软判据（引用未归档/版本未引用提交）：常规模式提示，验收与交付模式失败
@@ -1112,6 +1216,7 @@ def main():
         check_structure(rep, portable=True)
         check_ci_markers(rep)
         check_doc_links(rep)
+        check_deliverable_links(rep)
         check_tool_selftest(rep)
         check_auditor_independence(rep)
         for name in ("metadata_schema", "report_integrity", "identity_hashes", "version_consistency",
@@ -1125,6 +1230,7 @@ def main():
     check_structure(rep)
     check_ci_markers(rep)
     check_doc_links(rep)
+    check_deliverable_links(rep)
     check_metadata_schema(rep)
     check_report_integrity(rep, args.strict)
     check_identity_hashes(rep, args.strict)

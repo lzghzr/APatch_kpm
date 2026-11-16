@@ -32,7 +32,7 @@ KPM 是由 KernelPatch 加载到内核空间的 ARM64 可重定位 ELF，不使�
 
 在新的空输出目录运行 `all` 生成两份普通版；已有且确有用途的 `debug` 目标按模块约定保留；`static`、`dynamic` 可单独选择，`baselines` 按模块约定生成静态件。静态 JSON 默认与 KPM 同目录，也可用 `LAYOUT_DIR` 单独指定。正式候选使用仓库统一构建入口，捕获 `--extra-input patch_offsets.py` 及实际工具链、输出参数。
 
-发布规范为 Releases 提供两种普通版及静态 JSON，debug 保留在 Actions artifacts。实施前检查当前工作流；双模式 CI/发布改动见 [维护者补丁建议](../../../Developer/proposals/2026-10-10-kpm-modes/README.md)，不能把补丁副本的自检视为线上发布已生效。
+发布规范为 Releases 提供两种普通版及静态 JSON，debug 保留在 Actions artifacts。实施前检查当前工作流；双模式 CI/发布改动见维护者补丁建议（本地 `Developer/proposals/2026-10-10-kpm-modes/README.md`），不能把补丁副本的自检视为线上发布已生效。
 
 ## 结构体偏移策略
 
@@ -204,7 +204,7 @@ ARM64 构建使用 `-mgeneral-regs-only -ffixed-x18 -mno-outline-atomics -fno-bu
 
 探索输出用新的空目录。正式候选按仓库统一构建入口从冻结提交生成；记录提交、实例和产物哈希，不覆盖旧产物。动态算法的离线回归、静态补丁往返与主机 ASan/UBSan 都是实现方自检；运行时推导、目标锁、hook、ACK 和应用响应由独立真机测试核验。
 
-自检用例遵循 [测试基准守则](../../docs/process/06-antipatterns.md#测试基准与反向过拟合)：测试基准套件是权威只读 Oracle，严禁为了过测私自删改既有断言；严禁为了迁就宿主单测/Mock 而扭曲生产内核代码架构或在生产代码中引入脱离内核实际语义的冗余暂存与伪回滚；若已有断言失真确需变更，必须在开发报告中单独列出技术依据并由 Auditor 独立复核。
+自检用例遵循 [测试基准守则](../../../docs/process/06-antipatterns.md#测试基准与反向过拟合)：测试基准套件是权威只读 Oracle，严禁为了过测私自删改既有断言；严禁为了迁就宿主单测/Mock 而扭曲生产内核代码架构或在生产代码中引入脱离内核实际语义的冗余暂存与伪回滚；若已有断言失真确需变更，必须在开发报告中单独列出技术依据并由 Auditor 独立复核。
 
 ## 加载错误定位
 

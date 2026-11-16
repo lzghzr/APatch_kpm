@@ -13,7 +13,8 @@
 - **交接流程（接手必读）**：[process/09-handoff.md](process/09-handoff.md)
 - **从克隆到可开发（本地环境建立）**：[process/12-local-bootstrap.md](process/12-local-bootstrap.md)
 - 角色手册：[Developer](process/developer-handbook.md) / [Auditor](process/auditor-handbook.md) / [Tester](process/tester-handbook.md)
-- 报告与问题单模板：[templates/](templates/)
+- 报告模板：[Developer](templates/developer-report.md) / [Auditor](templates/auditor-report.md) / [Tester](templates/tester-report.md)
+- 协作模板：[问题单](templates/issue-ticket.md) / 修复响应（[Developer](templates/developer-response.md) / [Tester](templates/tester-response.md)）/ [交接](templates/handoff.md) / [设备升级](templates/escalation.md)
 - 覆盖矩阵（模块 × 内核 × 验证层级）：[coverage.md](coverage.md)
 
 ## 角色与产出

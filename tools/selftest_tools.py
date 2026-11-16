@@ -246,6 +246,27 @@ def _run_checks():
     results.append(("version_history", ok,
                     f"升级通过={ok_bump}，产物与自身版本不符被拒={bool(rep_bad.failures)}"))
 
+    # 4a2) 配套 CHANGELOG 首条：按已交付口吻写，会话期措辞被拒
+    def changelog_case(body):
+        rec = {"module": "clmod", "version_declared": "3.0", "version_sources": {"makefile": "3.0"}}
+        tmp = _gate_repo(rec, gate)
+        os.makedirs(os.path.join(tmp, "clmod", "module"), exist_ok=True)
+        open(os.path.join(tmp, "clmod", "Makefile"), "w").write("MYKPM_VERSION := 3.0\n")
+        open(os.path.join(tmp, "clmod", "module", "module.prop"), "w").write("version=v3.0\n")
+        open(os.path.join(tmp, "clmod", "module", "CHANGELOG.md"), "w").write(
+            "## v3.0\n\n" + body + "\n\n## v2.0\n\n- 旧条目\n")
+        rep = gate.Report()
+        gate.check_version_consistency(rep)
+        return not rep.failures
+
+    changelog_cases = {
+        "已交付口吻通过": changelog_case("- 同步上游 3.0 用户态工具与 WebUI。"),
+        "待发布被拒": not changelog_case("- 待发布，合并改动。"),
+        "本轮被拒": not changelog_case("- 本轮新增 CLI 迁移。"),
+        "旧条目不牵连": changelog_case("- 同步上游 3.0。") and True,
+    }
+    results.append(("changelog_release_wording", all(changelog_cases.values()), str(changelog_cases)))
+
     # 4b) 版本声明滞后 vs 事实矛盾：滞后只在提示（交接前在途），矛盾必须失败
     def version_case(declared, makefile, build_versions):
         record = {"module": "vermod", "version_declared": declared,
@@ -525,6 +546,57 @@ def _run_checks():
     unchanged = unchanged and after["builds"][:-1] == record["builds"] and len(after["builds"]) == 2
     results.append(("record_write_scope", rc == 0 and unchanged, "维护者字段与旧实例保持一致"))
 
+    # 17b) handoff 只记录构建者；维护者实际导入时登记，旧实例与清单不回写。
+    identity.build_entry = lambda *a, **kw: dict(entry, build_id="handoff-provenance",
+                                                fingerprint_sha256="c" * 64, recorded_at="fixture-built-time")
+    manifest = root / "handoff.json"
+    args.handoff = str(manifest)
+    args.no_archive = False
+    before = (root / "metadata/modules/mod.json").read_bytes()
+    with contextlib.redirect_stdout(io.StringIO()):
+        identity.record_locked(args)
+    handoff = json.loads(manifest.read_text())
+    pending = handoff["builds"][0]
+    provenance = {"handoff_no_registration": before == (root / "metadata/modules/mod.json").read_bytes(),
+                  "builder_only": pending.get("built_by") == "Developer" and pending.get("built_at") == "fixture-built-time"
+                                  and "recorded_by" not in pending and "recorded_at" not in pending}
+    saved_verify = identity.verify_build
+    identity.verify_build = lambda *a, **kw: {"problems": []}  # 本夹具仅核验归属；身份判据由独立用例覆盖。
+    raw_manifest = manifest.read_bytes()
+    with contextlib.redirect_stdout(io.StringIO()):
+        rc = identity.cmd_import_manifest(argparse.Namespace(path=str(manifest), by="维护者"))
+    imported = json.loads((root / "metadata/modules/mod.json").read_text())
+    current = imported["builds"][-1]
+    provenance["maintainer_registers"] = (rc == 0 and current["recorded_by"] == current["imported_by"] == "维护者"
+                                          and current["built_by"] == "Developer"
+                                          and current["built_at"] == "fixture-built-time")
+    provenance["old_entries_preserved"] = imported["builds"][:-1] == json.loads(before)["builds"]
+    provenance["manifest_immutable"] = manifest.read_bytes() == raw_manifest
+    before = (root / "metadata/modules/mod.json").read_bytes()
+    with contextlib.redirect_stdout(io.StringIO()):
+        identity.cmd_import_manifest(argparse.Namespace(path=str(manifest), by="another-importer"))
+    provenance["duplicate_does_not_reassign"] = before == (root / "metadata/modules/mod.json").read_bytes()
+    # 旧格式的生成者迁为 built_by；不信任来件对 recorded_by 的登记声明。
+    legacy = json.loads(raw_manifest)
+    legacy_entry = legacy["builds"][0]
+    legacy_entry["instance_id"] += "-legacy"
+    legacy_entry["recorded_by"] = legacy_entry.pop("built_by")
+    legacy_entry["recorded_at"] = legacy_entry.pop("built_at")
+    legacy_path = root / "handoff-legacy.json"
+    legacy_path.write_text(json.dumps(legacy))
+    identity.verify_build = lambda *a, **kw: {"problems": ["fixture rejected"]}
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        rc = identity.cmd_import_manifest(argparse.Namespace(path=str(legacy_path), by="维护者"))
+    provenance["invalid_no_registration"] = rc == 3 and before == (root / "metadata/modules/mod.json").read_bytes()
+    identity.verify_build = lambda *a, **kw: {"problems": []}
+    with contextlib.redirect_stdout(io.StringIO()):
+        rc = identity.cmd_import_manifest(argparse.Namespace(path=str(legacy_path), by="维护者"))
+    legacy_import = json.loads((root / "metadata/modules/mod.json").read_text())["builds"][-1]
+    provenance["legacy_producer_preserved"] = (rc == 0 and legacy_import["built_by"] == "Developer"
+                                               and legacy_import["recorded_by"] == "维护者")
+    identity.verify_build = saved_verify
+    results.append(("handoff_registration_actor", all(provenance.values()), str(provenance)))
+
     # 18) 实际运行统一入口：临时工具链构建两次，归档实例不同，输入变更被拒。
     root = Path(make_tmp("selftest-builder-"))
     for name in ("tools", "mod", "metadata/modules", "KernelPatch"):
@@ -774,6 +846,57 @@ def _run_checks():
     gate.check_report_integrity(rep_warn, strict=False)
     ref_cases["常规模式仅提示"] = (not rep_warn.failures and bool(rep_warn.warnings))
     results.append(("referenced_reports_archived", all(ref_cases.values()), str(ref_cases)))
+
+    # 24b) flattened_report_archive：压平交付把报告从工作树剔除后，引用仍成立（按提交字节归档）
+    import hashlib as _hashlib
+    flattened_rel = "Auditor/reports/flattened.md"
+    flattened = root / flattened_rel
+    flattened.write_text("flattened report bytes\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(root), "add", "-A"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(root), "-c", "user.name=F", "-c", "user.email=f@example.invalid",
+                    "-c", "commit.gpgsign=false", "commit", "-qm", "flattened report"],
+                   check=True, capture_output=True)
+    committed_sha = _hashlib.sha256(b"flattened report bytes\n").hexdigest()
+    flattened.unlink()                      # 模拟交付压平：工作树里不再有该文件
+    wrong_sha = "0" * 64
+
+    def flattened_check(record_extra, strict=True):
+        record = {"module": "flat_mod",
+                  "audits": [dict({"report": flattened_rel}, **record_extra)]}
+        versions_path.write_text(json.dumps(record))
+        gate.REPO = str(root)
+        rep = gate.Report()
+        gate.check_report_integrity(rep, strict=strict)
+        return rep
+    ok_rep = flattened_check({"report_sha256": committed_sha})
+    bad_rep = flattened_check({"report_sha256": wrong_sha})
+    unknown_rep = flattened_check({})
+    # 反例（AUD 复核 2026-11-15）：工作树里存在但脏改动／未入库时，不得用历史字节替它背书。
+    flattened.write_text("flattened report bytes\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(root), "add", "-A"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(root), "-c", "user.name=F", "-c", "user.email=f@example.invalid",
+                    "-c", "commit.gpgsign=false", "commit", "-qm", "restore flattened report"],
+                   check=True, capture_output=True)
+    flattened.write_text("dirty local edit\n", encoding="utf-8")
+    dirty_rep = flattened_check({"report_sha256": committed_sha})
+    flattened.unlink()
+    (root / flattened_rel).write_text("untracked new report\n", encoding="utf-8")
+    untracked_rep = flattened_check({"report_sha256": committed_sha})
+    # 压平态：文件仍在工作树、但不再被跟踪，字节与提交逐字节相同 → 视为归档
+    (root / flattened_rel).write_text("flattened report bytes\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(root), "rm", "--cached", "--quiet", flattened_rel],
+                   check=True, capture_output=True)
+    same_bytes_rep = flattened_check({"report_sha256": committed_sha})
+    flat_cases = {
+        "工作树缺失但提交字节相符→通过": not ok_rep.failures,
+        "归档计数出现在说明里": any("以提交归档" in item[2] for item in ok_rep.checks),
+        "登记哈希与提交字节不符→失败": bool(bad_rep.failures),
+        "无登记哈希也按提交字节归档→通过": not unknown_rep.failures,
+        "工作树脏改动不得被历史字节掩盖→失败": bool(dirty_rep.failures),
+        "工作树未入库但字节与提交相同→通过（压平态）": not same_bytes_rep.failures,
+        "工作树未入库且字节与提交不同→失败": bool(untracked_rep.failures),
+    }
+    results.append(("flattened_report_archive", all(flat_cases.values()), str(flat_cases)))
 
     # 25) report_version_commits：交接即提交（历史版本必须引用提交）
     def commits_check(with_pending=True, drop_history=False, mutate=None, strict=True):
@@ -1106,6 +1229,38 @@ def _run_checks():
     generation = load("selftest_report_generation", REPO / "tools/selftest_report_generation.py")
     generation_cases = generation.run_checks()
     results.append(("report_generation_scope", all(generation_cases.values()), str(generation_cases)))
+    # 25) deliverable_links：交付文档的相对链接必须落在交付集合内（子模块路径除外）。
+    dl_root = Path(make_tmp())
+    (dl_root / "docs").mkdir()
+    (dl_root / "Developer" / "reports").mkdir(parents=True)
+    (dl_root / ".gitignore").write_text("Developer/reports/*\n", encoding="utf-8")
+    (dl_root / "Developer" / "reports" / "r.md").write_text("report\n", encoding="utf-8")
+    (dl_root / "docs" / "target.md").write_text("target\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(dl_root), "init", "-q"], check=True, capture_output=True)
+    pathlib.Path(dl_root / "docs" / "guide.md").write_text(
+        "见 [目标](target.md) 与 [子模块](../KernelPatch/kernel/include/hook.h)\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(dl_root), "add", "-A"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(dl_root), "-c", "user.name=F", "-c", "user.email=f@example.invalid",
+                    "-c", "commit.gpgsign=false", "commit", "-qm", "fixture"], check=True, capture_output=True)
+
+    def dl_check(text):
+        (dl_root / "docs" / "guide.md").write_text(text, encoding="utf-8")
+        subprocess.run(["git", "-C", str(dl_root), "add", "-A"], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(dl_root), "-c", "user.name=F", "-c", "user.email=f@example.invalid",
+                        "-c", "commit.gpgsign=false", "commit", "-qm", "update", "--allow-empty"], check=True, capture_output=True)
+        gate.REPO = str(dl_root)
+        rep = gate.Report()
+        gate.check_deliverable_links(rep)
+        return rep
+
+    dl_cases = {
+        "ok_links_pass": not dl_check("见 [目标](target.md) 与 [子模块](../KernelPatch/kernel/include/hook.h)\n").failures,
+        "report_link_fails": bool(dl_check("见 [报告](../Developer/reports/r.md)\n").failures),
+        "missing_link_fails": bool(dl_check("见 [缺失](nope.md)\n").failures),
+        "ignored_target_fails": bool(dl_check("见 [其自身](../Developer/reports/r.md) 与 [目标](target.md)\n").failures),
+        "anchor_only_ok": not dl_check("见 [目标](target.md#小节)\n").failures,
+    }
+    results.append(("deliverable_links_scope", all(dl_cases.values()), str(dl_cases)))
     return results
 
 

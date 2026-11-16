@@ -7,7 +7,11 @@
 #
 # 场景:
 #   ok            一切正常
-#   load_fail     加载输出 unknown symbol（AUD-001 形态）
+#   load_fail     加载输出 unknown symbol（AUD-001 形态，退出码 1）
+#   load_fail_255 加载返回 255（TST-002 内核 -EINVAL CLI 退出码，属判据 FAIL，退出码 1）
+#   load_timeout  加载命令超时返回 124（看门狗超时，退出码 90）
+#   load_sigkill  加载命令被 SIGKILL 杀死返回 137（真实信号，退出码 90）
+#   load_sigterm  加载命令被 SIGTERM 杀死返回 143（真实信号，退出码 90）
 #   unload_fail   unload 报 not found 且模块仍在列表
 #   crash         加载后 dmesg 出现 Call trace
 #   reboot        加载后 boot_id 变化（软重启）
@@ -84,7 +88,12 @@ shell_dispatch() {
       if [ "$SCEN" = unload_fail ]; then echo "unload failed: module not found"; return 1; fi
       rm -f "$DIR/loaded"; echo "unload ok"; return 0 ;;
     *"kpm load"*|*"module load"*)
+      printf '%s\n' "$s" > "$DIR/last_load_cmd"
       if [ "$SCEN" = load_fail ]; then echo "unknown symbol: kf_get_task_ext"; return 1; fi
+      if [ "$SCEN" = load_fail_255 ]; then echo "failed with (null) error: -22"; return 255; fi
+      if [ "$SCEN" = load_timeout ]; then return 124; fi
+      if [ "$SCEN" = load_sigkill ]; then return 137; fi
+      if [ "$SCEN" = load_sigterm ]; then return 143; fi
       : > "$DIR/loaded"; echo "load ok"; return 0 ;;
     *"kpm info"*|*"module info"*) echo "${MOCK_MODULE:-re_kernel} mock-version mock"; return 0 ;;
     *dmesg*) dmesg_text; return 0 ;;

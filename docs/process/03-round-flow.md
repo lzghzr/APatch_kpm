@@ -147,7 +147,7 @@ Tester 报告落盘后，维护者把**结论与差异**回给 Developer：判�
 3. `bind-delivery` 追加指向 D 的交付绑定；实例、源码、指纹、产物、祖先关系和签名均复验通过后才落盘。
 4. 针对指定实例执行 delivery 核验与 strict 门禁，保存输出到新的回执位置。
 5. 用后续签名的记录提交 **E** 保存绑定与回执索引。E 的父链包含 D。
-6. 从干净 E 再核验记录，按发布授权推送包含 E 的分支，并复核主工作副本的对象一致。
+6. 从干净 E 再核验记录，由用户本人推送包含 E 的分支；助手禁止执行 `git push`。确认用户已推送后，维护者再同步 SMB 副本的 Git 跟踪内容并核对；本地提交阶段不做同步。
 
 ```bash
 git commit -S -m "<module>: <版本> <交付行为>"    # D；只提交已核对的本轮文件
@@ -156,7 +156,7 @@ python3 tools/identity.py bind-delivery <module> --instance-id '<build_id>#<n>' 
     --delivery-commit <D> --tag <module>-<版本> --by 维护者
 python3 tools/identity.py verify --module <module> --instance-id '<build_id>#<n>' --profile delivery
 python3 tools/check_repository.py --strict
-# 核对后仅提交新增绑定和回执索引，签名产生 E，再按发布授权推送
+# 核对后仅提交新增绑定和回执索引，签名产生 E；用户自行推送后再同步 SMB
 ```
 
 绑定引用已存在的 D，记录提交 E 保存该绑定，避免让提交引用自身 SHA 的循环。

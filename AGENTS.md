@@ -9,6 +9,10 @@
 2. 只改自己拥有的路径（所有权表见 [docs/process/02-roles.md](docs/process/02-roles.md)）。
 3. 结论必须绑定身份三要素：**完整 commit + instance_id（Build ID + 实例号）+ 产物 SHA-256**（见 [docs/process/01-identity.md](docs/process/01-identity.md)）。
 
+## 本地文件留存
+
+开发前先读[本地文件的存放与留存](docs/process/12-local-bootstrap.md#本地文件的存放与留存)：过程输出放临时工作目录，`keep` 只留需持续使用的材料，每轮收尾清理自己的中间文件。克隆后没有 `local/` 和 `local/keep/` 是正常状态，使用时按需创建；规则不依赖本地目录或文件存在。
+
 ## 每个角色的一句话职责
 
 | 角色 | 一句话 |
