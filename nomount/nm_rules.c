@@ -5,6 +5,8 @@ static void kfunc_def(nm_path_put)(const struct nm_path*);
 static void kfunc_def(nm_path_get)(const struct nm_path*);
 static u32 kfunc_def(nm_full_name_hash)(const void*, const char*, unsigned int);
 static u32 (*nm_full_name_hash_pair)(const char*, unsigned int);
+// 物化引擎准备后安装；独立规则引擎不创建虚拟 inode。
+static bool (*nm_rule_inode_is_virtual)(struct inode*);
 
 static u32 nm_name_hash(const void* salt, const char* name, unsigned int length) {
   return nm_full_name_hash_pair ? nm_full_name_hash_pair(name, length) : kfunc(nm_full_name_hash)(salt, name, length);
@@ -74,6 +76,11 @@ static struct nomount_rule* nm_alloc_rule(const char* path, u16 length, u32 flag
       kfunc(nm_path_put)(&resolved);
       nm_free(rule);
       return ERR_PTR(-ENOENT);
+    }
+    if (nm_rule_inode_is_virtual && nm_rule_inode_is_virtual((struct inode*)inode)) {
+      kfunc(nm_path_put)(&resolved);
+      nm_free(rule);
+      return ERR_PTR(-ELOOP);
     }
     // IS_DIR 来自 backing inode，不能靠控制载荷把普通文件伪装成目录。
     rule->flags &= ~NM_FLAG_IS_DIR;
@@ -203,7 +210,8 @@ static struct nm_rule_array* nm_build_leaf_rule_array(struct nomount_leaf* leaf,
   for (u32 i = 0; i < count; i++) {
     const struct nomount_rule* existing = old->rules[i];
     if (replace && i == pos) {
-      if (existing->deny_start != rule->deny_start || existing->deny_end != rule->deny_end)
+      if (!existing->automatic_parent
+          && (existing->deny_start != rule->deny_start || existing->deny_end != rule->deny_end))
         return ERR_PTR(-EEXIST);
     } else if ((rule->target_uid || rule->uid_end) && (existing->target_uid || existing->uid_end)
                && existing->target_uid <= rule->uid_end && rule->target_uid <= existing->uid_end)

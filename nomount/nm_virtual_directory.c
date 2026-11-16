@@ -74,9 +74,12 @@ static struct dentry* nm_materialize_virtual_directory(struct inode* parent, str
       return ERR_PTR(-ELOOP);
   }
   struct super_block* sb = nm_inode_superblock(parent);
+  int rc = nm_check_inode_allocation(sb);
+  if (rc)
+    return ERR_PTR(rc);
   if (!nm_inode_engine.directory_ops || !nm_virtual_directory_fops || !nm_super_proxy(nm_super_ops(sb)))
     return ERR_PTR(-ENODEV);
-  int rc = nm_wrap_dentry(dentry, true);
+  rc = nm_wrap_dentry(dentry, true);
   if (rc)
     return ERR_PTR(rc);
   struct nm_security_context context;
@@ -169,10 +172,15 @@ static int nm_virtual_directory_getattr_mount(struct vfsmount* mount, struct den
 static long nm_virtual_directory_read(struct file* file, char* buffer, unsigned long size, int64_t* position) {
   return -EISDIR;
 }
+// 已打开的 backing FD 保持绑定；排除 UID 使用原生内容，pure 目录没有回源对象。
+static bool nm_directory_uses_backing(const struct nm_inode_info* info) {
+  return info && !(info->flags & NM_FLAG_VIRTUAL_DIR)
+         && (!(info->flags & NM_FLAG_OPAQUE) || nomount_is_uid_blocked(nm_current_fsuid()));
+}
 static int64_t nm_virtual_directory_llseek(struct file* file, int64_t offset, int whence) {
   struct inode* inode = nm_file_inode(file);
   struct nm_inode_info* info = inode && nm_is_directory_inode(inode) ? nm_inode_private(inode) : NULL;
-  if (info && !(info->flags & (NM_FLAG_VIRTUAL_DIR | NM_FLAG_OPAQUE)))
+  if (nm_directory_uses_backing(info))
     return nm_inode_engine.seek_backing ? nm_inode_engine.seek_backing(file, offset, whence) : -EOPNOTSUPP;
   bool compat = nm_current_compat();
   if (whence == 0 && nm_virtual_position(offset, compat))
@@ -186,7 +194,7 @@ static int nm_virtual_directory_iterate(struct file* file, struct nm_dir_context
   struct nm_inode_info* info = nm_is_directory_inode(inode) ? nm_inode_private(inode) : NULL;
   if (!info || !info->dir_node)
     return -ENODEV;
-  if (!(info->flags & (NM_FLAG_VIRTUAL_DIR | NM_FLAG_OPAQUE)))
+  if (nm_directory_uses_backing(info))
     return nm_inode_engine.iterate_backing ? nm_inode_engine.iterate_backing(file, context, info->dir_node)
                                            : -EOPNOTSUPP;
   if (context->pos < 0)

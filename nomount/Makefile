@@ -1,4 +1,4 @@
-MYKPM_VERSION := 2.2.0-20261108
+MYKPM_VERSION := 2.3.0-20261114
 KP_DIR ?= ../KernelPatch
 
 OS_NAME = $(shell uname | tr A-Z a-z)

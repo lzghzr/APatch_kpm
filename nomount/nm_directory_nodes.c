@@ -41,30 +41,48 @@ static struct nomount_rule* nm_directory_rule(struct nm_directory_node* node, co
   return rule;
 }
 
-// 保持原版 cookie 编码，且不在 32 位索引耗尽时回绕。
+// 64 位 cookie 携带下一项 hash 片段；compat 保留 16 位索引与溢出检查。
 static bool nm_virtual_position(int64_t position, bool compat) {
   return compat ? ((u64)position & 0xffff0000ULL) == 0x6e6d0000ULL
-                : ((u64)position & 0xffffffff00000000ULL) == 0x6e6d000000000000ULL;
+                : ((u64)position & 0xffff000000000000ULL) == 0x6e6d000000000000ULL;
 }
 static int64_t nm_directory_position(u32 index, bool compat) {
   return compat ? (0x6e6d0000ULL | index) : (0x6e6d000000000000ULL | index);
 }
+static u32 nm_directory_hash_fragment(u32 hash) { return (hash >> 16) & 0xffffU; }
+static int64_t nm_directory_cookie(u32 index, u32 hash, bool compat) {
+  return nm_directory_position(index, compat) | (compat ? 0 : (u64)nm_directory_hash_fragment(hash) << 32);
+}
 static int nm_emit_children(struct nm_directory_node* node, struct nm_dir_context* context, u32 uid, bool compat) {
   if (!nm_virtual_position(context->pos, compat))
     context->pos = nm_directory_position(0, compat);
-  u32 index = compat ? (u64)context->pos & 0xffffU : (u64)context->pos & 0xffffffffU;
   for (;;) {
+    u32 index = compat ? (u64)context->pos & 0xffffU : (u64)context->pos & 0xffffffffU;
+    u32 fragment = compat ? 0 : ((u64)context->pos >> 32) & 0xffffU;
     char name[256];
     unsigned int length = 0, type = 0;
+    u32 hash = 0, next_hash = 0;
     u64 number = 0;
     nm_rcu_read_lock();
     struct nomount_child_array* array = node ? nm_rules_load(node->children) : NULL;
+    if (fragment && array
+        && (index >= array->count || nm_directory_hash_fragment(nm_entries(array)[index].hash) != fragment)) {
+      for (u32 i = 0; i < array->count; i++) {
+        if (nm_directory_hash_fragment(nm_entries(array)[i].hash) == fragment) {
+          index = i;
+          break;
+        }
+      }
+    }
     bool more = array && index < array->count;
     if (compat && array && array->count > 0xffffU) {
       nm_rcu_read_unlock();
       return -EOVERFLOW;
     }
     if (more) {
+      hash = nm_entries(array)[index].hash;
+      if (index + 1 < array->count)
+        next_hash = nm_entries(array)[index + 1].hash;
       struct nomount_leaf* leaf = nm_entries(array)[index].leaf;
       struct nomount_rule* rule = leaf ? nm_select_rule(leaf, uid) : NULL;
       if (rule && !(rule->flags & NM_FLAG_WHITEOUT) && leaf->child_len && leaf->child_len <= 255) {
@@ -77,13 +95,13 @@ static int nm_emit_children(struct nm_directory_node* node, struct nm_dir_contex
     nm_rcu_read_unlock();
     if (!more)
       return 0;
-    context->pos = nm_directory_position(index, compat);
+    context->pos = nm_directory_cookie(index, hash, compat);
     // 原生 actor 可拷贝用户页；不能在 RCU 读锁内调用。
     if (length && nm_dir_emit(context, name, length, context->pos, number, type))
       return 0;
     if (index == (u32)-1)
       return -EOVERFLOW;
     index++;
-    context->pos = nm_directory_position(index, compat);
+    context->pos = nm_directory_cookie(index, next_hash, compat);
   }
 }

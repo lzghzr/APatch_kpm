@@ -15,6 +15,7 @@
 struct nm_directory_node;
 
 struct nomount_rule {
+  // 固定 backing 引用：rename 跟随同一对象；unlink/同名替换不自动切换到新 inode。
   struct nm_path r_path;
   u32 refs;
   u32 target_uid;
@@ -24,8 +25,9 @@ struct nomount_rule {
   u16 r_len;
   u16 flags;
   bool published;
-  bool inherit_backing;  // 仅自动父目录／保留目录使用，不来自控制协议。
-  bool inherited_child;  // 仅无显式规则的临时子项，不进入管理树。
+  bool inherit_backing;   // 仅自动父目录／保留目录使用，不来自控制协议。
+  bool inherited_child;   // 仅无显式规则的临时子项，不进入管理树。
+  bool automatic_parent;  // 拓扑生成的骨架规则；显式规则替换后不再携带此标记。
   struct nomount_rule* next;
   char paths[];
 };

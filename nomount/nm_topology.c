@@ -21,6 +21,9 @@ static struct nm_topology_anchor* nm_topology_anchors;
 static bool nm_topology_ready;
 static struct dentry* kfunc_def(nm_d_hash_and_lookup)(struct dentry*, struct nm_qstr*);
 static void kfunc_def(nm_shrink_dcache_parent)(struct dentry*);
+// 原生 async API 自行持有 work_struct；KPM 不依赖其配置相关布局。
+static u64 (*nm_async_schedule_node)(void (*)(void*, u64), void*, int);
+static u64 (*nm_async_schedule)(void (*)(void*, u64), void*);
 
 static int nm_prepare_topology_functions(void) {
   if (!nm_inode_engine.materialize_directory)
@@ -36,6 +39,9 @@ static int nm_prepare_topology_functions(void) {
       (typeof(kfunc(nm_shrink_dcache_parent)))kallsyms_lookup_name_by_suffix("shrink_dcache_parent");
   if (!kfunc(nm_d_hash_and_lookup) || !kfunc(nm_shrink_dcache_parent))
     return -ENOENT;
+  nm_async_schedule_node = (void*)kallsyms_lookup_name_by_suffix("async_schedule_node");
+  nm_async_schedule = nm_async_schedule_node ? NULL : (void*)kallsyms_lookup_name_by_suffix("async_schedule");
+  nm_log_info("topology retirement: %s\n", nm_async_schedule_node || nm_async_schedule ? "async" : "synchronous");
   nm_topology_ready = true;
   return 0;
 }
@@ -210,8 +216,32 @@ static void nm_topology_invalidate(struct nm_topology_anchor* anchor, struct den
     kfunc(nm_shrink_dcache_parent)(anchor->path.dentry);
 }
 
+// 管理锁内沿已持有的节点/path检查；节点可同时被原生 anchor 与虚拟 owner 使用。
+// 两种视图都可能成为 lookup 的 parent，不另做字符串解析，也不漏掉旧原生 FD 的视图。
+static int nm_topology_check_inode_allocation(struct nm_directory_node* node, struct nm_topology_anchor* anchor) {
+  bool checked = false;
+  while (node) {
+    if (!anchor)
+      anchor = nm_topology_anchor(node);
+    if (anchor) {
+      int rc = nm_check_inode_allocation(nm_inode_superblock(nm_dentry_inode(anchor->path.dentry)));
+      if (rc)
+        return rc;
+      checked = true;
+    }
+    node = node->owner ? node->owner->parent : NULL;
+    anchor = NULL;
+  }
+  return checked ? 0 : -ENODEV;
+}
+
 static int nm_topology_replace(struct nm_topology_leaf* entry, struct nomount_rule* rule,
                                struct nm_topology_updates* updates) {
+  if (rule->flags != NM_FLAG_WHITEOUT || entry->leaf->this_dir) {
+    int rc = nm_topology_check_inode_allocation(entry->parent, NULL);
+    if (rc)
+      return rc;
+  }
   struct nm_rule_array* array = nm_build_leaf_rule_array(entry->leaf, rule);
   if (IS_ERR(array))
     return PTR_ERR(array);
@@ -241,8 +271,8 @@ static int nm_topology_replace(struct nm_topology_leaf* entry, struct nomount_ru
 }
 
 // 调用者在进程上下文持管理锁；控制层负责串行。成功接收规则引用。
-static int nm_topology_add_locked(const char* path, u16 length, struct nomount_rule* rule,
-                                  struct nm_topology_updates* updates) {
+static int nm_topology_add_prepared_locked(const char* path, u16 length, struct nomount_rule* rule,
+                                           struct nm_topology_updates* updates, int (*prepare_inodes)(void)) {
   if (!nm_topology_ready)
     return -ENODEV;
   length = path ? nm_trim_path(path, length) : length;
@@ -252,8 +282,17 @@ static int nm_topology_add_locked(const char* path, u16 length, struct nomount_r
   if ((rule->flags & NM_FLAG_IS_DIR) && !(rule->flags & NM_FLAG_VIRTUAL_DIR) && !nm_inode_engine.lookup_backing)
     return -EOPNOTSUPP;
   struct nm_topology_leaf* found = nm_topology_find(path, length);
-  if (found)
+  if (found) {
+    // 原生父目录内的纯白化只发布负项；其它替换仍先准备自建 inode 所需入口。
+    if (prepare_inodes
+        && (rule->flags != NM_FLAG_WHITEOUT || found->leaf->this_dir || found->parent->owner
+            || !nm_topology_anchor(found->parent))) {
+      rc = prepare_inodes();
+      if (rc)
+        return rc;
+    }
     return nm_topology_replace(found, rule, updates);
+  }
   struct nm_topology_leaf* pending = nm_topology_new_leaf(path, length, rule, false);
   if (IS_ERR(pending))
     return PTR_ERR(pending);
@@ -310,6 +349,7 @@ static int nm_topology_add_locked(const char* path, u16 length, struct nomount_r
       break;
     }
     directory->inherit_backing = true;  // 父视图以后可从pure替换为backing，来源由每次查找决定。
+    directory->automatic_parent = true;
     parent = nm_topology_new_leaf(path, parent_length, directory, true);
     if (IS_ERR(parent)) {
       rc = PTR_ERR(parent);
@@ -332,6 +372,15 @@ static int nm_topology_add_locked(const char* path, u16 length, struct nomount_r
   if (nm_topology_cycle(boundary, child->leaf->this_dir)) {
     rc = -ELOOP;
     goto failed;
+  }
+  // 用本次实际解析并持有的拓扑判定，避免另做一次路径探测后出现 TOCTOU。
+  // 多个 pending 节点表示新增了虚拟父链；owner 表示已在管理目录视图内。
+  if (rule->flags != NM_FLAG_WHITEOUT || pending->next || !anchor || boundary->owner) {
+    rc = nm_topology_check_inode_allocation(boundary, anchor);
+    if (!rc && prepare_inodes)
+      rc = prepare_inodes();
+    if (rc)
+      goto failed;
   }
   struct nomount_child_array* array = nm_build_inserted_child(nm_rules_load(boundary->children), child->leaf);
   if (IS_ERR(array)) {
@@ -384,6 +433,12 @@ failed:
   return rc;
 }
 
+// 原有拓扑入口不承担控制接口接线；控制层用 prepared 入口在实际发布边界准备能力。
+static int nm_topology_add_locked(const char* path, u16 length, struct nomount_rule* rule,
+                                  struct nm_topology_updates* updates) {
+  return nm_topology_add_prepared_locked(path, length, rule, updates, NULL);
+}
+
 static void nm_topology_unlink(struct nm_topology_leaf* entry, struct nm_topology_updates* updates) {
   struct nm_topology_leaf** slot = &nm_topology_leaves;
   while (*slot != entry) slot = &(*slot)->next;
@@ -409,8 +464,8 @@ static void nm_topology_retire_empty_anchors(struct nm_topology_updates* updates
   }
 }
 
-static int nm_topology_remove_scope_locked(const char* path, u16 length, u32 uid, u32 end,
-                                           u32 deny_start, u32 deny_end, struct nm_topology_updates* updates) {
+static int nm_topology_remove_scope_locked(const char* path, u16 length, u32 uid, u32 end, u32 deny_start, u32 deny_end,
+                                           struct nm_topology_updates* updates) {
   if (!nm_topology_ready)
     return -ENODEV;
   length = path ? nm_trim_path(path, length) : length;
@@ -429,12 +484,11 @@ static int nm_topology_remove_scope_locked(const char* path, u16 length, u32 uid
   if (!rule)
     return -ENOENT;
   if (entry->leaf->this_dir && nm_rules_load(entry->leaf->this_dir->children)) {
-    if ((rule->flags & NM_FLAG_IS_DIR) || (!uid && !end)
-        || rules->rules[0]->target_uid || rules->rules[0]->uid_end) {
+    if ((rule->flags & NM_FLAG_IS_DIR) || (!uid && !end) || rules->rules[0]->target_uid || rules->rules[0]->uid_end) {
       if (rule->flags & NM_FLAG_VIRTUAL_DIR)
         return 0;
-      struct nomount_rule* directory = nm_alloc_scoped_rule(NULL, 0, NM_FLAG_IS_DIR | NM_FLAG_VIRTUAL_DIR,
-                                                           uid, end, deny_start, deny_end);
+      struct nomount_rule* directory =
+          nm_alloc_scoped_rule(NULL, 0, NM_FLAG_IS_DIR | NM_FLAG_VIRTUAL_DIR, uid, end, deny_start, deny_end);
       if (IS_ERR(directory))
         return PTR_ERR(directory);
       directory->inherit_backing = entry->parent && entry->parent->owner;
@@ -449,8 +503,15 @@ static int nm_topology_remove_scope_locked(const char* path, u16 length, u32 uid
       struct nm_topology_leaf* parent = top->parent->owner;
       struct nm_rule_array* array = nm_rules_load(parent->leaf->rules);
       struct nomount_child_array* children = nm_rules_load(top->parent->children);
-      if (!parent->automatic || !array || array->count != 1 || !(array->rules[0]->flags & NM_FLAG_VIRTUAL_DIR)
-          || !children || children->count != 1 || nm_entries(children)[0].leaf != top->leaf)
+      if (!array || !children || children->count != 1 || nm_entries(children)[0].leaf != top->leaf)
+        break;
+      // 与上游一致：最后子项删除后，所有作用域均为虚拟目录的父节点可一并退役。
+      // 显式目录撤销后也会降级为虚拟目录；automatic 只决定创建方式与列表可见性。
+      u32 i;
+      for (i = 0; i < array->count; i++)
+        if (!(array->rules[i]->flags & NM_FLAG_VIRTUAL_DIR))
+          break;
+      if (i < array->count)
         break;
       top = parent;
     }
@@ -487,7 +548,7 @@ static int nm_topology_remove_locked(const char* path, u16 length, u32 uid, stru
 }
 
 // 调用者解锁后执行；一次宽限期覆盖本批次的规则、叶节点和原生 anchor 路径。
-static void nm_finish_topology_updates(struct nm_topology_updates* updates) {
+static void nm_reclaim_topology_updates(struct nm_topology_updates* updates) {
   if (!updates->rules.rules && !updates->leaves && !updates->anchors)
     return;
   nm_rcu_synchronize();
@@ -506,6 +567,31 @@ static void nm_finish_topology_updates(struct nm_topology_updates* updates) {
     updates->anchors = anchor->next;
     nm_topology_free_anchor(anchor);
   }
+}
+
+static void nm_reclaim_topology_async(void* data, u64 cookie) {
+  struct nm_topology_updates* updates = data;
+  nm_reclaim_topology_updates(updates);
+  nm_free(updates);
+}
+
+// 所有读侧入口已在管理锁内撤销；提交后只转交私有退役链，不再访问活动拓扑。
+// 原生 async 可能因分配失败同步执行，因此必须在解锁后的进程上下文调用。
+static void nm_finish_topology_updates(struct nm_topology_updates* updates) {
+  if (!updates->rules.rules && !updates->leaves && !updates->anchors)
+    return;
+  struct nm_topology_updates* pending =
+      nm_async_schedule_node || nm_async_schedule ? nm_zalloc(sizeof(*pending)) : NULL;
+  if (!pending) {
+    nm_reclaim_topology_updates(updates);
+    return;
+  }
+  *pending = *updates;
+  *updates = (struct nm_topology_updates){0};
+  if (nm_async_schedule_node)
+    nm_async_schedule_node(nm_reclaim_topology_async, pending, -1);  // NUMA_NO_NODE。
+  else
+    nm_async_schedule(nm_reclaim_topology_async, pending);
 }
 
 // 全部清空不分配新数组；先撤销所有读侧入口，再把引用交给解锁后的统一回收。

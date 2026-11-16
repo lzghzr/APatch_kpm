@@ -5,9 +5,6 @@ MODDIR=${0%/*}
 . "$MODDIR/common.sh"
 MODULES_DIR="${MODULE_DIR:-/data/adb/modules}"
 MODULES_DIR="${MODULES_DIR%/}"
-TARGET_PARTITIONS="system system_ext vendor odm product apex oem optics prism
-    mi_ext my_bigball my_carrier my_company my_engineering my_heytap
-    my_manifest my_preload my_product my_region my_reserve my_stock"
 
 mkdir -p "$NM_DATA" || exit 1
 nm_log "=== NoMount 文件加载：$(date) ==="
@@ -32,15 +29,16 @@ if [ -f "$NM_PENDING" ] && [ "$(cat "$NM_PENDING")" != "$boot_id" ]; then
     exit 1
 fi
 printf '%s\n' "$boot_id" > "$NM_PENDING" || exit 1
-fail_injection() {
-    nm_log "[ERROR] 文件加载失败，正在撤销本次规则。"
-    nm_clear_rules
-    rm -f "$NM_PENDING" "$NM_DATA/.paths"
+abort_injection() {
+    nm_log "[ERROR] 文件加载准备失败，未继续发布规则。"
+    rm -f "$NM_PENDING"
     exit 1
 }
 # 元模块挂载先于普通post-fs-data，UID屏蔽必须先于规则发布。
-nm_clear_rules || fail_injection
-nm_restore_exclusions || fail_injection
+nm_clear_rules || abort_injection
+nm_restore_exclusions || abort_injection
+
+status=0
 
 for mod_path in "$MODULES_DIR"/*; do
     [ -d "$mod_path" ] || continue
@@ -48,22 +46,17 @@ for mod_path in "$MODULES_DIR"/*; do
     if [ -f "$mod_path/disable" ] || [ -f "$mod_path/remove" ] || [ -f "$mod_path/skip_mount" ]; then
         continue
     fi
-    for partition in $TARGET_PARTITIONS; do
-        [ -d "$mod_path/$partition" ] || continue
-        [ -d "/$partition" ] || [ -d "/system/$partition" ] || continue
-        nm_log "[INFO] 加载 ${mod_path##*/}/$partition"
-        # 分步执行，保留find及xargs各自的失败状态。路径以NUL分隔。
-        find -L "$mod_path/$partition" \( -type d -o -type c -o -name .replace -o -name .remove \) \
-            -exec sh "$MODDIR/rule-paths.sh" path "$mod_path" {} + > "$NM_DATA/.paths" || fail_injection
-        xargs -0 -r -n 200 "$NM_BIN" rule add --whiteout < "$NM_DATA/.paths" >> "$NM_LOG" 2>&1 || fail_injection
-        find -L "$mod_path/$partition" \( -type d -o -name .replace \) \
-            -exec sh "$MODDIR/rule-paths.sh" opaque "$mod_path" {} + > "$NM_DATA/.paths" || fail_injection
-        xargs -0 -r -n 200 "$NM_BIN" rule add --opaque < "$NM_DATA/.paths" >> "$NM_LOG" 2>&1 || fail_injection
-        find -L "$mod_path/$partition" \( -type f -o -type l \) ! -name .replace ! -name .remove \
-            -exec sh "$MODDIR/rule-paths.sh" pair "$mod_path" {} + > "$NM_DATA/.paths" || fail_injection
-        xargs -0 -r -n 200 "$NM_BIN" rule add < "$NM_DATA/.paths" >> "$NM_LOG" 2>&1 || fail_injection
-    done
+    nm_log "[INFO] 加载 ${mod_path##*/}"
+    "$NM_BIN" module load "$mod_path" >> "$NM_LOG" 2>&1 || status=1
 done
-rm -f "$NM_DATA/.paths"
-nm_log "[OK] 文件加载完成，等待系统开机完成。"
-"$NM_BIN" rule list >> "$NM_LOG" 2>&1 || fail_injection
+if [ "$status" -eq 0 ]; then
+    nm_log "[OK] 文件加载完成，等待系统开机完成。"
+else
+    nm_log "[ERROR] 文件加载部分失败，已保留成功规则，等待系统开机完成。"
+fi
+# 列表仅用于诊断，不改变已经发布的规则；开机回执仍负责删除 pending。
+"$NM_BIN" rule list >> "$NM_LOG" 2>&1 || nm_log "[WARN] 无法记录规则列表。"
+if [ -f "$NM_DATA/dump_rules" ]; then
+    nm_dump_rules boot || nm_log "[WARN] 无法将规则列表写入 logcat。"
+fi
+exit "$status"

@@ -5,6 +5,17 @@ static void nm_control_error(struct nm_payload* payload, int rc) {
     payload->status = rc;
 }
 
+static int nm_control_prepare_inodes(void) {
+  int rc = nm_activate_xattr_reads_locked();
+  if (!rc)
+    rc = nm_activate_xattr_writes_locked();
+  if (!rc)
+    rc = nm_activate_xattr_extra_locked();
+  if (!rc)
+    rc = nm_activate_mutation_guards_locked();
+  return rc;
+}
+
 static int nm_control_rules(struct nm_payload* payload, bool add) {
   unsigned int offset = payload->arg1, end = payload->data_size;
   if (end > sizeof(payload->buffer) || offset > end)
@@ -52,13 +63,7 @@ static int nm_control_rules(struct nm_payload* payload, bool add) {
         rc = PTR_ERR(rule);
       else {
         nm_management_lock();
-        rc = nm_activate_xattr_reads_locked();
-        if (!rc)
-          rc = nm_activate_xattr_writes_locked();
-        if (!rc)
-          rc = nm_activate_xattr_extra_locked();
-        if (!rc)
-          rc = nm_topology_add_locked(path, rule_header.v_len, rule, &updates);
+        rc = nm_topology_add_prepared_locked(path, rule_header.v_len, rule, &updates, nm_control_prepare_inodes);
         nm_management_unlock();
         if (rc)
           nm_rule_put(rule);
@@ -83,6 +88,7 @@ static int nm_control_list(struct nm_payload* payload) {
   u32 index = 0, start = payload->arg1;
   unsigned int used = 0;
   int rc = 0;
+  char* (*render_path)(const struct nm_path*, char*, int) = (void*)kallsyms_lookup_name_by_suffix("d_path");
   nm_management_lock();
   for (struct nm_topology_leaf* entry = nm_topology_leaves; entry; entry = entry->next) {
     if (entry->automatic)
@@ -102,21 +108,52 @@ static int nm_control_list(struct nm_payload* payload) {
         index++;
         continue;
       }
-      unsigned int bytes = sizeof(struct nm_rule_hdr) + entry->leaf->v_len + rule->r_len;
-      if (bytes > sizeof(payload->buffer) - used) {
+      unsigned int head_len = sizeof(struct nm_rule_hdr) + entry->leaf->v_len;
+      unsigned int available = sizeof(payload->buffer) - used;
+      if (head_len > available) {
         if (!used)
           rc = -EOVERFLOW;
         goto done;
       }
-      struct nm_rule_hdr header = {
-          .flags = rule->flags, .uid = rule->target_uid, .uid_end = rule->uid_end,
-          .deny_start = rule->deny_start, .deny_end = rule->deny_end,
-          .v_len = entry->leaf->v_len, .r_len = rule->r_len};
+      char* real = NULL;
+      unsigned int real_len = 0;
+      if (!(rule->flags & (NM_FLAG_VIRTUAL_DIR | NM_FLAG_WHITEOUT))) {
+        if (!rule->r_path.dentry || !rule->r_path.mnt) {
+          rc = -ESTALE;
+          goto done;
+        }
+        if (!render_path) {
+          rc = -EOPNOTSUPP;
+          goto done;
+        }
+        // 管理锁保活规则及其 path；原生 d_path 处理 rename/mount 并发和 deleted 注记。
+        // 暂借未写入的记录头容纳尾零，使恰好填满 payload 的合法记录仍可输出。
+        real = render_path(&rule->r_path, payload->buffer + used, available);
+        if (IS_ERR(real)) {
+          rc = PTR_ERR(real);
+          if (rc == -ENAMETOOLONG && used)
+            rc = 0;  // 游标留在本条，下页以完整空间重试。
+          goto done;
+        }
+        real_len = strlen(real);
+        if (real_len > available - head_len) {
+          if (!used)
+            rc = -ENAMETOOLONG;
+          goto done;
+        }
+        memmove(payload->buffer + used + head_len, real, real_len);
+      }
+      struct nm_rule_hdr header = {.flags = rule->flags,
+                                   .uid = rule->target_uid,
+                                   .uid_end = rule->uid_end,
+                                   .deny_start = rule->deny_start,
+                                   .deny_end = rule->deny_end,
+                                   .v_len = entry->leaf->v_len,
+                                   .r_len = real_len};
       memcpy(payload->buffer + used, &header, sizeof(header));
       used += sizeof(header);
       memcpy(payload->buffer + used, entry->leaf->paths, header.v_len);
       used += header.v_len;
-      memcpy(payload->buffer + used, rule->paths, header.r_len);
       used += header.r_len;
       index++;
     }

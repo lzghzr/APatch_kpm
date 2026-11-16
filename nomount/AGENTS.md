@@ -2,6 +2,8 @@
 
 本目录由 Developer 维护，遵守仓库根目录和三方交付流程。
 
+评估或同步上游前先读 [当前差异清单](UPSTREAM.md#当前差异清单)。发现移植实现与上游不一致时写入 `UPSTREAM.md`，按「待处理」「已处理」「有意保留」分类，注明比较基线、影响、取舍与验证阶段；处理后同步实现依据和状态，候选完成不等于独立复核或验收完成，不另建平行待办。
+
 ## 目标与输入
 
 - 首轮目标为用户提供的 `boot_los23.2.img`，内核版本 `4.19.325-cip134-st18-perf-g7fc8455b2fa8`。
@@ -63,19 +65,20 @@ git archive <迁移前提交> nomount/configs | tar -x -C local
 - `nm_control.c`：控制命令、批次游标、规则与 UID 管理以及规则列表分页。
 - `nm_control_key.c`：keyring 预解析载荷与 key_type 注册；成功后驻留。
 - `nm_control_entry.c`：实际 KPM 包含的完整 backing 与控制层入口，先准备引擎和锁，最后注册 key type。
-- `module/`：配套ZIP自有安装与启动脚本；上游用户态、WebUI、metainstall及路径处理仍从冻结子模块读取。
-- `tools/build_zip.py`：从干净冻结提交打包ZIP，直接用NDK编译上游nm；记录独立ZIP实例、工具／输入及产物哈希，不重建KPM。
-- `tools/test_zip_module.py`：临时目录执行安装与启动脚本，以CLI／安装器夹具验证控制流，不能代替实机。
+- `module/`：配套ZIP自有安装与启动脚本；上游用户态、WebUI、metainstall 从冻结子模块读取，用户态扫描修正在 tools/cli-module.patch。
+- `tools/build_zip.py`：从干净冻结提交打包ZIP，以 Zig 静态 musl 编译适配后的上游 nm，保留 NDK 静态 libc 构建入口；记录独立ZIP实例、工具／输入及产物哈希，不重建KPM。
+- `Developer/tools/test_nomount_module_cli.py`：运行实际模块 CLI 和宿主目录；`test_nomount_failure_scope.py` 验证启动控制流，不能代替实机。
 - VFS、规则管理和控制接口按业务拆分，避免把目标布局混进规则实现。
 
 ## 配套元模块
 
 - 安装以包内nm的版本及隔离UID状态查询确认控制接口；2.1.1的CLI已传播列表查询错误；安装继续使用版本和隔离UID状态查询作兼容判据。不按uname或驱动版本字符串分支，不加载／卸载内核驱动。
-- APatch元模块metamount先于普通post-fs-data执行，metamount自行检查接口、停用标记和开机回执；清空旧规则并恢复UID／isolated设置后再发布文件规则。后续每个写入操作核对退出状态，失败清规则。
-- 路径以NUL分隔；find和xargs分步核对。保留原版分区映射、.replace与opaque路径处理，跳过disable/remove/skip_mount模块。
+- APatch元模块metamount先于普通post-fs-data执行，metamount自行检查接口、停用标记和开机回执；清空旧规则并恢复UID／isolated设置后再发布文件规则。后续每个写入操作核对退出状态，普通发布失败保留成功规则并汇总错误；诊断查询失败不改变规则。
+- 启动脚本逐模块调用 `nm module load`，CLI 在进程内扫描并批量发送规则；保留分区映射、.remove/.replace、字符设备白化和 opaque 处理，跳过 disable/remove/skip_mount 模块。
 - .booting保存boot_id，收到boot-completed后删除。上次回执未完成时暂停注入，不能把它定性为NoMount导致崩溃；同次开机重入不判为旧启动。
 - ZIP卸载清当前文件规则、配套数据及属于本模块的nm快捷入口；KPM保持原生命周期。原版WebUI安全模式在下次开机生效。
 - ZIP候选用源码完整commit、独立Build ID#实例号与ZIP SHA-256交接。打包从Git对象读取输入，固定ZIP时间及权限，使用新实例目录；用户态源码和GPL-3许可证随包附带。KPM与ZIP分别绑定身份与实机覆盖。
+- ZIP 由显式本地文件白名单、冻结上游 WebUI／源码及生成的 CLI／许可证展开完整条目集合，写包前和解包后都拒绝缺项、多项与重复项。工程约定留在仓库；CHANGELOG 作为冻结版本校验输入，发布更新日志指向对应 tag。
 
 先核对共同结构和 SDK 已确认的字段，再取得不能覆盖的偏移。生产代码统一使用根目录 `kpm_utils.h` 的指令解码和 BTF 查询。BTF 查询与短函数推导分开；仅数据或接口不可用时回退，有效 BTF 的错误保留。必要布局无法确认时停止初始化。
 
@@ -105,11 +108,11 @@ git archive <迁移前提交> nomount/configs | tar -x -C local
 - Developer入口为tools/test_cache_reuse.py：读取1545条int/bool冻结夹具，仅按7c4e160授权迁移M1-O1/O2的稳定正项返回值，类型检查、负项与clear_rules后失效保持；其余表达式和顺序不变，追加源／规则／绑定变化和回源交错。工具手动调用，未接共享门禁；宿主桩不证明原生dcache命中、shrinker或真实并发，迁移独立复核待Auditor。
 - 完整引擎依赖全齐后才开放拓扑中的 backing 目录规则。准备失败只清理尚未发布的私有表，并清空拓扑准备状态和权限入口；已有引擎拒绝重复完整准备。fallback普通链接按下述现代接口契约物化，特殊文件仍拒绝。
 - 在已有管理目录下新增深层规则时，建立私有自动父链，管理阶段不解析这些前缀的当前 UID 视图。自动／保留目录的 inherit_backing 只属于模块私有规则；查找时从实际父inode的独立path取得来源，使用原生 vfs_path_lookup 查询相应子目录，并持独立 path/rule/node 引用。ENOENT 保留纯目录，其他原生错误保留，源为非目录时返回 ENOTDIR。自动／保留目录的 inherit_backing 分支仍强制重查，以覆盖源出现／变化；显式来源撤销后有子规则的目录恢复父来源。
-- 在建管理父链前已打开的 fallback 目录持有原节点及源 path；新路径查找进入新管理节点。现有 FD 的目录视图保持到引用结束。删除最后子规则会裁剪自动父链，已打开的 inode 持有空节点直到 evict；撤销有子项的显式目录仍保留该管理节点。
+- 在建管理父链前已打开的 fallback 目录持有原节点及源 path；新路径查找进入新管理节点。现有 FD 的目录视图保持到引用结束。删除最后子规则会裁剪所有作用域均为虚拟目录的空父链，包含显式目录撤销后降级的节点；仍有子项或非虚拟规则的父节点保留。已打开的 inode 持有空节点直到 evict。
 - keyring 载荷先经过 `CAP_SYS_ADMIN` 检查，再通过原生 `memdup_user` 取得内核快照；响应核对用户拷贝长度。控制协议保持 4096 字节及 32/64 位地址传递。
-- v22 保持4096字节外层；ADD／列表记录头24字节、DEL头18字节。`version` 回复为 `22 (KPM <发布版本>)`，KPM元信息仍使用发布版本。配套CLI在非version操作前探测且精确要求协议22；安装器同样核对线协议号，不按内核版本选择布局。用户必须成组更新KPM与ZIP后重启。
-- UID默认作用域为(0,0)，单UID为(uid,uid)，范围包含两端；默认规则可带排除范围，显式范围拒绝重叠，相同范围不同排除集合返回EEXIST。删除精确匹配范围和排除集合，旧单UID内部入口仍可用。范围条数不按UID个数展开。
-- opaque的backing目录只提供属性/安全标签，子项来自显式规则；禁止backing查找、自动父目录来源继承和backing枚举。inode绑定中的flags包含opaque位，切换opaque/合并视图必须重新匹配缓存。带内容的`.replace`先建opaque目录再加文件，空`.replace`与`.remove`白化；启动每步核对错误，失败清规则。
+- v22/v23 共用4096字节外层、24字节ADD／列表记录头、18字节DEL头；`version` 回复为 `23 (KPM <发布版本>)`。配套CLI在非version操作前精确接受22/23，安装／启动与WebUI复用只读API检查；未知版本拒绝。升级先ZIP再KPM，分页仍保留客户端支持的空末页，不引入新的协商opcode。
+- UID默认作用域为(0,0)，单UID为(uid,uid)，范围包含两端；默认规则可带排除范围，显式范围拒绝重叠，相同范围不同排除集合返回EEXIST。拓扑自动父规则用私有 `automatic_parent` 标记来源，同范围升级为显式规则时接收新排除集合；标记按规则保存，不因另一 UID 的显式规则加入而丢失，显式规则及撤销后保留目录不带此标记。规则 ARM64 尺寸仍为56字节，线协议与原生偏移不变。删除精确匹配范围和排除集合，旧单UID内部入口仍可用。范围条数不按UID个数展开。
+- opaque规则生效时，backing目录只提供属性/安全标签，子项来自显式规则；禁止backing查找、自动父目录来源继承和backing枚举。全局排除／isolated UID 持有的既有 FD 转交 backing 枚举与 seek；虚拟 cookie 仍 EOF，rewind 后恢复原生位置。inode绑定中的flags包含opaque位，切换opaque/合并视图必须重新匹配缓存。带内容的`.replace`先建opaque目录再加文件，空`.replace`与`.remove`白化；启动每步核对错误，普通发布失败保留已成功规则。
 - 控制层使用原生 `__mutex_init`／`mutex_lock`／`mutex_unlock`，按目标完整 mutex 尺寸分配。当前明确要求无 `dep_map`，含 lockdep 的布局返回 EOPNOTSUPP；原生动态 class key 注册未接入。首轮配置已确认 DEBUG_LOCK_ALLOC／DEBUG_MUTEXES／DEBUG_SPINLOCK／LOCKDEP 未启用，mutex_size=32，初始化 class key 为 NULL。动态尺寸与 ABI 从 BTF 取得，静态值来自对应源码／配置证据，验证放在布局层。
 - key_type 只共用 name／def_datalen 前16字节和连续的 preparse／free_preparse／instantiate 回调；key_preparsed_payload 只共用连续 data／datalen。其起点由 nm_offsets.c 配置、nm_btf.c 查询。BTF 核对回调 ABI、完整尺寸和连续位置；key type 优先按已证完整尺寸分配；BTF明确不可用且完整尺寸未知时，可使用独立512字节清零容量，覆盖已核对声明及内部注册写入。容量不写入key_type_size，不参与原表复制。成功注册为初始化最后一步，此后表、锁和模块均驻留到重启。接口版本由 nm_protocol.h 的 NM_CONTROL_VERSION 提供，NM_KPM_VERSION 单独标识发布版本。
 - 动态自建表对已取得的 inode_operations／dentry_operations／key_type 尺寸执行512字节上界门控：超界在完整准备／控制校验时返回E2BIG，自建分配在分配前拒绝；不截断，不影响按精确尺寸复制原表。注册锚点已识别的link及其16字节链表写入也须在容量内，超界错误不得进入尾部未覆盖的降级。完整尾部未覆盖且已知尺寸在界内时沿用原处理；尺寸仍为-1时保留既有512字节回退，这不证明未知厂商尾部在界内，AUD-001保持OPEN。静态编译分支不增加该门控。
@@ -152,6 +155,8 @@ git archive <迁移前提交> nomount/configs | tar -x -C local
 
 ## 工具与测试的去留（2026-11-10）
 
+2026-11-15 维护者整理记录（仅调整工具入口与存放位置）：旧 CLI 独立入口转为 `Developer/tools/nomount_cli_fixture.py`，由协议 22/23 回归复用原有断言；DEV-103 因依赖未入库的目标 BTF 回归移入 `nomount/local/tests/test_pseudo_fs_btf.py`，检查范围保持。
+
 **不再使用的工具和测试必须移除，不要留着占位。**「存在但从不运行」的脚本比没有更糟：它让人以为有覆盖。
 
 移除判据（命中任一条即应删除，删除时在本文件记一行理由）：
@@ -173,7 +178,7 @@ git archive <迁移前提交> nomount/configs | tar -x -C local
 | --- | --- | --- |
 | 已发布候选的测试断言、冻结 Oracle 输出 | 只许追加，禁止改写／放宽 | 守则「篡改基准测试」 |
 | 从未运行过、或与其它测试重复覆盖的整份测试 | 可删除，但须在本文件留一行技术依据 | 本文件上表 |
-| 同一目标中间世代的 oracle 目录（如 `layout-01…05`） | 可直接移除，最终世代原地保留 | `local/keep/README.md` §代际规则 |
+| 同一目标中间世代的 oracle 目录（如 `layout-01…05`） | 可直接移除，最终世代原地保留 | [本地留存规则](../docs/process/12-local-bootstrap.md#本地文件的存放与留存) |
 
 **删除或改写仍在使用的断言，一律按守则「隐蔽削弱断言」走**：开发报告单独列「断言调整范围与技术依据」，交 Auditor 独立复核，且不得与业务功能混在同一提交——删除整份测试同样适用。维护者代为执行时，只做机械删除，结论仍归复核方。
 
@@ -249,7 +254,7 @@ Android boot 输入按 boot 头的 kernel 段长度截取后解压。arm64 头�
 
 - 默认加载事件、配套ZIP与署名／许可改动登记为0.3.1，原0.3.0第一组候选和独立结论保留。Makefile、控制协议版本与ZIP module.prop同步，ZIP versionCode为301。
 - 版本调整不改变45项偏移表、目标配置或加载实现。重新构建四基础件、14条目标派生记录及配套ZIP；审计和测试按新commit、实例及产物哈希绑定。
-- 既有Oracle及历史报告保持冻结，版本／身份变更通过新记录交接，不改写旧结论。**该冻结只针对“发布级 Oracle”**——即绑定某个已交付候选验收结论的那一份；纯测试输入（不被 `metadata` 的 build／acceptance 引用）可以**原地重生成**，代际由 receipt 里的 `tool_sha256`／`config_sha256`／`sources` 自证，不要为每次工具更新新建 `-01/-02` 目录。判据见 `local/keep/README.md` §oracle 的代际规则；断言层面的冻结与变更协议见 [测试基准守则](../docs/process/06-antipatterns.md#测试基准与反向过拟合) —— 冻结范围限于「已随候选提交／版本发布归档」的测试套件，中间世代目录与从未运行的脚本不受该条保护。
+- 既有Oracle及历史报告保持冻结，版本／身份变更通过新记录交接，不改写旧结论。**该冻结只针对“发布级 Oracle”**——即绑定某个已交付候选验收结论的那一份；纯测试输入（不被 `metadata` 的 build／acceptance 引用）可以**原地重生成**，代际由 receipt 里的 `tool_sha256`／`config_sha256`／`sources` 自证，不要为每次工具更新新建 `-01/-02` 目录。判据见 [本地留存规则](../docs/process/12-local-bootstrap.md#本地文件的存放与留存)；断言层面的冻结与变更协议见 [测试基准守则](../docs/process/06-antipatterns.md#测试基准与反向过拟合) —— 冻结范围限于「已随候选提交／版本发布归档」的测试套件，中间世代目录与从未运行的脚本不受该条保护。
 
 ## 0.4.0 目录回调
 
@@ -321,7 +326,7 @@ Android boot 输入按 boot 头的 kernel 段长度截取后解压。arm64 头�
 - release_zip.py 负责发布目录的 ZIP 副本、独立清单及哈希；合并发布前核对 KPM/ZIP 的完整 source_commit 和 NoMount 版本。最终 SHA256SUMS 包括两类发布文件，BUILD_MANIFEST 保留 KPM 信息并追加 companion 引用。
 - 用户侧安装／VFS业务保持现状；本轮只更改版本字符串、配套显示名、打包文件名和发布流程。已有审计／实机结论绑定旧实例，新实例需经轻量差异复核后由维护者验收。
 
-- ZIP 文件名为 NoMount-kpm_<版本>.zip；module.prop 的 updateJson 指向正式 Releases/latest/download/NoMount-kpm.json。发布时读取包内 version/versionCode/CHANGELOG，生成更新 JSON 和更新说明，下载 URL 绑定实际发布标签和版本化文件名。未发布的工作树不维护在线更新 JSON。
+- ZIP 文件名为 NoMount-kpm_<版本>.zip；module.prop 的 updateJson 指向正式 Releases/latest/download/NoMount-kpm.json。发布时读取包内 version/versionCode 生成更新 JSON；changelog 指向同一发布 tag 的仓库更新记录，下载 URL 绑定实际发布标签和版本化文件名。未发布的工作树不维护在线更新 JSON。
 - 更新信息遵循 KernelSU module.prop 的 updateJson 入口及通用四字段格式（version、整数 versionCode、zipUrl、changelog）；id 不变。规范来源：https://kernelsu.org/zh_CN/guide/module.html 与 https://topjohnwu.github.io/Magisk/guides.html。
 - 正式发布每轮使用新标签：release-action 开启 immutableCreate 和 artifactErrorsFailBuild，来源 commit 使用 github.sha；已公开标签不做资产覆盖更新，避免更新 JSON 与 ZIP 分批替换形成失效入口。
 
@@ -435,7 +440,7 @@ README 仅写普通用户的文件选择、界面操作和可见状态；加载�
 
 - `nm_xattr.c`接原生vfs_getxattr/vfs_listxattr，以及经BTF确认存在的独立do_get_acl；对三类自建inode，将dentry及get的userns/idmap改为info持有的源path；普通inode和纯虚拟目录直通。原生函数继续执行权限、LSM（含security.*捷径）、handler分派与errno；模块不自行解释/调用未知文件系统回调，链接的正向资格核验不变。
 - get支持已核对的plain四参、userns/idmap五参，list为三参。有效BTF逐项核对参数数目/宽度、具名dentry/context与返回值；BTF不可用仅沿已核对的plain/userns共同契约。静态仍46项/92字节；idmap新接入要求BTF，未知形态拒绝ADD。
-- 控制key成功注册后才标记驻留。首次ADD在管理锁内完成所需接入（普通get/list及存在时的独立ACL），全部成功后才调用拓扑发布；版本查询与DEL不触发。部分成功保留且ready为false、回调直通；后续ADD只重试未成功的一处。当前SDK没有在途撤钩同步，不以失败回滚释放这些已发布代码；它们与控制key同样驻留到重启。
+- 控制key成功注册后才标记驻留。首次需要自建inode的ADD在管理锁内完成所需接入（普通get/list及存在时的独立ACL），全部成功后才调用拓扑发布；版本查询与DEL不触发。部分成功保留且ready为false、回调直通；后续ADD只重试未成功的一处。当前SDK没有在途撤钩同步，不以失败回滚释放这些已发布代码；它们与控制key同样驻留到重启。
 - 原生调用者持有外层dentry/inode，info的独立源path覆盖可睡眠调用。源为自建inode/循环、绑定损坏或源上下文为空时，在原生调用前拒绝；不查当下规则代替已打开FD的绑定。每次读取不分配、不调用管理锁、不取额外path引用。
 - `tools/test_xattr_read.py`保留链接轮989处宿主断言及顺序再追加路径/FD、原生错误、注册失败/部分成功与阻断发布夹具；SDK参数帧直接读取当前hook.h声明。`tools/test_xattr_read_btf.py`保留8份真实BTF的原断言后追加读取ABI负例。Developer候选自检手动调用，未接共享门禁；不把原生桩称为真实LSM/syscall/CFI或性能证据。
 - 独立ACL入口存在性同时核对BTF与原生符号；原型/上下文未知、同址别名或证据冲突时拒绝。独立入口无静态契约时拒绝；旧共享契约中的无入口形态沿get处理ACL。`test_xattr_acl.py`在1021处断言后追加第三入口失败/重试和access/default路径/FD实参；`test_xattr_acl_btf.py`追加真实入口及签名反例。
@@ -458,13 +463,13 @@ README 仅写普通用户的文件选择、界面操作和可见状态；加载�
 - 新写入口由BTF核对plain五参、userns/idmap六参及具名dentry/context、参数/返回宽度与只读helper原型；mapped要求调用上下文与源mount相同，否则EXDEV。源绑定损坏、未初始化、负布局或循环在原生调用前拒绝。原生源path引用覆盖整个可睡眠调用，不额外取得锁/分配；不刷新虚拟inode权限或安全标签快照。
 - managed security.capability到达转交入口时EOPNOTSUPP，避免写入可能已按外层对象转换的载荷。旧形态可能在hook前已返回原生EPERM/EINVAL，不承诺syscall一律EOPNOTSUPP。该名字在取得转换层证据前仍属未完成项，其它security.*保留原生LSM。
 - 独立do_set_acl写支路单独核对具名原型/符号存在性，存在时在ACL解析与原生锁/权限/LSM之前同源换绑；不从普通入口推断全名空间覆盖。缺失或不一致证据时拒绝ADD，不按版本猜原型。
-- 控制key驻留后的首次ADD先激活读族、再激活写族，全部安装成功才发布规则。部分写hook保留、ready=false且managed修改拒绝；下次只补未成功hook。静态表没有新转交证据，已核对的plain/userns入口只用于EOPNOTSUPP拒绝；未知形态/独立ACL无证据则拒绝ADD。旧静态46项表不变。无BTF动态目标仅在源锁已准备、context=0、无do_set_acl且nm_xattr_signature.c的36/24/11/8条真实形态全部一致时启用plain5：同一entry dentry的锁链、locked权限/安全调用链及readonly完整短函数交叉核对；未知或冲突保留拒绝。context=1/2无BTF路径未覆盖。
+- 控制key驻留后，首次需要自建inode的ADD先激活读族、再激活写族，全部安装成功才发布规则。部分写hook保留、ready=false且managed修改拒绝；下次只补未成功hook。静态表没有新转交证据，已核对的plain/userns入口只用于EOPNOTSUPP拒绝；未知形态/独立ACL无证据则拒绝ADD。旧静态46项表不变。无BTF动态目标仅在源锁已准备、context=0、无do_set_acl且nm_xattr_signature.c的36/24/11/8条真实形态全部一致时启用plain5：同一entry dentry的锁链、locked权限/安全调用链及readonly完整短函数交叉核对；未知或冲突保留拒绝。context=1/2无BTF路径未覆盖。
 - Developer手动运行`tools/test_xattr_write.py`、`tools/test_xattr_write_btf.py`、`tools/test_xattr_plain5.py`及12份静态配置回归；旧业务断言只追加，工具未接共享门禁。宿主权限/LSM模型不能代替原生syscall、SELinux、CFI或并发freeze/remount的实机验证。
 
 
 ## xattr 删除与 syscall 列表入口
 
-- 动态版首次ADD在读取族、写入族之后准备`nm_xattr_extra.c`，有完整证据时两个新hook全部安装并发布ready后才发布规则；部分安装保留供重试，managed请求在ready前拒绝。BTF明确不可用、无独立删除ACL且旧follow共同几何已确认时，若源锁原始推导结果仅为不支持／缺来源，可关闭extra而继续建立只读规则：ready保持false，set沿既有拒绝hook，remove由已核对的原生空槽前置拒绝；handler型删除不沿用此降级。源锁冲突／无效数据／未准备、有效BTF错误及hook失败仍中止，不把汇总的setter关闭状态当作全部原因。静态版不接此层，配置及既有行为不变。
+- 动态版首次需要自建inode的ADD在读取族、写入族之后准备`nm_xattr_extra.c`，有完整证据时两个新hook全部安装并发布ready后才发布规则；部分安装保留供重试，managed请求在ready前拒绝。BTF明确不可用、无独立删除ACL且旧follow共同几何已确认时，若源锁原始推导结果仅为不支持／缺来源，可关闭extra而继续建立只读规则：ready保持false，set沿既有拒绝hook，remove由已核对的原生空槽前置拒绝；handler型删除不沿用此降级。源锁冲突／无效数据／未准备、有效BTF错误及hook失败仍中止，不把汇总的setter关闭状态当作全部原因。静态版不接此层，配置及既有行为不变。
 - `vfs_removexattr`独立核对plain二参、mapped三参及具名dentry/context，不从setxattr的参数数目推断；无BTF仅接受真实目标29/16/9条前缀，同一dentry的源锁与独立permission/security链必须一致。源不存在属性的ENODATA由原生删除透传。存在独立`vfs_remove_acl`时另核对具名mapped三参BTF并在其取inode/锁/权限/LSM之前换源；非BTF缺该符号可继续，存在但无签名证据则拒绝，不从do_set_acl推测删除支路。删除没有nscap值转换，security.capability删除仍交原生权限/LSM，设置限制保持。
 - 目标syscall内部`listxattr(dentry,user_buffer,size)`可能内联导出VFS实现。额外入口只换dentry，保留原生分配/用户拷贝/零长度探测/总字节数；不清S_PRIVATE、不填猜测的i_op槽、不在模块中拼接或过滤属性列表。有BTF核对其三参具名原型；无BTF核对25条helper与9条独立security前缀，未知形态或有效BTF错误拒绝接线。
 - Developer手动运行`tools/test_xattr_remove_list.py`与`tools/test_xattr_remove_list_btf.py`。宿主测试保留1666条Oracle，原生list函数体以字段访问器及FS/LSM/拷贝桩承接，并使用宿主临时文件的真实xattr；不替代Android原生路径/FD/LSM三态复验。DEV-059/060由发现方复核关闭。
@@ -513,7 +518,7 @@ README 仅写普通用户的文件选择、界面操作和可见状态；加载�
 ## 2026-11-08 上游修复回移
 
 - `nm_virtual_mode` 统一清除虚拟 inode 的 SUID/SGID，保留类型、普通权限及 sticky 位；新建、setattr 成功后的属性同步、两种 kstat 和缓存比较使用相同规则。源文件本身的权限不因物化或 getattr 改写，显式 setattr 仍按原生源接口执行。
-- 上游 gitlink 保持 v2.2.0；`build_zip.py` 对冻结输入生成适配后的 rule-paths 与 WebUI，源码、许可证和来源说明随包。opaque 阶段同时扫描目录和 `.replace`；非空 opaque 建目录规则，空目录白化，内容扫描出错传播到启动撤销路径。
+- 该轮从 v2.2.0 回移的非空 opaque 处理已包含于当前 v2.3.0 gitlink；路径脚本使用冻结上游字节。opaque 阶段同时扫描目录和 `.replace`，非空 opaque 建目录规则，空目录白化；扫描错误汇总到启动返回状态并保留独立成功规则。
 - WebUI 的加载/撤销入口共用规则脚本，检查 find/xargs 管道、桥接退出码及结束标记。失败传播到现有 UI 错误处理；规则批次仍不是事务，WebUI 不清空其它模块的规则来模拟回滚。
 - 手动自检入口为 `tools/test_upstream_fixes.py`，保留 int/bool 各1891处冻结 Oracle，追加特殊权限位、实际生成 shell 和 Node VM 交互。原测试文件保持冻结；原生 exec/LSM/CFI、Android WebView 与设备启动仍需独立验证。
 - 当前静态配置回归入口为 `tools/test_static_current.py`，参数沿用 `test_static_targets.py`。仅将生成夹具的截取边界定位到包含 `nm_btf.c` 的顶层动态区，并定义静态编译模式；完整保留原 C/Python 断言、配置矩阵和 JSON/blob 往返。原入口的首次 `#ifndef` 现位于容量函数内部，不能再用作截取边界。
@@ -526,3 +531,82 @@ README 仅写普通用户的文件选择、界面操作和可见状态；加载�
 - `tools/migrate_layout.py` 显式迁移完整旧46项配置，新字段设为旧共同契约的0，原值与输入文件不改。新51项基线必须配新配置；旧基线继续使用其原配套布局和配置，不互换。
 - 静态版仍不推导偏移；新idmap规则入口额外使用目标BTF验证get/list/set/remove/ACL原生ABI。BTF不可用或冲突则ADD失败，规则不发布。静态set/remove写入保持EOPNOTSUPP；读取与syscall list按源path转发。既有plain/userns静态能力保持。
 - `tools/test_612_btf.py` 对选定镜像执行当前生产BTF查询及真实记录变异；`test_612_callbacks.py` 保留int/bool各1907处业务Oracle并追加独立file字段、偏移回调、分列时间和静态idmap入口检查。`test_btf_current.py` 保留8份既有BTF的126处Oracle，以bias=0保留原固定前部测试语义；偏移前部的正例另由真实目标查询覆盖。原测试文件与断言不变。
+
+
+## 2026-11-12 规则失败范围
+
+- 配套启动仍先清旧规则并恢复 UID/isolated 配置；这两项准备失败停止发布。普通模块扫描或添加失败只记录错误、保留成功规则并继续其余扫描，最终返回非零；规则列表仅作诊断。部分成功也保留本次 boot_id 标记，等实际 boot-completed 删除，继续覆盖开机保护。
+- 控制层将 xattr 接线作为拓扑发布前回调。拓扑在持有本次实际解析结果、尚未发布子项时判断：只有直接原生父目录、无新增虚拟父链/目录节点的纯 WHITEOUT 可跳过；普通文件、目录、已有管理目录及新增父链仍须接入成功。替换用已持有的 parent/anchor/node 判据，不另解析路径。
+- 原 `nm_topology_add_locked` 继续只处理拓扑；完整控制路径使用 `nm_topology_add_prepared_locked`，原有独立调用者的入口与契约保留。接入失败沿私有树失败路径释放，不改变已发布规则；真实 EEXIST 仍返回错误。
+- 回归入口 `Developer/tools/test_nomount_failure_scope.py` 原样执行公共规则 Oracle，追加生产 topology/control 和重定位 shell；原 ZIP 回滚断言保持原文，已失效的行为预期及独立复核要求另见本轮 Developer 响应。
+
+## 2.3.0 安全与配套接入
+
+- `nm_mutation.c` 在首次需要虚拟 inode 的规则发布前，接入 `security_inode_unlink/rmdir/link/rename` BEFORE hook，参数数为 2/2/3/5，返回 int；BTF 可用时核对宽度和命名对象，静态／无 BTF 路径复用已核对共同签名。实际 parent/child inode 属 NoMount 才返回 EPERM；原生对象保留原始参数和 LSM/文件系统处理，不借删除文件隐式删除规则。
+- 包括源父目录未接管的 hardlink、RENAME_EXCHANGE、native 文件移入虚拟目标父目录；不依赖 LOOKUP_RENAME_TARGET 或重新按 UID 选规则。原生同 inode rename no-op 保留。
+- 接入属于驻留后的管理路径，部分安装保留，下次继续补齐；四个入口齐全后才发布正项。原生父目录内的纯 WHITEOUT 沿既有拓扑判断跳过此依赖，失败不清空其他规则。
+- `nm_install_super_proxy` 在分配／复制／发布前，以同一份原生 `s_op` 快照与 `kallsyms_lookup_name("kernfs_sops")` 数据对象地址比较；命中返回 EOPNOTSUPP。共享该表的 OEM kernfs 客户端同样拒绝。目标超级块另按 DEBUGFS/TRACEFS/BPF_FS/SECURITYFS 四个 UAPI 魔数排除，日志区分 `pseudo-fs magic` 与 `kernfs s_op identity`；名单不用于判断 backing 文件系统。目录入口先执行只读资格检查，再分配／复制目录表；super proxy 在原发布阶段重新核对同一份原表快照。静态表仍为 51 字段／102 字节。
+- `s_type/s_op` 缺失返回 EINVAL；数据身份符号不可解析返回 EOPNOTSUPP，均有错误日志。缺符号时新 super proxy 无法建立，依赖新目录代理的普通规则和纯 WHITEOUT 都受影响；已有代理、规则和控制接口保持，下次管理操作可重试。共同超级块前部扩展至 `s_magic`，保留 `s_iflags`；BTF 按字段位置与 8 字节宽度验证。静态／无 BTF 使用已核对的共同声明，不增加配置字段或版本分支。
+- DEV-101 自检 `Developer/tools/test_nomount_dev101_identity.py` 覆盖 OEM 名称、缺符号、空字段、重试及普通表完整复制；旧 v230 Oracle 只补原生表身份夹具与提取函数名，已有断言原文保留。DEV-102 的 `test_nomount_dev102_backing.py` 运行生产 open/release、规则/UID、过滤、backing iterate/seek 和虚拟目录分派，边界接 POSIX 实目录；覆盖 int/bool actor 与 compat/64 位 cookie。POSIX 适配不证明 Android 原生锁/LSM/CFI。
+- ZIP 使用上游 DOM 文本构造和统一 readModules；生成副本继续适配 KPM 连接标记、`_(._.)_`、路径归一化和 load/unload 错误状态。开机规则转储由 metamount 调用 common.sh 的 `nm_dump_rules`，列规则或 logcat 失败只报告错误；WebUI 手动转储入口的待适配差异见 UPSTREAM。
+- 自检入口：`Developer/tools/test_nomount_v230.py`、`test_nomount_protocol23.py` 和 `test_nomount_failure_scope.py`。旧断言保持；后者仅增加新依赖的宿主桩。BTF、宿主回调和浏览器桥接夹具属于 Developer 证据，原生 hook/CFI、Android WebView 与 TST-004 仍需各自独立结论。
+
+- DEV-103 本地自检 `nomount/local/tests/test_pseudo_fs_btf.py`（依赖同目录的目标 BTF 回归与本地输入）对生产目录和 super 安装执行四魔数 × 身份/缺符号矩阵及普通文件系统通过检查，并在 boot_405 真实 BTF 上验证 s_magic 位置、宽度与缺失拒绝。bpffs 排除防止被代理目录的 BPF_OBJ_PIN 身份失败；其余三项是控制/诊断文件系统业务边界。OEM 魔数复用可能误拒，改写可能漏拒，魔数不能替代 kernfs 数据表身份。
+
+## 固定 backing 绑定与当前路径列表
+
+- 规则和物化 inode 各自持有原生 path；rename 跟随同一对象，删除／同名替换不自动重新解析路径。已打开 FD、已物化 inode 和后续按同一规则物化者保持旧对象；选择新对象须显式删除对应规则再添加。源 inode 原地写入照常可见。
+- `nm_control_list` 在管理 mutex 下以原生 `d_path` 输出实际 path，引用由存活规则持有；不用保存的 `rule->paths` 回填。原生函数处理 rename/mount 序列同步，本地不额外持 d_lock。删除显示最后位置与原生 ` (deleted)` 注记；该文本与合法文件名后缀可能相同，不作为机器状态字段解析。
+- d_path 直接使用 payload 的未提交记录区，暂借记录头容纳尾零，再以 memmove 整理不含尾零的路径，保留恰好满页记录。当前页空间不足留游标下页重试；完整空页仍不足返回 ENAMETOOLONG，缺 path 返回 ESTALE，缺函数返回 EOPNOTSUPP。错误只影响此次 list，不撤销规则、不增加初始化依赖；白化／纯虚拟目录不要求来源路径。
+- 列表不额外分配内存；控制载荷沿原生 memdup_user 路径。d_path 的共同签名和 path 前部由 boot_405 BTF 核对；原生锁/CFI及跨命名空间表现属于设备验证范围。
+- 自检入口：`Developer/tools/test_nomount_rebind_dpath.py`、`test_nomount_protocol23.py`、`test_nomount_protocol23_dom.py`。旧 CLI Oracle 的“23拒绝”夹具迁移为“24拒绝”，原断言保留且全套分别以22/23重放；此合同迁移须独立复核。
+
+## TST-004：tmpfs 新 inode 边界
+
+- 通用 `new_inode/iget5_locked` 没有执行 shmem 私有初始化，不能与原生 destroy/free 配对。按实际目标 sb 的 TMPFS_MAGIC 拒绝新建 NoMount inode，返回 EOPNOTSUPP；不按 `/dev`、`/apex` 路径或 backing 文件系统判断。
+- 拓扑发布前沿已持有的 anchor 与 owner 父链检查，包括同时保有原生 anchor 和虚拟 owner 的视图。新增私有链、替换规则、删除后保留目录均受检查；拒绝走原有未发布清理，不撤销其它规则。原生父目录的直接 WHITEOUT 不需要新 inode，继续可用。
+- 目录和普通文件/链接物化在实际 parent sb 上再次检查，先于 dentry 包装、安全上下文、info 和原生 inode 分配，覆盖 backing 继承及隐式子项；不改原生 alloc/destroy/free、evict 或引用回收语义。
+- ramfs 不具有本次 shmem 私有销毁链，维持既有路径；源文件位于 tmpfs 而目标位于支持的文件系统时仍可用。该边界不等于其它文件系统的生命周期已全面验证。
+- 自检 `Developer/tools/test_nomount_tst004.py` 运行生产拓扑/控制与两种物化入口，保留 failure-scope Oracle 的全部断言；负例检查 tmpfs 分配器调用为零，正例检查 ramfs/ext4/erofs/f2fs 可到达注入失败的原生分配器。宿主计数不替代原生析构和设备结论。
+
+## 虚拟 backing 与枚举续读（2026-11-15）
+
+- `nm_alloc_rule` 对本次 `LOOKUP_FOLLOW` 解析出的实际 inode 使用物化引擎的三种私有 i_op 身份判定；虚拟来源返回 ELOOP，并释放本次 path/rule。原生对象、无 backing 的 WHITEOUT／虚拟目录保留。静态／动态共用此入口，独立规则引擎不增加物化依赖；继承来源沿既有 lookup 拒绝链。
+- 64 位虚拟 cookie 为 `nm:16 + hash高16位 + index:32`，在每次取得子项快照时检查索引；不匹配则按片段恢复。actor 在 RCU 外调用，期间发生更新也在下次取项重新核对。compat 仍为 `nm:16 + index:16`，超过 65535 个子项报 EOVERFLOW。
+- hash 片段为零、碰撞或对应子项被删除时采用尽力恢复；并发枚举不是快照，不保证这些情况下无遗漏／重复。cookie 只用于当前启动的目录 FD，线控制协议与静态布局表不变。
+- 自检 `Developer/tools/test_nomount_virtual_source.py`、`test_nomount_readdir_cursor.py` 保留规则 Oracle，并检查身份／引用平衡、int/bool actor、增删后恢复、actor 间更新、rewind 和 compat 边界；原生并发与 VFS 回调仍需独立验证。
+
+## 模块 CLI（2026-11-15）
+
+KPM 已加载时，可在 root shell 中管理单个模块。示例中的 `<模块>` 替换为待管理模块的目录名：
+
+```sh
+nm module load "/data/adb/modules/<模块>"
+nm module unload "/data/adb/modules/<模块>"
+nm module list --json
+```
+
+- 上游 `nm module load <模块目录>` 逐项添加分区目录内的文件／白化规则；不是把整个目录变成一条 backing 规则。启动与 WebUI 共用此入口，`rule add/del/list` 保持可用。
+- 同一批次即使有规则失败，KPM 仍消费整页；CLI 记录错误后清空发送缓存，继续下一页及其它分区。没有整批撤销或重发。扫描／发送失败最终返回非零，WebUI 同时检查退出码和状态标记。
+- 扫描跟随目录符号链接，按当前祖先链的 dev/ino 检测循环；不同别名各自扫描。load/unload/list 共用路径遍历。模块列表不限制为 64 个，链接归属使用绝对源路径和分区映射。
+- load/unload 共用父先子后的单次遍历：进入目录时先决定目录标记。非空 `.replace` 或 opaque 属性生成 opaque，优先于同目录 `.remove`；空 `.replace`／opaque 或单独 `.remove` 生成白化并覆盖该子树。普通目录只遍历，标记文件不再单独发规则。已有 `.replace` 足以决定规则时不依赖额外 xattr 查询成功。
+- `module unload` 只发送加载会生成的文件、白化和 opaque 路径。仅用于遍历的骨架目录不生成 DEL；按最终虚拟路径在命令内去重（UID 范围在本次命令中固定），覆盖重叠标记和分区别名，结束时释放临时集合。重复撤销或真正缺失的规则仍返回错误，批次失败后继续其它路径。
+- `module unload` 重扫当前模块目录并删除对应路径规则；源目录后来删除／改名，或不同模块路径重叠时，不具备历史归属恢复能力。固定 backing 绑定仍遵循前述契约。
+- 自检：模块 CLI 的 ASan/UBSan 目录与批次夹具、完整 22/23 CLI Oracle、启动失败范围和实际 ZIP 的浏览器 DOM 交互。shell／DOM 桥接夹具随命令迁移，行为断言保留；独立审计与 Android 实测分别验收。
+
+- DEV-106 自检 `Developer/tools/test_nomount_dev106.py` 用实际 CLI 生成的 ADD 路径建立严格 DEL 状态夹具：旧候选复现全撤销但退出 1；修复覆盖嵌套目录、重叠标记／opaque、分区别名、跨批次去重、UID 范围与无关规则保留、真实删除失败继续处理。原模块 CLI Oracle 断言保持不变。
+
+## dev 用户态增量（2026-11-16）
+
+- 配套 ZIP 基线为 `00e7c5d4fdbf1e58decea3522b8eb7207a46d413`，版本 `2.3.0-20261116`。KPM 继续使用 `2.3.0-20261114`。
+- `cli-module.patch` 基于上游 fd 相对遍历与公共 `nm_queue_rule`，保留上一节的标记选择、DEL 去重与 UID 范围。协议检查和 UID 参数解析位于 module 分派之前；目录标记查询失败记录错误，继续可读取的子项及后续分区，尾批始终发送。
+- `module list --json` 输出 `mods[].links` 与 `mods[].hasInjectable`，`rules` 仍在顶层。白化映射的 `real` 为空、`dir` 为 false；白化目录不遍历子项。CLI 与 WebUI 必须一起更新列表格式。
+- WebUI 采用上游 `shellQuote` 覆盖加载／撤销、disable、skip_mount 与 `--only`；本地保留 errno／状态标记检查和规则源路径规范化。Material You 沿用上游 Manager CSS → 缓存 → 默认色／异步系统强调色的选择。
+- `test_nomount_dev111.py` 以生产 CLI JSON 驱动生成 WebUI，检查纯白化、混合列表与五种状态；`test_nomount_dev111_dom.py` 重放原 DOM／协议 Oracle 并检查标记路径和主题渲染。宿主 fd／xattr 与 shell bridge 是平台边界夹具，Android 行为由 Tester 验证。
+
+## 性能试验采用（2026-11-15）
+
+- 采用异步退役，普通文件物化及查找恢复 DEV-108／109 基线：普通文件 `new_inode`，目录缓存保持；各次 backing FD 独立打开；原 hash/Bloom/二分查找，无 child_hint。
+- `nm_finish_topology_updates` 在管理解锁后把独占退役链交给原生 async；worker 使用原回收函数，等待 RCU 后释放路径／节点。不在 worker 修改活动拓扑。API 或任务内存不可用时同步完成；原生 async 的内联执行同样安全。初始化日志报告 async／synchronous，协议返回仍表示规则发布／撤销完成。
+- 自检入口 `Developer/tools/test_nomount_async.py` 使用当前生产拓扑与原规则 Oracle，保留三项实验的全部异步断言。原三项工具 `test_nomount_perf.py` 在实验提交 `3f6ebb7cc28c83e45869bdfafe98fd259af7e0e4` 上重放，原断言与证据留存。
+- 采纳记录（本地 `Developer/reports/2026-11-15-nomount-perf-decision.md`）绑定原 A/B/A 数据与实现选择；单项确认（本地 `Developer/reports/2026-11-15-nomount-async-confirmation.md`）记录差分审计、XQ-DQ72／5.15.189 点测和维护者 dynamic 验收。两份报告保存在本地 `dev` 分支归档中，不随 `main` 发布。DEL 前台延迟收益复现，本次 ADD p50 退步未复现；旧测法的因果归因仍未确定，固定等待不等于 worker 完成观测，p50 不代表尾延迟。DEV-110 报告更正经独立确认后已由维护者关闭；当前采用范围与交付状态见 [UPSTREAM](UPSTREAM.md#当前差异清单)。

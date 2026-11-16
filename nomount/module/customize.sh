@@ -21,7 +21,7 @@ MODDIR="$MODPATH"
 . "$MODDIR/common.sh"
 if ! nm_check_api; then
     ui_print "! 无法连接 NoMount。"
-    abort "! 需要 v22 控制协议。请成组更新 NoMount 2.2.0 KPM 与配套 ZIP，并在安装或嵌入 KPM 后重启；若仍失败，请检查适配情况和安装日志。"
+    abort "! 需要 v22 或 v23 控制接口及隔离 UID 查询。升级时先安装本 ZIP，再安装或嵌入新 KPM 并重启；请检查驱动版本和安装日志。"
 fi
 ui_print "- NoMount 已连接，驱动版本：$NM_DRIVER_VERSION"
 

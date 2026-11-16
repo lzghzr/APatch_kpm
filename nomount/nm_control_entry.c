@@ -6,11 +6,13 @@
 
 // 命令使用上述管理锁和完整backing引擎。
 #include <hook.h>
+// clang-format off: implementation dependencies, not header includes.
 #include "nm_xattr.c"
 #include "nm_xattr_write.c"
 #include "nm_xattr_extra.c"
-
+#include "nm_mutation.c"
 #include "nm_control.c"
+// clang-format on
 
 // keyring引用命令分派，最后发布。
 #include "nm_control_key.c"

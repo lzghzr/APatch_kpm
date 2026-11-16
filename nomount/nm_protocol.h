@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /* Wire layout from maxsteeel/nomount kernel/src/nomount.h,
- * commit bf1847f98fed382369c43bfd652cd93774b9b8e3; checked 2026-10-22. */
+ * v22 bf1847f98fed382369c43bfd652cd93774b9b8e3; unchanged in
+ * v23 ab93ee32a589ccb021257b3c1f280e058520d844, checked 2026-11-14. */
 #ifndef __NM_PROTOCOL_H
 #define __NM_PROTOCOL_H
 
@@ -12,7 +13,7 @@
 #define NM_KPM_VERSION "2.2.0-20261108"
 #endif
 #endif
-#define NM_CONTROL_VERSION "22 (KPM " NM_KPM_VERSION ")"
+#define NM_CONTROL_VERSION "23 (KPM " NM_KPM_VERSION ")"
 
 enum nm_command {
   NM_CMD_UNSPEC = 0,
@@ -60,7 +61,7 @@ struct nm_del_hdr {
 
 _Static_assert(sizeof(struct nm_payload) == 4096, "NoMount payload ABI");
 _Static_assert(offsetof(struct nm_payload, buffer) == 28, "NoMount payload header ABI");
-_Static_assert(sizeof(struct nm_rule_hdr) == 24, "NoMount v22 rule header ABI");
-_Static_assert(sizeof(struct nm_del_hdr) == 18, "NoMount v22 deletion header ABI");
+_Static_assert(sizeof(struct nm_rule_hdr) == 24, "NoMount v22/v23 rule header ABI");
+_Static_assert(sizeof(struct nm_del_hdr) == 18, "NoMount v22/v23 deletion header ABI");
 
 #endif

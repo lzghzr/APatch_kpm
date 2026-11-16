@@ -11,6 +11,17 @@ import stat
 import struct
 import subprocess
 import zipfile
+import tempfile
+
+
+MODULE_PACKAGE_FILES = (
+    'module.prop', 'customize.sh', 'post-fs-data.sh', 'boot-completed.sh',
+    'uninstall.sh', 'metamount.sh', 'common.sh', 'README.md', 'NOTICE.md',
+)
+COMPILER_LICENSE_FILES = {
+    'zig': ('licenses/musl-COPYRIGHT', 'licenses/zig-LICENSE'),
+    'ndk': ('licenses/NDK-NOTICE', 'licenses/NDK-NOTICE.toolchain'),
+}
 
 
 def sha(data):
@@ -26,6 +37,48 @@ def tree_files(repo, commit, *paths):
     return [p.decode() for p in rows.split(b'\0') if p]
 
 
+def module_inputs(repo, commit):
+    """只读取声明的模块文件及构建输入；工程文档不随目录隐式进入 ZIP。"""
+    paths = [*('nomount/module/' + name for name in MODULE_PACKAGE_FILES),
+             'nomount/module/CHANGELOG.md', 'nomount/tools/build_zip.py',
+             'nomount/tools/build_nm.sh', 'nomount/tools/cli-module.patch']
+    inputs, contents = {}, {}
+    for path in tree_files(repo, commit, *paths):
+        data = git(repo, 'show', commit + ':' + path)
+        inputs[path] = sha(data)
+        name = path.removeprefix('nomount/module/')
+        if name in MODULE_PACKAGE_FILES:
+            contents[name] = data
+        elif path == 'nomount/tools/cli-module.patch':
+            contents['sources/cli-module.patch'] = data
+        elif path == 'nomount/tools/build_nm.sh':
+            contents['sources/build-nm.sh'] = data
+    return inputs, contents
+
+
+def package_entries(upstream_paths, compiler):
+    """按冻结上游文件展开 webroot/sources 白名单，与输出 contents 独立。"""
+    expected = set(MODULE_PACKAGE_FILES) | {
+        'metainstall.sh', 'LICENSE', 'sources/build-nm.sh',
+        'sources/cli-module.patch', 'bin/nm',
+    } | set(COMPILER_LICENSE_FILES[compiler])
+    for path in upstream_paths:
+        if path.startswith('module/webroot/'):
+            expected.add(path.removeprefix('module/'))
+        elif path.startswith('userspace/src/'):
+            expected.add('sources/' + Path(path).name)
+    return expected
+
+
+def check_package_entries(names, expected):
+    """多出、缺失或重复任一条目均拒绝。"""
+    actual = set(names)
+    assert len(names) == len(actual), 'ZIP duplicate entries'
+    assert actual == expected, ('ZIP entry whitelist mismatch: '
+                                f'extra={sorted(actual - expected)}, '
+                                f'missing={sorted(expected - actual)}')
+
+
 def check_cli(data):
     assert data[:7] == b'\x7fELF\x02\x01\x01'
     assert struct.unpack_from('<HH', data, 16) == (2, 183), 'nm must be ARM64 EXEC'
@@ -39,122 +92,60 @@ def check_cli(data):
 
 def adapt_webui(js):
     """适配生成副本的连接状态、彩蛋与规则路径解析。"""
-    before = 'if ${NM_BIN} version > /dev/null 2>&1; then lsmod | grep -q nomount && echo lkm || echo built-in; fi'
+    before = 'if [ "$driver_status" -eq 0 ]; then lsmod | grep -q nomount && echo lkm || echo built-in; fi'
     assert js.count(before) == 1
-    js = js.replace(before, 'if ${NM_BIN} version > /dev/null 2>&1; then echo api; fi')
+    js = js.replace(before, 'MODDIR=${MOD_DIR}/nomount; . "$MODDIR/common.sh"; '
+                    'if nm_check_api; then echo api; else echo incompatible; fi')
     before = "el.modeBadge.textContent = data.nmMode === 'lkm' ? translate('mode_lkm') : data.nmMode === 'built-in' ? translate('mode_builtin') : '';"
     assert js.count(before) == 1
     js = js.replace(before, "el.modeBadge.textContent = data.nmMode === 'api' ? translate('mode_connected') : '';")
+    before = "active: dVer !== unk,"
+    assert js.count(before) == 1
+    js = js.replace(before, "active: nmMode === 'api',", 1)
+    before = "translate('mode_connected') : '';"
+    assert js.count(before) == 1
+    js = js.replace(before, "translate('mode_connected') : data.nmMode === 'incompatible' ? translate('mode_incompatible') : '';", 1)
     face = "'(._.)'"
     assert js.count(face) == 4
     js = js.replace(face, "'_(._.)_'")
-    helper = r"""function parseRuleList(text) {
-    const rules = JSON.parse(text);
-    for (const rule of rules) {
-        if (typeof rule?.real === 'string')
-            rule.real = rule.real.replace(/\/+/g, '/');
-    }
-    return rules;
-}
-
-"""
-    assert js.count('// Home\n') == 1
-    js = js.replace('// Home\n', helper + '// Home\n', 1)
-    replacements = {
-        'const rules = JSON.parse(parts[6]);': 'const rules = parseRuleList(parts[6]);',
-        'const activeRules = JSON.parse(jsonPart?.trim() || "[]");': 'const activeRules = parseRuleList(jsonPart?.trim() || "[]");',
-        'const activeRules = JSON.parse(stdout.trim() || "[]");': 'const activeRules = parseRuleList(stdout.trim() || "[]");',
-    }
-    for before, after in replacements.items():
-        assert js.count(before) == 1, before
-        js = js.replace(before, after, 1)
-    # 保留上游 UI 入口，共用有明确结束状态的规则发布/撤销脚本。
-    actions = r'''async function runModuleRules(modId, adding) {
-    const modPath = `${MOD_DIR}/${modId}`;
-    const command = adding ? `
-        find -L $valid_dirs '(' -type d -o -type c -o -name ".replace" -o -name ".remove" ')' \\
-            -exec sh "${RULE_PATHS}" path "${modPath}" {} + 2>/dev/null \\
-            | xargs -0 -r -n 200 "${NM_BIN}" rule add --whiteout
-        st=$?; [ "$st" -ne 0 ] && status=$st
-        find -L $valid_dirs '(' -type d -o -name ".replace" ')' \\
-            -exec sh "${RULE_PATHS}" opaque "${modPath}" {} + 2>/dev/null \\
-            | xargs -0 -r -n 200 "${NM_BIN}" rule add --opaque
-        st=$?; [ "$st" -ne 0 ] && status=$st
-        find -L $valid_dirs '(' -type f -o -type l ')' ! -name ".replace" ! -name ".remove" \\
-            -exec sh "${RULE_PATHS}" pair "${modPath}" {} + 2>/dev/null \\
-            | xargs -0 -r -n 200 "${NM_BIN}" rule add
-        st=$?; [ "$st" -ne 0 ] && status=$st
-    ` : `
-        find -L $valid_dirs '(' -type f -o -type l -o -type c -o -type d ')' \\
-            -exec sh "${RULE_PATHS}" del "${modPath}" {} + 2>/dev/null \\
-            | xargs -0 -r -n 200 "${NM_BIN}" rule del
-        st=$?; [ "$st" -ne 0 ] && status=$st
-    `;
-    const result = await exec(`
-        (
-            set -o pipefail || exit 1
-            cd "${modPath}" || exit 1
-            valid_dirs=""
-            for p in ${TARGET_PARTITIONS}; do [ -d "$p" ] && { [ -d "/$p" ] || [ -d "/system/$p" ]; } && valid_dirs="$valid_dirs $p"; done
-            [ -z "$valid_dirs" ] && exit 0
-            status=0
-            ${command}
-            exit "$status"
-        )
-        echo "nm_rule_status=$?" >&2
-    `);
-    const status = (result.stderr || '').match(/(?:^|\n)nm_rule_status=(\d+)\s*$/);
-    if (result.errno !== 0 || !status || Number(status[1]) !== 0)
-        throw new Error(result.stderr || 'NoMount rule operation failed');
-}
-
-async function loadModule(modId) { await runModuleRules(modId, true); }'''
-    for name, replacement in (('loadModule', actions),
-                              ('unloadModule', 'async function unloadModule(modId) { await runModuleRules(modId, false); }')):
-        pattern = r'(?ms)^async function ' + name + r'\(modId\) \{.*?^\}'
-        assert len(re.findall(pattern, js)) == 1, name
-        js = re.sub(pattern, lambda _: replacement, js, count=1)
+    before = "const data = JSON.parse(stdout);"
+    assert js.count(before) == 1
+    js = js.replace(before, before + "\n    for (const rule of data.rules) if (typeof rule.real === 'string') rule.real = rule.real.replace(/\\/+/g, '/');", 1)
+    # Upstream shellQuote covers paths and module filters; retain errno checking.
+    for action in ('load', 'unload'):
+        before = 'const { stderr } = await exec(`${NM_BIN} module ' + action + ' ${shellQuote(modPath)}`);'
+        assert js.count(before) == 1
+        js = js.replace(before, 'const { errno, stderr } = await exec(`${NM_BIN} module ' + action + ' ${shellQuote(modPath)}`);\n    if (errno) throw new Error(stderr || "Module operation failed");', 1)
     return js
 
 
-def adapt_rule_paths(body):
-    """回移上游非空 opaque 处理；其余路径映射保持冻结输入。"""
-    before = body[body.index('    elif [ "$kind" = opaque ]; then'):]
-    assert before.count('elif [ "$kind" = del ]; then') == 1
-    assert before.endswith('    fi\ndone\n')
-    after = r'''    elif [ "$kind" = del ]; then
-        case "${f##*/}" in
-            .replace) printf "/%s\0" "${v%/.replace}" ;;
-            .remove)  printf "/%s\0" "${v%/.remove}"  ;;
-            *)        printf "/%s\0" "$v"            ;;
-        esac
-    else
-        if [ -d "$f" ]; then
-            case "$(getfattr -n trusted.overlay.opaque "$f" 2>/dev/null)" in *"=\"y\""*) ;; *) continue;; esac
-        elif [ "${f##*/}" = ".replace" ]; then
-            f="${f%/.replace}"; v="${v%/.replace}"
-        else
-            printf "/%s\0" "${v%/.remove}"
-            continue
-        fi
-        entries=$(find "$f" -mindepth 1 ! -name '.replace' ! -name '.remove' -print -quit 2>/dev/null) || exit 1
-        if [ -n "$entries" ]; then
-            if [ "$kind" = opaque ]; then printf "/%s\0%s\0" "$v" "$f"; fi
-        elif [ "$kind" = path ]; then
-            printf "/%s\0" "$v"
-        fi
-    fi
-done
-'''
-    return body.replace(before, after, 1)
+def adapt_cli_header(body, patch=None):
+    """Apply the reviewed module-walker changes to the frozen upstream header."""
+    if patch is None:
+        patch = Path(__file__).with_name('cli-module.patch').read_text()
+    with tempfile.TemporaryDirectory(prefix='nomount-cli-') as directory:
+        path = Path(directory) / 'nm.h'
+        path.write_text(body)
+        result = subprocess.run(['patch', '--batch', '-p1'], cwd=directory, input=patch,
+                                text=True, capture_output=True)
+        if result.returncode:
+            raise RuntimeError(result.stdout + result.stderr)
+        return path.read_text()
 
 
 def adapt_cli(body):
-    """生成副本：v22 ABI 探测；默认规则允许独立的 UID 排除范围。"""
+    """生成副本：已知 v22/v23 ABI 探测；默认规则允许独立的 UID 排除范围。"""
     before = 'if (args.deny_start < args.target_uid || args.deny_end > args.target_uid_end) {'
     assert body.count(before) == 1
     body = body.replace(before, 'if ((args.target_uid || args.target_uid_end) && '
                         '(args.deny_start < args.target_uid || args.deny_end > args.target_uid_end)) {', 1)
+    dispatch = """    if (args.action == ACTION_MODULE_LIST) return cmd_module_list(&workspace, &args);
+    if (args.action == ACTION_MODULE_LOAD || args.action == ACTION_MODULE_UNLOAD)
+        return cmd_module_load_or_unload(&workspace, &args, args.action == ACTION_MODULE_LOAD);
+
+"""
+    assert body.count(dispatch) == 1
+    body = body.replace(dispatch, '', 1)
     before = '    switch (args.action) {'
     assert body.count(before) == 1
     probe = '''    /* KPM companion: verify wire ABI before any non-version operation. */
@@ -163,20 +154,21 @@ def adapt_cli(body):
         payload->arg1 = payload->data_size = 0;
         if (nm_send_payload(payload) != 0 || payload->data_size < 2
             || payload->data_size > sizeof(payload->buffer)
-            || payload->buffer[0] != '2' || payload->buffer[1] != '2'
+            || payload->buffer[0] != '2'
+            || (payload->buffer[1] != '2' && payload->buffer[1] != '3')
             || (payload->data_size > 2 && payload->buffer[2] != ' ')) {
-            print_literal("nm: incompatible driver protocol; v22 required\\n");
+            print_literal("nm: incompatible driver protocol; v22 or v23 required\\n");
             goto do_exit;
         }
         payload->cmd = payload->target_uid = payload->arg1 = payload->data_size = 0;
     }
 
 '''
-    return body.replace(before, probe + before, 1)
+    return body.replace(before, probe + dispatch + before, 1)
 
 
 def zip_changelog(data, version):
-    """配套 ZIP 的更新记录取自 module/CHANGELOG.md 自身，并核对首条标题的版本。
+    """核对仓库 module/CHANGELOG.md 首条版本，并提取当前版本段落。
 
     ZIP 与 KPM 独立更新：只要求 CHANGELOG 首个二级标题等于 module.prop 的版本，
     与 KPM 的发布版本无关。
@@ -197,9 +189,11 @@ def zip_changelog(data, version):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--ndk', type=Path, required=True)
+    compiler = parser.add_mutually_exclusive_group(required=True)
+    compiler.add_argument('--zig', type=Path, help='Zig executable (static musl)')
+    compiler.add_argument('--ndk', type=Path, help='Existing Android NDK build entry point')
     parser.add_argument('--host-tag', default='darwin-x86_64')
-    parser.add_argument('--toolchain', default='ndk26.3.11579264')
+    parser.add_argument('--toolchain')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     upstream = root / 'nomount/upstream/nomount'
@@ -211,16 +205,9 @@ def main():
     upstream_commit = row[2]
     assert git(upstream, 'rev-parse', 'HEAD').decode().strip() == upstream_commit
     assert not git(upstream, 'status', '--porcelain')
-    inputs = {}
-    contents = {}
-    for path in tree_files(root, commit, 'nomount/module', 'nomount/tools/build_zip.py', 'nomount/tools/build_nm.sh'):
-        data = git(root, 'show', commit + ':' + path)
-        inputs[path] = sha(data)
-        if path.startswith('nomount/module/'):
-            contents[path.removeprefix('nomount/module/')] = data
-        elif path == 'nomount/tools/build_nm.sh':
-            contents['sources/build-nm.sh'] = data
-    upstream_paths = tree_files(upstream, upstream_commit, 'module/webroot', 'module/metainstall.sh', 'module/rule-paths.sh', 'userspace/src', 'LICENSE')
+    inputs, contents = module_inputs(root, commit)
+    upstream_paths = tree_files(upstream, upstream_commit, 'module/webroot', 'module/metainstall.sh', 'userspace/src', 'LICENSE')
+    expected_entries = package_entries(upstream_paths, 'zig' if args.zig else 'ndk')
     sources = {}
     for path in upstream_paths:
         data = git(upstream, 'show', upstream_commit + ':' + path)
@@ -233,25 +220,51 @@ def main():
             contents['LICENSE'] = data
 
     sources['nm.c'] = adapt_cli(sources['nm.c'].decode()).encode()
-    contents['rule-paths.sh'] = ('# SPDX-License-Identifier: GPL-3.0-only\n'
-                                '# NoMount by maxsteeel; nonempty opaque handling adapted by Codex, 2026-11-08.\n'
-                                + adapt_rule_paths(contents['rule-paths.sh'].decode())).encode()
+    sources['nm.h'] = adapt_cli_header(sources['nm.h'].decode(), contents['sources/cli-module.patch'].decode()).encode()
 
     # 对输出副本适配状态展示，冻结上游保持原字节。
     js = adapt_webui(contents['webroot/index.js'].decode())
     contents['webroot/index.js'] = ('// SPDX-License-Identifier: GPL-3.0-only\n'
-                                  '// NoMount by maxsteeel; connection, rule paths and operation status adapted by Codex, 2026-11-08.\n' + js).encode()
+                                  '// NoMount by maxsteeel; connection, rule paths and operation status adapted by Codex, 2026-11-16.\n' + js).encode()
     for name in list(contents):
         if name.startswith('webroot/locales/') and name.endswith('.json'):
             locale = json.loads(contents[name])
             locale['mode_connected'] = '已连接' if name.endswith('/zh.json') else 'Connected'
+            locale['mode_incompatible'] = '接口不可用（支持 v22/v23）' if name.endswith('/zh.json') else 'API unavailable (v22/v23 supported)'
             contents[name] = (json.dumps(locale, ensure_ascii=False, indent=2) + '\n').encode()
 
-    tool_bin = args.ndk.resolve() / 'toolchains/llvm/prebuilt' / args.host_tag / 'bin'
-    tool_hashes = {name: sha((tool_bin / name).read_bytes()) for name in ('clang', 'ld.lld')}
+    if args.zig:
+        zig = args.zig.resolve()
+        zig_version = subprocess.check_output([str(zig), 'version'], text=True).strip()
+        args.toolchain = args.toolchain or 'zig' + zig_version
+        def capture_tools():
+            digest = hashlib.sha256()
+            library = zig.parent / 'lib'
+            for path in sorted(p for p in library.rglob('*') if p.is_file()):
+                digest.update(str(path.relative_to(library)).encode() + b'\0')
+                digest.update(bytes.fromhex(sha(path.read_bytes())))
+            return {'zig': sha(zig.read_bytes()), 'zig_lib': digest.hexdigest(),
+                    'license': sha((zig.parent / 'LICENSE').read_bytes())}
+        contents['licenses/musl-COPYRIGHT'] = (zig.parent / 'lib/libc/musl/COPYRIGHT').read_bytes()
+        contents['licenses/zig-LICENSE'] = (zig.parent / 'LICENSE').read_bytes()
+    else:
+        args.toolchain = args.toolchain or 'ndk26.3.11579264'
+        tool_bin = args.ndk.resolve() / 'toolchains/llvm/prebuilt' / args.host_tag / 'bin'
+        def capture_tools():
+            result = {name: sha((tool_bin / name).read_bytes()) for name in ('clang', 'ld.lld')}
+            sysroot = tool_bin.parent / 'sysroot/usr/lib/aarch64-linux-android'
+            for path in sorted([*sysroot.glob('*.a'), *(sysroot / '21').glob('*.o'),
+                                *(tool_bin.parent / 'lib/clang').glob('*/lib/linux/libclang_rt.builtins-aarch64-android.a')]):
+                result[str(path.relative_to(tool_bin.parent))] = sha(path.read_bytes())
+            for name in ('NOTICE', 'NOTICE.toolchain'):
+                result[name] = sha((args.ndk / name).read_bytes())
+            return result
+        for name in ('NOTICE', 'NOTICE.toolchain'):
+            contents['licenses/NDK-' + name] = (args.ndk / name).read_bytes()
+    tool_hashes = capture_tools()
     fingerprint = sha(json.dumps({'inputs': inputs, 'tool_hashes': tool_hashes, 'host_tag': args.host_tag}, sort_keys=True).encode())
     version = re.search(r'(?m)^version=v([^\n]+)', contents['module.prop'].decode()).group(1)
-    contents['CHANGELOG.md'] = zip_changelog(contents.get('CHANGELOG.md', b''), version)
+    zip_changelog(git(root, 'show', commit + ':nomount/module/CHANGELOG.md'), version)
     build_id = f'nomount-zip-{version}+g{fingerprint[:12]}.{args.toolchain}'
     output_root = root / 'artifacts/companion/nomount'
     output_root.mkdir(parents=True, exist_ok=True)
@@ -270,17 +283,22 @@ def main():
         contents['sources/' + name] = data
     (work / 'build-nm.sh').write_bytes(contents['sources/build-nm.sh'])
     command = ['sh', 'build-nm.sh', 'nm']
-    build_env = dict(os.environ, ANDROID_NDK=str(args.ndk.resolve()), NDK_HOST_TAG=args.host_tag)
+    build_env = dict(os.environ)
+    if args.zig:
+        build_env.update(ZIG=str(zig))
+    else:
+        build_env.update(ANDROID_NDK=str(args.ndk.resolve()), NDK_HOST_TAG=args.host_tag)
     built = subprocess.run(command, cwd=work, env=build_env, text=True, capture_output=True)
     (work / 'compile.log').write_text(built.stdout + built.stderr)
     built.check_returncode()
     contents['bin/nm'] = (work / 'nm').read_bytes()
     check_cli(contents['bin/nm'])
+    check_package_entries(list(contents), expected_entries)
     assert not git(root, 'status', '--porcelain')
     assert git(root, 'rev-parse', 'HEAD').decode().strip() == commit
     assert git(upstream, 'rev-parse', 'HEAD').decode().strip() == upstream_commit
     assert not git(upstream, 'status', '--porcelain')
-    assert {name: sha((tool_bin / name).read_bytes()) for name in tool_hashes} == tool_hashes
+    assert capture_tools() == tool_hashes
     package = output / f'NoMount-kpm_{version}.zip'
     with zipfile.ZipFile(package, 'x', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for name, data in sorted(contents.items()):
@@ -293,14 +311,16 @@ def main():
     with zipfile.ZipFile(package) as archive:
         assert archive.testzip() is None
         assert set(archive.namelist()) == set(contents)
+        check_package_entries(archive.namelist(), expected_entries)
         assert all(archive.read(name) == data for name, data in contents.items())
     manifest = {'module': 'nomount', 'kind': 'companion-zip', 'version': version, 'source_commit': commit,
                 'build_id': build_id, 'instance_id': build_id + '#' + str(instance),
                 'upstream_commit': upstream_commit, 'source_dirty': False, 'input_unchanged': True,
                 'source_fingerprint_sha256': fingerprint, 'inputs': inputs,
+                'package_entries': sorted(expected_entries),
                 'recipe': {'toolchain': args.toolchain, 'tools_sha256': tool_hashes, 'host_tag': args.host_tag,
                            'command': command, 'script_sha256': sha(contents['sources/build-nm.sh'])},
-                'protocol': {'transport': 'keyring', 'payload_size': 4096, 'read_probes': ['version', 'uid block_isolated']},
+                'protocol': {'transport': 'keyring', 'payload_size': 4096, 'supported_versions': [22, 23], 'read_probes': ['version', 'uid block_isolated']},
                 'entries': {name: sha(data) for name, data in sorted(contents.items())},
                 'artifacts': [{'name': package.name, 'path': str(package.relative_to(root)), 'sha256': sha(package.read_bytes()), 'size': package.stat().st_size}],
                 'scope': 'Developer reproducible ZIP; device installation and boot not tested'}

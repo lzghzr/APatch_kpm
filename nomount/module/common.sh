@@ -10,12 +10,15 @@ nm_log() {
     printf '%s\n' "$*" >> "$NM_LOG"
 }
 
-# 首项是线协议号，不是内核版本或 KPM 发布版本；只接受本包支持的 v22 ABI。
+# 首项是线协议号，不是内核版本或 KPM 发布版本；只接受本包验证过的 v22/v23 ABI。
 nm_check_api() {
     [ -x "$NM_BIN" ] || return 1
     NM_DRIVER_VERSION=$("$NM_BIN" version 2>/dev/null) || return 1
     [ -n "$NM_DRIVER_VERSION" ] || return 1
-    [ "${NM_DRIVER_VERSION%% *}" = 22 ] || return 1
+    case "${NM_DRIVER_VERSION%% *}" in
+        22|23) ;;
+        *) printf 'nm: unsupported protocol: %s (supported: 22, 23)\n' "$NM_DRIVER_VERSION" >&2; return 1 ;;
+    esac
     isolated_state=$("$NM_BIN" uid block_isolated 2>/dev/null) || return 1
     case "$isolated_state" in 0|1) return 0 ;; *) return 1 ;; esac
 }
@@ -38,4 +41,19 @@ nm_restore_exclusions() {
 
 nm_clear_rules() {
     "$NM_BIN" rule clear >> "$NM_LOG" 2>&1
+}
+
+# 查询成功后才输出规则；日志或查询失败只向调用者返回状态。
+nm_dump_rules() {
+    rules=$("$NM_BIN" rule list 2>&1)
+    rc=$?
+    if [ "$rc" -ne 0 ]; then
+        printf '%s\n' "$rules" >&2
+        return "$rc"
+    fi
+    log -t nomount -p i "rules dump started ($*)" || return 1
+    printf '%s\n' "$rules" | while IFS= read -r line; do
+        [ -z "$line" ] || log -t nomount -p i "$line" || exit 1
+    done || return 1
+    log -t nomount -p i "rules dump end"
 }

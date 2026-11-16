@@ -128,7 +128,7 @@ struct nm_inode_split_size_times {
 enum nm_file_layout { NM_FILE_COMMON = 0, NM_FILE_FIELDS = 1 };
 enum nm_inode_times_layout { NM_TIMESPEC = 0, NM_SPLIT_TIMES = 1 };
 
-// 止于 s_op 的共同前部；不包含后续锁和文件系统私有字段。
+// 止于 s_magic 的共同前部；不包含后续锁和文件系统私有字段。
 struct nm_super_head {
   void* list_next;
   void* list_prev;
@@ -142,6 +142,13 @@ struct nm_super_head {
   const void* s_qcop;
   const void* s_export_op;
   unsigned long s_flags;
+  unsigned long s_iflags;
+  unsigned long s_magic;
+};
+
+// Linux file_system_type 的共同首字段；只用于目标文件系统身份。
+struct nm_filesystem_type_head {
+  const char* name;
 };
 
 // drop_inode／evict_inode／put_super在两目标声明中连续；只取其实际起点。

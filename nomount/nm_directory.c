@@ -436,6 +436,12 @@ static int nm_install_directory(struct inode* parent, struct nm_directory_node* 
       || !((struct_offset.fop_iterate_shared >= 0 && nm_operation_callback(fops, struct_offset.fop_iterate_shared))
            || (struct_offset.fop_iterate >= 0 && nm_operation_callback(fops, struct_offset.fop_iterate))))
     return -EOPNOTSUPP;
+  struct super_block* sb = nm_inode_superblock(parent);
+  const void* super_ops = nm_super_ops(sb);
+  // 只读资格检查先于目录表复制；super proxy 仍在原发布阶段重取快照并校验。
+  int rc = nm_super_proxy(super_ops) ? 0 : nm_check_super_identity(sb, super_ops);
+  if (rc)
+    return rc;
   unsigned int file_start = nm_directory_file_table_offset();
   struct nm_directory_proxy* proxy =
       nm_zalloc(offsetof(struct nm_directory_proxy, tables) + file_start + struct_offset.file_ops_size);
@@ -453,7 +459,7 @@ static int nm_install_directory(struct inode* parent, struct nm_directory_node* 
   for (unsigned int i = 0; i < 2; i++)
     if (slots[i] >= 0 && nm_operation_callback(fops, slots[i]))
       nm_set_operation_callback(proxy->tables + file_start, slots[i], nm_directory_iterate);
-  int rc = nm_install_super_proxy(nm_inode_superblock(parent));
+  rc = nm_install_super_proxy(sb);
   if (rc) {
     nm_free(proxy);
     return rc;

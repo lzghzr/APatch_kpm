@@ -455,14 +455,18 @@ static int calculate_btf_inode_offsets(bool* unavailable) {
       || kpm_btf_offset(&btf, inode, "i_mapping", 8) != next.inode_superblock + 8
       || kpm_btf_offset(&btf, inode, "i_opflags", 2) != offsetof(struct nm_inode_owner_prefix, i_opflags))
     return -EINVAL;
-  const char* super_fields[] = {"s_dev", "s_blocksize_bits", "s_blocksize", "s_maxbytes", "s_type", "s_op"};
+  const char* super_fields[] = {"s_dev", "s_blocksize_bits", "s_blocksize", "s_maxbytes", "s_type", "s_op", "s_magic"};
   const int super_positions[] = {
       offsetof(struct nm_super_head, s_dev),       offsetof(struct nm_super_head, s_blocksize_bits),
       offsetof(struct nm_super_head, s_blocksize), offsetof(struct nm_super_head, s_maxbytes),
-      offsetof(struct nm_super_head, s_type),      offsetof(struct nm_super_head, s_op)};
+      offsetof(struct nm_super_head, s_type),      offsetof(struct nm_super_head, s_op),
+      offsetof(struct nm_super_head, s_magic)};
   for (unsigned int i = 0; i < sizeof(super_fields) / sizeof(super_fields[0]); i++)
     if (kpm_btf_offset(&btf, sb, super_fields[i], i == 0 ? 4 : i == 1 ? 1 : 8) != super_positions[i])
       return -EINVAL;
+  const struct btf_type* filesystem = kpm_btf_type(&btf, "file_system_type", 4);
+  if (!filesystem || kpm_btf_offset(&btf, filesystem, "name", 8) != offsetof(struct nm_filesystem_type_head, name))
+    return -EINVAL;
   const char* times[] = {"i_atime", "i_mtime", "i_ctime"};
   int first_time = kpm_btf_offset(&btf, inode, times[0], sizeof(struct nm_timespec));
   next.inode_times_layout = first_time == -ENOENT ? NM_SPLIT_TIMES : NM_TIMESPEC;
@@ -652,6 +656,32 @@ static int nm_btf_function(const struct kpm_btf* btf, const char* name, const u8
   if (!function)
     return -ENOENT;
   return nm_btf_prototype(btf, btf->type_by_id(btf->data, function->size), args, count, result);
+}
+
+static int calculate_btf_mutation(bool* unavailable) {
+  struct kpm_btf btf;
+  int rc = nm_get_btf(&btf, unavailable);
+  if (rc)
+    return rc;
+  const char* functions[] = {"security_inode_unlink", "security_inode_rmdir", "security_inode_link",
+                             "security_inode_rename"};
+  const unsigned int counts[] = {2, 2, 3, 5};
+  const u8 spec[] = {0x88, 0x88, 0x88, 0x88, 4};
+  const char* types[][4] = {
+      {"inode", "dentry"}, {"inode", "dentry"}, {"dentry", "inode", "dentry"}, {"inode", "dentry", "inode", "dentry"}};
+  for (unsigned int i = 0; i < 4; i++) {
+    rc = nm_btf_function(&btf, functions[i], spec, counts[i], 4);
+    if (rc)
+      return rc;
+    const struct btf_type* function = kpm_btf_type(&btf, functions[i], 12);
+    const struct btf_type* proto = btf.type_by_id(btf.data, function->size);
+    for (unsigned int j = 0; j < (i == 3 ? 4 : counts[i]); j++) {
+      rc = nm_btf_named_parameter(&btf, proto, j, types[i][j]);
+      if (rc)
+        return rc;
+    }
+  }
+  return 0;
 }
 
 static int calculate_btf_virtual_directory_abi(bool* unavailable) {

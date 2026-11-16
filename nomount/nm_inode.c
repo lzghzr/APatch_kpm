@@ -428,17 +428,60 @@ static void nm_proxy_evict_inode(struct inode* inode) {
   }
 }
 
+// 通用 new_inode/iget5_locked 不执行 shmem 的私有初始化，不能配对其原生 destroy/free。
+// 只限制新建 inode 的目标超级块；已初始化的原生目录仍可承载直接白化。
+static int nm_check_inode_allocation(const struct super_block* sb) {
+  if (((const struct nm_super_head*)sb)->s_magic == 0x01021994UL) {  // TMPFS_MAGIC
+    nm_log_error("inode allocation rejected: tmpfs requires native private initialization\n");
+    return -EOPNOTSUPP;
+  }
+  return 0;
+}
+
+// 目标文件系统资格：控制／诊断伪文件系统按 UAPI 魔数排除，kernfs 按原生表身份判定。
+static int nm_check_super_identity(const struct super_block* sb, const void* original) {
+  if (!((const struct nm_super_head*)sb)->s_type || !original) {
+    nm_log_error("super proxy rejected: missing s_type or s_op\n");
+    return -EINVAL;
+  }
+  unsigned long magic = ((const struct nm_super_head*)sb)->s_magic;
+  switch (magic) {
+    case 0x64626720UL:  // DEBUGFS_MAGIC
+    case 0x74726163UL:  // TRACEFS_MAGIC
+    case 0xcafe4a11UL:  // BPF_FS_MAGIC: 目录 i_op 身份参与 BPF_OBJ_PIN。
+    case 0x73636673UL:  // SECURITYFS_MAGIC
+      nm_log_error("super proxy rejected: pseudo-fs magic 0x%lx\n", magic);
+      return -EOPNOTSUPP;
+    default:
+      break;
+  }
+  const void* kernfs_ops = (const void*)kallsyms_lookup_name("kernfs_sops");
+  if (!kernfs_ops) {
+    nm_log_error("super proxy unavailable: kernfs_sops unresolved; current rule rejected\n");
+    return -EOPNOTSUPP;
+  }
+  if (original == kernfs_ops) {
+    nm_log_error("super proxy rejected: kernfs s_op identity must be preserved\n");
+    return -EOPNOTSUPP;
+  }
+  return 0;
+}
+
 // 调用者持有管理锁与 sb 的路径引用。复制全部原生回调，只替换 drop/evict。
 static int nm_install_super_proxy(struct super_block* sb) {
   struct struct_offset offsets = struct_offset;
   int rc = nm_validate_inode_offsets(&offsets);
-  if (rc || !nm_inode_engine.inode_ops)
+  if (rc || !nm_inode_engine.inode_ops) {
+    nm_log_error("super proxy unavailable: layout/engine not ready (%d)\n", rc ? rc : -ENODEV);
     return rc ? rc : -ENODEV;
+  }
   const void* original = nm_super_ops(sb);
-  if (!original)
-    return -EINVAL;
-  if (nm_super_proxy(original))
+  // 已由本模块接管的表保留既有行为；新表的身份检查与 CAS 使用同一快照。
+  if (original && nm_super_proxy(original))
     return 0;
+  rc = nm_check_super_identity(sb, original);
+  if (rc)
+    return rc;
   struct nm_super_proxy* proxy = nm_zalloc(offsetof(struct nm_super_proxy, table) + offsets.super_ops_size);
   if (!proxy)
     return -ENOMEM;
@@ -472,10 +515,13 @@ static struct dentry* nm_materialize_backed_inode(struct inode* parent, struct d
     link_put = (void*)nm_follow_pairs[pair].put;
   }
   struct super_block* sb = nm_inode_superblock(parent);
+  int rc = nm_check_inode_allocation(sb);
+  if (rc)
+    return ERR_PTR(rc);
   if (!nm_inode_engine.file_ops || !nm_inode_engine.inode_ops || !nm_super_proxy(nm_super_ops(sb)))
     return ERR_PTR(-ENODEV);
   struct nm_security_context context;
-  int rc = nm_get_security_context(backing, &context);
+  rc = nm_get_security_context(backing, &context);
   if (rc)
     return ERR_PTR(rc);
   struct nm_inode_info* info = nm_zalloc(sizeof(*info));
@@ -555,5 +601,6 @@ static int nm_prepare_inode_engine(void) {
   nm_inode_engine.file_ops = file_ops;
   nm_inode_engine.inode_ops = inode_ops;
   nm_inode_engine.symlink_ops = symlink_ops;
+  nm_rule_inode_is_virtual = nm_is_virtual_inode;
   return 0;
 }

@@ -1,0 +1,262 @@
+--- a/nm.h
++++ b/nm.h
+@@ -109,8 +109,18 @@
+     "my_bigball my_carrier my_company my_engineering my_heytap my_manifest " \
+     "my_preload my_product my_region my_reserve my_stock"
+ 
++/* One DEL per final virtual path and command scope (DEV-106). */
++struct nm_del_seen {
++    struct nm_del_seen *next;
++    size_t len;
++    char path[];
++};
++#define NM_DEL_BUCKETS 256
++
+ struct nm_walk {
+     struct nm_payload *payload;
++    const struct nm_args *args;
++    struct nm_del_seen *deleted[NM_DEL_BUCKETS];
+     struct nm_output *output;
+     size_t root_len;
+     int first_link;
+@@ -391,8 +401,32 @@
+     return 0;
+ }
+ 
++static int nm_queue_module_rule(struct nm_walk *ctx, unsigned flags, const char *vpath) {
++    struct nm_del_seen *entry = NULL;
++    unsigned bucket = 0;
++    if (ctx->payload->cmd == NM_CMD_DEL_RULE) {
++        size_t len = strlen(vpath);
++        if (sizeof(struct nm_del_hdr) + len > sizeof(ctx->payload->buffer)) return -E2BIG;
++        unsigned hash = 2166136261U;
++        for (size_t i = 0; i < len; i++) hash = (hash ^ (unsigned char)vpath[i]) * 16777619U;
++        bucket = hash % NM_DEL_BUCKETS;
++        for (entry = ctx->deleted[bucket]; entry; entry = entry->next)
++            if (entry->len == len && !memcmp(entry->path, vpath, len)) return 0;
++        entry = malloc(sizeof(*entry) + len);
++        if (!entry) return -ENOMEM;
++        entry->len = len;
++        memcpy(entry->path, vpath, len);
++    }
++    const char *real = ctx->payload->cmd == NM_CMD_ADD_RULE && !(flags & NM_FLAG_WHITEOUT) ? ctx->path : NULL;
++    int rc = nm_queue_rule(ctx->payload, ctx->args, flags, NULL, vpath, real);
++    /* A previous batch may fail while the current record is successfully queued. */
++    if (entry) {
++        entry->next = ctx->deleted[bucket]; ctx->deleted[bucket] = entry;
++    }
++    return rc;
++}
++
+ static void nm_emit(struct nm_walk *ctx, unsigned flags) {
+-    static const struct nm_args global_rule;
+     int rc;
+     if (ctx->output) {
+         if (!(flags & NM_FLAG_WHITEOUT)) return;
+@@ -400,10 +434,7 @@
+     } else {
+         char vpath[PATH_MAX];
+         rc = nm_to_vpath(ctx->path + ctx->root_len + 1, vpath, sizeof(vpath));
+-        if (!rc) {
+-            const char *real = ctx->payload->cmd == NM_CMD_ADD_RULE && !(flags & NM_FLAG_WHITEOUT) ? ctx->path : NULL;
+-            rc = nm_queue_rule(ctx->payload, &global_rule, flags, NULL, vpath, real);
+-        }
++        if (!rc) rc = nm_queue_module_rule(ctx, flags, vpath);
+     }
+     if (rc && !ctx->error) ctx->error = rc;
+ }
+@@ -426,13 +457,6 @@
+         if (!e) { if (errno) result = -errno; break; }
+         if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, "..")) continue;
+         if (strcmp(e->d_name, ".replace") && strcmp(e->d_name, ".remove")) { result = 1; break; }
+-        unsigned char type = e->d_type;
+-        if (type == DT_UNKNOWN) {
+-            struct stat st;
+-            if (fstatat(dirfd(d), e->d_name, &st, AT_SYMLINK_NOFOLLOW)) { result = -errno; break; }
+-            type = st.st_mode >> 12;
+-        }
+-        if (type == DT_DIR && (result = nm_dir_has_content(dirfd(d), e->d_name))) break;
+     }
+     closedir(d);
+     return result;
+@@ -488,8 +512,8 @@
+ }
+ 
+ static int nm_next_partition(const char **targets, char *part) {
+-    const char *p = *targets + strspn(*targets, " ");
+-    size_t n = strcspn(p, " ");
++    const char *p = *targets + strspn(*targets, " \t\r\n");
++    size_t n = strcspn(p, " \t\r\n");
+     if (n >= PATH_MAX) return -ENAMETOOLONG;
+     memcpy(part, p, n);
+     part[n] = '\0';
+@@ -513,31 +537,30 @@
+ static int nm_marker(int fd, const char *name) {
+     struct stat st;
+     if (fstatat(fd, name, &st, AT_SYMLINK_NOFOLLOW)) return errno == ENOENT ? 0 : -errno;
+-    if (S_ISLNK(st.st_mode) && fstatat(fd, name, &st, 0))
+-        return errno == ENOENT || errno == ENOTDIR ? 1 : -errno;
+-    return !S_ISDIR(st.st_mode);
+-}
+-
++    return 1;
++}
++
++/* Return 1 for WHITEOUT: the directory masks its whole subtree (DEV-108). */
+ static int nm_directory_rule(struct nm_walk *ctx, int fd) {
+-    int rc = nm_marker(fd, ".remove");
+-    if (rc < 0) return rc;
+-    if (rc) {
+-        nm_emit(ctx, NM_FLAG_WHITEOUT);
+-        return 0;
+-    }
+     int opaque = nm_marker(fd, ".replace");
+     if (opaque < 0) return opaque;
+     if (!opaque) {
+         char value;
+         ssize_t n = fgetxattr(fd, "trusted.overlay.opaque", &value, 1);
+-        if (n < 0 && errno != ENODATA && errno != ENOTSUP && errno != ERANGE) return -errno;
++        if (n < 0 && errno != ENODATA && errno != ENOTSUP && errno != ERANGE
++            && errno != EACCES && errno != EPERM) return -errno;
+         opaque = n == 1 && value == 'y';
+     }
+-    if (!opaque) return 0;
+-    int entries = nm_dir_has_content(fd, ".");
+-    if (entries < 0) return entries;
+-    nm_emit(ctx, entries ? NM_FLAG_OPAQUE : NM_FLAG_WHITEOUT);
+-    return 0;
++    if (opaque) {
++        int entries = nm_dir_has_content(fd, ".");
++        if (entries < 0) return entries;
++        nm_emit(ctx, entries ? NM_FLAG_OPAQUE : NM_FLAG_WHITEOUT);
++        return !entries;
++    }
++    int remove = nm_marker(fd, ".remove");
++    if (remove < 0) return remove;
++    if (remove) nm_emit(ctx, NM_FLAG_WHITEOUT);
++    return remove;
+ }
+ 
+ static int nm_walk_module(struct nm_walk *ctx, int parent_fd, const char *name,
+@@ -548,10 +571,15 @@
+         if (fstatat(parent_fd, name, &st, AT_SYMLINK_NOFOLLOW)) return -errno;
+         type = st.st_mode >> 12;
+     }
+-    if (type == DT_LNK) {
+-        if (fstatat(parent_fd, name, &st, 0)) return errno == ENOENT || errno == ENOTDIR ? 0 : -errno;
++    int link = type == DT_LNK;
++    if (link) {
++        if (fstatat(parent_fd, name, &st, 0)) {
++            if (errno != ENOENT && errno != ENOTDIR) return -errno;
++            if (!ctx->output) nm_emit(ctx, 0);
++            return 0;
++        }
+         type = st.st_mode >> 12;
+-        if (ctx->output && (rc = nm_list_mapping(ctx, type == DT_DIR ? NM_FLAG_VIRTUAL_DIR : 0))) return rc;
++        if (ctx->output && type != DT_DIR && (rc = nm_list_mapping(ctx, 0))) return rc;
+     }
+     if (type != DT_DIR) {
+         if (!strcmp(name, ".replace") || !strcmp(name, ".remove")) return 0;
+@@ -565,22 +593,26 @@
+     struct nm_ancestor here = { parent, st.st_dev, st.st_ino };
+     for (const struct nm_ancestor *a = parent; a; a = a->parent)
+         if (a->dev == here.dev && a->ino == here.ino) { rc = -ELOOP; goto done; }
+-    if ((rc = nm_directory_rule(ctx, dirfd(d)))) goto done;
++    rc = nm_directory_rule(ctx, dirfd(d));
++    if (rc > 0) { rc = 0; goto done; }
++    if (rc < 0 && !ctx->error) ctx->error = rc;
++    if (link && ctx->output && (rc = nm_list_mapping(ctx, NM_FLAG_VIRTUAL_DIR))) goto done;
+     size_t len = strlen(ctx->path);
+     for (;;) {
+         errno = 0;
+         struct dirent *e = readdir(d);
+         if (!e) { if (errno) rc = -errno; break; }
+-        if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, "..")) continue;
++        if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, "..")
++            || !strcmp(e->d_name, ".replace") || !strcmp(e->d_name, ".remove")) continue;
+         if (e->d_type == DT_REG && ctx->output) continue;
+         rc = nm_path_join(ctx->path + len, sizeof(ctx->path) - len, "", e->d_name);
+-        if (rc) break;
+-        rc = nm_walk_module(ctx, dirfd(d), e->d_name, e->d_type, &here);
++        if (!rc) rc = nm_walk_module(ctx, dirfd(d), e->d_name, e->d_type, &here);
+         ctx->path[len] = '\0';
+-        if (rc) break;
++        if (rc && !ctx->error) ctx->error = rc;
++        rc = 0;
+     }
+ done:
+-    closedir(d);
++    if (closedir(d) && !rc) rc = -errno;
+     return rc;
+ }
+ 
+@@ -588,14 +620,14 @@
+     char part[PATH_MAX];
+     int rc;
+     while ((rc = nm_next_partition(&targets, part)) > 0) {
+-        if ((rc = nm_check_partition(ctx->path, part)) < 0) return rc;
+-        if (!rc) continue;
+-        ctx->has_injectable = 1;
+-        rc = nm_path_join(ctx->path + ctx->root_len, sizeof(ctx->path) - ctx->root_len, "", part);
+-        if (rc) return rc;
+-        rc = nm_walk_module(ctx, AT_FDCWD, ctx->path, DT_UNKNOWN, NULL);
+-        ctx->path[ctx->root_len] = '\0';
+-        if (rc) return rc;
++        rc = nm_check_partition(ctx->path, part);
++        if (rc > 0) {
++            ctx->has_injectable = 1;
++            rc = nm_path_join(ctx->path + ctx->root_len, sizeof(ctx->path) - ctx->root_len, "", part);
++            if (!rc) rc = nm_walk_module(ctx, AT_FDCWD, ctx->path, DT_UNKNOWN, NULL);
++            ctx->path[ctx->root_len] = '\0';
++        }
++        if (rc && !ctx->error) ctx->error = rc;
+     }
+     return rc;
+ }
+@@ -603,18 +635,26 @@
+ /* --- module load / unload --- */
+ 
+ static int cmd_module_load_or_unload(struct nm_workspace *ws, struct nm_args *args, int is_load) {
+-    struct nm_walk ctx = { .payload = &ws->payload };
++    struct nm_walk ctx = { .payload = &ws->payload, .args = args };
+     int rc = 0;
+-    if (!args->mod_path) rc = -EINVAL;
++    if ((args->deny_start || args->deny_end) &&
++        (!args->deny_start || !args->deny_end || args->deny_start > args->deny_end ||
++         ((args->target_uid || args->target_uid_end) &&
++          (args->deny_start < args->target_uid || args->deny_end > args->target_uid_end)))) rc = -EINVAL;
++    else if (!args->mod_path) rc = -EINVAL;
+     else if (!realpath(args->mod_path, ctx.path)) rc = -errno;
+     else if ((rc = nm_dir_exists(ctx.path)) > 0) {
+         ctx.root_len = strlen(ctx.path);
+         ctx.payload->cmd = is_load ? NM_CMD_ADD_RULE : NM_CMD_DEL_RULE;
+         ctx.payload->arg1 = ctx.payload->data_size = 0;
+         rc = nm_walk_partitions(&ctx, args->mod_targets ? args->mod_targets : NM_DEFAULT_TARGETS);
+-        if (!rc) rc = nm_flush_rules(ctx.payload);
+-        if (!rc) rc = ctx.error;
++        int tail_error = nm_flush_rules(ctx.payload);
++        if (!rc) rc = ctx.error ? ctx.error : tail_error;
+     } else if (!rc) rc = -ENOTDIR;
++    for (unsigned i = 0; i < NM_DEL_BUCKETS; i++) {
++        struct nm_del_seen *entry = ctx.deleted[i];
++        while (entry) { struct nm_del_seen *next = entry->next; free(entry); entry = next; }
++    }
+     if (rc) nm_error(is_load ? "module load" : "module unload", rc);
+     const char *status = is_load ? "nm_load_status=" : "nm_unload_status=";
+     write_strn(STDERR_FILENO, status, strlen(status));
+@@ -683,12 +723,15 @@
+     while (!rc) {
+         rc = nm_send_payload(&ws->payload);
+         if (rc || !ws->payload.data_size) break;
++        if (ws->payload.data_size > sizeof(ws->payload.buffer)) { rc = -EIO; break; }
+         char *data = ws->payload.buffer;
+         int pos = 0;
+         while (pos < (int)ws->payload.data_size) {
++            if (ws->payload.data_size - pos < sizeof(struct nm_rule_hdr)) { rc = -EIO; break; }
+             struct nm_rule_hdr *h = (void *)(data + pos);
+             unsigned short vlen = h->v_len, rlen = h->r_len;
+             pos += sizeof(*h);
++            if ((unsigned)vlen + rlen > ws->payload.data_size - pos) { rc = -EIO; break; }
+             char *v = data + pos; pos += vlen;
+             char *r = data + pos; pos += rlen;
+             if (!first_rule) list_print_literal(&out, ",");
