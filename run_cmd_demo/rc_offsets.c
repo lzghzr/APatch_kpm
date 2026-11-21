@@ -16,11 +16,16 @@ volatile struct struct_offset struct_offset __attribute__((section(".data.re_off
 #define subprocess_info_path_offset struct_offset.subprocess_info_path_offset
 #define cred_security_offset struct_offset.cred_security_offset
 #define cred_sid_offset struct_offset.cred_sid_offset
+// 所有来源（BTF／指令链／边车）统一的偏移上界：真实 subprocess_info 很小，
+// 超过这个值的写入会落到结构体之外。
+#define RUN_CMD_PATH_MAX 0x100
+// 所有来源（BTF／指令链／边车）共用的上界判据；两个构建分支都走这里。
+static bool path_offset_in_range(int off) { return off >= 0 && off <= RUN_CMD_PATH_MAX; }
 #define legacy_worker_size struct_offset.legacy_worker_size
 
 #ifdef CONFIG_KPM_BASELINES
 static long calculate_offsets() {
-  if (subprocess_info_path_offset < 0 || cred_security_offset < 0 || cred_sid_offset < 0
+  if (!path_offset_in_range(subprocess_info_path_offset) || cred_security_offset < 0 || cred_sid_offset < 0
       || (!kfunc(kthread_create_worker) && legacy_worker_size <= 0))
     return -EINVAL;
   // 基线保存结构内 SID 偏移；LSM blob 的起点由启动后的内核给出。
@@ -36,6 +41,7 @@ static long calculate_offsets() {
 static long calculate_offsets() {
   struct kpm_btf btf = {cmd_btf, kfunc(btf_find_by_name_kind), kfunc(btf_type_by_id), kfunc(btf_name_by_offset),
                         kfunc(btf_resolve_size)};
+  bool btf_path_rejected = false;
   if (cmd_btf) {
     // 工作项由模块持有，核对实际内核是否能使用这一共同前缀。
     const struct btf_type* work = kpm_btf_type(&btf, "kthread_work", 4);
@@ -44,7 +50,14 @@ static long calculate_offsets() {
             || kpm_btf_offset(&btf, work, "func", 8) != 16 || kpm_btf_offset(&btf, work, "worker", 8) != 24
             || (kfunc(kthread_create_worker) && kpm_btf_offset(&btf, work, "canceling", 4) != 32)))
       return -EINVAL;
-    int path = kpm_btf_offset(&btf, kpm_btf_type(&btf, "subprocess_info", 4), "path", 8);
+    const struct btf_type* info_type = kpm_btf_type(&btf, "subprocess_info", 4);
+    int path = kpm_btf_offset(&btf, info_type, "path", 8);
+    // 成员偏移 + 指针宽度必须落在类型内，否则这个 "path" 落在结构体之外。
+    if (path >= 0 && (!info_type || (u32)path + sizeof(void*) > info_type->size)) {
+      logkm("BTF subprocess_info.path out of type: off=0x%x size=0x%x\n", path, info_type ? info_type->size : 0);
+      path = -1;
+      btf_path_rejected = true;
+    }
     int security = kpm_btf_offset(&btf, kpm_btf_type(&btf, "cred", 4), "security", 8);
     int sid = kpm_btf_offset(&btf, kpm_btf_type(&btf, "task_security_struct", 4), "sid", 4);
     if (sid >= 0 && kvar(selinux_blob_sizes)) {
@@ -94,8 +107,12 @@ static long calculate_offsets() {
     }
     break;
   }
-  logkm("subprocess_info_path=0x%x\n", subprocess_info_path_offset);
-  if (subprocess_info_path_offset < 0)
+  // 指令链是候选来源：BTF 越界被拒与 BTF 缺失要能区分（分开两条日志，避免把标志塞进可变参数）。
+  if (btf_path_rejected)
+    logkm("path offset=0x%x via=insn (btf candidate rejected)\n", subprocess_info_path_offset);
+  else
+    logkm("path offset=0x%x via=insn\n", subprocess_info_path_offset);
+  if (!path_offset_in_range(subprocess_info_path_offset))
     return -ENOENT;
 
   if (!kfunc(selinux_cred_getsecid)) {

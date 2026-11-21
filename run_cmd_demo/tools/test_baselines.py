@@ -24,7 +24,15 @@ def main():
     spec.loader.exec_module(patcher)
     artifacts = []
     kpms = sorted(args.builds.glob('*.kpm'))
-    assert len(kpms) == 4
+    # 依据 AGENTS「KPM 偏移模式默认规范」：默认**不再**生成单独 debug 件，一次 `all debug`
+    # 只产出 base + baselines 两份。这里按名字分类而不是写死总数——将来显式加回 `_debug`
+    # 变体时无需改这条断言，同时仍要求 base/baselines 各恰好一份。
+    _base = [p.name for p in kpms if '_baselines' not in p.name and '_debug' not in p.name]
+    _baselines = [p.name for p in kpms if '_baselines' in p.name]
+    _debug = [p.name for p in kpms if '_debug' in p.name]
+    assert len(_base) == 1 and len(_baselines) == 1, \
+        f'期望 base 与 baselines 各一份，实得 base={_base} baselines={_baselines} debug={_debug}'
+    assert len(kpms) == len(_base) + len(_baselines) + len(_debug), f'出现无法分类的产物：{[p.name for p in kpms]}'
     for path in kpms:
         data = path.read_bytes()
         static = '_baselines' in path.name
@@ -71,6 +79,7 @@ def main():
     source = args.output / 'static-init.c'
     source.write_text('''#include <assert.h>
 #include <stdint.h>
+#include <stdbool.h>   /* rc_offsets.c 用 bool；宿主编译没有 KP 头里的定义 */
 #include <errno.h>
 #define CONFIG_KPM_BASELINES
 static void* creator;

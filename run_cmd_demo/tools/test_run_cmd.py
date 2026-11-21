@@ -38,6 +38,9 @@ def main():
     code = code.replace('__attribute__((section(".data.re_offsets"), used))', '')
     # 仅在主机 init 夹具替换准备阶段，生产 prepare 的算法另行用实际指令验证。
     code = code.replace('static long run_cmd_init(', '#define prepare_run_cmd fake_prepare_run_cmd\nstatic long run_cmd_init(')
+    # 回读判据与 UMH 准备同样用函数替换注入：夹具可以模拟「写进去的值被改写」。
+    code = code.replace('static int run_cmd(const char* cmd) {',
+                        '#define run_cmd_path_matches fake_path_matches\nstatic int run_cmd(const char* cmd) {', 1)
     code = code.replace('static long run_cmd_control0(', '#undef prepare_run_cmd\nstatic long run_cmd_control0(')
     utilities = 'typedef uint8_t u8;\ntypedef uint64_t u64;\n' + (root / 'kpm_utils.h').read_text().split('// BTF\n', 1)[1].rsplit('#endif', 1)[0]
     fixture = (module / 'tools/test_run_cmd.c').read_text().replace(

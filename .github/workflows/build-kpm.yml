@@ -337,6 +337,8 @@ jobs:
           mkdir upload
           shopt -s nullglob
           for kpm in release/*.kpm; do
+            # 本轮 Release 附件范围；CI 仍构建并校验全部产物。
+            case "${kpm##*/}" in run_cmd_demo_[0-9]*.kpm) continue ;; esac
             cp "$kpm" upload/
             if [ -f "${kpm}.json" ]; then
               cp "${kpm}.json" upload/

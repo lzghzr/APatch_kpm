@@ -118,6 +118,9 @@ class UploadSelectionTests(unittest.TestCase):
 
     def test_uploads_only_user_assets(self):
         self.write_assets()
+        for name in ("run_cmd_demo_1.3.0.kpm", "run_cmd_demo_1.3.0_baselines.kpm",
+                     "run_cmd_demo_1.3.0_baselines.kpm.json"):
+            (self.release / name).write_bytes(b"payload")
         result = self.run_script()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual({p.name for p in (self.root / "upload").iterdir()}, {

@@ -98,13 +98,16 @@ static struct subprocess_info helper;
 static struct cred caller, snapshot;
 static struct kthread_worker worker;
 static struct kthread_work* queued_work;
-static int alloc_fail, cred_fail, worker_fail, queue_fail, exec_ret, setup_calls, copied, copy_short, ran, live_creds;
+static int alloc_fail, worker_fail, queue_fail, exec_ret, setup_calls, copied, copy_short, ran;
+// 执行期 prepare 的期望返回（0=成功；失败用例只看返回值）
+static int prepare_expect;
 static long prepare_ret;
 static const char* missing;
 static uint32_t entry[64], sid_entry[32];
 static char observed[4096];
 static void* lookup(const char* name);
 static long fake_prepare_run_cmd(void);
+static bool fake_path_matches(char* volatile* slot);
 static void fake_task_getsecid(struct task_struct*, u32*);
 static void* fake_kmalloc(size_t, gfp_t);
 static void fake_kfree(const void*);
@@ -121,35 +124,23 @@ static int compat_copy_to_user(char* dst, const void* src, int len) {
   return copy_short ? len - 1 : len;
 }
 /* PRODUCTION_FUNCTIONS */
-static struct cred* fake_prepare_kernel_cred(struct task_struct* daemon) {
-  assert(daemon == &initial_task);
-  assert(!lock_depth && !ctl_active && !live_creds);
-  if (cred_fail)
-    return NULL;
-  snapshot = kernel_cred;
-  snapshot.security = &snapshot.context;
-  live_creds++;
-  return &snapshot;
-}
-static void fake_abort_creds(struct cred* old) {
-  assert(old == &snapshot && live_creds == 1);
-  live_creds--;
-}
+static const char* secctx_requested;  // 最后一次被请求的执行域
+static int secctx_calls;
 static int fake_secctx_to_secid(const char* data, u32 len, u32* sid) {
-  assert(!ctl_active && !lock_depth && !strcmp(data, RUN_CMD_CONTEXT) && len == strlen(data));
+  // 域解析在控制入口内进行（每次提交都查一次），所以 ctl_active 允许为真；
+  // 它是纯查询，但不得在持锁时调用。
+  assert(!lock_depth);
+  // 模块只允许请求已声明的域；长度按调用方给的字节数核对。
+  assert(len == strlen(data) && !strcmp(data, RUN_CMD_CONTEXT));
+  secctx_requested = data;
+  secctx_calls++;
   *sid = sid_zero ? 0 : 3;
   return sid_error;
 }
 static void fake_getsecid(const struct cred* cred, u32* sid) { *sid = getter_error ? 99 : cred->context; }
-static void fake_transfer(struct cred* new, const struct cred* old) {
-  assert(old == &snapshot && live_creds == 1 && !ctl_active && !lock_depth);
-  assert(active_cred == &kernel_cred && !override_depth);
-  new->context = old->context;
-  new->security = &new->context;
-}
 static const struct cred* fake_override_creds(const struct cred* new) {
   assert(!ctl_active && !lock_depth && !override_depth && active_cred == &kernel_cred);
-  assert(new->context == snapshot.context);
+  assert(new->context == (int)cmd_sid);
   const struct cred* old = active_cred;
   active_cred = new;
   override_depth++;
@@ -164,7 +155,7 @@ static void fake_revert_creds(const struct cred* old) {
 }
 static struct file* fake_filp_open(const char* path, int flags, umode_t mode) {
   assert(!ctl_active && !lock_depth && !strcmp(path, "/dev/null") && flags == O_RDWR && mode == 0);
-  assert(override_depth == 1 && active_cred->context == snapshot.context);
+  assert(override_depth == 1 && active_cred->context == (int)cmd_sid);
   open_calls++;
   if (open_error)
     return ERR_PTR(open_error);
@@ -199,6 +190,21 @@ static void helper_exit_files(void) {
   }
   assert(null_file.refs == 0);
 }
+// 回读判据替身：默认与生产同义（比指针身份）。两种注入：
+//   path_mismatch —— 写入没生效（槽里还是旧值）；
+//   path_impostor —— 槽里的值不是本模块的 sh，但指向的内容一模一样（防止退回内容比较）。
+static int path_mismatch, path_impostor;
+static char sh_impostor[sizeof(sh)];
+static bool fake_path_matches(char* volatile* slot) {
+  if (path_mismatch)
+    return false;
+  if (path_impostor && slot && *slot == sh) {
+    memcpy(sh_impostor, sh, sizeof(sh));
+    *slot = sh_impostor;
+  }
+  return slot && *slot == sh;
+}
+
 static struct subprocess_info* fake_setup(const char* path, char** argv, char** env, gfp_t mask,
                                           int (*init)(struct subprocess_info*, struct cred*),
                                           void (*cleanup)(struct subprocess_info*), void* data) {
@@ -218,8 +224,14 @@ static struct subprocess_info* fake_setup(const char* path, char** argv, char** 
 static int fake_exec(struct subprocess_info* info, int wait) {
   assert(!ctl_active && !lock_depth && info == &helper && wait == UMH_WAIT_PROC && info->path == sh);
   struct cred new = {0};
-  assert(info->init(info, &new) == 0 && new.context == snapshot.context);
-  assert(null_file.context == new.context&& active_cred == &kernel_cred && !override_depth);
+  // 子任务凭据由 UMH 准备；prepare 回调只改它自己的 LSM blob。
+  new.security = &new.context;
+  int rc = info->init(info, &new);
+  snapshot = new;
+  assert(rc == prepare_expect);
+  if (rc)
+    return rc;
+  assert(null_file.context == new.context && active_cred == &kernel_cred && !override_depth);
   for (unsigned int fd = 0; fd < 3; fd++) assert(stdio_files[fd] == &null_file);
   assert(null_file.refs == 3);
   strcpy(observed, info->argv[2]);
@@ -243,14 +255,11 @@ static long fake_prepare_run_cmd(void) {
   subprocess_info_path_offset = offsetof(struct subprocess_info, path);
   kfunc(call_usermodehelper_setup) = fake_setup;
   kfunc(call_usermodehelper_exec) = fake_exec;
-  kfunc(prepare_kernel_cred) = fake_prepare_kernel_cred;
   kfunc(security_secctx_to_secid) = fake_secctx_to_secid;
   kfunc(selinux_cred_getsecid) = fake_getsecid;
   kvar(init_task) = &initial_task;
   cred_sid_offset = 0;
   cred_security_offset = offsetof(struct cred, security);
-  kfunc(abort_creds) = fake_abort_creds;
-  kfunc(security_transfer_creds) = fake_transfer;
   kfunc(override_creds) = fake_override_creds;
   kfunc(revert_creds) = fake_revert_creds;
   kfunc(kthread_create_worker) = fake_create_worker;
@@ -371,14 +380,16 @@ static bool fake_legacy_queue(struct kthread_worker* owner, struct kthread_work*
 }
 static uintptr_t kallsyms_lookup_name_by_suffix(const char* name) { return (uintptr_t)lookup(name); }
 static void* lookup(const char* name) {
+  // 两个 SELinux getter 是「至少有一个」的契约：只删一个不算缺失。
+  if (missing && !strcmp(missing, "selinux_getters")
+      && (!strcmp(name, "selinux_cred_getsecid") || !strcmp(name, "selinux_task_getsecid")))
+    return NULL;
   if (missing && !strcmp(name, missing))
     return NULL;
   if (!strcmp(name, "call_usermodehelper_exec"))
     return entry;
   if (!strcmp(name, "call_usermodehelper_setup"))
     return fake_setup;
-  if (!strcmp(name, "prepare_kernel_cred"))
-    return fake_prepare_kernel_cred;
   if (!strcmp(name, "security_secctx_to_secid"))
     return fake_secctx_to_secid;
   if (!strcmp(name, "selinux_cred_getsecid"))
@@ -387,10 +398,6 @@ static void* lookup(const char* name) {
     return &initial_task;
   if (!strcmp(name, "selinux_blob_sizes"))
     return &blob_offset;
-  if (!strcmp(name, "abort_creds"))
-    return fake_abort_creds;
-  if (!strcmp(name, "security_transfer_creds"))
-    return fake_transfer;
   if (!strcmp(name, "override_creds"))
     return fake_override_creds;
   if (!strcmp(name, "revert_creds"))
@@ -441,10 +448,16 @@ static void reset(void) {
   legacy_worker_size = -1;
   cmd_btf = NULL;
   native_btf = &test_btf;
-  alloc_fail = cred_fail = worker_fail = queue_fail = exec_ret = setup_calls = copied = copy_short = ran = 0;
+  alloc_fail = worker_fail = queue_fail = exec_ret = setup_calls = copied = copy_short = ran = 0;
+  prepare_expect = 0;
+  path_mismatch = path_impostor = 0;
+  cmd_sid = 0;
   caller.context = 3;
   kernel_cred.context = 1;
   sid_error = sid_zero = getter_error = 0;
+  secctx_requested = NULL;
+  secctx_calls = 0;
+  cmd_capable = false;
   cred_sid_offset = -1;
   cred_security_offset = -1;
   cred_offset.security_offset = offsetof(struct cred, security);
@@ -491,9 +504,11 @@ static void offsets(void) {
   entry[31] = 0xf9401c09;
   entry[32] = 0xb4000029;
   assert(prepare_run_cmd() == -ENOENT);
-  const char* names[] = {"call_usermodehelper_setup", "call_usermodehelper_exec", "prepare_kernel_cred", "abort_creds",
-                         "security_transfer_creds",   "kthread_create_worker",    "kthread_queue_work"};
-  for (unsigned int i = 0; i < 7; i++) {
+  // 依赖清单：凭据准备/转移/释放已不在加载期，三个符号随之出列。
+  const char* names[] = {"call_usermodehelper_setup", "call_usermodehelper_exec", "kthread_create_worker",
+                         "kthread_queue_work",      "filp_open",                "replace_fd",
+                         "filp_close",              "security_secctx_to_secid", "override_creds"};
+  for (unsigned int i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
     reset();
     missing = names[i];
     assert(prepare_run_cmd() == -ENOENT);
@@ -818,11 +833,9 @@ static void legacy_execution(void) {
   assert(child >= 0);
   if (!child) {
     legacy_api = 1;
-    getter_error = 1;
-    assert(run_cmd_init(NULL, NULL, NULL) == -EINVAL && !cmd_worker && live_creds == 1);
-    assert(run_cmd_exit(NULL) == 0 && !live_creds);
-    getter_error = 0;
-    assert(run_cmd_init("legacy command", NULL, NULL) == 0 && snapshot.context == 3 && queued_work);
+    // 旧 worker 路径：加载只建通道，域在提交时解析（legacy 下没有 cred getter，跳过回读）。
+    assert(run_cmd_init("legacy command", NULL, NULL) == 0);
+    assert(queued_work && cmd_sid == 3 && secctx_calls == 1 && !strcmp(secctx_requested, RUN_CMD_CONTEXT));
     finish_work();
     assert(!strcmp(observed, "legacy command") && !queued_work && cmd_result == 0);
     char reply[RUN_CMD_REPLY_SIZE];
@@ -835,48 +848,159 @@ static void legacy_execution(void) {
   assert(waitpid(child, &status, 0) == child && status == 0);
   reset();
 }
+static void path_guard_cases(void) {
+  // ① 错偏移拒：BTF 的 path 成员偏移 + 指针宽度越过类型大小 ⇒ 该候选作废，回退指令链。
+  reset();
+  btf_fixture();
+  use_btf = 1;
+  btf_records[1].type.size = 0x30;  // 成员仍在 0x38，但已超出类型大小。
+  assert(prepare_run_cmd() == 0 && subprocess_info_path_offset == 0x38);
+  // BTF 作废后若指令链也给不出候选，就必须整体失败，证明没有悄悄采用越界值。
+  reset();
+  btf_fixture();
+  use_btf = 1;
+  btf_records[1].type.size = 0x30;
+  for (unsigned int i = 0; i < 64; i++) entry[i] = 0xd503201f;
+  assert(prepare_run_cmd() == -ENOENT && subprocess_info_path_offset == -1);
+
+  // ② 超上界拒：判据本身覆盖边界（静态/动态共用），再由指令链实证一次。
+  assert(path_offset_in_range(0) && path_offset_in_range(0x38) && path_offset_in_range(0x100));
+  assert(!path_offset_in_range(-1) && !path_offset_in_range(0x101) && !path_offset_in_range(0x7ff8));
+  reset();
+  entry[2] = 0xf9408809;  // ldr x9,[x0,#0x110]
+  entry[5] = 0xb4000029;  // cbz x9, ...
+  assert(prepare_run_cmd() == -ENOENT && subprocess_info_path_offset == 0x110);
+  // 恰好在界内的 0x100 仍然接受（上界是闭区间，不误伤）。
+  reset();
+  entry[2] = 0xf9408009;  // ldr x9,[x0,#0x100]
+  entry[5] = 0xb4000029;
+  assert(prepare_run_cmd() == 0 && subprocess_info_path_offset == 0x100);
+
+  // ③ 回读不一致（写入没生效）⇒ -EIO 且 fail-closed 不 exec。
+  reset();
+  btf_fixture();
+  use_btf = 1;
+  assert(prepare_run_cmd() == 0 && subprocess_info_path_offset == 0x38);
+  path_mismatch = 1;
+  int setup_before = setup_calls;
+  assert(run_cmd("echo guard") == -EIO);
+  assert(setup_calls == setup_before + 1 && !ran && !override_calls);
+  path_mismatch = 0;
+
+  // ④ 指针不等但内容完全相同 ⇒ 仍必须 -EIO：判据是「我写的那个指针还在」。
+  reset();
+  btf_fixture();
+  use_btf = 1;
+  assert(prepare_run_cmd() == 0 && subprocess_info_path_offset == 0x38);
+  path_impostor = 1;
+  setup_before = setup_calls;
+  assert(run_cmd("echo impostor") == -EIO);
+  assert(setup_calls == setup_before + 1 && !ran && !override_calls);
+  path_impostor = 0;
+
+  // 生产判据本身：同一指针收；内容相同但地址不同拒；空槽拒。
+  char* same = sh;
+  assert(run_cmd_path_matches(&same));
+  char copy[sizeof(sh)];
+  memcpy(copy, sh, sizeof(sh));
+  char* different = copy;
+  assert(!strcmp(different, sh) && !run_cmd_path_matches(&different));
+  char* empty = NULL;
+  assert(!run_cmd_path_matches(&empty));
+}
+
+static void context_cases(void) {
+  char out[RUN_CMD_REPLY_SIZE];
+  assert(cmd_worker && cmd_capable && !queued_work);
+  // ② 提交期只查一次目标域，成功后 SID 随本次命令生效。
+  secctx_calls = 0;
+  secctx_requested = NULL;
+  assert(control("echo magisk", out, sizeof(out)) == 0 && !strcmp(out, "queued\n"));
+  assert(secctx_calls == 1 && !strcmp(secctx_requested, RUN_CMD_CONTEXT));
+  assert(cmd_sid == 3);
+  finish_work();
+  assert(!strcmp(observed, "echo magisk") && snapshot.context == 3);
+  assert(control("result", out, sizeof(out)) == 0 && !strcmp(out, "ret=0\n"));
+
+  // ③ 目标域尚未就绪：查询报错或返回零 SID 都不能排队。
+  const int setup_before = setup_calls, ran_before = ran;
+  const int previous_result = cmd_result;
+  struct kthread_worker* worker_before = cmd_worker;
+  secctx_calls = 0;
+  for (int zero = 0; zero <= 1; ++zero) {
+    sid_error = zero ? 0 : -EINVAL;
+    sid_zero = zero;
+    memset(out, 0, sizeof(out));
+    assert(control("echo unavailable", out, sizeof(out)) == -EOPNOTSUPP);
+    assert(!strcmp(out, "unavailable\n") && secctx_calls == zero + 1);
+    assert(!queued_work && cmd_worker == worker_before && cmd_capable);
+    assert(setup_calls == setup_before && ran == ran_before);
+    assert(cmd_status == CMD_DONE && cmd_result == previous_result);
+    assert(!strcmp(secctx_requested, RUN_CMD_CONTEXT));
+  }
+
+  // ④ 域就绪后，同一实例接受新提交，先前拒绝的命令不自动运行。
+  sid_error = sid_zero = 0;
+  assert(!queued_work && ran == ran_before);
+  assert(control("echo retry", out, sizeof(out)) == 0 && !strcmp(out, "queued\n"));
+  assert(secctx_calls == 3);
+  finish_work();
+  assert(ran == ran_before + 1 && !strcmp(observed, "echo retry"));
+
+  // ⑤ 执行期 SID 回读失败：prepare 返回 -EINVAL，命令结果如实反映。
+  getter_error = 1;
+  prepare_expect = -EINVAL;
+  assert(control("echo badsid", out, sizeof(out)) == 0);
+  finish_work();
+  prepare_expect = 0;
+  getter_error = 0;
+  assert(control("result", out, sizeof(out)) == -EINVAL);
+
+  // ⑥ 子任务没有 LSM blob（security 指针为空）：同样在执行期拒绝。
+  cmd_sid = 3;
+  {
+    struct cred bare = {0};
+    assert(run_cmd_prepare(&helper, &bare) == -EINVAL);
+  }
+  cmd_sid = 0;
+}
+
 int main(void) {
   compat_offsets();
   legacy_cred_slots();
   legacy_execution();
   offsets();
   sid_offsets();
+  path_guard_cases();
   missing_kp_security();
   reset();
   prepare_ret = -ENOENT;
-  assert(run_cmd_init(NULL, NULL, NULL) == -ENOENT && !live_creds && !cmd_worker);
+  assert(run_cmd_init(NULL, NULL, NULL) == -ENOENT && !cmd_worker);
   assert(run_cmd_exit(NULL) == 0);
   prepare_ret = 0;
   char huge[RUN_CMD_MAX_SIZE + 1];
   memset(huge, 'a', sizeof(huge));
   huge[sizeof(huge) - 1] = 0;
-  assert(run_cmd_init(huge, NULL, NULL) == -E2BIG && !live_creds);
-  cred_fail = 1;
-  assert(run_cmd_init(NULL, NULL, NULL) == -ENOMEM && !live_creds);
-  assert(run_cmd_exit(NULL) == 0);
-  cred_fail = 0;
+  assert(run_cmd_init(huge, NULL, NULL) == -E2BIG);
   worker_fail = 1;
-  assert(run_cmd_init(NULL, NULL, NULL) == -ENOMEM && live_creds == 1 && !cmd_worker);
-  assert(run_cmd_exit(NULL) == 0 && !live_creds);
+  assert(run_cmd_init(NULL, NULL, NULL) == -ENOMEM && !cmd_worker);
+  assert(run_cmd_exit(NULL) == 0);
   worker_fail = 0;
-  sid_error = -EINVAL;
-  assert(run_cmd_init(NULL, NULL, NULL) == -EINVAL && !live_creds && !cmd_worker);
-  sid_error = 0;
-  sid_zero = 1;
-  assert(run_cmd_init(NULL, NULL, NULL) == -EINVAL && !live_creds && !cmd_worker);
-  sid_zero = 0;
-  getter_error = 1;
-  assert(run_cmd_init(NULL, NULL, NULL) == -EINVAL && live_creds == 1 && !cmd_worker);
-  assert(run_cmd_exit(NULL) == 0 && !live_creds);
-  getter_error = 0;
   caller.context = 29;  // UI 加载者与执行域须不同。
-  for (int fail = 0; fail < 2; fail++) {
+  for (int mode = 0; mode < 3; mode++) {
     pid_t child = fork();
     assert(child >= 0);
     if (!child) {
-      queue_fail = fail;
+      queue_fail = mode == 1;
+      sid_error = mode == 2 ? -EINVAL : 0;
       assert(run_cmd_init("initial command", NULL, NULL) == 0);
-      if (fail) {
+      if (mode == 2) {
+        char reply[RUN_CMD_REPLY_SIZE];
+        assert(secctx_calls == 1 && cmd_worker && cmd_capable && !queued_work && !setup_calls && !ran);
+        sid_error = 0;
+        assert(control("result", reply, sizeof(reply)) == 0 && !strcmp(reply, "idle\n"));
+        assert(secctx_calls == 1 && !queued_work);
+      } else if (queue_fail) {
         assert(!queued_work && cmd_status == CMD_DONE && cmd_result == -EAGAIN);
       } else {
         assert(queued_work && !setup_calls);
@@ -889,11 +1013,12 @@ int main(void) {
     assert(waitpid(child, &status, 0) == child && status == 0);
   }
   cred_offset.security_offset = -1;
-  assert(run_cmd_init(NULL, NULL, NULL) == 0 && live_creds == 1 && !queued_work);
-  assert(cred_offset.security_offset == -1 && snapshot.context == 3);
-  assert(snapshot.context == 3 && caller.context == 29 && kernel_cred.context == 1);
-  const char* domain_names[] = {"prepare_kernel_cred", "security_secctx_to_secid", "selinux_cred_getsecid",
-                                "init_task"};
+  secctx_calls = 0;
+  assert(run_cmd_init(NULL, NULL, NULL) == 0 && cmd_worker && !queued_work);
+  // ① 加载期不解析域：一次 lookup 都不做，也不写 SID。
+  assert(secctx_calls == 0 && cmd_sid == 0 && cmd_capable);
+  assert(cred_offset.security_offset == -1 && caller.context == 29 && kernel_cred.context == 1);
+  const char* domain_names[] = {"security_secctx_to_secid", "selinux_getters", "init_task"};
   for (unsigned int i = 0; i < sizeof(domain_names) / sizeof(domain_names[0]); i++) {
     missing = domain_names[i];
     assert(prepare_run_cmd() == -ENOENT);
@@ -906,7 +1031,11 @@ int main(void) {
   missing = NULL;
   assert(prepare_run_cmd() == 0);
   assert(fake_prepare_run_cmd() == 0);
+  // 这一段只测 fd 安装：执行期域已解析好，子任务凭据带 LSM blob 指针。
+  cmd_sid = 3;
+  const int override_base = override_calls, revert_base = revert_calls;
   struct cred helper_cred = {0};
+  helper_cred.security = &helper_cred.context;
   open_error = -EACCES;
   open_calls = replace_calls = close_calls = 0;
   assert(run_cmd_prepare(&helper, &helper_cred) == -EACCES);
@@ -923,7 +1052,7 @@ int main(void) {
   open_calls = replace_calls = close_calls = 0;
   assert(run_cmd_prepare(&helper, &helper_cred) == 0);
   assert(open_calls == 1 && replace_calls == 3 && close_calls == 1 && null_file.refs == 3);
-  assert(helper_cred.context == snapshot.context);
+  assert(helper_cred.context == (int)cmd_sid);
   helper_exit_files();
   const char* cred_names[] = {"override_creds", "revert_creds"};
   for (unsigned int i = 0; i < sizeof(cred_names) / sizeof(cred_names[0]); i++) {
@@ -933,7 +1062,8 @@ int main(void) {
   missing = NULL;
   assert(prepare_run_cmd() == 0);
   assert(fake_prepare_run_cmd() == 0);
-  assert(override_calls == 5 && revert_calls == 5 && !override_depth && active_cred == &kernel_cred);
+  assert(override_calls == override_base + 5 && revert_calls == revert_base + 5 && !override_depth
+         && active_cred == &kernel_cred);
   char out[RUN_CMD_REPLY_SIZE];
   assert(control("result", out, sizeof(out)) == 0 && !strcmp(out, "idle\n"));
   assert(control(NULL, out, sizeof(out)) == -EINVAL);
@@ -950,7 +1080,7 @@ int main(void) {
   exec_ret = 1792;
   finish_work();
   assert(control("result", out, sizeof(out)) == 1792 && !strcmp(out, "ret=1792\n"));
-  assert(!strcmp(observed, "exit 7") && setup_calls == 1 && live_creds == 1);
+  assert(!strcmp(observed, "exit 7") && setup_calls == 1);
   caller.context = 99;
   const int statuses[] = {0, -ENOMEM, -EACCES, -ENOENT, 1792};
   for (unsigned int i = 0; i < sizeof(statuses) / sizeof(statuses[0]); i++) {
@@ -961,7 +1091,7 @@ int main(void) {
     assert(control("result", out, sizeof(out)) == statuses[i]);
     assert(copied == (int)strlen(out) + 1);
     for (unsigned int j = copied; j < sizeof(out); j++) assert(out[j] == 0x5a);
-    assert(snapshot.context == 3 && live_creds == 1);
+    assert(snapshot.context == 3);
   }
   alloc_fail = 1;
   assert(control("echo alloc", out, sizeof(out)) == 0);
@@ -979,9 +1109,11 @@ int main(void) {
   exec_ret = 0;
   finish_work();
   assert(control("result", out, sizeof(out)) == 0);
-  assert(run_cmd_exit(NULL) == -EBUSY && live_creds == 1);
+  // 执行期域解析夹具（②~⑥）：跑在已有 worker 上，与真机 ctl0 语义一致。
+  context_cases();
+  assert(run_cmd_exit(NULL) == -EBUSY);
   assert(!lock_depth && !queued_work);
   assert(override_calls == revert_calls && !override_depth && active_cred == &kernel_cred);
-  puts("run_cmd production async/credential/offset tests passed");
+  puts("run_cmd production async/exec-context/offset tests passed");
   return 0;
 }
