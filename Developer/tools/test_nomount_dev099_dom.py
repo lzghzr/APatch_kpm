@@ -26,6 +26,7 @@ window.ksu = {
   else if(cmd.includes('module list')) stdout=JSON.stringify({mods:[{modId:'example',realName:'中文模块 🧩',disable:fixture.disabled,skipMount:false,root:'/data/adb/modules/example',hasInjectable:true,links:[]}],rules:fixture.injected?[{virtual:'/system/a',real:'/data//adb/modules/example/system/a'}]:[],links:[]});
   else if(cmd.includes('module load')) {fixture.injected=1;stderr='nm_load_status=0\n';}
   else if(cmd.includes('module unload')) {fixture.injected=0;stderr='nm_unload_status=0\n';}
+  else if(cmd.includes('<<<NMSTATE>>>')) stdout=[JSON.stringify(fixture.blocked),'no','no','0',JSON.stringify(fixture.saved)].join('\n<<<NMSTATE>>>\n');
   else if(cmd.includes('uid list')) stdout=JSON.stringify(fixture.blocked);
   else if(cmd.includes('uid add')) fixture.blocked.push(cmd.trim().split(/\s+/).pop());
   else if(cmd.includes('uid del')) fixture.blocked=fixture.blocked.filter(uid=>uid!==cmd.trim().split(/\s+/).pop());

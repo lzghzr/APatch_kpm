@@ -10,6 +10,20 @@ nm_log() {
     printf '%s\n' "$*" >> "$NM_LOG"
 }
 
+# 无参数只打印用法并返回 1，不访问 KPM；先区分 ELF/运行库加载失败与驱动查询失败。
+nm_check_cli() {
+    if NM_CLI_OUTPUT=$("$NM_BIN" 2>&1); then
+        NM_CLI_EXIT=0
+    else
+        NM_CLI_EXIT=$?
+    fi
+    [ "$NM_CLI_EXIT" -eq 1 ] || return 1
+    case "$NM_CLI_OUTPUT" in
+        'NoMount CLI (nm) - Usage Guide:'*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 # 首项是线协议号，不是内核版本或 KPM 发布版本；只接受本包验证过的 v22/v23 ABI。
 nm_check_api() {
     [ -x "$NM_BIN" ] || return 1

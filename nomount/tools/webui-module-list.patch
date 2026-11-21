@@ -1,0 +1,61 @@
+--- a/index.js
++++ b/index.js
+@@ -871,16 +871,40 @@
+     if (errno) throw new Error(stderr || 'Failed to read modules');
+
+     const data = JSON.parse(stdout);
++    for (const rule of data.rules) if (typeof rule.real === 'string') rule.real = rule.real.replace(/\/+/g, '/');
+     const modules = [];
++    const roots = new Map();
++    const links = new Map();
+     for (const m of data.mods) {
+         if (!m.hasInjectable) continue;
+-        modules.push({
++        const mod = {
+             modId: m.modId,
+             realName: m.realName,
+             disable: m.disable,
+             skipMount: m.skipMount,
+-            fileCount: m.fileCount,
+-        });
++            fileCount: 0,
++        };
++        modules.push(mod);
++        if (!roots.has(m.root)) roots.set(m.root, []);
++        roots.get(m.root).push(mod);
++        for (const link of m.links) {
++            if (!links.has(link.virtual)) links.set(link.virtual, []);
++            links.get(link.virtual).push({ mod, real: link.real, dir: link.dir });
++        }
++    }
++
++    for (const { virtual, real } of data.rules) {
++        const owners = new Set();
++        for (let path = real; path; path = path.slice(0, path.lastIndexOf('/'))) {
++            for (const mod of roots.get(path) || []) owners.add(mod);
++        }
++        for (let path = links.size ? virtual : ''; path; path = path.slice(0, path.lastIndexOf('/'))) {
++            const suffix = virtual.slice(path.length);
++            for (const link of links.get(path) || []) {
++                if ((link.dir || !suffix) && real === (suffix ? link.real.replace(/\/$/, '') + suffix : link.real)) owners.add(link.mod);
++            }
++        }
++        for (const mod of owners) mod.fileCount++;
+     }
+
+     for (const mod of modules) {
+@@ -947,13 +971,13 @@
+         for (const mod of moduleInfo) frag.appendChild(buildModuleCard(mod));
+         listContainer.replaceChildren(frag);
+     } catch (e) {
++        if (renderId !== currentRenderId) return;
+         renderTextState(listContainer, 'error-message', `Error: ${e.message}`);
+     }
+ }
+
+ let initialModulesPromise;
+ const readInitialModules = () => initialModulesPromise ||= readModules().catch(e => { initialModulesPromise = null; throw e; });
+-readInitialModules();
+
+ async function loadModule(modId) {
+     const modPath = `${MOD_DIR}/${modId}`;

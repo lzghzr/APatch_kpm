@@ -19,6 +19,11 @@ fi
 set_perm "$MODPATH/bin/nm" 0 0 0755
 MODDIR="$MODPATH"
 . "$MODDIR/common.sh"
+if ! nm_check_cli; then
+    ui_print "! 配套 CLI 无法在本机执行（退出码 ${NM_CLI_EXIT}）。"
+    [ -z "$NM_CLI_OUTPUT" ] || ui_print "$NM_CLI_OUTPUT"
+    abort "! 请重新下载官方 NoMount 配套 ZIP，并检查安装日志中的可执行错误。"
+fi
 if ! nm_check_api; then
     ui_print "! 无法连接 NoMount。"
     abort "! 需要 v22 或 v23 控制接口及隔离 UID 查询。升级时先安装本 ZIP，再安装或嵌入新 KPM 并重启；请检查驱动版本和安装日志。"

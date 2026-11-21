@@ -1,11 +1,11 @@
 # 上游基线与差异
 
 - 仓库：<https://github.com/maxsteeel/nomount>
-- 完整提交：`00e7c5d4fdbf1e58decea3522b8eb7207a46d413`
-- 上游元模块版本：`v2.3.0`（dev 分支统一扫描／白化归属快照）。
+- 配套 ZIP 冻结上游：`v2.3.1`，完整提交 `dcd77d03e9912f397a586d7da81694d1628f170e`。
+- KPM 上一轮核对的上游内核提交：`00e7c5d4fdbf1e58decea3522b8eb7207a46d413`。
 - 上游内核版本标记：`NOMOUNT_BASE_VERSION = 23`；KPM 使用协议 23，配套 ZIP 兼容 22/23，保留 v22 的线格式与连接契约。
 - 内核实现：[`kernel/src/nomount.c`](https://github.com/maxsteeel/nomount/blob/00e7c5d4fdbf1e58decea3522b8eb7207a46d413/kernel/src/nomount.c) 与 [`kernel/src/nomount.h`](https://github.com/maxsteeel/nomount/blob/00e7c5d4fdbf1e58decea3522b8eb7207a46d413/kernel/src/nomount.h)。
-- 用户态工具和元模块使用同一提交，控制协议与内核端一起核对。KPM业务实现单独维护，管理索引保留独立规则及进程上下文退役；inode持有独立path和目录节点。小对象优先原生slab分配，目录缓存按绑定及属性核对。
+- 用户态工具和元模块使用同一冻结提交，控制协议与 KPM 一起核对。KPM业务实现单独维护，管理索引保留独立规则及进程上下文退役；inode持有独立path和目录节点。小对象优先原生slab分配，目录缓存按绑定及属性核对。
 
 上游 README 声明 `kernel/` 为 GPL-2，其余部分为 GPL-3；根目录保留上游 LICENSE。移植文件保留来源与适用许可证。
 
@@ -19,20 +19,37 @@ Git 子模块位于 `nomount/upstream/nomount`，由父仓库 gitlink 冻结上�
 
 ## 当前差异清单
 
-实现状态核对日期：2026-11-16（Developer）。差异按待处理、已处理、有意保留分类；已处理项另注明候选、复核和验收状态，独立结论引用对应角色的记录。
+实现状态核对日期：2026-11-19（Developer）。差异按待处理、已处理、有意保留分类；已处理项另注明候选、复核和验收状态，独立结论引用对应角色的记录。
 
 下文的角色报告路径标识本地证据，不随 `main` 发布；复核时从本地 `dev` 分支或维护者提供的归档取得。实现范围、验证阶段与已知边界直接列在本清单中。
 
 ### 比较基线
 
-- 配套 CLI/WebUI 的冻结上游：`00e7c5d4fdbf1e58decea3522b8eb7207a46d413`，与父仓库 gitlink 一致；相对 `611f2420abfd49c716e7e1ca685a7b6143eb2cae` 新增 9 个用户态／脚本提交，内核与协议无差分。配套 ZIP 更新为 `v2.3.0-20261116`；KPM 保持 `2.3.0-20261114`。逐提交评估（本地 `Developer/reports/2026-11-16-nomount-dev-assessment.md`）与实现记录（本地 `Developer/reports/2026-11-16-nomount-dev-implementation.md`）。
+- **2026-11-19：v2.3.1 评估**。本地对照为 `dev` 的 `9786fc731f711d3dd96900ecdcd84396926589db`；起点评估的 ZIP 为 `v2.3.0-20261116`、KPM 为 `2.3.0-20261114`。[上游 v2.3.1](https://github.com/maxsteeel/nomount/releases/tag/v2.3.1) 指向 `dcd77d03e9912f397a586d7da81694d1628f170e`，[相对上一版冻结提交的差分](https://github.com/maxsteeel/nomount/compare/00e7c5d4fdbf1e58decea3522b8eb7207a46d413...dcd77d03e9912f397a586d7da81694d1628f170e) 为 48 个提交、15 个文件（+882／−510）。发布页以较早的 v2.3.0-720 为对照；统一扫描、白化归属、路径引用及主题取色已有落地，不重复计入本轮收益。
+
+- 2026-11-16 配套 CLI/WebUI 的冻结上游：`00e7c5d4fdbf1e58decea3522b8eb7207a46d413`；相对 `611f2420abfd49c716e7e1ca685a7b6143eb2cae` 新增 9 个用户态／脚本提交，内核与协议无差分。配套 ZIP 更新为 `v2.3.0-20261116`；KPM 保持 `2.3.0-20261114`。逐提交评估（本地 `Developer/reports/2026-11-16-nomount-dev-assessment.md`）与实现记录（本地 `Developer/reports/2026-11-16-nomount-dev-implementation.md`）。
 - 性能结果采用源码：`c69e4cbeb8ccd86dd44b9a196edc86d3692e2677`；保留异步退役，物化与查找恢复基线。单项候选身份与自检（本地 `Developer/reports/responses/2026-11-15-nomount-async-selected.md`），差分审计与点测采纳（本地 `Developer/reports/2026-11-15-nomount-async-confirmation.md`）。
 - DEV-108／DEV-109 联合候选源码：`f9965b9e20be04f8831cde7a5738de0bf62f06b9`；包含 DEV-107 修复。KPM 与 ZIP 版本标记保持，实例身份见联合回执（本地 `Developer/reports/responses/2026-11-15-nomount-dev108-109.md`）。
 - KPM 虚拟 backing／枚举续读源码：`834c7b813681abcfc67601b5bfce8fe128705ec6`；DEV-107 空虚拟目录回收候选源码：`89003bee2149e4d4562ee527f2979d21bbb69ed5`。
 - 模块 CLI 初版源码：`ed32e6425767ba2a6068efce4eca58d0924800f9`；DEV-106 修复源码：`03ada11138df5bf84f7ad691e622b586f50490f6`；配套 ZIP 版本 `2.3.0-20261115`，KPM 版本仍为 `2.3.0-20261114`。
 - 迁移前查询记录：master 为 `7914458ca71dfa3a8c162fa97fdb69332db7a690`，相对旧冻结提交 `ab93ee32a589ccb021257b3c1f280e058520d844` 仅修正上游 `update.json` 下载 URL；dev 为上述 `611f2420…`。以上为迁移前查询快照。
 
+### v2.3.1 对照
+
+| 范围 | 相对冻结提交新增的差异 | 可行性与必要性 |
+| --- | --- | --- |
+| ZIP：CLI 列表与 WebUI | `nm module list --json` 从返回模块、链接与规则明细，改为仅返回带 `fileCount`／`hasInjectable` 的 `mods`；归属计数移入 CLI。WebUI 同步调整列表、首页状态缓存、应用列表和渲染。 | **已适配配套 ZIP**，保留列表格式与 WebUI 归属计数；上游性能数据不作为本地收益。 |
+| ZIP：解析与扫描 | UID／参数校验、路径归一化与保留 backing 末尾斜杠语义；列表为空时减少扫描。加载时新增白化子树剪枝，撤销仍下钻；xattr 查询失败一律视为没有 opaque 标记。 | **采用输入校验**；保留本地目录标记顺序（非空 `.replace`／opaque 优先于 `.remove`）、load／unload 对称和 DEL 去重。区分缺少 xattr 与权限／I/O 错误，保留成功规则和失败汇总。 |
+| KPM：VFS 生命周期 | 上游 LKM 改在 `put_super` 恢复操作表，处理恢复期间的回调，延迟释放代理 xattr 表；虚拟对象拒绝文件句柄编码，原生对象继续走原回调。 | **仅记录，不移植。** NoMount KPM 禁止运行时卸载，驻留到重启；KernelPatch 未提供可依赖的卸载拦截。上游 LKM 的卸载与回调恢复流程不纳入本轮。 |
+| KPM：路径及属性正确性 | 规则路径、flag／UID 校验，目录项按实际类型输出，open／write 后刷新代理 inode 尺寸，失效 backing 子项重验证；另有虚拟对象的 rename／hardlink 防护、异步直接 I/O 拒绝及 mmap 标志更新。 | **仅作差异记录。** 本地已有虚拟对象修改防护、异步 I/O 拒绝与 mmap 按位更新；保留固定 backing 身份、旧 FD 和本地错误码。 |
+| KPM：协议与性能 | 控制协议仍为 23，线格式未改；上游规则分页改用桶内游标，扩大叶节点哈希和 UID Bloom，并复用路径哈希、自动父规则及目录叶节点。 | **不需同步升级 KPM**。CLI 从 0 开始并原样回传内核回复的游标；保留本地分页与显式规则可见性，ZIP 回归覆盖 22／23。性能改动无本地负载证据，暂缓。 |
+| 启动、构建与发布 | 上游改启动文件锁、孤儿锁及 UID 失败日志，更新 LKM 启动脚本及构建流程、Kconfig、构建选项、版本与更新源。 | **不随 ZIP 迁入**。继续用现有 KPM 启动和回执方式；Android 17 CLI 发布工具链按 DEV-117 单独处理。 |
+
+**迁移前复现**：用旧版 `build_zip.py` 分别处理冻结提交和 v2.3.1 的原始输入。冻结输入的三项生成转换均通过；v2.3.1 的 `cli-module.patch` 有 8／11 个补丁块失败。`nm.c` 与 WebUI 的文本替换仍能执行，但生成版 `readModules()` 还读取 `data.rules`。用两版各自的空列表格式运行该函数：冻结版正常，v2.3.1 抛出 `TypeError: data.rules is not iterable`。这两项为形成候选前的宿主差分证据。
+
 ### 已处理
+
+- **v2.3.1 配套 ZIP（Developer 更新）**：冻结用户态及 WebUI 输入至 v2.3.1，ZIP 版本为 `v2.3.1-20261119`；KPM 保持 `2.3.0-20261114`。采用路径与参数校验、首页和模块列表复用、应用列表缓存等上游变更；保留原列表 JSON 和本地标记、批次及协议契约。CLI 与 WebUI 适配绑定到同一冻结输入。Zig/musl 候选已通过 CLI 回归和实际 ZIP 的浏览器自检；实例、哈希及验证边界见开发记录（本地 `Developer/reports/responses/2026-11-19-nomount-v231-zip.md`）。独立审计与设备验证待对应角色执行。
 
 - **dev 用户态增量（独立复核／实测完成，DEV-111 维护者已关闭）**：采用上游公共扫描／批次、单次模块元数据收集与每模块 `links`／`hasInjectable`；新列表向 WebUI 提供白化归属。同步上游所有模块路径的 shell 引用和 Material You 种子色检测。保留本地标记选择、DEL 去重／UID 范围、协议入口探测及成功规则保留；删除旧遍历器适配。源码 `b8868ef50aed42c9d82c5866ab028295a7964c54` 的 ZIP `nomount-zip-2.3.0-20261116+g45cbbcc2c8ae.zig0.17.1#2` 已完成独立审计（本地 `Auditor/proposals/2026-11-15-nomount-zip-20261116/report.md`）与真机聚焦验证（本地 `Tester/reports/2026-11-15-nomount-zip-20261116-device.md`）：纯白化模块显示已激活、计数为 1，混合模块计数为 3，DEV-106～109 回归通过。维护者已登记该 ZIP 为 `device-tested` 并关闭 DEV-111。实现与完整身份见本轮记录（本地 `Developer/reports/2026-11-16-nomount-dev-implementation.md`）。
 
@@ -57,7 +74,11 @@ Git 子模块位于 `nomount/upstream/nomount`，由父仓库 gitlink 冻结上�
 
 ### 待处理
 
-本轮选定的上游增量已处理完成，DEV-111 与 ZIP dev 迁移的完成状态及来源见上文。文档收尾、既有候选身份及后续交接见开发回执（本地 `Developer/reports/responses/2026-11-15-nomount-documentation-closeout.md`）。后续新增差异在重新比较目标基线后登记。
+2026-11-16 选定的上游增量已完成。DEV-111 与 ZIP dev 迁移的状态见上文；既有候选身份及交接见开发回执（本地 `Developer/reports/responses/2026-11-15-nomount-documentation-closeout.md`）。
+
+**后续验证**：ZIP 候选按冻结提交、构建实例和产物身份交独立审计及目标实测；继续在本清单记录复核结果。
+
+- **DEV-117 发布 CLI**：维护者已确认 NDK 发布件在 Android 17 因 Bionic TLS 对齐无法执行；官方发布改用既有 Zig/musl 内层字节。Developer 已实现安装可执行探测与分层报错，并提供 Zig 出件／发布门禁补丁；CI 采纳、发布资产核对及 Android 17 候选实测待对应角色完成。
 
 - **WebUI 手动规则转储**：上游按钮从 common.sh 调用 `dump_all_rules_logcat`，本地只提供 `nm_dump_rules`，该入口尚待适配。开机 metamount 已直接调用本地函数；本轮 ZIP 收录清理不改运行脚本或 WebUI，手动入口需另行修复、复核与实测。
 
@@ -79,7 +100,7 @@ Git 子模块位于 `nomount/upstream/nomount`，由父仓库 gitlink 冻结上�
 - **普通文件与 backing FD**：三项联合实验未建立 inode 缓存的独立收益，已恢复基线 `new_inode()`；目录已有缓存保留。各次 backing FD 独立打开，保持凭据、seek／ioctl 文件状态；不采用上游共享 FD。以后有针对性负载证据再评估，不维持必做迁移待办。
 - **查找结构**：撤回实验 child_hint，保留基线 hash／Bloom／二分查找；本次未建立提示的独立收益，B3 无关前缀未命中也不经过该提示。不直接采用上游 inode 持有 leaf 或新版 buckets。
 - **异步接入方式**：通过原生 async API 提交退役链，不复制配置相关的 work_struct 布局；不可用时沿用同步回收。生命周期与语义继续按本地模型维护。
-- **KPM 架构**：静态／动态偏移模式、目标证据推导及驻留生命周期独立维护；上游 LKM 装载、rmmod 与版本编译分支不直接移植。
+- **KPM 架构**：静态／动态偏移与驻留生命周期独立维护。禁止运行时卸载是操作约束，不是内核中的拦截开关；更新或停用 KPM 通过重启生效。上游 LKM 装载、运行时卸载及操作表恢复流程只登记差异。
 
 ### 如何维护
 

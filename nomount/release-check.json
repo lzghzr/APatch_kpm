@@ -1,0 +1,14 @@
+{
+  "packages": [
+    {
+      "kind": "companion-zip",
+      "version": "2.3.1-20261119",
+      "status": "device-tested",
+      "instance_id": "nomount-zip-2.3.1-20261119+g7885d029e20a.zig0.17.1#1",
+      "zip_entries": 34,
+      "inner_bin": {
+        "sha256": "9c5b6076c470f678e9be46d435d1929fb0fc89a601f1a056a5d49f4193e489de"
+      }
+    }
+  ]
+}

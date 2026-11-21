@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /* NoMount by maxsteeel; KPM adaptation by Codex (OpenAI), modified 2026-10-13. */
 #include <kpmodule.h>
+#include <linux/string.h>
 
 // 完整引擎、原生管理锁与keyring注册按依赖顺序准备。
 #include "nm_control_entry.c"
@@ -28,6 +29,17 @@ static bool nm_initialized;
 static long nomount_init(const char* args, const char* event, void* reserved) {
   if (args && *args)
     return -EINVAL;
+#ifdef CONFIG_KPM_BASELINES
+  // file_layout 是必填判别字段；0 是合法的 NM_FILE_COMMON。
+  if (struct_offset.file_layout == -1) {
+    nm_log_error("static baseline is unconfigured (file_layout=-1); refusing to load (%d)\n", -EINVAL);
+    return -EINVAL;
+  }
+#endif
+  if (!kfunc(memset) || !kfunc(memcpy) || !kfunc(memmove) || !kfunc(memcmp) || !kfunc(memchr)) {
+    nm_log_error("kfunc mem* slots are incomplete; refusing to load\n");
+    return -ENOENT;
+  }
   int rc = nm_prepare_control_engine();
   if (rc) {
     nm_log_error("initialization failed: %d\n", rc);

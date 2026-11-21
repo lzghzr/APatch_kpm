@@ -58,6 +58,9 @@ Developer 拥有「让功能在目标内核上跑起来」的全部工作：内�
 - **未知工具链名直接失败**（`TOOLCHAIN` 只接受 `gcc` / `ndk`），不做猜测。
 
 CI 的 KPM 构建下载同一 GCC 发行版，并通过 `TARGET_COMPILE` 指定前缀。
+**维护者记录（2026-11-20，NoMount 用户态 ZIP）：** [Build-NoMount-zip](../.github/workflows/build-kpm.yml)
+使用 Zig 0.17.1 构建静态 musl 版 `bin/nm`。更新配套版本时，从该版本已真机验证的登记中同步 [ZIP 校验记录](../nomount/release-check.json)。DEV-117 仍为 open：按问题单，须核对实际发布 ZIP 内的
+`bin/nm` 与已验证字节一致，并确认其在 Android 17 上可执行，才能关闭。
 
 ### 编译器运行时按需链接
 

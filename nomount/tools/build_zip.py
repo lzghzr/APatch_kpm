@@ -41,7 +41,8 @@ def module_inputs(repo, commit):
     """只读取声明的模块文件及构建输入；工程文档不随目录隐式进入 ZIP。"""
     paths = [*('nomount/module/' + name for name in MODULE_PACKAGE_FILES),
              'nomount/module/CHANGELOG.md', 'nomount/tools/build_zip.py',
-             'nomount/tools/build_nm.sh', 'nomount/tools/cli-module.patch']
+             'nomount/tools/build_nm.sh', 'nomount/tools/cli-module.patch',
+             'nomount/tools/webui-module-list.patch']
     inputs, contents = {}, {}
     for path in tree_files(repo, commit, *paths):
         data = git(repo, 'show', commit + ':' + path)
@@ -90,8 +91,9 @@ def check_cli(data):
     assert any(p[0] == 1 and p[1] & 1 and p[3] <= entry < p[3] + p[6] for p in segments)
 
 
-def adapt_webui(js):
-    """适配生成副本的连接状态、彩蛋与规则路径解析。"""
+def adapt_webui(js, patch=None):
+    """适配生成副本的连接状态、列表契约与操作失败。"""
+    js = apply_source_patch(js, 'index.js', 'webui-module-list.patch', patch)
     before = 'if [ "$driver_status" -eq 0 ]; then lsmod | grep -q nomount && echo lkm || echo built-in; fi'
     assert js.count(before) == 1
     js = js.replace(before, 'MODDIR=${MOD_DIR}/nomount; . "$MODDIR/common.sh"; '
@@ -108,9 +110,6 @@ def adapt_webui(js):
     face = "'(._.)'"
     assert js.count(face) == 4
     js = js.replace(face, "'_(._.)_'")
-    before = "const data = JSON.parse(stdout);"
-    assert js.count(before) == 1
-    js = js.replace(before, before + "\n    for (const rule of data.rules) if (typeof rule.real === 'string') rule.real = rule.real.replace(/\\/+/g, '/');", 1)
     # Upstream shellQuote covers paths and module filters; retain errno checking.
     for action in ('load', 'unload'):
         before = 'const { stderr } = await exec(`${NM_BIN} module ' + action + ' ${shellQuote(modPath)}`);'
@@ -119,12 +118,12 @@ def adapt_webui(js):
     return js
 
 
-def adapt_cli_header(body, patch=None):
-    """Apply the reviewed module-walker changes to the frozen upstream header."""
+def apply_source_patch(body, name, patch_name, patch):
+    """Apply a local adaptation to a copy of a frozen upstream source file."""
     if patch is None:
-        patch = Path(__file__).with_name('cli-module.patch').read_text()
-    with tempfile.TemporaryDirectory(prefix='nomount-cli-') as directory:
-        path = Path(directory) / 'nm.h'
+        patch = Path(__file__).with_name(patch_name).read_text()
+    with tempfile.TemporaryDirectory(prefix='nomount-source-') as directory:
+        path = Path(directory) / name
         path.write_text(body)
         result = subprocess.run(['patch', '--batch', '-p1'], cwd=directory, input=patch,
                                 text=True, capture_output=True)
@@ -133,8 +132,24 @@ def adapt_cli_header(body, patch=None):
         return path.read_text()
 
 
+def adapt_cli_header(body, patch=None):
+    return apply_source_patch(body, 'nm.h', 'cli-module.patch', patch)
+
+
 def adapt_cli(body):
     """生成副本：已知 v22/v23 ABI 探测；默认规则允许独立的 UID 排除范围。"""
+    # KPM packaging owns its startup flow and does not use the LKM lock helper.
+    lock = """    if (argc == 2 && !strcmp(argv[1], "--try-lock")) {
+        if (!flock(STDIN_FILENO, LOCK_EX | LOCK_NB)) return 0;
+        return errno == EWOULDBLOCK ? 1 : 2;
+    }
+
+"""
+    assert body.count(lock) == 1
+    body = body.replace(lock, '').replace('#include <sys/file.h>\n', '')
+    usage = 'List modules with their injected file count'
+    assert body.count(usage) == 1
+    body = body.replace(usage, 'List modules, rules and links')
     before = 'if (args.deny_start < args.target_uid || args.deny_end > args.target_uid_end) {'
     assert body.count(before) == 1
     body = body.replace(before, 'if ((args.target_uid || args.target_uid_end) && '
@@ -223,9 +238,10 @@ def main():
     sources['nm.h'] = adapt_cli_header(sources['nm.h'].decode(), contents['sources/cli-module.patch'].decode()).encode()
 
     # 对输出副本适配状态展示，冻结上游保持原字节。
-    js = adapt_webui(contents['webroot/index.js'].decode())
+    webui_patch = git(root, 'show', commit + ':nomount/tools/webui-module-list.patch').decode()
+    js = adapt_webui(contents['webroot/index.js'].decode(), webui_patch)
     contents['webroot/index.js'] = ('// SPDX-License-Identifier: GPL-3.0-only\n'
-                                  '// NoMount by maxsteeel; connection, rule paths and operation status adapted by Codex, 2026-11-16.\n' + js).encode()
+                                  '// NoMount by maxsteeel; KPM connection, module listing and operation status adapted by Codex, 2026-11-19.\n' + js).encode()
     for name in list(contents):
         if name.startswith('webroot/locales/') and name.endswith('.json'):
             locale = json.loads(contents[name])

@@ -104,7 +104,9 @@ def main():
         result = subprocess.run([str(binary), *cmd], env=dict(os.environ, CLI_MODE=mode), text=True, capture_output=True)
         assert result.returncode == expected, (cmd, result.stdout, result.stderr)
         cases.append([cmd, mode, result.returncode])
-    paths = [path for i in range(300) for path in (f'/virtual/{i}', '/backing/' + 'x' * 900)]
+    # Long paths must still use VFS-valid components; retain the 300-record batch assertion.
+    backing = '/backing/' + '/'.join(['x' * 225] * 4)
+    paths = [path for i in range(300) for path in (f'/virtual/{i}', backing)]
     result = subprocess.run([str(binary), 'rule', 'add', *paths], env=dict(os.environ, CLI_MODE='ready', CLI_EXPECT_ADD='300'), text=True, capture_output=True)
     assert result.returncode == 0, result.stderr
     cases.append(['multi-payload-300-pairs', 'ready', result.returncode])

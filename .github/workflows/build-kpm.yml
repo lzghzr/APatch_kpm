@@ -16,6 +16,8 @@ on:
       - "**/Makefile"
       - "**/archive"
       - "re_kernel_x/tools/**"
+      - "tools/check_release_zip.py"
+      - "nomount/release-check.json"
       - "nomount/module/**"
       - "nomount/README.md"
       - "nomount/tools/**"
@@ -39,6 +41,8 @@ on:
       - "**/Makefile"
       - "**/archive"
       - "re_kernel_x/tools/**"
+      - "tools/check_release_zip.py"
+      - "nomount/release-check.json"
       - "nomount/module/**"
       - "nomount/README.md"
       - "nomount/tools/**"
@@ -254,17 +258,15 @@ jobs:
           submodules: "recursive"
           fetch-depth: 1
 
-      - name: Setup Java for Android SDK
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Install ZIP toolchain
-        uses: android-actions/setup-android@v4
-        with:
-          packages: "ndk;26.3.11579264"
-          log-accepted-android-sdk-licenses: false
+      - name: Install ZIP toolchain (Zig 0.17.1, static musl)
+        run: |
+          url="https://ziglang.org/download/0.17.1/zig-x86_64-linux-0.17.1.tar.xz"
+          sha="3581863e3cbcfd0fce0efc682ce7e9e93da96668a977791d356a26d2a7e9b17a"
+          curl -fsSL -o "$RUNNER_TEMP/zig.tar.xz" "$url"
+          echo "$sha  $RUNNER_TEMP/zig.tar.xz" | sha256sum -c -
+          tar -xJf "$RUNNER_TEMP/zig.tar.xz" -C "$RUNNER_TEMP"
+          echo "ZIG_DIR=$RUNNER_TEMP/zig-x86_64-linux-0.17.1" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/zig-x86_64-linux-0.17.1/zig" version
 
       - name: Check ZIP publishing
         run: |
@@ -275,10 +277,15 @@ jobs:
         id: build_zip
         run: |
           mkdir -p local
-          python3 nomount/tools/build_zip.py --ndk "$ANDROID_HOME/ndk/26.3.11579264" --host-tag linux-x86_64 > local/nomount-zip-result.json
+          # CI 独立构建 ZIP，随后按当前版本的真机验收记录核对包内 bin/nm。
+          python3 nomount/tools/build_zip.py --zig "$ZIG_DIR/zig" --host-tag linux-x86_64 > local/nomount-zip-result.json
           python3 nomount/tools/release_zip.py prepare --result local/nomount-zip-result.json --output target_zip
           (cd target_zip && sha256sum --check SHA256SUMS)
           python3 -c 'import json; print("zip_name=" + json.load(open("local/nomount-zip-result.json"))["artifact"]["name"])' >> "$GITHUB_OUTPUT"
+
+      - name: Verify release ZIP identity
+        run: |
+          python3 tools/check_release_zip.py target_zip/*.zip --metadata nomount/release-check.json
 
       - name: Upload ZIP and build identity
         uses: actions/upload-artifact@v7

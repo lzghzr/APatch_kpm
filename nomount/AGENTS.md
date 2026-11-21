@@ -34,6 +34,7 @@ git archive <迁移前提交> nomount/configs | tar -x -C local
 
 - `nomount.c`：KPM 元信息、完整初始化、状态查询和驻留诊断入口。
 - `Makefile`：dynamic / static 两种产物，静态版附带布局 JSON。
+- 公共 `kpm_runtime.c`：将编译器生成的 `memset` 调用转接到 KP 的 `kf_memset`，与主入口分别编译、共同链接。
 - `nomount/local/configs/boot_los23.2.json`：首轮目标的38项配置及镜像、源码和证据绑定。
 - `nomount/local/configs/B2N-416G.json`／`nomount/local/configs/boot_los23.2-v2.json`：0.2.0 的42项静态配置。原0.1.0配置与候选保持原样。
 - `nm_layout.c`：布局获取层的编译入口；当前只构建对象文件。
@@ -79,10 +80,13 @@ git archive <迁移前提交> nomount/configs | tar -x -C local
 - ZIP卸载清当前文件规则、配套数据及属于本模块的nm快捷入口；KPM保持原生命周期。原版WebUI安全模式在下次开机生效。
 - ZIP候选用源码完整commit、独立Build ID#实例号与ZIP SHA-256交接。打包从Git对象读取输入，固定ZIP时间及权限，使用新实例目录；用户态源码和GPL-3许可证随包附带。KPM与ZIP分别绑定身份与实机覆盖。
 - ZIP 由显式本地文件白名单、冻结上游 WebUI／源码及生成的 CLI／许可证展开完整条目集合，写包前和解包后都拒绝缺项、多项与重复项。工程约定留在仓库；CHANGELOG 作为冻结版本校验输入，发布更新日志指向对应 tag。
+- 官方发布 CLI 采用 Zig 0.17.1／musl，并用维护者发布门禁匹配已测内层字节；CI 切换与引用基线补丁待维护者采纳。安装先调用 `nm_check_cli`：无参数用法输出且返回 1 表示程序已执行；不访问 KPM，再单独检查 v22/v23 与隔离 UID 接口。加载失败输出原始 CLI 诊断，不改协议判据。
 
 先核对共同结构和 SDK 已确认的字段，再取得不能覆盖的偏移。生产代码统一使用根目录 `kpm_utils.h` 的指令解码和 BTF 查询。BTF 查询与短函数推导分开；仅数据或接口不可用时回退，有效 BTF 的错误保留。必要布局无法确认时停止初始化。
 
 有布局依赖时提供 static / dynamic 两种模式，共用业务实现。源码与 Makefile 面向最新 KP SDK；旧 KP 派生件在已构建的二进制上生成。跨目标的函数 ABI 依据实际接口证据选择。
+
+KPM 可用裸机 GNU 工具链构建：`make -C nomount TARGET_COMPILE=aarch64-none-elf- all`（工具链 bin 在 PATH 中，或使用绝对前缀）。联合入口从 KP 的 `<ktypes.h>` 取得 `size_t`，`offsetof` 使用 SDK 的定义，不依赖 NDK UAPI 头；NDK clang 入口继续可用。正式候选仍走统一构建入口，记录实际工具链与参数，并枚举产物导入符号核对 KP 导出。
 
 ## 控制与生命周期
 
@@ -90,6 +94,7 @@ git archive <迁移前提交> nomount/configs | tar -x -C local
 - KPM 参数不承担规则传递；规则由配套用户态工具管理。
 - 嵌入允许默认 `pre-kernel-init` 和 `post-kernel-init`，分别绑定实机证据；文件规则等到数据分区可读后建立，并在 Android 系统应用扫描前完成。
 - 初始化拒绝非空参数，加载事件不决定是否执行准备；全部可能失败的准备在 key type 注册前完成，注册成功后直接返回成功。失败只清理未发布对象。
+- 静态模板的必填判别字段 `file_layout` 为 `-1` 时，入口在引擎准备与原生接口注册前记录未配置并返回 `-EINVAL`；`0` 是合法模式。已填判别字段的产物继续由原有逐阶段布局门禁验证。拒载复测须从没有成功加载过 NoMount 的干净启动开始；同次启动的 `kpm list` 无条目不足以排除卸载遗留。
 - 目标启用 CFI 时，Tester 在加载前绑定实际 KP／boot 身份并确认目标 `__cfi_slowpath` 挂接成功。当前 KP 不导出可靠的 CFI 就绪状态；到达 KPM init 或单独的 `bypass_kcfi done:0` 日志均不能证明挂接完成。KPM 回调位于 KP 可执行分配区域，CFI 处理复用 KP；保持 `-ffixed-x18`。
 - 原生 inode、dentry、superblock、文件及映射的引用和锁不能由模块私有锁代替。
 - 规则替换/删除使用原生 `synchronize_rcu` 和 `call_rcu`；不经过 SDK 的 `synchronize_rcu`/`kfree_rcu` 包装。
@@ -233,7 +238,7 @@ v22 候选冻结前，Developer 显式运行 `tools/test_v22_sync.py --oracle-ou
 
 `tools/check_target_calls.py` 在 B2N 镜像的指定有界片段中核对字段与调用寄存器。其窗口和寄存器模式只覆盖已核对的目标；完整表尺寸另需目标配置／声明证据，不能把脚本通过当作通用布局保证。
 
-目标配置通过根目录 `patch_offsets.py` 修改已构建二进制。配置值须绑定目标证据，基础实例与派生哈希一起交接。构建使用新输出，禁止覆盖已有 KPM；候选布局 JSON 使用单独的 `LAYOUT_DIR`，再附到相应归档目录。
+目标配置通过根目录 `patch_offsets.py` 修改已构建二进制。配置值须绑定目标证据，基础实例与派生哈希一起交接。手工构建使用新的空输出目录；统一候选入口保留默认 `LAYOUT_DIR=$(OUT_DIR)`，将同名静态 JSON 与 KPM 一起登记归档，并在重建前移走旧产物。已归档实例与清单不可覆盖。
 
 新派生件统一生成到 `artifacts/binary-port/nomount/<派生 SHA-256>/<派生件名>`，目标身份写入元数据和回执。历史生成命令和交接记录保留原样；当前位置由维护者登记记录取得。
 
@@ -598,11 +603,17 @@ nm module list --json
 
 ## dev 用户态增量（2026-11-16）
 
-- 配套 ZIP 基线为 `00e7c5d4fdbf1e58decea3522b8eb7207a46d413`，版本 `2.3.0-20261116`。KPM 继续使用 `2.3.0-20261114`。
+- 当轮 ZIP 基线为 `00e7c5d4fdbf1e58decea3522b8eb7207a46d413`，版本 `2.3.0-20261116`；KPM 为 `2.3.0-20261114`。当前 ZIP 见下节。
 - `cli-module.patch` 基于上游 fd 相对遍历与公共 `nm_queue_rule`，保留上一节的标记选择、DEL 去重与 UID 范围。协议检查和 UID 参数解析位于 module 分派之前；目录标记查询失败记录错误，继续可读取的子项及后续分区，尾批始终发送。
 - `module list --json` 输出 `mods[].links` 与 `mods[].hasInjectable`，`rules` 仍在顶层。白化映射的 `real` 为空、`dir` 为 false；白化目录不遍历子项。CLI 与 WebUI 必须一起更新列表格式。
 - WebUI 采用上游 `shellQuote` 覆盖加载／撤销、disable、skip_mount 与 `--only`；本地保留 errno／状态标记检查和规则源路径规范化。Material You 沿用上游 Manager CSS → 缓存 → 默认色／异步系统强调色的选择。
 - `test_nomount_dev111.py` 以生产 CLI JSON 驱动生成 WebUI，检查纯白化、混合列表与五种状态；`test_nomount_dev111_dom.py` 重放原 DOM／协议 Oracle 并检查标记路径和主题渲染。宿主 fd／xattr 与 shell bridge 是平台边界夹具，Android 行为由 Tester 验证。
+
+## 2.3.1 配套 ZIP（2026-11-19）
+
+- ZIP 冻结上游为 `v2.3.1`，KPM 代码和控制协议不变。现有 `module list --json` 保留 `mods[].links`、`hasInjectable` 与顶层 `rules`；WebUI 继续按规则实际路径和映射去重计数。CLI 与启动脚本保留同一目录标记和批次行为。
+- 上游 WebUI 的首页、列表缓存与渲染更新进入 ZIP；`webui-module-list.patch` 保留列表生产者和消费者的既有格式。该补丁参与冻结输入指纹；ZIP 提供实际生成后的 JavaScript。
+- `Developer/tools/test_nomount_v231_zip.py` 增补参数边界、backing 末尾斜杠与 `..`、协议 22／23 的恰满页和多页。旧 CLI 的 300 条批次夹具以四个合法长分量替换单个 900 字节分量，保留条数与跨批次断言，另测超长分量拒绝。模块扫描和 DOM Oracle 不变。
 
 ## 性能试验采用（2026-11-15）
 
