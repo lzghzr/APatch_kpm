@@ -61,6 +61,10 @@ on:
         description: "release version"
         required: false
         default: "2024051900"
+      release_notes:
+        description: "发布说明（Markdown，选填；显示在自动更新记录之前）"
+        type: string
+        required: false
 
 jobs:
   Build-on-Ubuntu:
@@ -118,6 +122,7 @@ jobs:
       - name: Build kpm
         run: |
           mkdir target
+          shopt -s nullglob
 
           # 只构建「有 Makefile 且未被 archive 标记」的顶层目录：
           #   * 没有 Makefile 的目录（文档/工具/用户数据/子模块）天然跳过，无需任何标记；
@@ -132,16 +137,10 @@ jobs:
             fi
             echo "build ${dir}"
             printf "%s\n" "${dir%/}" >> target/modules.txt
-            if [ "${dir%/}" = "re_kernel_x" ] || [ "${dir%/}" = "re_kernel" ] || [ "${dir%/}" = "run_cmd_demo" ] || [ "${dir%/}" = "zram_zstd" ] || [ "${dir%/}" = "nomount" ]; then
-              make -C "${dir}" all
-              if grep -Eq '^debug[[:space:]]*:' "${dir}Makefile"; then
-                make -C "${dir}" debug
-              fi
-              mv "${dir}"*.kpm "${dir}"*.kpm.json target
-            else
-              make -C "${dir}"
-              mv "${dir}"*.kpm target
-            fi
+            make -C "${dir}" ci
+            kpms=("${dir}"*.kpm)
+            test "${#kpms[@]}" -gt 0
+            mv "${kpms[@]}" "${dir}"*.kpm.json target/
           done
 
       - name: Validate compiled artifacts
@@ -199,7 +198,7 @@ jobs:
             test -f "${baselines[0]}.json"
             cp "${baselines[0]}" "${baselines[0]}.json" release/
           fi
-          for module in re_kernel run_cmd_demo; do
+          for module in cgroupv2_freeze re_kernel run_cmd_demo; do
             statics=(target/${module}_[0-9]*_baselines.kpm)
             dynamics=()
             for kpm in target/${module}_[0-9]*.kpm; do
@@ -357,6 +356,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           name: ${{ github.event.inputs.version }}
           tag: ${{ github.event.inputs.version }}
+          body: ${{ inputs.release_notes }}
           artifacts: "upload/*"
           commit: ${{ github.sha }}
           artifactErrorsFailBuild: true

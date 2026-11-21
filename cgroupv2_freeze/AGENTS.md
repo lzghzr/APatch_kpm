@@ -20,7 +20,7 @@ UID 1000 不替代 SELinux 授权。验收时记录实际调用方的 UID/GID �
 
 默认使用 Arm GNU Toolchain 12.2.rel1；`kpm_runtime.c` 提供独立链接的 `memset`，`kf_memset` 作为未定义符号由 KP 解析到函数指针槽，槽值为空时在装钩前拒载。保留原生 freezer 的 `-EOPNOTSUPP` 拒载、CTL0 输出边界和 `-EBUSY` 退出政策。
 
-`make -C cgroupv2_freeze` 默认只构建动态版；`all` 构建动态版、静态模板及配套 JSON，`static` 仅构建静态与 JSON。候选用 `--target all --extra-input patch_offsets.py`；两版管理名称相同，只嵌入一份。
+`make -C cgroupv2_freeze` 默认执行 `all`，生成动态版、静态模板及配套 JSON。`dynamic`（也可用 `base`）只构建动态版，`static` 只构建静态版与 JSON。候选用 `--target all --extra-input patch_offsets.py`。两版管理名称相同，默认推荐嵌入动态版，每次只选一份。
 
 `python3 cgroupv2_freeze/tools/test_uid_mount.py` 自检 UID 来源和挂载选择、权限失败、已存在组及回滚。其余 `tools/` 内现有夹具保留原断言。它们按对应候选的源码切片取样：复核 1.0.14 时，在冻结提交 `967b79c18c3909deb151d7e1ae1e0c9d664a5077` 中运行该提交的工具；挂载实验按各自冻结提交运行。现行 UID 模式以设备回归判据为准。
 

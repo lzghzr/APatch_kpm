@@ -6,6 +6,8 @@ endif
 
 include ../kpm_toolchain.mk
 
+.DEFAULT_GOAL := all
+
 OUT_DIR ?= .
 LAYOUT_DIR ?= $(OUT_DIR)
 PYTHON ?= python3
@@ -22,10 +24,14 @@ headers := cgroupv2_freeze.h cfv2_utils.h cfv2_offsets.c ../kpm_utils.h
 kpm := $(OUT_DIR)/cgroupv2_freeze_$(MYKPM_VERSION)
 layout := $(LAYOUT_DIR)/$(notdir $(kpm))_baselines.kpm.json
 
-.DEFAULT_GOAL := base
 .DELETE_ON_ERROR:
 
 all: dynamic static
+ci: all
+	@set -- "$(OUT_DIR)"/*_baselines.kpm; \
+	  test "$$#" -eq 1 && test "$$1" = "$(kpm)_baselines.kpm" && \
+	  test -f "$(kpm).kpm" && test -f "$$1" && test -f "$(layout)"
+
 base: dynamic
 baselines: static
 dynamic: $(kpm).kpm
@@ -44,7 +50,7 @@ $(layout): $(kpm)_baselines.kpm ../patch_offsets.py cfv2_utils.h
 	@mkdir -p "$(LAYOUT_DIR)"
 	$(PYTHON) ../patch_offsets.py baseline "$<" --source cfv2_utils.h --output "$@"
 
-.PHONY: all base baselines dynamic static clean
+.PHONY: all ci base baselines dynamic static clean
 clean:
 	rm -f *.kpm *.kpm.json
 	find . -name "*.o" | xargs rm -f

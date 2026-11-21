@@ -70,6 +70,9 @@ python3 tools/check_repository.py --strict   # 验收/发布：另要求产物�
 
 ## 远程编译与产物门禁
 
+手动发版时，在 **Actions → Build CI → Run workflow** 中将 `release` 设为 `true`，填写本次版本号。
+「发布说明」可填写 Markdown，例如升级提醒或使用示例。填写的内容显示在自动更新记录之前；留空时只显示自动记录。
+
 GitHub Actions 的 [Build CI](../.github/workflows/build-kpm.yml) 构建当前提交中有 Makefile 且未归档的模块，随后运行
 `python3 tools/artifact_gate.py target --modules target/modules.txt`。检查当次 KPM 的 ELF64/AArch64 可重定位格式、
 必需元信息、初始化与退出入口，以及 ReKernel-X 配套布局的产物哈希、ABI、表范围与偏移值。

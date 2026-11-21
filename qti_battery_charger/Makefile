@@ -6,6 +6,8 @@ endif
 
 include ../kpm_toolchain.mk
 
+.DEFAULT_GOAL := all
+
 CFLAGS = -Wall -O2 -fno-PIC -fno-asynchronous-unwind-tables -fno-stack-protector -fno-common -DMYKPM_VERSION=\"$(MYKPM_VERSION)$(MYKPM_VER)\"
 
 INCLUDE_DIRS := . include patch/include linux/include linux/arch/arm64/include linux/tools/arch/arm64/include
@@ -15,6 +17,7 @@ INCLUDE_FLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(KP_DIR)/kernel/$(dir))
 objs := qti_battery_charger.o
 
 all: qti_battery_charger_$(MYKPM_VERSION).kpm
+ci: all
 
 qti_battery_charger_$(MYKPM_VERSION).kpm: ${objs}
 	${CC} -r -o $@ $^
@@ -22,7 +25,7 @@ qti_battery_charger_$(MYKPM_VERSION).kpm: ${objs}
 %.o: %.c Makefile $(KPM_TOOLCHAIN_MK)
 	${CC} $(CFLAGS) $(INCLUDE_FLAGS) -c -o $@ $<
 
-.PHONY: clean
+.PHONY: all ci clean
 clean:
 	rm -rf *.kpm
 	find . -name "*.o" | xargs rm -f

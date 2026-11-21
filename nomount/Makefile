@@ -3,6 +3,8 @@ KP_DIR ?= ../KernelPatch
 
 include ../kpm_toolchain.mk
 
+.DEFAULT_GOAL := all
+
 # NoMount's warning policy is local to this module.
 ifeq ($(TOOLCHAIN),ndk)
     WARN_FLAGS := -Wall -Werror -Wno-error=macro-redefined -Wno-unused-function
@@ -22,6 +24,11 @@ kpm := $(OUT_DIR)/NoMount_$(MYKPM_VERSION)
 kpms := $(kpm).kpm $(kpm)_baselines.kpm
 
 all: dynamic static
+ci: all
+	@for file in "$(kpm).kpm" "$(kpm)_baselines.kpm" "$(LAYOUT_DIR)/$(notdir $(kpm))_baselines.kpm.json"; do \
+	  test -f "$$file" || { printf 'Missing CI artifact: %s\n' "$$file" >&2; exit 1; }; \
+	done
+
 dynamic: $(kpm).kpm
 static: $(kpm)_baselines.kpm
 baselines: static
@@ -34,4 +41,4 @@ $(kpms): $(kpm_sources) $(headers) Makefile $(KPM_TOOLCHAIN_MK)
 	$(CC) $(CFLAGS) $(CFLAG) $(MODE_FLAGS) -DMYKPM_VERSION=\"$(MYKPM_VERSION)\" $(INCLUDE_FLAGS) $(kpm_sources) -r -o $@
 	$(if $(filter %_baselines.kpm,$@),$(PYTHON) ../patch_offsets.py baseline $@ --source nm_offsets.c --output $(LAYOUT_DIR)/$(notdir $@).json)
 
-.PHONY: all dynamic static baselines
+.PHONY: all ci dynamic static baselines

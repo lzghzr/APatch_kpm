@@ -3,6 +3,8 @@ KP_DIR ?= ../KernelPatch
 
 include ../kpm_toolchain.mk
 
+.DEFAULT_GOAL := all
+
 OUT_DIR ?= .
 LAYOUT_DIR ?= $(OUT_DIR)
 PYTHON ?= python3
@@ -21,6 +23,11 @@ kpm := $(OUT_DIR)/zram_zstd_$(MYKPM_VERSION)
 kpms := $(kpm).kpm $(kpm)_baselines.kpm
 
 all: dynamic static
+ci: all
+	@for file in "$(kpm).kpm" "$(kpm)_baselines.kpm" "$(LAYOUT_DIR)/$(notdir $(kpm))_baselines.kpm.json"; do \
+	  test -f "$$file" || { printf 'Missing CI artifact: %s\n' "$$file" >&2; exit 1; }; \
+	done
+
 dynamic: $(kpm).kpm
 static: $(kpm)_baselines.kpm
 baselines: static
@@ -67,4 +74,4 @@ $(kpms): zram_zstd.c $(RUNTIME_OBJ) zs_structs.h zs_offsets.c zs_btf.c zs_displa
 	$(CC) $(CFLAGS) $(CFLAG) $(MODE_FLAGS) -DMYKPM_VERSION=\"$(MYKPM_VERSION)\" $(INCLUDE_FLAGS) $(CODEC_FLAGS) zram_zstd.c $(RUNTIME_OBJ) $(NATIVE_ENTRY_OBJ) $(codec_objs) $(LZ4_OBJ) $(LZ4KD_OBJ) -r -o $@
 	$(if $(filter %_baselines.kpm,$@),$(PYTHON) ../patch_offsets.py baseline $@ --source zs_offsets.c --output $(LAYOUT_DIR)/$(notdir $@).json)
 
-.PHONY: all dynamic static baselines
+.PHONY: all ci dynamic static baselines

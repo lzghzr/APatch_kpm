@@ -6,6 +6,8 @@ endif
 
 include ../kpm_toolchain.mk
 
+.DEFAULT_GOAL := all
+
 OUT_DIR ?= .
 LAYOUT_DIR ?= $(OUT_DIR)
 PYTHON ?= python3
@@ -23,6 +25,11 @@ kpm := $(OUT_DIR)/run_cmd_demo_$(MYKPM_VERSION)
 kpms := $(kpm).kpm $(kpm)_baselines.kpm
 
 all: static dynamic
+ci: all
+	@for file in "$(kpm).kpm" "$(kpm)_baselines.kpm" "$(LAYOUT_DIR)/$(notdir $(kpm))_baselines.kpm.json"; do \
+	  test -f "$$file" || { printf 'Missing CI artifact: %s\n' "$$file" >&2; exit 1; }; \
+	done
+
 base: all
 baselines: static
 
@@ -37,6 +44,6 @@ $(kpms): ${objs} ${headers} Makefile $(KPM_TOOLCHAIN_MK)
 	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $(objs) -r -o $@
 	$(if $(filter %_baselines.kpm,$@),$(PYTHON) ../patch_offsets.py baseline $@ --source rc_offsets.c --output $(LAYOUT_DIR)/$(notdir $@).json)
 
-.PHONY: all base baselines static dynamic clean
+.PHONY: all ci base baselines static dynamic clean
 clean:
 	rm -f *.kpm *.kpm.json *.o
