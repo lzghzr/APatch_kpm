@@ -13,7 +13,7 @@
 #include "xiiba_utils.h"
 
 KPM_NAME("xperia_ii_battery_age");
-KPM_VERSION(XIIBA_VERSION);
+KPM_VERSION(MYKPM_VERSION);
 KPM_LICENSE("GPL v2");
 KPM_AUTHOR("lzghzr");
 KPM_DESCRIPTION("set xperia ii battery aging level");
