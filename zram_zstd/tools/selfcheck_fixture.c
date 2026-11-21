@@ -10,6 +10,11 @@
 #include <string.h>
 #include <pthread.h>
 #include "linux/zstd.h"
+#include "zs_memory.h"
+
+extern int (*kf_memcmp)(const void*, const void*, size_t);
+extern void* (*kf_memchr)(const void*, int, size_t);
+
 typedef uint8_t u8;
 typedef uint32_t u32;
 typedef uint64_t u64;

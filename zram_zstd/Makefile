@@ -1,25 +1,7 @@
 MYKPM_VERSION := 1.3.0
 KP_DIR ?= ../KernelPatch
 
-OS_NAME = $(shell uname | tr A-Z a-z)
-MACHINE = $(shell uname -m)
-HOST_TAG = $(OS_NAME)-$(MACHINE)
-ifeq ($(HOST_TAG), darwin-arm64)
-    HOST_TAG = darwin-x86_64
-endif
-NDK_BIN_DIR := toolchains/llvm/prebuilt/$(HOST_TAG)/bin
-ifdef ANDROID_NDK_LATEST_HOME
-    NDK_PATH ?= $(ANDROID_NDK_LATEST_HOME)/$(NDK_BIN_DIR)
-else ifdef ANDROID_NDK
-    NDK_PATH ?= $(ANDROID_NDK)/$(NDK_BIN_DIR)
-endif
-ifdef TARGET_COMPILE
-    CC := $(TARGET_COMPILE)gcc
-    LD := $(TARGET_COMPILE)ld
-else ifdef NDK_PATH
-    CC := $(NDK_PATH)/aarch64-linux-android31-clang
-    LD := $(NDK_PATH)/ld.lld
-endif
+include ../kpm_toolchain.mk
 
 OUT_DIR ?= .
 LAYOUT_DIR ?= $(OUT_DIR)
@@ -48,35 +30,41 @@ $(GENERATED_DIR)/MANIFEST.json: tools/prepare_codec.py zs_zstd_deps.h zs_memory.
 
 $(addprefix $(GENERATED_DIR)/,$(codec_rel)): $(GENERATED_DIR)/MANIFEST.json
 
-$(CODEC_DIR)/%.o: $(GENERATED_DIR)/%.c $(GENERATED_DIR)/MANIFEST.json $(wildcard compat/linux/*.h compat/asm/*.h) Makefile
+$(CODEC_DIR)/%.o: $(GENERATED_DIR)/%.c $(GENERATED_DIR)/MANIFEST.json $(wildcard compat/linux/*.h compat/asm/*.h) Makefile $(KPM_TOOLCHAIN_MK)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(CFLAG) $(CODEC_FLAGS) -c $< -o $@
 
 LZ4_OBJ := $(CODEC_DIR)/lz4.o
-$(LZ4_OBJ): upstream/lz4/lz4.c upstream/lz4/lz4.h zs_lz4_config.h zs_memory.h Makefile
+$(LZ4_OBJ): upstream/lz4/lz4.c upstream/lz4/lz4.h zs_lz4_config.h zs_memory.h Makefile $(KPM_TOOLCHAIN_MK)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(CFLAG) -O3 -include zs_lz4_config.h -c $< -o $@
 
 LZ4KD_OBJ := $(CODEC_DIR)/lz4kd_encode.o $(CODEC_DIR)/lz4kd_decode.o
-$(CODEC_DIR)/lz4kd_encode.o: zs_lz4kd_encode.c upstream/lz4kd/lz4kd_encode.c $(GENERATED_DIR)/MANIFEST.json zs_memory.h $(wildcard upstream/lz4kd/*.h) zs_lz4kd_config.h Makefile
+$(CODEC_DIR)/lz4kd_encode.o: zs_lz4kd_encode.c upstream/lz4kd/lz4kd_encode.c $(GENERATED_DIR)/MANIFEST.json zs_memory.h $(wildcard upstream/lz4kd/*.h) zs_lz4kd_config.h Makefile $(KPM_TOOLCHAIN_MK)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(CFLAG) -I. -Icompat -I$(GENERATED_DIR) -include zs_lz4kd_config.h -c $< -o $@
 
-$(CODEC_DIR)/lz4kd_decode.o: zs_lz4kd_decode.c $(GENERATED_DIR)/MANIFEST.json zs_memory.h $(wildcard upstream/lz4kd/*.h) zs_lz4kd_config.h Makefile
+$(CODEC_DIR)/lz4kd_decode.o: zs_lz4kd_decode.c $(GENERATED_DIR)/MANIFEST.json zs_memory.h $(wildcard upstream/lz4kd/*.h) zs_lz4kd_config.h Makefile $(KPM_TOOLCHAIN_MK)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(CFLAG) -I. -Icompat -I$(GENERATED_DIR) -include zs_lz4kd_config.h -c $< -o $@
 
 $(kpm)_baselines.kpm: MODE_FLAGS += -DCONFIG_KPM_BASELINES
 
 NATIVE_ENTRY_OBJ := $(CODEC_DIR)/zs_native_entry.o
-$(NATIVE_ENTRY_OBJ): zs_native_entry.S Makefile
+$(NATIVE_ENTRY_OBJ): zs_native_entry.S Makefile $(KPM_TOOLCHAIN_MK)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(CFLAG) -c $< -o $@
 
-$(kpms): zram_zstd.c zs_structs.h zs_offsets.c zs_btf.c zs_display.c zs_runtime.c zs_memory.h zs_zstd_config.h zs_lz4kd.c zs_native.h zs_native.c zs_native_btf.c $(NATIVE_ENTRY_OBJ) $(codec_objs) $(LZ4_OBJ) $(LZ4KD_OBJ) zs_lz4_config.h ../kpm_utils.h ../patch_offsets.py Makefile
+# Compiler libcalls are separate from the upstream codec objects.
+RUNTIME_OBJ := $(LAYOUT_DIR)/out/kpm_runtime.o
+$(RUNTIME_OBJ): ../kpm_runtime.c Makefile $(KPM_TOOLCHAIN_MK)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) -DKPM_RUNTIME_COPY -c $< -o $@
+
+$(kpms): zram_zstd.c $(RUNTIME_OBJ) zs_structs.h zs_offsets.c zs_btf.c zs_display.c zs_memory.h zs_zstd_config.h zs_lz4kd.c zs_native.h zs_native.c zs_native_btf.c $(NATIVE_ENTRY_OBJ) $(codec_objs) $(LZ4_OBJ) $(LZ4KD_OBJ) zs_lz4_config.h ../kpm_utils.h ../patch_offsets.py Makefile $(KPM_TOOLCHAIN_MK)
 	@mkdir -p $(OUT_DIR) $(LAYOUT_DIR)
 	@test ! -e $@
-	$(CC) $(CFLAGS) $(CFLAG) $(MODE_FLAGS) -DMYKPM_VERSION=\"$(MYKPM_VERSION)\" $(INCLUDE_FLAGS) $(CODEC_FLAGS) zram_zstd.c zs_runtime.c $(NATIVE_ENTRY_OBJ) $(codec_objs) $(LZ4_OBJ) $(LZ4KD_OBJ) -r -o $@
+	$(CC) $(CFLAGS) $(CFLAG) $(MODE_FLAGS) -DMYKPM_VERSION=\"$(MYKPM_VERSION)\" $(INCLUDE_FLAGS) $(CODEC_FLAGS) zram_zstd.c $(RUNTIME_OBJ) $(NATIVE_ENTRY_OBJ) $(codec_objs) $(LZ4_OBJ) $(LZ4KD_OBJ) -r -o $@
 	$(if $(filter %_baselines.kpm,$@),$(PYTHON) ../patch_offsets.py baseline $@ --source zs_offsets.c --output $(LAYOUT_DIR)/$(notdir $@).json)
 
 .PHONY: all dynamic static baselines

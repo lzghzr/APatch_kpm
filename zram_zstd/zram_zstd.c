@@ -253,10 +253,23 @@ static unsigned int zs_detect_page_size(void) {
 }
 
 static long zram_zstd_init(const char* args, const char* event, void* reserved) {
+  if (!kfunc(memset) || !kfunc(memcpy) || !kfunc(memmove) || !kfunc(memcmp) || !kfunc(memchr)) {
+    logkm("kfunc mem* slots are incomplete; refusing to load\n");
+    return -ENOENT;
+  }
   if (event && !strcmp(event, "pre-kernel-init")) {
     logkm("use post-kernel-init\n");
     return -EINVAL;
   }
+  long rc;
+#ifdef CONFIG_KPM_BASELINES
+  // crypto_has_alg() 可触发原生模块探测，不让未配置模板走到这里。
+  rc = calculate_offsets();
+  if (rc) {
+    logkm("Static baseline: invalid or incomplete Crypto layout (%ld)\n", rc);
+    return rc;
+  }
+#endif
   kfunc_lookup_name(crypto_has_alg);
   if (!kfunc(crypto_has_alg))
     return -ENOENT;
@@ -280,9 +293,11 @@ static long zram_zstd_init(const char* args, const char* event, void* reserved) 
           !!kfunc(vzalloc), !!kfunc(vfree));
     return -ENOENT;
   }
-  long rc = calculate_offsets();
+#ifndef CONFIG_KPM_BASELINES
+  rc = calculate_offsets();
   if (rc)
     return rc;
+#endif
   rc = codec_check();
   if (rc)
     return rc;

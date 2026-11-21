@@ -46,11 +46,12 @@ CPUHP add 失败已经回滚此前 CPU，不再 remove。先 pin 住原生 zram 
 
 ## 文件与偏移
 
-`zs_structs.h` 保存核对过的共同前缀和成员片段，能够覆盖的字段直接由定义访问；只有未覆盖的名字数组长度、回调区位置及 transform 上下文位置才获取目标偏移。`zram_zstd.c` 保存初始化、编解码和注册逻辑，`zs_offsets.c` 保存配置表、固定窗口函数推导、获取方式调度与公共检查，`zs_btf.c` 独立保存 BTF 查询，`zs_runtime.c` 将编译器生成的内存函数转接到 KP 导出。公共指令宏、BTF 查询使用根目录 `kpm_utils.h`。开始修改前读取 `kpm-development`、`kernel-offset-derivation` 与用户指定的复核技能；先比较目标中的短函数入口，再编写推导。指令识别和解码复用公共宏，缺少的宏在公共头按现有模板补齐。
+`zs_structs.h` 保存核对过的共同前缀和成员片段，能够覆盖的字段直接由定义访问；只有未覆盖的名字数组长度、回调区位置及 transform 上下文位置才获取目标偏移。`zram_zstd.c` 保存初始化、编解码和注册逻辑，`zs_offsets.c` 保存配置表、固定窗口函数推导、获取方式调度与公共检查，`zs_btf.c` 独立保存 BTF 查询，公共 `kpm_runtime.c` 将编译器生成的内存调用转接到 KP 导出。公共指令宏、BTF 查询使用根目录 `kpm_utils.h`。开始修改前读取 `kpm-development`、`kernel-offset-derivation` 与用户指定的复核技能；先比较目标中的短函数入口，再编写推导。指令识别和解码复用公共宏，缺少的宏在公共头按现有模板补齐。
 
 每个注册名字各用模块持有的 1024 字节清零块，按 128 字节对齐。只填写必要成员，不将本地 `sizeof(struct crypto_alg)` 当作目标布局。BTF 路径核对实际结构大小和被使用的连续成员片段。
 
 动态版按 rek 的契约分层：`calculate_btf_offsets()` 返回 `-ENODATA` 才调用 `calculate_function_offsets()`；有效 BTF 的错误直接返回，成功结果再经过公共存储范围检查。静态版只检查配置表。
+静态配置须在 `crypto_has_alg()` 之前通过布局检查；该原生查询可能触发模块探测，不用于未配置模板。
 
 短函数路径使用固定窗口：
 
@@ -86,7 +87,7 @@ LZ4 v1.10.0的block源码原字节位于`upstream/lz4/`，提交与BSD-2-Clause�
 所有代码沿用`-mgeneral-regs-only -ffixed-x18`，实际KPM必须检查零FP/SIMD/SVE、零x18。
 transform上下文只有一个工作区指针（ARM64为8字节）；压缩哈希工作区由`LZ4_sizeofState()`取得并在init分配、exit释放，
 不把约16KiB哈希表放进内核栈。extState接口每块重置状态，acceleration=1，解压不持有字典/解压上下文。
-LZ4 库对象单独追加 `-O3`，与 Linux 6.6 的 `lib/lz4/Makefile` 一致；ZSTD、LZ4KD 和模块入口保持 `-O2`。两者使用同一 NDK 与公共 ARM64 寄存器约束。宿主 sanitizer 自检也单独以 `-O3` 编译 LZ4 对象，其余继续使用原自检优化级别。
+LZ4 库对象单独追加 `-O3`，与 Linux 6.6 的 `lib/lz4/Makefile` 一致；ZSTD、LZ4KD 和模块入口保持 `-O2`。所有对象使用所选的同一工具链与公共 ARM64 寄存器约束。宿主 sanitizer 自检也单独以 `-O3` 编译 LZ4 对象，其余继续使用原自检优化级别。
 
 依次注册 ZSTD、LZ4、LZ4KD；首项失败时尚未公开资源，直接拒载。ZSTD 成功后模块常驻，后续 LZ4/LZ4KD 失败则关闭该项并记录日志。
 不能对已公开算法做失败回滚：旧 Crypto API 注销不等待活跃 transform，可能 BUG；显示层只追加注册成功的名字。不能热卸载。
@@ -99,7 +100,7 @@ LZ4 库对象单独追加 `-O3`，与 Linux 6.6 的 `lib/lz4/Makefile` 一致；
 `zs_memory.h` 共用三项内存 primitive：小的编译期常量保留 builtin，动态长度与大的常量直接调用 KP 的 `kf_*` 指针。
 NDK 标量 O2 的内联选择阈值为 memcpy/memmove 128、memset 256 字节；阈值不限制合法长度，也不增加动态长度分支。
 必须在实际 ARM64 产物确认小复制保持内联、库的动态热点没有新增包装调用或小块间接调用循环。
-`zs_runtime.c` 的普通符号继续为编译器生成的剩余 libc 调用提供接入，不能直接删除。
+公共运行时对象启用 `KPM_RUNTIME_COPY`，为编译器生成的调用提供 `memset`、`memcpy` 和 `memmove`；该选项不施加到编解码器对象。
 
 LZ4 从现有配置宏接入；ZSTD 通过本模块平台依赖模板接入，上游子模块原字节不变。
 `tools/prepare_codec.py` 同时生成只修改两项 primitive 的 LZ4KD private 头，模板不匹配就停止，清单记录生成字节。
@@ -128,7 +129,7 @@ LZ4 从现有配置宏接入；ZSTD 通过本模块平台依赖模板接入，�
 原始参考解码器仍参与宿主差分；其 length==8 的冲突不作为该长度的参考。
 生成的 `zs_lz4kd_private.h` 仅将 `m_copy/m_set` 的内存 primitive 接入本模块内联头；
 原始编码器及 private 头字节保持，解码器继续复用同一平台头。
-上游派生解码文件保留原格式，局部差异可直接与 `upstream/lz4kd/lz4kd_decode.c` 比较。
+上游派生解码文件遵循仓库 `.clang-format`，功能差异可直接与 `upstream/lz4kd/lz4kd_decode.c` 比较。
 
 `tools/test_codecs.py` 同时复用 `selfcheck_fixture.c` 的列表/晚加载/并发安装检查，覆盖三项精确注册、
 全部注册失败组合、独立 transform、1..4096 字节四类数据、容量边界、上游参考解码及畸形流。
@@ -146,7 +147,7 @@ LZ4/ZSTD 的独立库互解继续保留。测试清单迁移依据见 Developer 
 
 普通候选使用 `--target "all"`，额外捕获 `patch_offsets.py`。Makefile 只使用其 `baseline` 子命令生成静态布局 JSON；静态偏移配置使用 `patch` 子命令，这两项与 KP 版本转接分别处理。构建结束后，单独运行 `Developer/tools/test_legacy_kp_metadata.py` 检查普通 KPM 的二进制转接；需要 Clang 与同目录的 `ld.lld`，推荐使用 NDK 工具链。自检保留历史可选字段夹具，并覆盖实际 KPM 元信息字节保持、直接调用和原名指针导入、精确修改范围、静态布局与输出保护。回执与自检结果作为同轮证据留存。
 
-统一候选构建时显式设置新的 `LAYOUT_DIR=../local/<新目录>`，让生成的 JSON/codec 源码留在 `local/`；KPM 输出仍由统一入口放在模块目录并归档。转接自检用两个 `--kpm <文件名>` 精确列出本轮普通件；不带选择器仍保留历史四件套判据。
+统一候选构建使用 `--target all`，保留默认 `LAYOUT_DIR=$(OUT_DIR)`，让静态 JSON 与 KPM 同目录并一起归档。生成的 `.kpm.json` 和 `out/codec/` 不计入源码输入；统一入口会在重建前移走旧 KPM、JSON 和 `out/`。转接自检用两个 `--kpm <文件名>` 精确列出本轮普通件；不带选择器仍保留历史四件套判据。
 
 ## 源码准备与构建
 
