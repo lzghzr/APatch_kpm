@@ -101,12 +101,12 @@ def main():
         assert run.returncode == 0, run.stdout + run.stderr
         results.append({"name": name, "sha256": sha256(binary), "output": run.stdout})
         print(name + ": " + run.stdout.strip())
-    inputs = [module / name for name in ("re_kernel.c", "re_runtime.c", "re_offsets.c", "re_kernel.h", "re_structs.h", "re_utils.h",
+    inputs = [module / name for name in ("re_kernel.c", "re_offsets.c", "re_kernel.h", "re_structs.h", "re_utils.h",
                                          "tools/test_genl.c", "tools/test_genl.py",
                                          "tools/test_genl_offsets.py", "tools/test_instructions.c", "tools/test_cleanup.c",
                                          "tools/test_cleanup_flow.c",
                                          "tools/test_genl_anchors.c", "tools/test_binder_from.c", "tools/test_binder_dead.c", "tools/test_binder_alloc.c")]
-    inputs.append(root / "kpm_utils.h")
+    inputs.extend(root / name for name in ("kpm_utils.h", "kpm_runtime.c"))
     receipt = {"scope": "Developer host selfcheck; no device conclusion",
                "sources": {str(path.relative_to(root)): sha256(path) for path in inputs}, "results": results}
     (args.output / "receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")

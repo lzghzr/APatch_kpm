@@ -795,10 +795,10 @@ struct rekernel_hook {
   void* data;
   bool installed;
 };
-static void binder_cleanup_hook_exit(void);
+static int binder_cleanup_hook_exit(void);
 static struct rekernel_hook rekernel_hooks[4];
-static void stop_rekernel_hooks(void) {
-  binder_cleanup_hook_exit();
+static int stop_rekernel_hooks(void) {
+  int result = binder_cleanup_hook_exit();
   for (unsigned int i = ARRAY_SIZE(rekernel_hooks); i; i--) {
     struct rekernel_hook* hook = &rekernel_hooks[i - 1];
     if (hook->installed) {
@@ -807,27 +807,36 @@ static void stop_rekernel_hooks(void) {
     }
   }
   if (trace) {
-    tracepoint_probe_unregister(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
-    trace = false;
+    int rc = tracepoint_probe_unregister(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
+    if (!rc)
+      trace = false;
+    else if (!result)
+      result = rc;
   }
+  return result;
 }
 
-static int binder_cleanup_hook_init(void) {
+static int prepare_binder_cleanup_hook(void) {
   binder_vendor_record = (void*)kallsyms_lookup_name("__tracepoint_android_vh_binder_transaction_record");
   binder_proc_dec_tmpref = (void*)kallsyms_lookup_name_by_suffix("binder_proc_dec_tmpref");
-  int rc = -ENOENT;
-  if (binder_vendor_record && binder_proc_dec_tmpref && trace && kfunc(copy_from_user_nofault)
-      && kfunc(tracepoint_probe_register) && kfunc(tracepoint_probe_unregister)) {
-    rc = binder_vendor_record_abi();
-    if (!rc)
-      rc = tracepoint_probe_register(binder_vendor_record, binder_vendor_transaction_record, NULL);
+  if (!binder_vendor_record || !binder_proc_dec_tmpref || !kvar(__tracepoint_binder_transaction)
+      || !kfunc(copy_from_user_nofault) || !kfunc(tracepoint_probe_register) || !kfunc(tracepoint_probe_unregister))
+    return -ENOENT;
+  return binder_vendor_record_abi();
+}
+
+static int binder_cleanup_hook_init(int vendor_rc) {
+  int rc = trace ? vendor_rc : -ENOENT;
+  if (!rc) {
+    rc = tracepoint_probe_register(binder_vendor_record, binder_vendor_transaction_record, NULL);
     if (!rc) {
       binder_vendor_record_registered = true;
       logkm("Binder cleanup: android_vh_binder_transaction_record\n");
       return 0;
     }
-    logkm("Binder vendor record unavailable: %d\n", rc);
   }
+  if (rc != -ENOENT)
+    logkm("Binder vendor record unavailable: %d\n", rc);
   if (!binder_proc_transaction) {
     logkm("Binder cleanup unavailable: no validated vendor record or binder_proc_transaction\n");
     return rc;
@@ -842,20 +851,29 @@ static int binder_cleanup_hook_init(void) {
   return 0;
 }
 
-static void binder_cleanup_hook_exit(void) {
+static int binder_cleanup_hook_exit(void) {
+  int result = 0;
   if (binder_vendor_record_registered) {
     int rc = tracepoint_probe_unregister(binder_vendor_record, binder_vendor_transaction_record, NULL);
-    if (rc)
+    if (rc) {
       logkm("Failed to unregister Binder vendor record: %d\n", rc);
-    binder_vendor_record_registered = false;
+      result = rc;
+    } else {
+      binder_vendor_record_registered = false;
+    }
   }
   if (binder_proc_hooked) {
     hook_unwrap(binder_proc_transaction, binder_proc_transaction_before, NULL);
     binder_proc_hooked = false;
   }
+  return result;
 }
 
 static long inline_hook_init(const char* args, const char* event, void* __user reserved) {
+  if (!kfunc(memset) || !kfunc(memcpy) || !kfunc(memmove) || !kfunc(memcmp) || !kfunc(memchr)) {
+    logkm("kfunc mem* slots are incomplete; refusing to load\n");
+    return -ENOENT;
+  }
 #ifdef CONFIG_KPM_BASELINES
   if (struct_offset.binder_release_abi < 3 || struct_offset.binder_release_abi > 6)
     return -EINVAL;
@@ -864,6 +882,15 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   binder_transaction_buffer_release_ver6 = struct_offset.binder_release_abi == 6;
 #endif
   lookup_name(cgroup_freezing);
+#ifdef CONFIG_KPM_BASELINES
+  // 模板门禁：参考布局模板与已按目标核对的配置必须可区分，未核对就不启用 hook。
+  if (re_baseline_check())
+    return -EINVAL;
+  if (!re_static_genl_layout_valid()) {
+    logkm("Static baseline: invalid Generic Netlink layout\n");
+    return -EINVAL;
+  }
+#endif
 
   kfunc_lookup_name(__alloc_skb);
   kfunc_lookup_name(kfree_skb);
@@ -942,11 +969,18 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
       || (!kfunc(copy_from_user_nofault) && (!kfunc(memdup_user) || !kfunc(kvfree))) || !kfunc(_raw_spin_lock)
       || !kfunc(_raw_spin_unlock) || !kvar(binder_stats))
     return -EOPNOTSUPP;
+  int vendor_rc = prepare_binder_cleanup_hook();
+  if (vendor_rc && !binder_proc_transaction) {
+    logkm("Binder cleanup unavailable: no validated vendor record or binder_proc_transaction\n");
+    return vendor_rc;
+  }
   if (kfunc(tracepoint_probe_register) && kfunc(tracepoint_probe_unregister) && kvar(__tracepoint_binder_transaction)) {
     rc = tracepoint_probe_register(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
     if (!rc)
       trace = true;
   }
+  if (!trace && !binder_proc_transaction)
+    return -ENOENT;
   for (unsigned int i = 0; i < ARRAY_SIZE(rekernel_hooks); i++) {
     struct rekernel_hook* hook = &rekernel_hooks[i];
     rc = hook_wrap(hook->func, hook->args, hook->before, hook->after, hook->data);
@@ -959,7 +993,7 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   rc = start_rekernel_genl_server();
   // record 注册是最后一个可能失败的阶段；成功后不再增加初始化步骤。
   if (!rc)
-    rc = binder_cleanup_hook_init();
+    rc = binder_cleanup_hook_init(vendor_rc);
   if (!rc)
     return 0;
 failed:
@@ -976,12 +1010,9 @@ static long inline_hook_control0(const char* ctl_args, char* __user out_msg, int
 }
 
 static long inline_hook_exit(void* __user reserved) {
-  binder_cleanup_hook_exit();
-  int rc = stop_rekernel_genl_server();
-  if (rc)
-    return rc;
-  stop_rekernel_hooks();
-  return 0;
+  int rc = stop_rekernel_hooks();
+  int genl_rc = stop_rekernel_genl_server();
+  return rc ? rc : genl_rc;
 }
 
 KPM_INIT(inline_hook_init);

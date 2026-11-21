@@ -25,6 +25,7 @@ HOST = r'''
 #undef off_t
 #define kfunc_def(n) (*kf_##n)
 #define kfunc(n) kf_##n
+#define kvar(n) (&point)
 #define kfunc_lookup_name(n) ((void)0)
 #define ERR_PTR(e) ((void*)(intptr_t)(e))
 #define IS_ERR(p) ((uintptr_t)(p) >= (uintptr_t)-4095)
@@ -86,7 +87,7 @@ static void reset(void) {
   struct_offset.binder_proc_tmp_ref = EXPECTED_TMP_REF;
 }
 static void fallback(void) {
-  assert(!binder_cleanup_hook_init() && !binder_vendor_record_registered && binder_proc_hooked && wrapped == 1);
+  assert(!binder_cleanup_hook_init(prepare_binder_cleanup_hook()) && !binder_vendor_record_registered && binder_proc_hooked && wrapped == 1);
   binder_cleanup_hook_exit();
   assert(!wrapped && unwrapped == 1 && !unregistered);
 }
@@ -98,10 +99,10 @@ int main(int argc, char** argv) {
   kf_btf_find_by_name_kind = host_find; kf_btf_name_by_offset = host_name; kf_btf_resolve_size = host_size;
   reset();
   assert(!binder_vendor_record_abi() && struct_offset.binder_proc_tmp_ref == EXPECTED_TMP_REF);
-  assert(!binder_cleanup_hook_init() && binder_vendor_record_registered && !binder_proc_hooked && registered == 1);
+  assert(!binder_cleanup_hook_init(prepare_binder_cleanup_hook()) && binder_vendor_record_registered && !binder_proc_hooked && registered == 1);
   binder_cleanup_hook_exit(); binder_cleanup_hook_exit(); assert(unregistered == 1 && !unwrapped);
   reset(); binder_proc_transaction = NULL;
-  assert(!binder_cleanup_hook_init() && binder_vendor_record_registered); binder_cleanup_hook_exit();
+  assert(!binder_cleanup_hook_init(prepare_binder_cleanup_hook()) && binder_vendor_record_registered); binder_cleanup_hook_exit();
   reset(); have_vendor = 0; fallback();
   reset(); have_dec = 0; fallback();
   reset(); trace = false; fallback();
@@ -110,11 +111,11 @@ int main(int argc, char** argv) {
   reset(); kf_tracepoint_probe_unregister = NULL; fallback();
   reset(); register_error = -EBUSY; fallback(); assert(registered == 1);
   reset(); register_error = -EBUSY; binder_proc_transaction = NULL;
-  assert(binder_cleanup_hook_init() == -EBUSY && !binder_vendor_record_registered && !binder_proc_hooked);
+  assert(binder_cleanup_hook_init(prepare_binder_cleanup_hook()) == -EBUSY && !binder_vendor_record_registered && !binder_proc_hooked);
   reset(); have_vendor = 0; binder_proc_transaction = NULL;
-  assert(binder_cleanup_hook_init() < 0 && !registered && !wrapped);
+  assert(binder_cleanup_hook_init(prepare_binder_cleanup_hook()) < 0 && !registered && !wrapped);
   reset(); have_vendor = 0; wrap_error = 7;
-  assert(binder_cleanup_hook_init() == -23 && !binder_proc_hooked);
+  assert(binder_cleanup_hook_init(prepare_binder_cleanup_hook()) == -23 && !binder_proc_hooked);
 #ifndef CONFIG_KPM_BASELINES
   reset(); kf_bpf_get_btf_vmlinux = NULL; fallback(); kf_bpf_get_btf_vmlinux = host_get;
   reset();
@@ -179,7 +180,7 @@ def main():
     btf += f"static const u32 string_start={strings}, string_length={len(data)-strings};\n" + host.HOST
     source = (root / "re_kernel/re_kernel.c").read_text()
     production = (root / "re_kernel/re_vendor_btf.c").read_text()
-    production += function(source, "binder_cleanup_hook_init") + "\n" + function(source, "binder_cleanup_hook_exit")
+    production += function(source, "prepare_binder_cleanup_hook") + "\n" + function(source, "binder_cleanup_hook_init") + "\n" + function(source, "binder_cleanup_hook_exit")
     results = []
     for static in (False, True):
         mode = "static" if static else "dynamic"

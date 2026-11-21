@@ -69,8 +69,8 @@ def main():
                     assert b'task_struct_offset\0' not in data and b'cred_offset\0' not in data
                     offset, size, abi = patcher.sections(data)
                     fields = patcher.source_fields(root / module / "re_offsets.c")
-                    assert size == len(fields) * 2 == 92 and abi is None
-                    assert fields[-2:] == ['binder_proc_tmp_ref', 'binder_release_abi']
+                    assert size == len(fields) * 2 == 94 and abi is None
+                    assert fields[-3:] == ['binder_proc_tmp_ref', 'template_abi', 'binder_release_abi']
                     assert struct.unpack_from('<h', data, offset + size - 4)[0] == -1
                     assert struct.unpack_from('<h', data, offset + size - 2)[0] == 6
                     for value in (3, 4, 5, 6):
@@ -93,10 +93,10 @@ def main():
                         abi = None
                     else:
                         offset, size, abi = patcher.sections(data)
-                    values = struct.unpack_from('<46h', data, offset)
+                    values = struct.unpack_from('<47h', data, offset)
                     fields = patcher.source_fields(root / module / "re_offsets.c")
-                    assert size == len(fields) * 2 == 92 and abi is None
-                    assert fields[-2:] == ['binder_proc_tmp_ref', 'binder_release_abi']
+                    assert size == len(fields) * 2 == 94 and abi is None
+                    assert fields[-3:] == ['binder_proc_tmp_ref', 'template_abi', 'binder_release_abi']
                     assert values[fields.index('binder_proc_tmp_ref')] == -1
                     assert values[fields.index('binder_buffer_data')] == (-1 if module == 're_kernel_x' else 0)
                     assert all(v == 0 for f, v in zip(fields, values) if f not in ('binder_buffer_data', 'binder_proc_tmp_ref'))

@@ -56,6 +56,14 @@
 
 ## 静态移植
 
+静态模板保留参考布局，模板里 `template_abi` 与必需的 `cred_uid` 初值都是 -1。初始化在启用任何 hook 前
+经 `re_baseline_check()` 拒绝这两处未配置：只填 `cred_uid` 或只改 `template_abi` 都不放行，`template_abi` 取 0
+也不算目标标识。移植时必须从目标证据核对完整配置，不能只把哨兵改成非负值；核对完成后把 `template_abi`
+写成目标自己的标识（正整数，例如内核版本编码）。表顺序、94 字节尺寸和 ABI 3/4/5/6 契约保持；
+这是未移植模板的拒载措施，目标配置的准确性仍由离线分析和独立复核建立。
+
+静态 Genl 配置须在所有 hook 前通过计数宽度、字段范围、对齐和重叠检查。两种模式均先确认 Genl 依赖及可选 Binder 厂商 record 的 ABI；实际注册失败仍走原有失败清理。
+
 准备目标设备的 `boot.img`、静态基线及同一构建的 `.kpm.json`，分析目标偏移后填写到 JSON 的 `offsets` 中。基线是移植模板，须先完成目标适配。
 
 在仓库根目录运行：
@@ -85,10 +93,11 @@ RPC 读取优先使用 140 字节栈缓冲与 `copy_from_user_nofault`，失败�
 `memdup_user` 路径，其 tracepoint 原子上下文风险仍待独立处理；本轮 6.12 证据不覆盖该路径。厂商入口在
 Genl 初始化成功后最后注册，失败按已安装状态撤销自有 wrap／tracepoint 与 family；热卸载仍不允许。
 
-静态表为 46 个 int16（92 字节）：原前 44 项不动，在末项 `binder_release_abi` 前增加
-`binder_proc_tmp_ref`，默认 -1（动态初始化也为 -1）。只在厂商能力验证时写入该字段；老的独立入口不要求
-它。`binder_buffer_data` 在本模块业务中未使用，动态常规 BTF 仍只查询原 38 项，不增加 rekx 的读取依赖。
-旧 45 项基线必须用旧配套 JSON；不可与本轮表混用。
+静态表为 47 个 int16（94 字节）：原前 44 项不动，在末项 `binder_release_abi` 前增加
+`binder_proc_tmp_ref` 与 `template_abi`，模板里都是 -1（`template_abi` 只在静态模板里为 -1，动态初始化不设）。
+`binder_proc_tmp_ref` 只在厂商能力验证时写入，老的独立入口不要求它；`template_abi` 是模板确认字段、不是偏移，
+移植者核对完目标配置后写成目标自己的标识（正整数）。`binder_buffer_data` 在本模块业务中未使用，动态常规 BTF
+仍只查询原 38 项，不增加 rekx 的读取依赖。旧 45 项基线必须用旧配套 JSON；不可与本轮表混用。
 
 新分配器 `__kmalloc_noprof` 仅在 `kmalloc`／`__kmalloc` 都不可用时绑定 SDK 同 ABI 封装，此时分配、
 Genl 广播统一使用共同 `__GFP_HIGH` 位以避免旧 GFP 高位含义冲突。skb 优先 `kfree_skb`，否则

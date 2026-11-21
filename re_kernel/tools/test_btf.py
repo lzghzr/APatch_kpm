@@ -133,7 +133,9 @@ def synthetic():
                sk_buff_len=112, sk_buff_transport_header=178, sk_buff_network_header=180, sk_buff_tail=200,
                sk_buff_head=208, sk_buff_data=216, net_genl_sock=280, genl_family_id=28, genl_family_config=0,
                genl_family_mcgrps=80, genl_family_n_mcgrps=39, genl_family_n_mcgrps_size=1, genl_family_mcgrp_offset=32,
-               binder_buffer_data=-1, binder_release_abi=6)
+               binder_buffer_data=-1, binder_release_abi=6,
+               # 模板确认字段只存在于静态模板；动态路径不设它，保持 0。
+               template_abi=0)
     return b.data(), ref
 
 

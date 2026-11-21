@@ -44,6 +44,7 @@ struct struct_offset {
   int16_t binder_proc_is_dead;
   int16_t binder_buffer_data;
   int16_t binder_proc_tmp_ref;
+  int16_t template_abi;
   int16_t binder_release_abi;
 };
 
@@ -89,16 +90,61 @@ volatile struct struct_offset struct_offset __attribute__((section(".data.re_off
     .task_struct_pid = 0x5d8,
     .task_struct_tgid = 0x5dc,
     .task_struct_cred = 0x798,
-    .cred_uid = 0x4,
+    .cred_uid = -1,
     .task_struct_comm = 0x7a8,
     .sock_sk_net = 0x30,
     .binder_proc_is_dead = 0x70,
     .binder_buffer_data = -1,
     .binder_proc_tmp_ref = -1,
+    .template_abi = -1,
     .binder_release_abi = 6,
 };
 #else
 struct struct_offset struct_offset = {.binder_proc_tmp_ref = -1};
+#endif /* CONFIG_KPM_BASELINES */
+
+#ifdef CONFIG_KPM_BASELINES
+// 模板门禁：参考布局模板与已按目标核对的表必须可区分。模板保持 template_abi = -1；
+// 移植者按目标核对全部偏移后，把它写成自己的目标标识（正整数）。
+static inline long re_baseline_check(void) {
+  if (struct_offset.template_abi <= 0) {
+    logkm(
+        "Static baseline is a reference layout: confirm every offset against the target kernel, "
+        "then set template_abi\n");
+    return -EINVAL;
+  }
+  // cred_uid 是必需配置项；模板保留 -1，未完成离线移植时不能启用 hook。
+  if (struct_offset.cred_uid < 0) {
+    logkm("Static baseline is unconfigured: set all offsets from the target kernel\n");
+    return -EINVAL;
+  }
+  return 0;
+}
+
+static bool re_static_genl_layout_valid(void) {
+  const int count_size = struct_offset.genl_family_n_mcgrps_size;
+  if (count_size != 1 && count_size != 2 && count_size != 4)
+    return false;
+  const int sock = struct_offset.net_genl_sock;
+  if (sock < 0 || sock % sizeof(void*))
+    return false;
+  const int fields[][3] = {
+      {struct_offset.genl_family_id, sizeof(unsigned int), __alignof__(unsigned int)},
+      {struct_offset.genl_family_config, sizeof(struct genl_family_config), __alignof__(struct genl_family_config)},
+      {struct_offset.genl_family_mcgrps, sizeof(void*), __alignof__(void*)},
+      {struct_offset.genl_family_n_mcgrps, count_size, 1}, // 通过 memcpy 访问。
+      {struct_offset.genl_family_mcgrp_offset, sizeof(unsigned int), __alignof__(unsigned int)},
+  };
+  for (unsigned int i = 0; i < ARRAY_SIZE(fields); ++i) {
+    const int start = fields[i][0], end = start + fields[i][1];
+    if (start < 0 || start % fields[i][2] || end > (int)sizeof(struct genl_family))
+      return false;
+    for (unsigned int j = 0; j < i; ++j)
+      if (start < fields[j][0] + fields[j][1] && fields[j][0] < end)
+        return false;
+  }
+  return true;
+}
 #endif /* CONFIG_KPM_BASELINES */
 
 // task_comm
