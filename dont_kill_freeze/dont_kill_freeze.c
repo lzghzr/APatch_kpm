@@ -8,10 +8,10 @@
 #include <hook.h>
 #include <kpmodule.h>
 #include <kputils.h>
-#include <taskext.h>
 #include <linux/kernel.h>
 #include <linux/printk.h>
 #include <linux/string.h>
+#include <taskext.h>
 #include <uapi/asm-generic/errno.h>
 
 #ifdef CONFIG_DEBUG_CMDLINE
@@ -44,8 +44,10 @@ static int (*do_send_sig_info)(int sig, struct siginfo* info, struct task_struct
 static int (*get_cmdline)(struct task_struct* task, char* buffer, int buflen);
 #endif /* CONFIG_DEBUG_CMDLINE */
 
-static uint64_t task_struct_jobctl_offset = UZERO, task_struct_signal_offset = UZERO, signal_struct_oom_score_adj_offset = UZERO,
-last_uid = UZERO, oom_score_adj_max = UZERO;
+static uint64_t task_struct_jobctl_offset = UZERO, task_struct_signal_offset = UZERO,
+                signal_struct_oom_score_adj_offset = UZERO, last_uid = UZERO, oom_score_adj_max = UZERO;
+
+static bool signal_hooked;
 
 static char android_display[] = "android.display";
 // 有些内核可能是 "Binder:"
@@ -72,16 +74,14 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
   struct kernel_siginfo* siginfo = (struct kernel_siginfo*)args->arg1;
   struct task_struct* dst = (struct task_struct*)args->arg2;
 #ifdef CONFIG_DEBUG
-  if (sig == SIGKILL
-    && task_uid(dst).val > MIN_USERAPP_UID) {
-    logkm("killer=%d,comm=%s,dst=%d,oom_score_adj=%d,frozen=%d\n",
-      task_uid(current).val, get_task_comm(current), task_uid(dst).val, get_oom_score_adj(dst), frozen_task_group(dst));
+  if (sig == SIGKILL && task_uid(dst).val > MIN_USERAPP_UID) {
+    logkm("killer=%d,comm=%s,dst=%d,oom_score_adj=%d,frozen=%d\n", task_uid(current).val, get_task_comm(current),
+          task_uid(dst).val, get_oom_score_adj(dst), frozen_task_group(dst));
   }
 #endif /* CONFIG_DEBUG */
 // cmdline 速度非常非常慢
 #ifdef CONFIG_DEBUG_CMDLINE
-  if (sig == SIGKILL
-    && task_uid(dst).val > MIN_USERAPP_UID) {
+  if (sig == SIGKILL && task_uid(dst).val > MIN_USERAPP_UID) {
     char cmdline[PATH_MAX];
     memset(&cmdline, 0, PATH_MAX);
     int res = get_cmdline(current, cmdline, PATH_MAX - 1);
@@ -89,19 +89,18 @@ static void do_send_sig_info_before(hook_fargs4_t* args, void* udata) {
     logkm("cmdline=%s\n", cmdline);
   }
 #endif /* CONFIG_DEBUG_CMDLINE */
-  if (sig != SIGKILL || siginfo->si_code != 0)
+  // SEND_SIG_NOINFO / SEND_SIG_PRIV / SEND_SIG_FORCED 是内核特殊值，不是对象。
+  if (sig != SIGKILL || (uintptr_t)siginfo <= 2 || siginfo->si_code != 0)
     return;
   if (task_uid(current).val < MIN_SYSTEM_UID || task_uid(current).val > MAX_SYSTEM_UID)
     return;
-  if (task_uid(dst).val == last_uid
-    || task_uid(dst).val < MIN_USERAPP_UID
-    || get_oom_score_adj(dst) > oom_score_adj_max)
+  if (task_uid(dst).val == last_uid || task_uid(dst).val < MIN_USERAPP_UID
+      || get_oom_score_adj(dst) > oom_score_adj_max)
     return;
 
   const char* comm = get_task_comm(current);
-  if (memcmp(comm + 1, binder + 1, sizeof(binder) - 2)
-    && memcmp(comm, android_display, sizeof(android_display) - 1)
-    && frozen_task_group(dst)) {
+  if (memcmp(comm + 1, binder + 1, sizeof(binder) - 2) && memcmp(comm, android_display, sizeof(android_display) - 1)
+      && frozen_task_group(dst)) {
     args->ret = -EPERM;
     args->skip_origin = true;
 #ifdef CONFIG_DEBUG
@@ -118,19 +117,23 @@ static long calculate_offsets() {
   lookup_name(task_clear_jobctl_trapping);
 
   uint32_t* task_clear_jobctl_trapping_src = (uint32_t*)task_clear_jobctl_trapping;
-  for (u32 i = 0; i < 0x10; i++) {
-    if (task_clear_jobctl_trapping_src[i] == ARM64_RET) {
+  for (u32 i = 0; i + 1 < 0x10; i++) {
+    if (inst_is_ret(task_clear_jobctl_trapping_src[i])) {
       break;
-    } else if ((task_clear_jobctl_trapping_src[i] & MASK_LDR_64_Rn_X0) == INST_LDR_64_Rn_X0) {
+    } else if (inst_get_ldr_imm_uint_size(task_clear_jobctl_trapping_src[i]) == 3
+               && inst_get_ldr_imm_uint_rn(task_clear_jobctl_trapping_src[i]) == 0
+               && inst_get_tbz_bit(task_clear_jobctl_trapping_src[i + 1] & ~(1U << 24)) == 21
+               && inst_get_tbz_rt(task_clear_jobctl_trapping_src[i + 1] & ~(1U << 24))
+                      == inst_get_ldr_imm_uint_rt(task_clear_jobctl_trapping_src[i])) {
       uint64_t imm12 = bits32(task_clear_jobctl_trapping_src[i], 21, 10);
-      task_struct_jobctl_offset = sign64_extend((imm12 << 0b11u), 16u);
+      task_struct_jobctl_offset = (imm12 << 3);
       break;
     }
   }
 #ifdef CONFIG_DEBUG
   logkm("task_struct_jobctl_offset=%llx\n", task_struct_jobctl_offset);
 #endif /* CONFIG_DEBUG */
-  if (task_struct_jobctl_offset == UZERO) {
+  if (task_struct_jobctl_offset == UZERO || task_struct_jobctl_offset >= 0x4000) {
     return -11;
   }
   // 获取 task_struct->signal, signal_struct->oom_score_adj
@@ -138,14 +141,19 @@ static long calculate_offsets() {
   lookup_name(out_of_memory);
 
   uint32_t* out_of_memory_src = (uint32_t*)out_of_memory;
-  for (u32 i = 0; i < 0xa0; i++) {
-    if ((out_of_memory_src[i] & MASK_LDR_64_) == INST_LDR_64_ && (out_of_memory_src[i + 1] & MASK_LDRSH) == INST_LDRSH) {
+  for (u32 i = 0; i + 2 < 0xa0; i++) {
+    if (inst_get_ldr_imm_uint_size(out_of_memory_src[i]) == 3 && inst_get_ldr_imm_size(out_of_memory_src[i + 1]) == 1
+        && inst_get_ldr_imm_opc(out_of_memory_src[i + 1]) == 3
+        && bits32(out_of_memory_src[i + 1], 9, 5) == bits32(out_of_memory_src[i], 4, 0)
+        && inst_get_adds_imm_sf(out_of_memory_src[i + 2]) == 0 && inst_get_adds_imm_rd(out_of_memory_src[i + 2]) == 31
+        && inst_get_adds_imm_imm(out_of_memory_src[i + 2]) == 1000
+        && bits32(out_of_memory_src[i + 2], 9, 5) == bits32(out_of_memory_src[i + 1], 4, 0)) {
       uint64_t imm12 = 0;
       imm12 = bits32(out_of_memory_src[i], 21, 10);
-      task_struct_signal_offset = sign64_extend((imm12 << 0b11u), 16u);
+      task_struct_signal_offset = (imm12 << 3);
 
       imm12 = bits32(out_of_memory_src[i + 1], 21, 10);
-      signal_struct_oom_score_adj_offset = sign64_extend((imm12 << 1u), 16u);
+      signal_struct_oom_score_adj_offset = (imm12 << 1);
       break;
     }
   }
@@ -153,7 +161,8 @@ static long calculate_offsets() {
   logkm("task_struct_signal_offset=%llx\n", task_struct_signal_offset);
   logkm("signal_struct_oom_score_adj_offset=%llx\n", signal_struct_oom_score_adj_offset);
 #endif /* CONFIG_DEBUG */
-  if (task_struct_signal_offset == UZERO || signal_struct_oom_score_adj_offset == UZERO) {
+  if (task_struct_signal_offset == UZERO || task_struct_signal_offset >= 0x4000
+      || signal_struct_oom_score_adj_offset == UZERO || signal_struct_oom_score_adj_offset >= 0x4000) {
     return -11;
   }
 
@@ -163,6 +172,8 @@ static long calculate_offsets() {
 static long inline_hook_init(const char* args, const char* event, void* __user reserved) {
   kfunc_lookup_name(kstrtoint);
   kfunc_lookup_name(strim);
+  if (!kfunc(kstrtoint) || !kfunc(strim))
+    return -ENOENT;
 
   lookup_name(cgroup_freezing);
   lookup_name(do_send_sig_info);
@@ -183,7 +194,10 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
     }
   }
 
-  hook_func(do_send_sig_info, 4, do_send_sig_info_before, NULL, NULL);
+  int err = hook_wrap4(do_send_sig_info, do_send_sig_info_before, NULL, NULL);
+  if (err)
+    return -EINVAL;
+  signal_hooked = true;
 
   return 0;
 }
@@ -210,7 +224,10 @@ static long inline_hook_control0(const char* ctl_args, char* __user out_msg, int
 }
 
 static long inline_hook_exit(void* __user reserved) {
-  unhook_func(do_send_sig_info);
+  if (signal_hooked) {
+    hook_unwrap(do_send_sig_info, do_send_sig_info_before, NULL);
+    signal_hooked = false;
+  }
 
   return 0;
 }
