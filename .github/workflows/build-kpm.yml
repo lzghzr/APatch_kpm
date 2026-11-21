@@ -7,6 +7,8 @@ on:
       - "tools/artifact_gate.py"
       - "tools/selftest_artifact_gate.py"
       - "tools/selftest_offset_modes.py"
+      - "tools/selftest_release_assets.py"
+      - "tools/selftest_workflow_support.py"
       - "patch_offsets.py"
       - "**/*.c"
       - "**/*.h"
@@ -32,6 +34,8 @@ on:
       - "tools/artifact_gate.py"
       - "tools/selftest_artifact_gate.py"
       - "tools/selftest_offset_modes.py"
+      - "tools/selftest_release_assets.py"
+      - "tools/selftest_workflow_support.py"
       - "patch_offsets.py"
       - "**/*.c"
       - "**/*.h"
@@ -336,8 +340,6 @@ jobs:
           mkdir upload
           shopt -s nullglob
           for kpm in release/*.kpm; do
-            # 本轮 Release 附件范围；CI 仍构建并校验全部产物。
-            case "${kpm##*/}" in run_cmd_demo_[0-9]*.kpm) continue ;; esac
             cp "$kpm" upload/
             if [ -f "${kpm}.json" ]; then
               cp "${kpm}.json" upload/
