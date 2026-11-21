@@ -226,25 +226,4 @@ struct cftype {
   unsigned int (*poll)(struct kernfs_open_file* of, struct poll_table_struct* pt);
 };
 
-// fs/internal.h
-struct open_flags {
-  int open_flag;
-  umode_t mode;
-  int acc_mode;
-  int intent;
-  int lookup_flags;
-};
-
-// security.h
-struct selinux_state {
-  bool disabled;
-  bool enforcing;
-  bool checkreqprot;
-  bool initialized;
-  // unknow
-};
-
-// linux/umh.h
-struct subprocess_info;
-
 #endif /* __CGROUP_FREEZE_H */

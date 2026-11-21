@@ -14,7 +14,6 @@
 #include <linux/kernel.h>
 #include <linux/printk.h>
 #include <linux/string.h>
-#include <linux/umh.h>
 
 #include "../kpm_utils.h"
 #include "cfv2_utils.h"
@@ -24,15 +23,17 @@ KPM_VERSION(MYKPM_VERSION);
 KPM_LICENSE("GPL v2");
 KPM_AUTHOR("lzghzr");
 KPM_DESCRIPTION("add cgroup.freeze, support 4.4 ~ 4.19");
+#ifdef CONFIG_KPM_BASELINES
+KPM_INFO(offset_mode, "static", 16);
+#else
+KPM_INFO(offset_mode, "dynamic", 16);
+#endif
 
 #define GLOBAL_SYSTEM_UID KUIDT_INIT(1000)
 #define GLOBAL_SYSTEM_GID KGIDT_INIT(1000)
 
 #define IZERO (1UL << 0x10)
 #define UZERO (1UL << 0x20)
-
-// 延迟加载, KernelPatch支持 事件加载 后弃用
-static struct file* (*do_filp_open)(int dfd, struct filename* pathname, const struct open_flags* op);
 
 // do_freezer_trap
 static int (*proc_pid_wchan)(struct seq_file* m, struct pid_namespace* ns, struct pid* pid, struct task_struct* task);
@@ -57,12 +58,6 @@ static struct cgroup* (*cgroup_kn_lock_live_v4)(struct kernfs_node* kn);
 static void (*cgroup_kn_unlock)(struct kernfs_node* kn);
 int kfunc_def(kstrtoint)(const char* s, unsigned int base, int* res);
 char* kfunc_def(strim)(char* s);
-// run_cmd
-int kfunc_def(call_usermodehelper)(const char* path, char** argv, char** envp, int wait);
-int kfunc_def(call_usermodehelper_exec)(struct subprocess_info* info, int wait);
-static int* selinux_enforcing;
-struct selinux_state* selinux_state;
-
 // hook cgroup_addrm_files
 static int (*cgroup_addrm_files)(struct cgroup_subsys_state* css, struct cgroup* cgrp, struct cftype cfts[],
                                  bool is_add);
@@ -80,8 +75,7 @@ static ssize_t (*kernfs_setattr)(struct kernfs_node* kn, const struct iattr* iat
 // hook get_signal
 static bool (*get_signal)(struct ksignal* ksig);
 
-struct struct_offset struct_offset = {};
-static uint64_t css_task_iter_start_ver5 = UZERO, cgroup_kn_lock_live_ver5 = UZERO, cftype_ver5 = UZERO,
+static uint64_t css_task_iter_start_ver5 = UZERO, cgroup_kn_lock_live_ver5 = UZERO,
                 cgroup_base_files_ver5 = UZERO;
 #include "cfv2_offsets.c"
 
@@ -190,12 +184,43 @@ static ssize_t cgroup_freeze_write(struct kernfs_open_file* of, char* buf, size_
 static struct cftype cgroup_freeze_files[] = {
     {
         .name = "cgroup.freeze",
+#ifndef CONFIG_KPM_BASELINES
         .flags = CFTYPE_NOT_ON_ROOT,
+#endif
     },
     {},
 };
 
+static void cfv2_prepare_freeze_files(void) {
+#ifdef CONFIG_KPM_BASELINES
+  // calculate_offsets() 已确认各槽对齐，且完全落在目标表项内。
+  char* entry = (char*)cgroup_freeze_files;
+  unsigned int flags = CFTYPE_NOT_ON_ROOT;
+  typeof(&cgroup_freeze_show) show = cgroup_freeze_show;
+  typeof(&cgroup_freeze_write) write = cgroup_freeze_write;
+  __builtin_memcpy(entry + struct_offset.cftype_flags_offset, &flags, sizeof(flags));
+  __builtin_memcpy(entry + struct_offset.cftype_show_offset, &show, sizeof(show));
+  __builtin_memcpy(entry + struct_offset.cftype_write_offset, &write, sizeof(write));
+#else
+  if (cftype_ver5 == IZERO) {
+    cgroup_freeze_files->seq_show = cgroup_freeze_show;
+    cgroup_freeze_files->write = cgroup_freeze_write;
+  } else {
+    cgroup_freeze_files->seq_show_v4 = cgroup_freeze_show;
+    cgroup_freeze_files->write_v4 = cgroup_freeze_write;
+  }
+#endif
+}
+
+static bool cfv2_hooks_ready;
+
+static bool cfv2_active(void) {
+  return __atomic_load_n(&cfv2_hooks_ready, __ATOMIC_ACQUIRE);
+}
+
 static void cgroup_addrm_files_after(hook_fargs4_t* args, void* udata) {
+  if (!cfv2_active())
+    return;
   int ret = (int)args->ret;
   if (ret)
     return;
@@ -209,6 +234,8 @@ static const char uid_0[] = "uid_0";
 static const char pid_[] = "pid_";
 // v1 模式并不会附加到 dfl_cgrp, 需要特殊处理
 static void cgroup_procs_write_after(hook_fargs4_t* args, void* udata) {
+  if (!cfv2_active())
+    return;
   size_t nbytes = (size_t)args->arg2;
   size_t ret = (size_t)args->ret;
   if (ret != nbytes)
@@ -234,6 +261,8 @@ static void cgroup_procs_write_after(hook_fargs4_t* args, void* udata) {
 }
 // 处理 v2 uid 模式
 static void css_set_move_task_after(hook_fargs4_t* args, void* udata) {
+  if (!cfv2_active())
+    return;
   struct task_struct* task = (struct task_struct*)args->arg0;
   if (!task)
     return;
@@ -268,6 +297,8 @@ static void css_set_move_task_after(hook_fargs4_t* args, void* udata) {
 }
 // 修改 cgroup.freeze 所有者为 system:system
 static void __kernfs_create_file_after(hook_fargs8_t* args, void* udata) {
+  if (!cfv2_active())
+    return;
   struct kernfs_node* kn = (struct kernfs_node*)args->ret;
 
   if (IS_ERR(kn))
@@ -306,6 +337,8 @@ static void do_freezer_trap(void) {
 }
 
 static void get_signal_before(hook_fargs1_t* args, void* udata) {
+  if (!cfv2_active())
+    return;
   struct signal_struct* signal = task_signal(current);
   unsigned long* jobctl = task_jobctl_ptr(current);
   for (;;) {
@@ -321,6 +354,8 @@ static void get_signal_before(hook_fargs1_t* args, void* udata) {
 }
 // kpm 模块 wchan 函数名总为0, 需要手动修改
 static void proc_pid_wchan_before(hook_fargs4_t* args, void* udata) {
+  if (!cfv2_active())
+    return;
   struct seq_file* m = (struct seq_file*)args->arg0;
   struct task_struct* task = (struct task_struct*)args->arg3;
 
@@ -333,86 +368,16 @@ static void proc_pid_wchan_before(hook_fargs4_t* args, void* udata) {
   }
 }
 
-static void call_usermodehelper_exec_before(hook_fargs2_t* args, void* udata) {
-  struct subprocess_info* sub_info = (struct subprocess_info*)args->arg0;
-  if (!sub_info)
-    return;
-
-  char** argv = subprocess_info_argv(sub_info);
-  *(char**)((uintptr_t)sub_info + struct_offset.subprocess_info_path) = argv[0];
-}
-
-static void run_cmd(char* cmd[]) {
-  char* envp[] = {"HOME=/", "PATH=/sbin:/bin", NULL};
-  bool sel = true;
-  hook_err_t err = 0;
-
-  if (selinux_enforcing) {
-    sel = *selinux_enforcing;
-    *selinux_enforcing = false;
-  } else {
-    err = hook_wrap2(kf_call_usermodehelper_exec, call_usermodehelper_exec_before, NULL, NULL);
-    sel = selinux_state->enforcing;
-    selinux_state->enforcing = false;
-  }
-
-  for (int i = 0; cmd[i]; i++) {
-    char* argv[] = {"/bin/sh", "-c", cmd[i], NULL};
-    call_usermodehelper(argv[0], argv, envp, UMH_WAIT_PROC);
-  }
-
-  if (selinux_enforcing) {
-    *selinux_enforcing = sel;
-  } else {
-    if (!err) {
-      unhook(kf_call_usermodehelper_exec);
-    }
-    selinux_state->enforcing = sel;
-  }
-}
-
-static const char apm[] = "/data/adb/modules/";
-static void do_filp_open_after(hook_fargs3_t* args, void* udata) {
-  struct filename* pathname = (struct filename*)args->arg1;
-  if (!memcmp(pathname->name, apm, sizeof(apm) - 1)) {
-    char* cmd[] = {
-        "if [ ! -d \"/sys/fs/cgroup/uid_0\" ]; then\
-  umount /sys/fs/cgroup/freezer;\
-  umount /sys/fs/cgroup;\
-\
-  chown system:system /sys/fs/cgroup/;\
-\
-  if [ -d \"/dev/cg2_bpf/uid_0\" ]; then\
-    mount -t cgroup2 none /sys/fs/cgroup/;\
-  elif [ -d \"/acct/uid_0\" ]; then\
-    mount -t cgroup -o cpuacct none /sys/fs/cgroup/;\
-  else\
-    exit;\
-  fi;\
-fi;\
-\
-if [ ! -d \"/sys/fs/cgroup/frozen\" ]; then\
-  mkdir /sys/fs/cgroup/frozen/;\
-  chown -R system:system /sys/fs/cgroup/frozen/;\
-  echo 1 > /sys/fs/cgroup/frozen/cgroup.freeze;\
-\
-  mkdir /sys/fs/cgroup/unfrozen/;\
-  chown -R system:system /sys/fs/cgroup/unfrozen/;\
-fi",
-        NULL};
-    run_cmd(cmd);
-    unhook_func(do_filp_open);
-  }
-}
-
 static long inline_hook_init(const char* args, const char* event, void* __user reserved) {
+  if (!kfunc(memset))
+    return -ENOENT;
+
   // 有 cgroup_freeze_write 函数说明本身就支持cgroupv2 freezer
   void (*kf_cgroup_freeze_write)(void);
   kf_cgroup_freeze_write = (typeof(kf_cgroup_freeze_write))kallsyms_lookup_name("cgroup_freeze_write");
   if (kf_cgroup_freeze_write)
-    return -24;
+    return -EOPNOTSUPP;
 
-  lookup_name(do_filp_open);
   lookup_name(proc_pid_wchan);
   kfunc_lookup_name(schedule);
 
@@ -434,14 +399,11 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   lookup_name(cgroup_kn_unlock);
   kfunc_lookup_name(kstrtoint);
   kfunc_lookup_name(strim);
-
-  kfunc_lookup_name(call_usermodehelper);
-  kfunc_lookup_name(call_usermodehelper_exec);
-
-  selinux_enforcing = (typeof(selinux_enforcing))kallsyms_lookup_name("selinux_enforcing");
-  selinux_state = (typeof(selinux_state))kallsyms_lookup_name("selinux_state");
-  if (!selinux_enforcing && !selinux_state)
-    return -21;
+  if (!kfunc(schedule) || !kfunc(wake_up_process) || !kfunc(of_css) || !kfunc(seq_printf) || !kfunc(kstrtoint)
+      || !kfunc(strim)) {
+    logkm("Required freezer helper missing\n");
+    return -ENOENT;
+  }
 
   lookup_name(cgroup_addrm_files);
   lookup_name(cgroup_init_cftypes);
@@ -457,52 +419,62 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   rc = calculate_offsets();
   if (rc < 0)
     return rc;
-  // 配置文件需要初始化一下
-  if (cftype_ver5 == IZERO) {
-    cgroup_freeze_files->seq_show = cgroup_freeze_show;
-    cgroup_freeze_files->write = cgroup_freeze_write;
-  } else {
-    cgroup_freeze_files->seq_show_v4 = cgroup_freeze_show;
-    cgroup_freeze_files->write_v4 = cgroup_freeze_write;
-  }
+  cfv2_prepare_freeze_files();
   rc = cgroup_init_cftypes(NULL, cgroup_freeze_files);
   if (rc < 0)
     return rc;
 
-  hook_func(get_signal, 1, get_signal_before, NULL, NULL);
-  hook_func(proc_pid_wchan, 4, proc_pid_wchan_before, NULL, NULL);
-  hook_func(cgroup_addrm_files, 4, NULL, cgroup_addrm_files_after, NULL);
-  hook_func(cgroup_procs_write, 4, NULL, cgroup_procs_write_after, NULL);
-  hook_func(css_set_move_task, 4, NULL, css_set_move_task_after, NULL);
-  // 高版本内核会自动处理所有者, 不再需要手动更改
-  if (cgroup_base_files_ver5 != IZERO) {
-    hook_func(__kernfs_create_file, 8, NULL, __kernfs_create_file_after, NULL);
+  const struct {
+    const char* name;
+    void* target;
+    int arity;
+    void* before;
+    void* after;
+  } hooks[] = {
+      {"get_signal", get_signal, 1, get_signal_before, NULL},
+      {"proc_pid_wchan", proc_pid_wchan, 4, proc_pid_wchan_before, NULL},
+      {"cgroup_addrm_files", cgroup_addrm_files, 4, NULL, cgroup_addrm_files_after},
+      {"cgroup_procs_write", cgroup_procs_write, 4, NULL, cgroup_procs_write_after},
+      {"css_set_move_task", css_set_move_task, 4, NULL, css_set_move_task_after},
+      {"__kernfs_create_file", __kernfs_create_file, 8, NULL, __kernfs_create_file_after},
+  };
+  // 新内核原生处理属主；最后一项仅在需要旧内核修正时安装。
+  unsigned int count = (sizeof(hooks) / sizeof(hooks[0])) - (cgroup_base_files_ver5 == IZERO);
+  for (unsigned int i = 0; i < count; ++i) {
+    hook_err_t error = hook_wrap(hooks[i].target, hooks[i].arity, hooks[i].before, hooks[i].after, NULL);
+    if (error) {
+      logkm("hook %s error: %d\n", hooks[i].name, error);
+      if (!i)
+        return -23;
+      // KP 不保证摘钩等待在途回调。已发布的入口保持惰性，
+      // 必须保留 KPM 代码，不能返回失败让加载器释放它。
+      logkm("freezer inactive: partial hook installation; reboot before retry\n");
+      return 0;
+    }
+    logkm("hook %s success\n", hooks[i].name);
   }
 
-  if (!event || strcmp(event, "load-file")) {
-    hook_func(do_filp_open, 3, NULL, do_filp_open_after, NULL);
-  }
-
+  __atomic_store_n(&cfv2_hooks_ready, true, __ATOMIC_RELEASE);
+  cfv2_arm_uid_mount(event);
   return 0;
 }
 
 static long inline_hook_control0(const char* ctl_args, char* __user out_msg, int outlen) {
+  if (!cfv2_active())
+    return -ENODEV;
   char msg[64];
   snprintf(msg, sizeof(msg), "_(._.)_");
-  compat_copy_to_user(out_msg, msg, sizeof(msg));
-  return 0;
+  int size = strlen(msg) + 1;
+  if (!out_msg || outlen < size)
+    return -EINVAL;
+  return compat_copy_to_user(out_msg, msg, size) == size ? 0 : -EFAULT;
 }
 
 static long inline_hook_exit(void* __user reserved) {
-  unhook_func(get_signal);
-  unhook_func(proc_pid_wchan);
-  unhook_func(cgroup_addrm_files);
-  unhook_func(cgroup_procs_write);
-  unhook_func(css_set_move_task);
-  unhook_func(__kernfs_create_file);
-  unhook_func(do_filp_open);
-
-  return 0;
+  // 政策（docs/records/2026-11-18-load-event-and-unload-policy.md）：卸载一律禁止，恒返回 -EBUSY。
+  // 注意 KP 加载器当前仍会释放模块内存，已装钩子会悬空；运行端修复前必须重启移除。
+  logkm("cgroup callbacks are persistent; do not unload; reboot to remove\n");
+  return -EBUSY;
 }
 
 KPM_INIT(inline_hook_init);

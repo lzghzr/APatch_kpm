@@ -11,17 +11,22 @@
 struct struct_offset {
   int16_t cgroup_flags;
   int16_t css_set_dfl_cgrp;
-  int16_t freezer_state;
   int16_t seq_file_private;
   int16_t signal_struct_flags;
   int16_t signal_struct_group_exit_task;
-  int16_t subprocess_info_argv;
-  int16_t subprocess_info_path;
-  int16_t task_struct_css_set;
   int16_t task_struct_flags;
   int16_t task_struct_jobctl;
   int16_t task_struct_signal;
   int16_t task_struct_state;
+  int16_t css_task_iter_start_arity;
+  int16_t cgroup_kn_lock_live_arity;
+  int16_t cftype_flags_offset;
+  int16_t cftype_show_offset;
+  int16_t cftype_write_offset;
+  int16_t cftype_stride;
+  int16_t kernfs_owner_fixup;
 };
+
+void cfv2_arm_uid_mount(const char* event);
 
 #endif /* __CF_UTILS_H */
