@@ -14,7 +14,7 @@
 #include "battchg.h"
 
 KPM_NAME("qti_battery_charger");
-KPM_VERSION(QBC_VERSION);
+KPM_VERSION(MYKPM_VERSION);
 KPM_LICENSE("GPL v2");
 KPM_AUTHOR("lzghzr");
 KPM_DESCRIPTION("set battery_psy_get_prop value");
