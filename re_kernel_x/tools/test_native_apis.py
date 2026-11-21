@@ -177,8 +177,8 @@ def main():
     allocator = "  kfunc_lookup_name(kfree);" + allocator
     skb = source.split("  kfunc_lookup_name(kfree_skb);", 1)[1].split("  kfunc_lookup_name(netlink_broadcast);", 1)[0]
     skb = "  kfunc_lookup_name(kfree_skb);" + skb
-    genl = function(source, "start_rekernel_genl_server")
-    genl = genl.split("  lookup_name(genl_rcv_msg);", 1)[1].split("  struct genl_family* family", 1)[0]
+    genl = function(source, "prepare_rekernel_genl_server")
+    genl = genl.split("  lookup_name(genl_rcv_msg);", 1)[1].rsplit("  return 0;", 1)[0]
     binder = source.split("  kfunc_lookup_name(memdup_user);\n\n", 1)[1].split("  lookup_name(do_send_sig_info);", 1)[0]
     sdk = (root.parent / "KernelPatch/kernel/linux/include/linux/slab.h").read_text()
     production = "static int allocator_init(void) {\n" + allocator + "  return 0;\n}\n"

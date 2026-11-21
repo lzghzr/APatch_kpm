@@ -480,6 +480,7 @@ static void test_rules(void) {
 }
 int main(void) {
   init_net.socket = &socket;
+  assert(prepare_rekernel_genl_server() == 0);
   hook_error = 1;
   assert(start_rekernel_genl_server() == -EOPNOTSUPP && !hooked && !registered);
   hook_error = 0;

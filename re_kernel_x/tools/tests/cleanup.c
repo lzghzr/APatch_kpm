@@ -15,6 +15,13 @@
 #define list_for_each_entry(p, h, m) \
   for (p = container_of((h)->next, __typeof__(*p), m); &p->m != (h); p = container_of(p->m.next, __typeof__(*p), m))
 #define kfunc(name) kf_##name
+
+// The production init guard reads the SDK's function slots before ABI selection.
+static void* (*kf_memset)(void*, int, size_t) = memset;
+static void* (*kf_memcpy)(void*, const void*, size_t) = memcpy;
+static void* (*kf_memmove)(void*, const void*, size_t) = memmove;
+static int (*kf_memcmp)(const void*, const void*, size_t) = memcmp;
+static void* (*kf_memchr)(const void*, int, size_t) = memchr;
 #define logkm(...) ((void)0)
 #define kvar(n) (&stats)
 typedef uint32_t u32;

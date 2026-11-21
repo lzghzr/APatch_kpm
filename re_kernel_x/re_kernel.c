@@ -347,8 +347,7 @@ static void genl_rcv_msg_before(hook_fargs2_t* args, void* udata) {
   args->skip_origin = 1;
   args->ret = rekernel_genl_rcv_msg(skb, nlh);
 }
-// 静态内存块清零、填写配置，再交给内核注册。
-static int start_rekernel_genl_server(void) {
+static int prepare_rekernel_genl_server(void) {
   kfunc_lookup_name(genl_register_family);
   if (!kfunc(genl_register_family))
     kfunc_lookup_name(__genl_register_family);
@@ -363,6 +362,11 @@ static int start_rekernel_genl_server(void) {
       || !kvar(init_net))
     return -EOPNOTSUPP;
 
+  return 0;
+}
+
+// 静态内存块清零、填写配置，再交给内核注册。
+static int start_rekernel_genl_server(void) {
   struct genl_family* family = &rekernel_genl_family;
   struct genl_family_config* config = genl_family_config(family);
   unsigned int n_mcgrps = 1;
@@ -954,23 +958,28 @@ static void tcp_rcv_before(hook_fargs2_t* args, void* udata) {
   rekernel_report(NETWORK, version, data_len, NULL, uid, NULL, true);
 }
 
-static int binder_cleanup_hook_init(void) {
+static int prepare_binder_cleanup_hook(void) {
   binder_vendor_record = (void*)kallsyms_lookup_name("__tracepoint_android_vh_binder_transaction_record");
   binder_proc_dec_tmpref = (void*)kallsyms_lookup_name_by_suffix("binder_proc_dec_tmpref");
-  int rc = -ENOENT;
-  if (binder_vendor_record && binder_proc_dec_tmpref && trace && kfunc(copy_from_user_nofault)
-      && kfunc(binder_alloc_copy_from_buffer) && kfunc(tracepoint_probe_register)
-      && kfunc(tracepoint_probe_unregister)) {
-    rc = binder_vendor_record_abi();
-    if (!rc)
-      rc = tracepoint_probe_register(binder_vendor_record, binder_vendor_transaction_record, NULL);
+  if (!binder_vendor_record || !binder_proc_dec_tmpref || !kvar(__tracepoint_binder_transaction)
+      || !kfunc(copy_from_user_nofault) || !kfunc(tracepoint_probe_register) || !kfunc(tracepoint_probe_unregister)
+      || !kfunc(binder_alloc_copy_from_buffer))
+    return -ENOENT;
+  return binder_vendor_record_abi();
+}
+
+static int binder_cleanup_hook_init(int vendor_rc) {
+  int rc = trace ? vendor_rc : -ENOENT;
+  if (!rc) {
+    rc = tracepoint_probe_register(binder_vendor_record, binder_vendor_transaction_record, NULL);
     if (!rc) {
       binder_vendor_record_registered = true;
       logkm("Binder cleanup: android_vh_binder_transaction_record\n");
       return 0;
     }
-    logkm("Binder vendor record unavailable: %d\n", rc);
   }
+  if (rc != -ENOENT)
+    logkm("Binder vendor record unavailable: %d\n", rc);
   if (!binder_proc_transaction) {
     logkm("Binder cleanup unavailable: no validated vendor record or binder_proc_transaction\n");
     return rc;
@@ -985,20 +994,58 @@ static int binder_cleanup_hook_init(void) {
   return 0;
 }
 
-static void binder_cleanup_hook_exit(void) {
+static int binder_cleanup_hook_exit(void) {
+  int result = 0;
   if (binder_vendor_record_registered) {
     int rc = tracepoint_probe_unregister(binder_vendor_record, binder_vendor_transaction_record, NULL);
-    if (rc)
+    if (rc) {
       logkm("Failed to unregister Binder vendor record: %d\n", rc);
-    binder_vendor_record_registered = false;
+      result = rc;
+    } else {
+      binder_vendor_record_registered = false;
+    }
   }
   if (binder_proc_hooked) {
     hook_unwrap(binder_proc_transaction, binder_proc_transaction_before, NULL);
     binder_proc_hooked = false;
   }
+  return result;
+}
+
+struct rekernel_hook {
+  void* func;
+  int args;
+  void* before;
+  void* after;
+  void* data;
+  bool installed;
+};
+static struct rekernel_hook rekernel_hooks[4];
+
+static int stop_rekernel_hooks(void) {
+  int result = binder_cleanup_hook_exit();
+  for (unsigned int i = ARRAY_SIZE(rekernel_hooks); i; i--) {
+    struct rekernel_hook* hook = &rekernel_hooks[i - 1];
+    if (hook->installed) {
+      hook_unwrap(hook->func, hook->before, hook->after);
+      hook->installed = false;
+    }
+  }
+  if (trace) {
+    int rc = tracepoint_probe_unregister(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
+    if (!rc)
+      trace = false;
+    else if (!result)
+      result = rc;
+  }
+  return result;
 }
 
 static long inline_hook_init(const char* args, const char* event, void* __user reserved) {
+  if (!kfunc(memset) || !kfunc(memcpy) || !kfunc(memmove) || !kfunc(memcmp) || !kfunc(memchr)) {
+    logkm("kfunc mem* slots are incomplete; refusing to load\n");
+    return -ENOENT;
+  }
 #ifdef CONFIG_KPM_BASELINES
   if (struct_offset.binder_release_abi < 3 || struct_offset.binder_release_abi > 6) {
     logkm("Invalid Binder release ABI: %d\n", struct_offset.binder_release_abi);
@@ -1006,6 +1053,15 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
   }
 #endif
   lookup_name(cgroup_freezing);
+#ifdef CONFIG_KPM_BASELINES
+  // 模板门禁：参考布局模板与已按目标核对的配置必须可区分，未核对就不启用 hook。
+  if (re_baseline_check())
+    return -EINVAL;
+  if (!re_static_genl_layout_valid()) {
+    logkm("Static baseline: invalid Generic Netlink layout\n");
+    return -EINVAL;
+  }
+#endif
 
   kfunc_lookup_name(__alloc_skb);
   kfunc_lookup_name(genlmsg_put);
@@ -1086,35 +1142,47 @@ static long inline_hook_init(const char* args, const char* event, void* __user r
     else
       logkm("Free-async rules unavailable: buffer reader not configured\n");
   }
+  rc = prepare_rekernel_genl_server();
+  if (rc)
+    return rc;
   // 缺少 tracepoint 符号或调用入口时跳过注册，与动态版同样不阻断其余 hook。
+  int vendor_rc = prepare_binder_cleanup_hook();
+  if (vendor_rc && !binder_proc_transaction) {
+    logkm("Binder cleanup unavailable: no validated vendor record or binder_proc_transaction\n");
+    return vendor_rc;
+  }
   if (kfunc(tracepoint_probe_register) && kfunc(tracepoint_probe_unregister) && kvar(__tracepoint_binder_transaction)) {
     rc = tracepoint_probe_register(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
     if (rc == 0)
       trace = true;
   }
+  if (!trace && !binder_proc_transaction)
+    return -ENOENT;
 
-  hook_func(binder_transaction, 5, binder_transaction_before, binder_transaction_after, NULL);
-  hook_func(do_send_sig_info, 4, do_send_sig_info_before, NULL, NULL);
-
-  hook_func(tcp_v4_do_rcv, 2, tcp_rcv_before, NULL, &ipv4_version);
-  hook_func(tcp_v6_do_rcv, 2, tcp_rcv_before, NULL, &ipv6_version);
+  rekernel_hooks[0] =
+      (struct rekernel_hook){binder_transaction, 5, binder_transaction_before, binder_transaction_after, NULL, false};
+  rekernel_hooks[1] = (struct rekernel_hook){do_send_sig_info, 4, do_send_sig_info_before, NULL, NULL, false};
+  rekernel_hooks[2] = (struct rekernel_hook){tcp_v4_do_rcv, 2, tcp_rcv_before, NULL, &ipv4_version, false};
+  rekernel_hooks[3] = (struct rekernel_hook){tcp_v6_do_rcv, 2, tcp_rcv_before, NULL, &ipv6_version, false};
+  for (unsigned int i = 0; i < ARRAY_SIZE(rekernel_hooks); i++) {
+    struct rekernel_hook* hook = &rekernel_hooks[i];
+    rc = hook_wrap(hook->func, hook->args, hook->before, hook->after, hook->data);
+    if (rc) {
+      rc = -EOPNOTSUPP;
+      goto failed;
+    }
+    hook->installed = true;
+  }
 
   rc = start_rekernel_genl_server();
   // 厂商回调注册成功后直接完成 init，不再增加可能失败的初始化步骤。
   if (!rc)
-    rc = binder_cleanup_hook_init();
-  if (rc) {
-    stop_rekernel_genl_server();
-    binder_cleanup_hook_exit();
-    if (trace) {
-      tracepoint_probe_unregister(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
-      trace = false;
-    }
-    hook_unwrap(binder_transaction, binder_transaction_before, binder_transaction_after);
-    hook_unwrap(do_send_sig_info, do_send_sig_info_before, NULL);
-    hook_unwrap(tcp_v4_do_rcv, tcp_rcv_before, NULL);
-    hook_unwrap(tcp_v6_do_rcv, tcp_rcv_before, NULL);
-  }
+    rc = binder_cleanup_hook_init(vendor_rc);
+  if (!rc)
+    return 0;
+failed:
+  stop_rekernel_hooks();
+  stop_rekernel_genl_server();
   return rc;
 }
 
@@ -1126,20 +1194,12 @@ static long inline_hook_control0(const char* ctl_args, char* __user out_msg, int
 }
 
 static long inline_hook_exit(void* __user reserved) {
-  binder_cleanup_hook_exit();
-  int rc = stop_rekernel_genl_server();
-  if (rc)
-    logkm("Failed to unregister Generic Netlink family: %d\n", rc);
-  if (trace)
-    tracepoint_probe_unregister(kvar(__tracepoint_binder_transaction), rekernel_binder_transaction, NULL);
-
-  unhook_func(binder_transaction);
-  unhook_func(do_send_sig_info);
-
-  unhook_func(tcp_v4_do_rcv);
-  unhook_func(tcp_v6_do_rcv);
-
-  return 0;
+  int rc = stop_rekernel_hooks();
+  int genl_rc = stop_rekernel_genl_server();
+  if (genl_rc)
+    logkm("Failed to unregister Generic Netlink family: %d\n", genl_rc);
+  // 失败的注册对象仍持有模块地址，加载器必须保留该实例。
+  return rc ? rc : genl_rc;
 }
 
 KPM_INIT(inline_hook_init);

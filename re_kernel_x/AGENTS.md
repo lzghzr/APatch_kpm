@@ -21,13 +21,21 @@
 README 面向使用者，只写用途、文件选择、界面操作、可见状态、适用范围和更新记录；实现细节、分析步骤与自检说明维护在本文件。静态移植方法见 [静态二进制移植技能](../.agents/skills/kpm-static-binary-port/SKILL.md)，偏移依据见 [偏移分析技能](../.agents/skills/kernel-offset-derivation/SKILL.md)。
 
 ## 静态移植方式
+
+静态模板保留参考布局，模板里 `template_abi` 与必需的 `cred_uid` 初值都是 -1。初始化在启用任何 hook 前
+经 `re_baseline_check()` 拒绝这两处未配置：只填 `cred_uid` 或只改 `template_abi` 都不放行，`template_abi` 取 0
+也不算目标标识。移植时必须从目标证据核对完整配置，不能只把哨兵改成非负值；核对完成后把 `template_abi`
+写成目标自己的标识（正整数，例如内核版本编码）。表顺序、94 字节尺寸和 ABI 3/4/5/6 契约保持；
+这是未移植模板的拒载措施，目标配置的准确性仍由离线分析和独立复核建立。
 针对目标内核 img 离线分析结构体偏移和字段宽度，替换 `re_offsets.c` 中的固定值后构建对应 KPM；有目标 BTF 时，优先从其结构体定义取得字段偏移。模块直接使用这些固定值，偏移核对在移植阶段完成。
+
+静态 Genl 配置须在所有 hook 前通过计数宽度、字段范围、对齐和重叠检查。两种模式均先确认 Genl 依赖及可选 Binder 厂商 record 的 ABI；实际注册失败仍走原有失败清理。
 
 同一份基线包含 Binder 释放函数的四种调用方式，由 `re_offsets.c` 末尾的 `binder_release_abi` 选择。默认模板值为 6，移植时依据目标函数实际签名填写 3/4/5/6，不按 Linux 主版本号选择；无需编译四份 KPM。共同布局复用结构体定义，变化字段和调用选择都通过静态配置替换。初始化在安装 hook 前拒绝非法选择值，不做运行时偏移推导。
 
 使用 KP SDK 的 kfunc_lookup_name/kvar_lookup_name，保留原名查找与编译器后缀查找。当前 SDK 0.13.9 的这两个宏依赖 kallsyms_lookup_name_by_suffix；该函数从 KP 0.13.6 开始导出。运行端需提供这一导出，建议更新至本轮构建使用的 KP 0.13.9。必需内核符号仍在初始化检查；旧 KP 缺少导出时会在初始化之前加载失败。
 
-偏移表单独放在 `.data.re_offsets`，使用 `volatile` 防止编译器把固定值折叠进指令。当前为 46 个小端 `int16_t`，共 92 字节；前 44 项偏移及配置的顺序保持原样，随后为 `binder_proc_tmp_ref`，末项仍为 `binder_release_abi`。字段顺序、文件位置、当前释放 ABI 和 KPM SHA-256 随构建写入同名 `.kpm.json`，布局 schema 为 2，没有固定 `.rodata.re_abi` 标记。模块直接读表。45 项旧基线继续与原配套 JSON 使用，不能把它的配置直接套到新基线。
+偏移表单独放在 `.data.re_offsets`，使用 `volatile` 防止编译器把固定值折叠进指令。当前为 47 个小端 `int16_t`，共 94 字节；前 44 项偏移及配置的顺序保持原样，随后为 `binder_proc_tmp_ref`、`template_abi`（模板确认字段，初值 -1），末项仍为 `binder_release_abi`。字段顺序、文件位置、当前释放 ABI 和 KPM SHA-256 随构建写入同名 `.kpm.json`，布局 schema 为 2，没有固定 `.rodata.re_abi` 标记。模块直接读表。45 项旧基线继续与原配套 JSON 使用，不能把它的配置直接套到新基线。
 
 下一次 Releases 发布统一的非 debug 基线及其布局 JSON，debug 和两份布局同时保存在 Actions artifacts。缺少配套 JSON 时，可用同一构建提交中仓库根目录的 `patch_offsets.py` 和 `re_kernel_x/re_offsets.c` 执行 `baseline <基准.kpm> --source re_kernel_x/re_offsets.c --output <基准.kpm.json>` 生成，无需 NDK；不能用不同提交的字段顺序代替。
 
