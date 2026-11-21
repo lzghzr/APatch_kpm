@@ -6,18 +6,44 @@
 
 ## 1. 前置依赖（按宿主平台）
 
-NDK 只提供交叉编译器；构建 KPM 与运行宿主夹具还需要这些宿主工具：
+工具链之所以默认 GCC，起因是发布流水线用 NDK 构建的用户态 `bin/nm` 在 Android 17 上因 `PT_TLS` 对齐不足被 abort（DEV-117），
+处置与结论见 `docs/records/2026-11-19-gcc-migration-origin.md`：**用户态 nm 走 musl/Zig，KPM 走 GCC**。
 
-| 宿主 | 支持状态 | 需要装的东西 | NDK 目录名 |
-| --- | --- | --- | --- |
-| **Linux x86_64** | ✅ 完整支持（CI 就是这条路） | `python3` ≥ 3.11、`clang`、`make`、`git`、`adb`(可选) | `linux-x86_64` |
-| **macOS（Intel / Apple Silicon）** | ✅ 完整支持 | Xcode Command Line Tools（提供 `clang`、GNU Make 3.81）、`python3`、`git` | `darwin-x86_64`（NDK 的 macOS 包就是这个目录；Makefile 已把 `darwin-arm64` 映射过去，Apple Silicon 经 Rosetta 2 运行） |
-| **Windows** | ⚠ **只支持 WSL2** | WSL2 + Ubuntu，然后按 Linux 那行装 | `linux-x86_64`（在 WSL 里） |
-| **Windows 原生（MSYS2 / Cygwin / Git Bash）** | ❌ 不支持 | — | — |
+**KPM 默认工具链是 Arm GNU Toolchain 12.2.rel1（`aarch64-none-elf`）**，与上游 KernelPatch CI 同一发行版；
+NDK clang 已退为**显式可选**（`make TOOLCHAIN=ndk`）。工具链前缀按 `TARGET_COMPILE` → `AARCH64_NONE_ELF_DIR` →
+`PATH` 上的 `aarch64-none-elf-gcc` 顺序解析，都找不到时 Makefile 直接报错并给出安装方式，**不会静默退回 NDK**。
+
+构建 KPM 与运行宿主夹具还需要这些宿主工具：
+
+| 宿主 | 支持状态 | 需要装的东西 |
+| --- | --- | --- |
+| **Linux x86_64** | ✅ 完整支持（CI 就是这条路） | `python3` ≥ 3.11、`clang`、`make`、`git`、`adb`(可选)、`aarch64-none-elf-gcc` |
+| **macOS（Intel / Apple Silicon）** | ✅ 完整支持 | Xcode Command Line Tools（提供 `clang`、GNU Make 3.81）、`python3`、`git`、`aarch64-none-elf-gcc` |
+| **Windows** | ⚠ **只支持 WSL2** | WSL2 + Ubuntu，然后按 Linux 那行装 |
+| **Windows 原生（MSYS2 / Cygwin / Git Bash）** | ❌ 不支持 | — |
+
+拿工具链（二选一）：
+
+```bash
+# A. 官方二进制：解包后把 bin/ 加进 PATH
+curl -LO https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-x86_64-aarch64-none-elf.tar.xz
+tar xf arm-gnu-toolchain-12.2.rel1-x86_64-aarch64-none-elf.tar.xz
+export PATH="$PWD/arm-gnu-toolchain-12.2.rel1-x86_64-aarch64-none-elf/bin:$PATH"
+
+# B. 已有解包目录：显式告知
+export AARCH64_NONE_ELF_DIR=/path/to/arm-gnu-toolchain-12.2.rel1-x86_64-aarch64-none-elf
+```
+
+显式用 NDK clang 构建（历史实例复现时才需要）：
+
+```bash
+export ANDROID_NDK=/path/to/android-ndk-r26c      # 或 ANDROID_NDK_LATEST_HOME
+make -C nomount TOOLCHAIN=ndk all
+```
 
 Windows 原生无法运行的具体原因：
 
-- `nomount/Makefile` 用 `uname` 推 NDK 目录：`HOST_TAG = $(shell uname | tr A-Z a-z)-$(uname -m)`；MSYS2 下 `uname` 返回 Windows 风格标识，拼出的目录名与 NDK 实际的 `windows-x86_64`／`linux-x86_64` 都对不上。
+- Git Bash/MSYS2 下 `uname` 返回 Windows 风格标识，NDK 路径与 `windows-x86_64`／`linux-x86_64` 目录名对不上（`TOOLCHAIN=ndk` 时才涉及）。
 - 宿主夹具按固定路径 `/usr/bin/clang` 调用编译器（公共树 13 个脚本），Windows 没有这个路径。
 - 多处依赖 POSIX shell（`find`、`xargs`、`mktemp`）与 `/` 分隔的路径假设。
 
@@ -28,7 +54,7 @@ Windows 原生无法运行的具体原因：
 | 你要做什么 | 最小依赖 |
 | --- | --- |
 | 只跑门禁 / 读工具 | `git` + `python3` |
-| 改模块源码并构建 KPM | 上述 + `make` + NDK |
+| 改模块源码并构建 KPM | 上述 + `make` + `aarch64-none-elf-gcc`（或 `TOOLCHAIN=ndk` + NDK） |
 | 跑宿主夹具测试 | 上述 + `clang` |
 | 真机测试 | 上述 + `adb` |
 
@@ -95,9 +121,17 @@ python3 nomount/tools/inspect_target.py \
 随后按 `nomount/AGENTS.md` §验证 的顺序做模块侧工作：静态配置 → 布局自检 → 构建。构建：
 
 ```bash
-export ANDROID_NDK=/path/to/android-ndk-r26c      # 平台需匹配宿主
+# 默认工具链：aarch64-none-elf GCC（Arm GNU Toolchain 12.2.rel1，与上游 KernelPatch CI 同一发行版）
+export AARCH64_NONE_ELF_DIR=/path/to/arm-gnu-toolchain-12.2.rel1-x86_64-aarch64-none-elf
 make -C nomount all                               # dynamic + static 两份 KPM
+
+# 确需 NDK clang（例如复现历史 ndk26.3.11579264 实例）时显式指定：
+#   export ANDROID_NDK=/path/to/android-ndk-r26c
+#   make -C nomount all TOOLCHAIN=ndk
 ```
+
+NoMount 的 Makefile 通过 [kpm_toolchain.mk](../../kpm_toolchain.mk) 按 `TARGET_COMPILE` → `AARCH64_NONE_ELF_DIR` → `PATH` 上的 `aarch64-none-elf-gcc` 选择 GCC；找不到时直接报错，NDK 需要显式选择。
+需要编译器外部 `memset` 的模块独立链接 [kpm_runtime.c](../../kpm_runtime.c)。用 `aarch64-none-elf-readelf -sW <产物>.kpm` 核对最终 ELF 恰有一个已定义的全局 `memset`，并确认没有裸 libc 未定义符号。
 
 静态版需按目标镜像取证后填入 `nomount/local/configs/<目标>.json`（模板与字段说明见 `nomount/AGENTS.md`）。**不得按内核版本号猜偏移**：必要字段取不到就停止初始化。
 

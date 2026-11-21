@@ -78,6 +78,15 @@ shasum -a 256 <登记的 artifacts.path>     # Linux 使用 sha256sum
 - 判据不改动角色报告的写作方式：报告照旧不入库，只是文档不得再链接它们。
 - **发布件里的版本记录按已交付口吻写**：`CHANGELOG` 的当前版本条目描述本版本实际交付的行为，上游同步能覆盖的改动合并成一句，只单列本仓库特有的契约（CLI 迁移、修复、保留策略）。门禁在 `version_consistency` 里检查首条条目的措辞，技术文档中的同名用词不受影响。
 
+## 发布资产的字节身份
+
+Release 上的配套 ZIP 必须与**已验收实例**逐字节一致：出件工具链与构建参数要和审计时相同，换工具链就等于换了一个未经验证的产物。
+
+- 发版后用下载到的资产跑 `python3 tools/check_release_zip.py <zip>`：内层可执行哈希须命中已登记的 `device-tested` 实例，`module.prop` 版本与条目数须与登记一致。
+- 同一检查也进了门禁（`companion_zip_binary`）：本地登记的每个配套 ZIP 都会核对内层哈希与 ELF 可加载性。
+- 该约束只针对**用户态可执行**：`.kpm` 是 ELF64 可重定位目标（ET_REL），由 KernelPatch 的内核侧加载器装入，不经 Bionic，因此 NDK 编的 KPM 不受影响；用户态静态链 Bionic 的 `bin/nm` 才受 TLS 对齐约束。
+- **Bionic 链接的可执行要求 PT_TLS 段对齐 ≥ 64**；低于该值的二进制在 Android 上会以 `TLS segment is underaligned` 直接 abort（DEV-117：NDK 出的 arm64 件对齐 8，在 Android 17 上装不上；Zig/musl 件不受该检查约束）。
+
 ## 交付核验
 
 按 [一轮完整流程](03-round-flow.md) 的 D/E 顺序签名、绑定、保存回执。

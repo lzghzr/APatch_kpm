@@ -59,10 +59,17 @@ def tracked_in(module):
     return {line.strip() for line in out.stdout.splitlines() if line.strip()}
 
 
+CLEAN_DIRS = ("out",)   # 模块构建中间目录（如 zram_zstd 的 codec 产物）；存在即整体挪走
+
+
 def plan_cleanup(mdir, protected_rel):
-    """返回 (要移走的文件, 被保护而跳过的文件)。"""
+    """返回 (要移走的文件/目录, 被保护而跳过的文件)。"""
     protected = {str(Path(p).name) for p in protected_rel}
     to_move, skipped = [], []
+    for name in CLEAN_DIRS:
+        path = mdir / name
+        if path.is_dir() and not any(str(p).startswith(f"{path.name}/") for p in protected_rel):
+            to_move.append(path)
     for pattern in CLEAN_PATTERNS + AMBIGUOUS_PATTERNS:
         for path in sorted(mdir.glob(pattern)):
             if not path.is_file():
@@ -100,6 +107,24 @@ def main():
             die(f"--env 需要 K=V 形式：{item!r}")
         key, _, value = item.partition("=")
         env[key] = value
+
+    # 工具链标签 → TOOLCHAIN 选择：默认切成 GCC 后，`--toolchain ndk*` 若不同步 TOOLCHAIN=ndk
+    # 会被静默按 GCC 构建，导致身份标签与实际产物不符。这里按标签推导并注入，冲突则拒绝。
+    tag = (args.toolchain or "").lower()
+    if tag.startswith("ndk"):
+        want = "ndk"
+    elif tag.startswith("gcc") or tag.startswith("arm-gnu"):
+        want = "gcc"
+    else:
+        want = None
+    if want:
+        given = env.get("TOOLCHAIN")
+        if given and given != want:
+            die(f"--env TOOLCHAIN={given} 与 --toolchain {args.toolchain} 不一致（该标签应对应 {want}）")
+        if not given:
+            env["TOOLCHAIN"] = want
+            args.env = list(args.env) + [f"TOOLCHAIN={want}"]
+            print(f"工具链: 按标签自动注入 TOOLCHAIN={want}")
 
     kind = args.kind
     dirty = bool(ident.git(["status", "--porcelain"]))

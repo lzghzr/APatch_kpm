@@ -6,7 +6,9 @@
 ## 一、实例目录
 
 ```
-artifacts/<module>-<version>+g<source7>.r<recipe8>.kpb<kp7>.ndk<ver>[#n]/
+artifacts/<module>-<version>+g<source7>.r<recipe8>.kpb<kp7>.<toolchain>[#n]/
+# 例：cgroupv2_freeze-1.0.16+gb29565c60f6c.r67bf3c0a.kpb51197a.gcc12.2.1-aarch64-none-elf#1
+# 历史 NDK 实例仍是 .ndk<ver> 形态，按登记原样保留，不追溯改名
 ```
 
 - 目录名必须是**完整 instance_id**，与 `metadata/modules/<module>.json` 的 `builds[].instance_id` 逐字一致；

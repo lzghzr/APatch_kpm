@@ -22,17 +22,17 @@ rek（`re_kernel`）与 rekx（`re_kernel_x`）分别提供动态普通版 `<模
 
 ## 获取公开基准（用户侧）
 
-默认从项目 GitHub Releases 下载非 debug 的 `_baselines.kpm`，无需本地编译、NDK 或 KP SDK。先从目标镜像确认实际释放签名，从同一发布 tag 下载静态基线及同名 `.kpm.json`；从该次构建提交取得根目录 `patch_offsets.py`，放入新的本地目录。核对发布清单，确认下载的是静态模式；debug 基准及全部构建产物保留在 Actions artifacts。补丁工具仅依赖 Python 标准库；镜像分析工具的依赖另行准备。
+默认从项目 GitHub Releases 下载非 debug 的 `_baselines.kpm`，无需本地编译、NDK 或 KP SDK。若模块有调用 ABI 选择项，先确认目标签名。从同一发布 tag 下载静态基线及同名 `.kpm.json`；从该次构建提交取得根目录 `patch_offsets.py`，放入新的本地目录。核对发布清单，确认下载的是静态模式；debug 基准及全部构建产物保留在 Actions artifacts。补丁工具仅依赖 Python 标准库；镜像分析工具的依赖另行准备。
 
-配套 JSON 未提供时，可用 `python3 patch_offsets.py baseline <基准.kpm> --source <模块>/re_offsets.c --output <基准.kpm.json>` 离线生成；源文件必须与基准构建提交一致，用于取得字段顺序，不进行编译。历史基线使用其构建提交配套的工具和布局，不套用当前字段表。
+配套 JSON 未提供时，可用 `python3 patch_offsets.py baseline <基准.kpm> --source <同构建的表定义源文件> --output <基准.kpm.json>` 离线生成；源文件必须与基准构建提交一致，用于取得字段顺序，不进行编译。历史基线使用其构建提交配套的工具和布局，不套用当前字段表。
 
-配套 JSON 提供基线 SHA-256、当前释放配置、表位置、长度与字段顺序。统一基线使用 schema 2；选择值随目标 offsets 一起替换，生成后的 binder_abi 同步为实际配置。旧固定基线的 schema 1 与 `.rodata.re_abi` 只读标记仍受支持，不能把旧代码改成另一种释放签名。替换前核对这些信息，不能混用不同版本的布局文件或将公开基准的模板偏移直接用于目标内核。记录实际 tag、来源和基准哈希；已有核对过的本地基准可复用，没有兼容基准时再转开发构建。
+配套 JSON 提供基线 SHA-256、表位置、长度与字段顺序。有 Binder 释放选择项的统一基线使用 schema 2；选择值随目标 offsets 一起替换，生成后的 binder_abi 同步为实际配置。旧固定基线的 schema 1 与 `.rodata.re_abi` 只读标记仍受支持，不能把旧代码改成另一种释放签名。替换前核对这些信息，不能混用不同版本的布局文件或将公开基准的模板偏移直接用于目标内核。记录实际 tag、来源和基准哈希；已有核对过的本地基准可复用，没有兼容基准时再转开发构建。
 
 ## 构建与发布基准（开发侧）
 
 偏移集中于 `.data.re_offsets`，使用 `volatile` 防止编译器折叠成指令立即数。配置段必须可写、无重定位，不存运行时地址。复用已经核对的共同布局，只把变化字段放入表中。
 
-编译环境由开发者或 GitHub Actions 准备，用户侧只下载与替换。各模块的 `all debug` 生成动态/静态普通版与两份 debug，`baselines` 只生成静态普通/debug 两份。发布规范为 Releases 保留各模块两种普通 KPM 及静态 JSON，四份 KPM 与静态布局都保留在 Actions artifacts。公开基线必须能取得配套 JSON 和同版本补丁工具。实际 CI 状态先核对工作流；双模式发布的维护者补丁建议（本地 `Developer/proposals/2026-10-10-kpm-modes/README.md`）尚待接入，流程改动由维护者落地。
+以模块 Makefile 为准选择目标：例如 `re_kernel_x` 的 `baselines` 生成静态普通版和静态 debug 版，`run_cmd_demo` 和 `nomount` 的同名目标只生成静态普通版。发布资产以[构建工作流](../../../.github/workflows/build-kpm.yml)为准；公开静态基线须配同次构建的 JSON 和对应提交的补丁工具。
 
 ```bash
 make -C re_kernel_x baselines OUT_DIR=../local/baselines-round1
@@ -40,13 +40,13 @@ make -C re_kernel_x baselines OUT_DIR=../local/baselines-round1
 
 使用新的空目录保存每轮基准。仓库正式候选与探索登记按 AGENTS.md 的统一构建入口执行；上述 Makefile 命令仅展示基准目标。
 
-每个静态 KPM 携带同名 `.kpm.json`，记录实际文件 SHA-256、释放调用配置、表的文件偏移、长度、字段顺序及初值。rek、rekx 当前各有 45 项 int16，最后一项为 binder_release_abi；不得省略该项或借用旧 44 项表。表大小和顺序读取本模块、本次构建的布局文件，不能硬编码旧轮次的字节数。默认 JSON 随 KPM 输出，`LAYOUT_DIR` 可指定布局目录；候选构建捕获 `--extra-input patch_offsets.py` 和实际输出参数。
+按静态 KPM 的同名 `.kpm.json` 核对产物 SHA-256、表的文件偏移、长度、字段顺序及初值；有调用选择项时也核对其含义。字段数与表长从这份旁车读取，不从其他模块或旧版本抄取。默认 JSON 随 KPM 输出，`LAYOUT_DIR` 可指定布局目录；候选构建捕获 `--extra-input patch_offsets.py` 和实际输出参数。
 
 ## 目标移植
 
 1. 使用用户指定的 img；多个未指定镜像先列候选。正常入口是 `img → 解包/解压 → Image → 符号与布局分析`；已有裸 Image 与符号表可复用，不能因为回归语料为减小体积保存了裸内核，就要求使用者预先提供裸内核。不下载完整源码树来查少量函数。
 2. 有目标 BTF/头文件时提取布局，否则从镜像的实际函数数据流取偏移，使用另一锚点交叉验证。4.4～5.10 是函数推导的主要适配范围，5.15 及以上默认使用 BTF；缺少数据时仍可尝试已有窗口，困难目标现场分析。离线读取 BTF 不依赖运行内核查询接口；使用目标的类型、宽度和实际签名，具体契约见 [BTF 使用指引](../kernel-offset-derivation/references/btf-layout.md)。源码解释字段含义，版本号和相邻版本布局不能充当证据。
-3. 基于配套基线 JSON 填全目标配置，包括已经确认的 binder_release_abi，保留缺失字段的约定。未知值应停止相关功能或报告待分析。部分偏移正确不表示完整目标移植完成。
+3. 基于配套基线 JSON 填全目标配置，若表含 binder_release_abi 则填入已确认的调用配置，保留缺失字段的约定。未知值应停止相关功能或报告待分析。部分偏移正确不表示完整目标移植完成。
 4. 生成新文件，不覆盖基准或之前的补丁产物：
 
 ```bash
@@ -55,17 +55,9 @@ python3 patch_offsets.py patch local/baselines-round1/re_kernel_x_1.6-20261008_b
 
 原始表也可用 `dump <kpm> --output local/offsets.bin` 导出，按 JSON 的 `fields` 顺序修改小端 int16，再用 `patch <kpm> --blob local/offsets.bin --output local/target.kpm` 替换。使用配套布局文件校验调用选择、完整字段、长度和基线哈希。用目标 BTF/头文件取得布局后，另据实际函数原型或调用点确认签名编号，结构体布局不代替函数签名依据。
 
-## 旧 KP 缺导出的临时处理
+## 旧 KP 兼容路径已退役
 
-目标运行端报 `unknown symbol: kallsyms_lookup_name_by_suffix`，且已确认模块需要查找的目标符号可以按原名取得时，可显式生成临时兼容件；适用于静态和动态 KPM，不按内核版本自动启用。原名查找会失去编译器后缀兜底，不能把 4.4 版本号当作等价保证。
-
-```bash
-python3 patch_offsets.py legacy-kp local/target.kpm --output local/target-legacy.kpm
-```
-
-只替换 ELF 未定义导入的字符串，保留代码、重定位、偏移表和模块信息，输出新 KPM 与 `.compat.json` 来源哈希收据。存在配套布局 JSON 时先验证，再生成哈希更新的输出布局；布局另存时用 `--layout <文件>`。动态版不要求静态偏移表。原始候选和清单保留，派生产物单独记录哈希并交 Tester 验证。
-
-这是 KP 兼容问题修复前的临时入口，构建与发布不默认应用。运行端 KP 修复后使用原始产物；入口及其专用自检可删除。
+4.4～5.10 的现行做法是使用带 hotpatch 修复的 KernelPatch 和未经 `legacy-kp` 变换的模块。修复在 KP 侧，按机型与内核准备；已有派生件、工具及设备记录仅供历史核查，不再生成新派生件。适用条件与行为判据见[低版本兼容裁定](../../../docs/process/10-binary-adaptation.md)。
 
 ## 碎片化旧内核的现场适配
 
@@ -79,10 +71,11 @@ python3 patch_offsets.py legacy-kp local/target.kpm --output local/target-legacy
 
 ## 验证边界
 
-- 偏移替换前后只允许配置段范围内变化，代码、符号、重定位和模块元数据保持逐字节一致；统一基线的释放选择只在表内变化，旧固定 ABI 标记保持逐字节一致。对 JSON 和 blob 两种路径都做往返检查。临时 `legacy-kp` 操作另核对仅目标导入的字符串范围改变，其余符号名称及所有其它字节不变。
+- 偏移替换前后只允许配置段范围内变化，代码、符号、重定位和模块元数据保持逐字节一致；统一基线的释放选择只在表内变化，旧固定 ABI 标记保持逐字节一致。对 JSON 和 blob 两种路径都做往返检查。
 - 重新枚举 ELF 的全部未定义导入，与实际 KP SDK 导出比较。`-fno-builtin` 仍可能留下裸 `memcpy`/`memset`，不能只看编译成功。
 - ARM64 使用 `-mgeneral-regs-only -ffixed-x18 -mno-outline-atomics`，检查真实反汇编的 FP/SIMD/SVE；按指令行解析，避免 `\s` 跨行把符号名认成寄存器。
 - 主机 ASan/UBSan 验证业务、边界和失败路径，目标锁、hook、真实 ACK、卸载和应用响应需单独验证。不得把离线检查写成 Android 实机通过。
+- 真机分两种输入分别记录：对设计为未配置即拒载的模板，在本次启动从未成功加载同名模块的环境中，检查预期错误、诊断及拒载后的设备存活；对按目标填好的产物，核对实际加载的是该文件，再验证依赖这份配置的功能。模板拒载与配置件加载各自绑定产物身份，不能用一项代替另一项。
 - 记录完整 commit、构建实例和产物 SHA-256；脏树只记探索，附源树指纹。原报告、清单和归档产物保留。
 
 自检入口：`python3 re_kernel_x/tools/test_static.py --baselines <基准目录>`。

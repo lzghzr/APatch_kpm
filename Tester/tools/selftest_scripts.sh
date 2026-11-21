@@ -20,6 +20,7 @@ cd "$REPO" || exit 2
 SELFTEST_FREEZE_COMMIT="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
 
 WORK="${WORK:-local/keep/evidence/tester-raw/selftest}"
+[[ "$WORK" = /* ]] || WORK="$REPO/$WORK"
 BIN="$WORK/bin"
 STATE="$WORK/state"
 rm -rf "$WORK"
@@ -77,6 +78,22 @@ CASE_OUT=""
 check_rc()  { [ "$3" -eq "$2" ] && ok "$1 (rc=$3)" || { bad "$1 期望 rc=$2 实际 rc=$3"; sed -n '1,30p' "$CASE_OUT"; }; }
 check_has() { grep -qF -- "$3" "$2" && ok "$1" || bad "$1（未找到：$3）"; }
 check_not() { grep -qF -- "$3" "$2" && bad "$1（不应出现：$3）" || ok "$1"; }
+check_cmd_has() {
+  local name="$1" needle="$2"
+  if [ -f "$STATE/cmd_history.log" ] && grep -Eq -- "$needle" "$STATE/cmd_history.log"; then
+    ok "${name}"
+  else
+    bad "${name}（mock 历史未记录命令: ${needle}）"
+  fi
+}
+check_cmd_not() {
+  local name="$1" needle="$2"
+  if [ -f "$STATE/cmd_history.log" ] && grep -Eq -- "$needle" "$STATE/cmd_history.log"; then
+    bad "${name}（mock 历史不应出现命令: ${needle}）"
+  else
+    ok "${name}"
+  fi
+}
 check_row_value() {
   local name="$1" file="$2" field="$3" value="$4" needle
   needle="$(printf '| %s | `%s` |' "$field" "$value")"
@@ -94,11 +111,12 @@ run() {  # run <名称> <场景> <OBSERVE> <命令...>
   local name="$1" scen="$2" obs="$3"; shift 3
   rm -rf "$STATE"; mkdir -p "$STATE"
   CASE_DIR="$WORK/cases/$name"
-  mkdir -p "$CASE_DIR/runs" "$CASE_DIR/esc" "$CASE_DIR/env" "$CASE_DIR/ev"
+  mkdir -p "$CASE_DIR/runs" "$CASE_DIR/esc" "$CASE_DIR/env" "$CASE_DIR/ev" "$CASE_DIR/raw"
+  CASE_DIR="$(cd "$CASE_DIR" && pwd)"
   CASE_OUT="$CASE_DIR/out.txt"
   MOCK_DIR="$STATE" MOCK_SCEN="$scen" ADB="$BIN/adb" FASTBOOT="$BIN/fastboot" \
   TIMEOUT=1 OBSERVE="$obs" POLL=1 TOOL_FREEZE_COMMIT="$SELFTEST_FREEZE_COMMIT" \
-  RUNDIR="$CASE_DIR/runs" ESCDIR="$CASE_DIR/esc" OUTDIR="$CASE_DIR/env" \
+  RUNDIR="$CASE_DIR/runs" ESCDIR="$CASE_DIR/esc" OUTDIR="$CASE_DIR/env" RAW_DIR="$CASE_DIR/raw" \
     "$@" >"$CASE_OUT" 2>&1
   return $?
 }
@@ -167,7 +185,7 @@ if [ "$HAVE_REAL" -eq 1 ]; then
   check_has "MNT-010：报告绑定仪器集合哈希" "$REP" '仪器路径 / 集合 sha256'
   check_has "MNT-010：报告绑定模块登记记录字节哈希" "$REP" '模块登记记录 sha256'
   check_has "正例：加载成功判 PASS" "$LOG" '[PASS]（强）加载成功'
-  check_has "正例：卸载干净判 PASS" "$LOG" '[PASS]（强）卸载干净'
+  check_has "正例：常驻存活判 PASS" "$LOG" '[PASS]（强）常驻存活'
   check_has "正例：存活判据判 PASS" "$LOG" '[PASS]（强）设备存活'
   check_not "正例：无 FAIL 判据" "$LOG" '[FAIL]'
   check_has "正例：报告骨架写判据脚本 hash（C5）" "$REP" 'sha256='
@@ -214,10 +232,6 @@ if [ "$HAVE_REAL" -eq 1 ]; then
   run run_load_sigterm load_sigterm 0 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" --instance-id "$REAL_ID"
   check_rc "run_test/加载被 SIGTERM 143 升级" 90 "$?"
   check_has "加载 143：升级单写明超时/信号" "$(first "$CASE_DIR/esc" .md)" 'module load 超时未返回'
-
-  run run_unload_fail unload_fail 0 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" --instance-id "$REAL_ID"
-  check_rc "run_test/卸载失败" 1 "$?"
-  check_has "卸载失败：卸载判据 FAIL" "$(first "$CASE_DIR/runs" .log)" '[FAIL]（强）卸载干净'
 
   run run_crash crash 1 bash Tester/tools/run_test.sh --kpm "$REAL_KPM" --module "$REAL_MODULE" --instance-id "$REAL_ID"
   check_rc "run_test/崩溃升级" 90 "$?"
@@ -372,6 +386,276 @@ TIMEOUT=1 \
     --out "$CASE_DIR/explicit" >"$CASE_OUT" 2>&1
 check_rc "collect_evidence/--out 显式目录" 0 "$?"
 check_has "证据：--out 生效" "$(ls -d "$CASE_DIR"/explicit/*/ 2>/dev/null | head -1)/README.md" '升级证据'
+
+# ---- 13. MNT-022: 已有同名实例拦截 / 完整日志保留 / 拒载场景正反用例 ----------
+# 合成记录只在隔离的 mock 仓库标准目录（不污染发布树，生产代码不使用任何 MODULE_RECORD 后门）
+MOCK_REPO="$(cd "$WORK" && pwd)/mock_repo"
+rm -rf "$MOCK_REPO"
+mkdir -p "$MOCK_REPO/metadata/modules"
+mkdir -p "$MOCK_REPO/Tester/tools"
+mkdir -p "$MOCK_REPO/Tester/reports/runs" "$MOCK_REPO/Tester/reports/escalations"
+
+# 复制 Tester 工具到 mock 仓库
+cp -p "$REPO/Tester/tools/"*.sh "$MOCK_REPO/Tester/tools/"
+chmod +x "$MOCK_REPO/Tester/tools/"*.sh
+
+# 准备测试产物
+KPM_RE="$MOCK_REPO/dummy_re_kernel_8.0.0.kpm"
+printf 'MOCK-REKERNEL-BYTES\n' > "$KPM_RE"
+KPM_RE_SHA="$(sha256_hex < "$KPM_RE")"
+
+KPM_NOMOUNT="$MOCK_REPO/dummy_nomount_1.0.0.kpm"
+printf 'MOCK-NOMOUNT-BYTES\n' > "$KPM_NOMOUNT"
+KPM_NOMOUNT_SHA="$(sha256_hex < "$KPM_NOMOUNT")"
+
+# 在 mock 仓库标准目录生成登记记录
+cat > "$MOCK_REPO/metadata/modules/re_kernel.json" <<JSON
+{
+  "module": "re_kernel",
+  "name": "re_kernel",
+  "kpm_name": "re_kernel",
+  "status": "candidate",
+  "builds": [
+    {
+      "instance_id": "re_kernel-mnt022#1",
+      "build_id": "re_kernel-mnt022",
+      "source_commit": "$SELFTEST_FREEZE_COMMIT",
+      "artifacts": [
+        {
+          "path": "dummy_re_kernel_8.0.0.kpm",
+          "sha256": "$KPM_RE_SHA"
+        }
+      ]
+    }
+  ]
+}
+JSON
+
+cat > "$MOCK_REPO/metadata/modules/nomount.json" <<JSON
+{
+  "module": "nomount",
+  "name": "NoMount",
+  "kpm_name": "NoMount",
+  "status": "candidate",
+  "builds": [
+    {
+      "instance_id": "nomount-mnt022#1",
+      "build_id": "nomount-mnt022",
+      "source_commit": "$SELFTEST_FREEZE_COMMIT",
+      "artifacts": [
+        {
+          "path": "dummy_nomount_1.0.0.kpm",
+          "sha256": "$KPM_NOMOUNT_SHA"
+        }
+      ]
+    }
+  ]
+}
+JSON
+
+# 用例 1：已有同名实例时拒绝加载（旧记录在场 - 运行列表，Tester 不执行模块热卸载，换件须重启）
+run mnt022_already_loaded already_loaded 0 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1"
+check_rc "MNT-022/已有同名实例时在加载前停" 3 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：说明 Tester 不执行热卸载且换件须重启" "$LOG" 'Tester 不执行模块热卸载'
+check_cmd_not "MNT-022：已有实例时 mock 命令未调用 kpm unload" 'kpm unload|module unload'
+check_cmd_not "MNT-022：已有实例时 mock 命令未调用 kpm load" 'kpm load|module load'
+
+# 用例 2：实际管理名与 metadata key 不同时拦截（NoMount vs nomount）
+MOCK_RUNNING_MODULE="NoMount" run mnt022_nomount_already_loaded already_loaded 0 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_NOMOUNT" --module "nomount" --instance-id "nomount-mnt022#1"
+check_rc "MNT-022/管理名不同(NoMount)在场时拦截" 3 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：识别实际管理名 NoMount 已在运行" "$LOG" '模块 NoMount（key: nomount）已在运行列表中'
+check_cmd_not "MNT-022：管理名已在场时 mock 命令未调用 kpm unload" 'kpm unload|module unload'
+check_cmd_not "MNT-022：管理名已在场时 mock 命令未调用 kpm load" 'kpm load|module load'
+
+# 用例 3：模块清单读取失败时在加载前停（清单读失败）
+run mnt022_list_fail list_fail 0 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1"
+check_rc "MNT-022/清单读取失败在加载前停" 3 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：日志说明清单读取失败" "$LOG" '模块清单读取失败'
+check_cmd_not "MNT-022：清单失败时 mock 命令未调用 kpm load" 'kpm load|module load'
+
+# 用例 4：保留完整内核日志（不执行 dmesg -c，保留完整日志）
+run mnt022_dmesg_preserved ok 1 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" --no-unload
+check_rc "MNT-022/测试正常执行" 0 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：日志记录保留完整内核日志" "$LOG" '保留完整内核日志快照（不执行 dmesg -c'
+check_cmd_has "MNT-022：执行了 kpm load" 'kpm load|module load'
+check_cmd_not "MNT-022：测试全程 mock 命令未调用 dmesg -c" 'dmesg -c'
+check_cmd_not "MNT-022：测试全程 mock 命令未调用 kpm unload" 'kpm unload|module unload'
+check_has "MNT-022：私有原始证据保存预载日志" "$CASE_DIR/raw/dmesg_pre_load.log" 'Linux version'
+check_has "MNT-022：私有原始证据保存加载后日志" "$CASE_DIR/raw/dmesg_post_load.log" 'Linux version'
+
+# 用例 5：拒载场景/旧成功记录在场拦截（KP 标准日志 "[re_kernel] succeed with [base]"）
+run mnt022_reject_old_record reject_old_record 0 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" \
+  --expect-reject "-22" --clean-boot-credential "boot-old-1111:re_kernel"
+check_rc "MNT-022/拒载场景: 曾成功加载记录在场拦截" 3 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：拒载场景拦截已有成功记录" "$LOG" '已有成功记录'
+check_cmd_not "MNT-022：旧成功记录在场时 mock 未调用 kpm load" 'kpm load|module load'
+
+# 用例 6：拒载场景/未提供操作人核验凭据拦截（不能仅靠 dmesg 第一行接近零断言从未加载）
+run mnt022_reject_no_credential ok 0 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" \
+  --expect-reject "-22"
+check_rc "MNT-022/拒载场景: 缺操作人凭据拦截" 3 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：拒载场景拦截缺操作人核验凭据" "$LOG" '未提供按本轮启动与模块绑定的操作人已核验凭据'
+check_cmd_not "MNT-022：缺凭据时 mock 未调用 kpm load" 'kpm load|module load'
+
+# 用例 7：拒载场景/凭据未严格绑定目标模块拦截（boot-only 拦截：不能只有 boot_id 或前缀通配）
+run mnt022_reject_boot_only ok 0 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" \
+  --expect-reject "-22" --clean-boot-credential "boot-old-1111"
+check_rc "MNT-022/拒载场景: 凭据未绑定模块(boot-only)拦截" 3 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：拒载场景拦截 boot-only 凭据" "$LOG" '操作人凭据未严格绑定目标模块'
+check_cmd_not "MNT-022：boot-only 凭据时 mock 未调用 kpm load" 'kpm load|module load'
+
+# 用例 8：拒载场景/操作人凭据与当前 boot_id 不一致拦截
+run mnt022_reject_bad_credential ok 0 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" \
+  --expect-reject "-22" --clean-boot-credential "boot-wrong-0000:re_kernel"
+check_rc "MNT-022/拒载场景: 凭据与 boot_id 不匹配拦截" 3 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：拒载场景拦截凭据不匹配" "$LOG" '操作人凭据（boot-wrong-0000:re_kernel）与当前 boot_id（boot-old-1111）或目标模块不一致'
+check_cmd_not "MNT-022：凭据不匹配时 mock 未调用 kpm load" 'kpm load|module load'
+
+# 用例 9：拒载场景/拒载前日志读取失败应在加载前停
+run mnt022_reject_pre_dmesg_fail reject_pre_dmesg_fail 0 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" \
+  --expect-reject "-22" --clean-boot-credential "boot-old-1111:re_kernel"
+check_rc "MNT-022/拒载场景: 前置 dmesg 读失败在加载前停" 3 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：日志说明前置内核日志读取失败" "$LOG" '内核日志读取失败'
+check_cmd_not "MNT-022：前置日志失败时 mock 未调用 kpm load" 'kpm load|module load'
+
+# 用例 10：NoMount 真实拒载正例（CLI 非零 + 内核本次窗口出现专用诊断）判 PASS
+run mnt022_nomount_reject_clean_ok nomount_reject_clean_ok 1 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_NOMOUNT" --module "nomount" --instance-id "nomount-mnt022#1" \
+  --expect-reject "refusing to load \(-22\)" --clean-boot-credential "boot-old-1111:NoMount"
+check_rc "MNT-022/NoMount 真实正例: 窗口专用诊断判 PASS" 0 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+REP="$(first "$CASE_DIR/runs" .md)"
+check_has "MNT-022：凭据核验通过" "$LOG" '拒载场景凭据核验通过'
+check_cmd_has "MNT-022：拒载验证执行了 kpm load" 'kpm load|module load'
+check_cmd_not "MNT-022：拒载验证 mock 未调用 kpm unload" 'kpm unload|module unload'
+check_has "MNT-022：拒载验证判 PASS" "$LOG" '[PASS]（强）拒载验证（未被加载入列表 且 本次窗口出现明确目标错误码与专用诊断）'
+check_has "MNT-022：设备存活判 PASS" "$LOG" '[PASS]（强）设备存活'
+check_has "MNT-022：报告骨架记录拒载模式" "$REP" '拒载验证'
+
+# 用例 11：错误码与专用诊断不匹配（CLI 返回 -95 无专用诊断，不能判通过）
+run mnt022_reject_cli_95_no_diag reject_cli_95_no_diag 1 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" \
+  --expect-reject "refusing to load \(-22\)" --clean-boot-credential "boot-old-1111:re_kernel"
+check_rc "MNT-022/反例: CLI 返回 -95 且无专用诊断判 FAIL" 1 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：无专用诊断判 FAIL" "$LOG" '[FAIL]（强）拒载验证'
+
+# 用例 12：拒载场景/旧日志相同诊断拦截（旧日志诊断不在本次窗口，不能判通过）
+run mnt022_reject_old_dmesg_diag reject_old_dmesg_diag 1 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_NOMOUNT" --module "nomount" --instance-id "nomount-mnt022#1" \
+  --expect-reject "refusing to load \(-22\)" --clean-boot-credential "boot-old-1111:NoMount"
+check_rc "MNT-022/反例: 旧日志相同诊断不在本次窗口判 FAIL" 1 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：旧日志诊断判 FAIL" "$LOG" '[FAIL]（强）拒载验证'
+
+# 用例 13：拒载场景/缺专用诊断参数不能判通过（缺参数不能 PASS）
+run mnt022_reject_no_param reject_clean_ok 1 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" \
+  --expect-reject --clean-boot-credential "boot-old-1111:re_kernel"
+check_rc "MNT-022/反例: 缺专用诊断参数判 FAIL" 1 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：缺参数判 FAIL" "$LOG" '[FAIL]（强）拒载验证'
+
+# 用例 14：拒载场景/观察期证据读不到不能判通过
+run mnt022_reject_post_dmesg_fail reject_post_dmesg_fail 1 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" \
+  --expect-reject "-22" --clean-boot-credential "boot-old-1111:re_kernel"
+check_rc "MNT-022/反例: 观察期证据读不到判 FAIL" 1 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：证据读不到判 FAIL" "$LOG" '[FAIL]（强）拒载验证'
+
+# 用例 15：拒载场景/仅有 unknown symbol（代码缺陷非拒载）不判通过
+run mnt022_reject_unknown_sym reject_clean_fail_unknown_sym 1 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" \
+  --expect-reject "-22" --clean-boot-credential "boot-old-1111:re_kernel"
+check_rc "MNT-022/拒载场景: unknown symbol 缺陷判 FAIL" 1 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：unknown symbol 判 FAIL" "$LOG" '[FAIL]（强）拒载验证'
+
+# 用例 16：拒载场景/无明确内核错误诊断不判通过（不能把任意失败算通过）
+run mnt022_reject_no_diag reject_clean_fail_nodots 0 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" \
+  --expect-reject "-22" --clean-boot-credential "boot-old-1111:re_kernel"
+check_rc "MNT-022/拒载场景: 无有效诊断信息判 FAIL" 1 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：无有效诊断信息判 FAIL" "$LOG" '[FAIL]（强）拒载验证'
+
+# 用例 17：拒载场景/意外成功加载判 FAIL
+run mnt022_reject_unexpected_ok ok 1 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" \
+  --expect-reject "-22" --clean-boot-credential "boot-old-1111:re_kernel"
+check_rc "MNT-022/拒载场景: 模块意外成功加载判 FAIL" 1 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：意外加载成功判 FAIL" "$LOG" '[FAIL]（强）拒载验证'
+
+# 用例 18：拒载场景/后置列表查询失败判 FAIL（查询错误不能当模块不存在）
+run mnt022_reject_post_list_fail reject_post_list_fail 1 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" \
+  --expect-reject "-22" --clean-boot-credential "boot-old-1111:re_kernel"
+check_rc "MNT-022/拒载场景: 后置列表查询失败判 FAIL" 1 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_has "MNT-022：后置列表查询失败判 FAIL" "$LOG" '[FAIL]（强）拒载验证'
+
+# 用例 19：正常首次加载不套用拒载专属前提
+run mnt022_normal_first_load ok 1 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" --no-unload
+check_rc "MNT-022/正常首次加载: 不受拒载专属前提限制正常通过" 0 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_cmd_has "MNT-022：正常首次加载执行了 kpm load" 'kpm load|module load'
+check_cmd_not "MNT-022：正常首次加载 mock 未调用 kpm unload" 'kpm unload|module unload'
+check_cmd_not "MNT-022：正常首次加载 mock 未调用 dmesg -c" 'dmesg -c'
+check_has "MNT-022：正常加载判 PASS" "$LOG" '[PASS]（强）加载成功'
+check_has "MNT-022：常驻存活判 PASS" "$LOG" '[PASS]（强）常驻存活'
+check_not "MNT-022：正常加载不包含拒载核验字样" "$LOG" '拒载场景前置核验'
+
+# 用例 20：常驻存活反例（加载成功但观察期结束消失）对照正常首次加载
+run mnt022_resident_fail resident_fail 1 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" --no-unload
+check_rc "MNT-022/常驻存活反例: 加载成功但观察期消失判 FAIL" 1 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_cmd_has "MNT-022：执行了 kpm load" 'kpm load|module load'
+check_cmd_not "MNT-022：mock 未调用 kpm unload" 'kpm unload|module unload'
+check_has "MNT-022：首次加载判 PASS" "$LOG" '[PASS]（强）加载成功'
+check_has "MNT-022：常驻存活判 FAIL" "$LOG" '[FAIL]（强）常驻存活'
+
+# 用例 21：常驻列表错误反例（加载成功但后续查询失败，查询错误不能当模块不存在）
+run mnt022_resident_list_fail resident_list_fail 1 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1" --no-unload
+check_rc "MNT-022/常驻列表错误反例: 加载成功但后续查询失败判 FAIL" 1 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_cmd_has "MNT-022：执行了 kpm load" 'kpm load|module load'
+check_cmd_not "MNT-022：mock 未调用 kpm unload" 'kpm unload|module unload'
+check_has "MNT-022：首次加载判 PASS" "$LOG" '[PASS]（强）加载成功'
+check_has "MNT-022：常驻存活判 FAIL" "$LOG" '[FAIL]（强）常驻存活'
+
+# 用例 22：默认调用（无 --no-unload）正常执行，不触发卸载
+run mnt022_normal_default ok 1 \
+  bash "$MOCK_REPO/Tester/tools/run_test.sh" --kpm "$KPM_RE" --module "re_kernel" --instance-id "re_kernel-mnt022#1"
+check_rc "MNT-022/默认无--no-unload正常执行" 0 "$?"
+LOG="$(first "$CASE_DIR/runs" .log)"
+check_cmd_has "MNT-022：默认调用执行了 kpm load" 'kpm load|module load'
+check_cmd_not "MNT-022：默认调用 mock 未调用 kpm unload" 'kpm unload|module unload'
+check_cmd_not "MNT-022：默认调用 mock 未调用 dmesg -c" 'dmesg -c'
+check_has "MNT-022：默认调用加载成功判 PASS" "$LOG" '[PASS]（强）加载成功'
+check_has "MNT-022：默认调用常驻存活判 PASS" "$LOG" '[PASS]（强）常驻存活'
 
 echo
 if [ "$FAILS" -eq 0 ]; then

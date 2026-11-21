@@ -162,6 +162,97 @@ def _binding(entry, signature_verified, note="fixture"):
     }
 
 
+def _elf64_with_symtab(path, symbols):
+    """生成只含 `.text/.symtab/.strtab/.shstrtab` 的最小 ELF64，供 `kpm_kfunc_binding` 夹具使用。
+
+    `symbols` 为 `(name, st_shndx, st_info)`：`st_shndx == 0` 表示 UND，非 0 表示 DEF。
+    """
+    def align(n, a=8):
+        return (n + a - 1) // a * a
+
+    shstr = b"\x00"
+    name_off = {}
+    for sec in (".text", ".symtab", ".strtab", ".shstrtab"):
+        name_off[sec] = len(shstr)
+        shstr += sec.encode() + b"\x00"
+
+    strtab = b"\x00"
+    entries = []
+    for name, shndx, info in symbols:
+        entries.append((len(strtab), info, shndx))
+        strtab += name.encode() + b"\x00"
+
+    text = b"\x00\x00\x00\x00"
+    symtab = b"".join(struct.pack("<IBBHQQ", off, info, 0, shndx, 0, 0)
+                      for off, info, shndx in entries)
+
+    off_text = 64
+    off_symtab = align(off_text + len(text))
+    off_strtab = off_symtab + len(symtab)
+    off_shstr = off_strtab + len(strtab)
+    shoff = align(off_shstr + len(shstr))
+
+    shdrs = []
+
+    def sh(name, typ, flags, offset, size, link=0, info=0, entsize=0):
+        shdrs.append(struct.pack("<IIQQQQIIQQ", name, typ, flags, 0, offset, size, link, info, 8, entsize))
+
+    sh(0, 0, 0, 0, 0)
+    sh(name_off[".text"], 1, 6, off_text, len(text))
+    sh(name_off[".symtab"], 2, 0, off_symtab, len(symtab), link=3, info=1, entsize=24)
+    sh(name_off[".strtab"], 3, 0, off_strtab, len(strtab))
+    sh(name_off[".shstrtab"], 3, 0, off_shstr, len(shstr))
+
+    data = bytearray(shoff + 64 * len(shdrs))
+    data[0:16] = b"\x7fELF" + bytes([2, 1, 1, 0]) + b"\x00" * 8
+    data[16:64] = struct.pack("<HHIQQQIHHHHHH", 1, 183, 1, 0, 0, shoff, 0,
+                              64, 0, 0, 64, len(shdrs), 4)
+    data[off_text:off_text + len(text)] = text
+    data[off_symtab:off_symtab + len(symtab)] = symtab
+    data[off_strtab:off_strtab + len(strtab)] = strtab
+    data[off_shstr:off_shstr + len(shstr)] = shstr
+    for index, header in enumerate(shdrs):
+        data[shoff + 64 * index: shoff + 64 * (index + 1)] = header
+    open(path, "wb").write(bytes(data))
+
+
+def _kfunc_binding_cases(gate):
+    """G/K1 回归：KP 填充槽（`kf_mem*`）为 DEF 必须失败，UND 必须通过，隔离件不得再报。
+
+    2026-11-17 实例：1.0.12 的 `kf_memset` 因缺 `extern` 落进模块 `.bss`，KP 不填充 ⇒ 任何内核都装不上，
+    而身份核验仍 0 问题。判据以产物符号表为准，这里用最小 ELF64 夹具把正反两面钉住。
+    """
+    def run(files, quarantine=None):
+        tmp = make_tmp()
+        os.makedirs(os.path.join(tmp, "artifacts", "fixture"), exist_ok=True)
+        for name, symbols in files.items():
+            _elf64_with_symtab(os.path.join(tmp, "artifacts", "fixture", name), symbols)
+        if quarantine:
+            os.makedirs(os.path.join(tmp, "metadata"), exist_ok=True)
+            json.dump({"quarantined": [{"path": p, "reason": "fixture", "issue": "TST-FIXTURE"} for p in quarantine]},
+                      open(os.path.join(tmp, "metadata", "quarantine.json"), "w"))
+        previous = gate.REPO
+        gate.REPO = tmp
+        try:
+            rep = gate.Report()
+            gate.check_kfunc_binding(rep)
+            return rep
+        finally:
+            gate.REPO = previous
+
+    und = [("kf_memset", 0, 0x10), ("kf_memcpy", 0, 0x10), ("kf_schedule", 1, 0x10)]
+    defined = [("kf_memset", 1, 0x11)]
+    good = run({"und.kpm": und})
+    bad = run({"def.kpm": defined})
+    hidden = run({"def.kpm": defined}, quarantine=["artifacts/fixture/def.kpm"])
+    return {
+        "und_passes": not good.failures,
+        "def_fails": bool(bad.failures),
+        "other_kf_def_ok": not good.failures,       # 夹具里 kf_schedule 是 DEF，属允许形态
+        "quarantine_skips": not hidden.failures and bool(hidden.checks),
+    }
+
+
 def _run_checks():
     """返回 [(名称, 是否通过, 说明)]；不写任何仓库文件（只用临时目录）。"""
     results = []
@@ -193,6 +284,45 @@ def _run_checks():
         if value is not True and (gate_ok or verify_ok):
             mismatches.append(f"{value!r} 应当失败")
     results.append(("signature_parity", not mismatches, "; ".join(mismatches) or "6 种取值两处判据一致"))
+
+    # 1b) 配方指纹与工具链路径解耦（AUD-046）：同一编译器字节、两种安装根 ⇒ v2 哈希相同，
+    #     历史口径（含绝对路径）仍各自不同，且 verify 的比较函数两种口径都接受。
+    try:
+        import tempfile as _tempfile
+        real_tc = os.environ.get("AARCH64_NONE_ELF_DIR") or str(Path.home() / "tools" / "aarch64-none-elf")
+        roots, caps = [], {}
+        if os.path.isdir(real_tc):
+            base = _tempfile.mkdtemp(prefix="aud046-")
+            TEMP_DIRS.append(base)
+            saved = os.environ.get("AARCH64_NONE_ELF_DIR")
+            # `_sample_entry()` 会把 identity.REPO 指向临时夹具仓库且不还原；
+            # 本夹具要在真实仓库上跑 make -n，必须显式指回并复原。
+            saved_repo = identity.REPO
+            identity.REPO = REPO
+            for tag in ("A", "B"):
+                root = os.path.join(base, "tc-" + tag)
+                os.makedirs(root, exist_ok=True)
+                os.symlink(os.path.join(real_tc, "bin"), os.path.join(root, "bin"))
+                roots.append(root)
+                os.environ["AARCH64_NONE_ELF_DIR"] = root
+                caps[tag] = identity.capture_build_recipe("make -C hosts_redirect all")
+            identity.REPO = saved_repo
+            if saved is None:
+                os.environ.pop("AARCH64_NONE_ELF_DIR", None)
+            else:
+                os.environ["AARCH64_NONE_ELF_DIR"] = saved
+            v2_same = caps["A"].get("dry_run_sha256_v2") == caps["B"].get("dry_run_sha256_v2")
+            legacy_diff = caps["A"].get("dry_run_sha256") != caps["B"].get("dry_run_sha256")
+            # 历史兼容：旧记录（legacy 值）在同环境下重算仍能命中
+            legacy_hit = identity.recipe_hash_matches({"dry_run_sha256": caps["A"].get("dry_run_sha256")}, caps["A"])
+            v2_hit = identity.recipe_hash_matches({"dry_run_sha256": caps["A"].get("dry_run_sha256_v2")}, caps["A"])
+            results.append(("recipe_path_free",
+                            bool(v2_same and legacy_diff and legacy_hit and v2_hit),
+                            f"v2 相同={v2_same}；历史口径随路径变化={legacy_diff}；两种记录都能命中={legacy_hit}/{v2_hit}"))
+        else:
+            results.append(("recipe_path_free", None, "本机无 aarch64-none-elf 工具链，跳过"))
+    except Exception as exc:            # 夹具自身异常必须显式失败，不能静默跳过
+        results.append(("recipe_path_free", False, f"夹具异常: {exc}"))
 
     # 2) 验收指纹不一致 → 门禁失败
     bad_entry = dict(entry)
@@ -1261,6 +1391,113 @@ def _run_checks():
         "anchor_only_ok": not dl_check("见 [目标](target.md#小节)\n").failures,
     }
     results.append(("deliverable_links_scope", all(dl_cases.values()), str(dl_cases)))
+    # 26) companion_zip_binary：配套 ZIP 内层可执行必须与登记一致且能在 Android 上加载（DEV-117）。
+    import hashlib as _hashlib2
+    import struct as _struct
+    import zipfile as _zipfile
+
+    def sym_elf(tls_align, bionic=False):
+        ident = b"\x7fELF" + bytes([2, 1, 1]) + b"\x00" * 9
+        phdr = _struct.pack("<IIQQQQQQ", 7, 0, 0, 0, 0, 0, 0, tls_align)   # PT_TLS
+        head = ident + _struct.pack("<HHIQQQIHHHHHH", 2, 183, 1, 0, 64, 0, 0, 64, 56, 1, 0, 0, 0)
+        blob = head + phdr + (b"bionic" if bionic else b"musl")
+        return blob
+
+    cb_root = Path(make_tmp())
+    (cb_root / "metadata" / "modules").mkdir(parents=True)
+    (cb_root / "art").mkdir()
+
+    def cb_case(tls_align, bionic, registered):
+        zbuf = cb_root / "art" / "pkg.zip"
+        payload = sym_elf(tls_align, bionic)
+        with _zipfile.ZipFile(zbuf, "w") as zf:
+            zf.writestr("bin/nm", payload)
+            zf.writestr("module.prop", "version=v9.9\n")
+        digest = _hashlib2.sha256(payload).hexdigest()
+        record = {"module": "cbmod", "packages": [{
+            "kind": "companion-zip", "instance_id": "cb#1", "version": "9.9",
+            "path": "art/pkg.zip", "zip_entries": 2, "status": "device-tested",
+            "inner_bin": {"name": "bin/nm", "sha256": registered(digest)}}]}
+        (cb_root / "metadata" / "modules" / "cbmod.json").write_text(json.dumps(record))
+        gate.REPO = str(cb_root)
+        rep = gate.Report()
+        gate.check_companion_zip_binary(rep)
+        return not rep.failures
+
+    cb_cases = {
+        "musl_align4_通过": cb_case(4, False, lambda d: d),
+        "bionic_align64_通过": cb_case(64, True, lambda d: d),
+        "bionic_align8_被拒": not cb_case(8, True, lambda d: d),
+        "哈希截断_被拒": not cb_case(4, False, lambda d: d[:16]),
+        "哈希不符_被拒": not cb_case(4, False, lambda d: "0" * 64),
+    }
+    gate.REPO = str(REPO)
+    results.append(("companion_zip_binary_scope", all(cb_cases.values()), str(cb_cases)))
+    # 27) 静态基线边车收集：`*.kpm.json` 必须与 `.kpm` 一起被 collect_artifacts 收进同一实例。
+    ident_spec = importlib.util.spec_from_file_location("dsh_identity_sidecar", REPO / "tools" / "identity.py")
+    ident = importlib.util.module_from_spec(ident_spec)
+    ident_spec.loader.exec_module(ident)
+    sc_root = Path(make_tmp())
+    (sc_root / "NoMount_9.9.9.kpm").write_bytes(b"kpm")
+    (sc_root / "NoMount_9.9.9_baselines.kpm").write_bytes(b"kpm-b")
+    (sc_root / "NoMount_9.9.9_baselines.kpm.json").write_bytes(b"{}")
+    got = ident.collect_artifacts("nomount", sc_root, "9.9.9", None)
+    by_variant = {variant: (path.name, [e.name for e in extras]) for variant, path, extras in got}
+    sc_cases = {
+        "动态件无边车": by_variant.get("base") == ("NoMount_9.9.9.kpm", []),
+        "基线件带边车": by_variant.get("baselines") == ("NoMount_9.9.9_baselines.kpm",
+                                                     ["NoMount_9.9.9_baselines.kpm.json"]),
+        "件数正确": len(got) == 2,
+    }
+    results.append(("identity_sidecar_collection", all(sc_cases.values()), str(sc_cases)))
+    # 提交标识解析：缩写与全量都必须被接受。
+    # 2026-11-17 实际缺陷：`git cat-file --batch-check` 输出的第一列是**规范化全量 SHA**，
+    # 旧实现拿它当白名单 ⇒ 记录里写 7 位缩写一律被判「不可解析」。历史记录恰好都写全量，
+    # 缺陷因此长期潜伏；补这条回归，防止换实现时再次退化。
+    head = subprocess.run(["git", "-C", str(REPO), "rev-parse", "HEAD"],
+                          capture_output=True).stdout.decode().strip()
+    commit_cases = {}
+    if len(head) == 40:
+        gate.REPO = str(REPO)
+        commit_cases = {
+            "full_ok": gate.resolve_commit(head),
+            "abbrev_ok": gate.resolve_commit(head[:7]),
+            "short_both_ok": gate.resolve_commits([head[:7], head]) == {head[:7], head},
+            "garbage_rejected": not gate.resolve_commit("0" * 7),
+        }
+    results.append(("commit_id_forms", (all(commit_cases.values()) if commit_cases else None),
+                    str(commit_cases) if commit_cases else "非 git 工作树，跳过"))
+
+    # 公共构建输入只对显式引用生效：无须改变既有候选命令或历史输入集合。
+    root = Path(make_tmp("selftest-shared-kpm-"))
+    mod = root / "example"
+    mod.mkdir()
+    for name in ("kpm_utils.h", "kpm_toolchain.mk", "kpm_runtime.c"):
+        (root / name).touch()
+    makefile = mod / "Makefile"
+    saved_root = identity.REPO
+    try:
+        identity.REPO = root
+        known = {"example/Makefile", "kpm_utils.h"}
+        cases = {
+            "历史入口": ("MYKPM_VERSION := 1.0\n", set()),
+            "仅选择工具链": ("include ../kpm_toolchain.mk\n# 可选 ../kpm_runtime.c\n", {"kpm_toolchain.mk"}),
+            "工具链与运行时": ("include ../kpm_toolchain.mk\nobjs := example.c ../kpm_runtime.c\n",
+                               {"kpm_toolchain.mk", "kpm_runtime.c"}),
+        }
+        shared_cases = {}
+        for label, (recipe, dependencies) in cases.items():
+            makefile.write_text(recipe)
+            shared_cases[label] = set(identity.source_files("example", mod)) == known | dependencies
+        (root / "kpm_runtime.c").unlink()
+        shared_cases["缺失的依赖不能消失"] = "kpm_runtime.c" in identity.source_files("example", mod)
+    finally:
+        identity.REPO = saved_root
+    results.append(("shared_kpm_build_inputs", all(shared_cases.values()), str(shared_cases)))
+
+    # KP 填充槽绑定：`kf_mem*` 为 DEF 必须失败（AUD-055 那类「装不上但身份核验通过」）。
+    kf_cases = _kfunc_binding_cases(gate)
+    results.append(("kfunc_binding", all(kf_cases.values()), str(kf_cases)))
     return results
 
 

@@ -16,8 +16,10 @@ import hashlib
 import json
 import os
 import re
+import struct
 import subprocess
 import sys
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)          # 仓库根（可被夹具改写）
@@ -56,6 +58,9 @@ TESTER_REPORT_REQUIRED = ["身份", "commit", "Build ID", "sha256", "环境事�
 
 HYGIENE_PATTERNS = [
     (re.compile(r"/(Users|Volumes|home)/[A-Za-z0-9._-]+"), "本机绝对路径"),
+    # 本机包管理器路径同样是「本机绝对路径」：/opt/homebrew 只存在于 macOS，
+    # 出现在公开文件里必然是本机环境泄漏（2026-11-17 审计报告 §2/§8 实例）。
+    (re.compile(r"/opt/homebrew/[A-Za-z0-9._/-]+"), "本机绝对路径"),
     (re.compile(r"(?i)\bsuperkey\s*=\s*[A-Za-z0-9]{4,}"), "疑似 superkey 明文"),
     (re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"), "私钥内容"),
     (re.compile(r"(?i)\b(serial|serialno|serial_no)\s*=\s*[A-Za-z0-9]{6,}"), "明文设备序列号"),
@@ -330,6 +335,71 @@ def check_deliverable_links(rep):
     detail = (f"{total} 个相对链接均指向交付文件" if not broken
               else f"{len(broken)} 条不可用：" + "; ".join(broken[:8]) + (" …" if len(broken) > 8 else ""))
     rep.check("deliverable_links", not broken, detail)
+
+
+def check_companion_zip_binary(rep):
+    """配套 ZIP 的内层可执行必须与登记一致，且能在目标 Android 上加载（DEV-117）。"""
+    import zipfile
+    problems, checked = [], 0
+    modules_dir = os.path.join(REPO, "metadata", "modules")
+    if not os.path.isdir(modules_dir):
+        rep.skip("companion_zip_binary", "本地无 metadata/modules（克隆或独立工作树）")
+        return
+    for name in sorted(os.listdir(modules_dir)):
+        if not name.endswith(".json"):
+            continue
+        try:
+            record = json.load(open(os.path.join(modules_dir, name), encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        for package in record.get("packages", []):
+            if package.get("kind") != "companion-zip":
+                continue
+            inner = package.get("inner_bin") or {}
+            path = os.path.join(REPO, package.get("path", ""))
+            if not inner.get("sha256") or not os.path.isfile(path):
+                continue
+            checked += 1
+            try:
+                with zipfile.ZipFile(path) as zf:
+                    payload = zf.read(inner.get("name", "bin/nm"))
+            except (OSError, KeyError, zipfile.BadZipFile) as exc:
+                problems.append(f"{package.get('instance_id')}: 读取内层可执行失败（{exc}）")
+                continue
+            digest = hashlib.sha256(payload).hexdigest()
+            if len(inner["sha256"]) != 64:
+                problems.append(f"{package.get('instance_id')}: 登记的内层哈希不是 64 位十六进制")
+            elif digest != inner["sha256"]:
+                problems.append(f"{package.get('instance_id')}: 内层 {inner.get('name')} 与登记哈希不一致")
+            facts = companion_elf_facts(payload)
+            if facts is None:
+                problems.append(f"{package.get('instance_id')}: 内层可执行不是 ELF64-LE")
+                continue
+            tls, dynamic, bionic = facts
+            if bionic and tls is not None and tls < 64:
+                problems.append(f"{package.get('instance_id')}: Bionic 链接的 TLS 段对齐 {tls} < 64，"
+                                "Android 会 abort（DEV-117）")
+    detail = (f"{checked} 个配套 ZIP 的内层可执行与登记一致且可加载" if not problems
+              else "; ".join(problems[:6]))
+    rep.check("companion_zip_binary", not problems, detail)
+
+
+def companion_elf_facts(data):
+    """(PT_TLS 对齐, 是否动态链接, 是否 Bionic)；非 ELF64-LE 返回 None。"""
+    if data[:4] != b"\x7fELF" or data[4] != 2 or data[5] != 1:
+        return None
+    phoff = struct.unpack_from("<Q", data, 0x20)[0]
+    entsize = struct.unpack_from("<H", data, 0x36)[0]
+    count = struct.unpack_from("<H", data, 0x38)[0]
+    tls, dynamic = None, False
+    for i in range(count):
+        off = phoff + i * entsize
+        kind = struct.unpack_from("<I", data, off)[0]
+        if kind == 7:
+            tls = struct.unpack_from("<Q", data, off + 48)[0]
+        elif kind in (2, 3):
+            dynamic = True
+    return tls, dynamic, dynamic or b"BIONIC" in data or b"bionic" in data
 
 
 def check_metadata_schema(rep):
@@ -890,9 +960,13 @@ def resolve_commits(values, submodule=False):
     result = subprocess.run(["git", "-C", cwd, "cat-file", "--batch-check"],
                             input=("\n".join(values) + "\n").encode(), capture_output=True)
     ok = set()
-    for line in result.stdout.decode(errors="replace").splitlines():
+    # batch-check 输出的第一列是**规范化的全量 SHA**，而调用方传进来的是记录里的原文
+    # （历史记录多为全量，但复核记录常写 7 位缩写）。两者都要接受，否则缩写会被误判为
+    # 「不可解析」——这是工具缺陷，不是记录错误。
+    for requested, line in zip(values, result.stdout.decode(errors="replace").splitlines()):
         fields = line.split()
         if len(fields) >= 2 and fields[1] == "commit":
+            ok.add(requested)
             ok.add(fields[0])
     return ok
 
@@ -1203,6 +1277,163 @@ def check_hygiene(rep):
     rep.check("public_file_hygiene", not problems, "; ".join(problems) if problems else "未发现本机路径/密钥/序列号明文")
 
 
+KP_FILLED_SLOTS = ("kf_memset", "kf_memcpy", "kf_memmove", "kf_memcmp", "kf_memchr")
+
+
+def _elf_symbol_shndx(path):
+    """极简 ELF64 符号表读取：返回 [(name, st_shndx)]。不依赖工具链，干净树可跑。"""
+    import struct
+    data = open(path, "rb").read()
+    if len(data) < 64 or data[:4] != b"\x7fELF" or data[4] != 2:
+        return []
+    e_shoff, = struct.unpack_from("<Q", data, 0x28)
+    e_shentsize, e_shnum = struct.unpack_from("<HH", data, 0x3A)
+    e_shstrndx, = struct.unpack_from("<H", data, 0x3E)
+    if not e_shoff or not e_shnum:
+        return []
+    sections = []
+    for i in range(e_shnum):
+        off = e_shoff + i * e_shentsize
+        name, stype, _flags, _addr, sh_off, size, link, _info, _align, entsize = \
+            struct.unpack_from("<IIQQQQIIQQ", data, off)
+        sections.append({"name": name, "type": stype, "off": sh_off, "size": size,
+                         "link": link, "entsize": entsize})
+    if e_shstrndx >= len(sections):
+        return []
+    str_base = sections[e_shstrndx]["off"]
+    out = []
+    for sec in sections:
+        if sec["type"] != 2 or not sec["entsize"]:   # SHT_SYMTAB
+            continue
+        strtab = sections[sec["link"]]["off"]
+        count = sec["size"] // sec["entsize"]
+        for i in range(count):
+            off = sec["off"] + i * sec["entsize"]
+            st_name, st_info, st_other, st_shndx = struct.unpack_from("<IBBH", data, off)
+            if not st_name:
+                continue
+            end = data.find(b"\x00", strtab + st_name)
+            name = data[strtab + st_name:end].decode("utf-8", "replace")
+            out.append((name, st_shndx))
+    return out
+
+
+
+INSTANCE_RE = re.compile(r"[a-z][a-z0-9_]+-[0-9][A-Za-z0-9._-]*\+[A-Za-z0-9._-]+#[0-9]+")
+
+
+def check_record_coverage(rep):
+    """审计/测试报告里出现过的实例，必须在 metadata 里有对应记录（audits/device_tests/acceptances）。
+
+    报告是本地文件（gitignored），克隆环境不判；只在报告在场时把"报告有、记录无"标成警告。
+    """
+    modules_dir = os.path.join(REPO, "metadata", "modules")
+    recorded, built = {}, {}
+    if os.path.isdir(modules_dir):
+        for name in sorted(os.listdir(modules_dir)):
+            if not name.endswith(".json"):
+                continue
+            try:
+                record = json.load(open(os.path.join(modules_dir, name), encoding="utf-8"))
+            except Exception:
+                continue
+            ids = {b.get("instance_id") for b in record.get("builds", []) or []}
+            for iid in ids:
+                if iid:
+                    built[iid] = name[:-5]
+            seen = set()
+            for key in ("audits", "device_tests", "acceptances"):
+                for entry in record.get(key, []) or []:
+                    if entry.get("instance_id"):
+                        seen.add(entry["instance_id"])
+            recorded.update({iid: seen for iid in ids})
+    report_dirs = [os.path.join(REPO, "Auditor", "reports"), os.path.join(REPO, "Tester", "reports")]
+    missing = {}
+    scanned = 0
+    for root in report_dirs:
+        for dirpath, _dirnames, filenames in os.walk(root):
+            for filename in filenames:
+                if not filename.endswith(".md"):
+                    continue
+                path = os.path.join(dirpath, filename)
+                try:
+                    if time.time() - os.stat(path).st_mtime > 3 * 86400:
+                        continue  # 只看近 3 天报告：历史报告早已按当时口径登记
+                except OSError:
+                    continue
+                try:
+                    text = open(path, encoding="utf-8", errors="replace").read()
+                except Exception:
+                    continue
+                scanned += 1
+                for iid in set(INSTANCE_RE.findall(text)):
+                    # debug 变体按项目约定由审计的「变体差异」结论绑定，不单独要求记录
+                    if "_debug" in iid:
+                        continue
+                    if iid in built and iid not in recorded.get(iid, set()):
+                        missing.setdefault(iid, set()).add(os.path.relpath(path, REPO))
+    if not scanned:
+        rep.skip("record_coverage", "本地无角色报告（Artifacts 未检出），跳过")
+        return
+    detail = "报告%d份，全部实例均有登记记录" % scanned
+    if missing:
+        detail = "；".join("%s（%s）" % (iid, ", ".join(sorted(files))) for iid, files in list(missing.items())[:6])
+        if len(missing) > 6:
+            detail += "；另有 %d 条" % (len(missing) - 6)
+    rep.check("record_coverage", not missing, detail, warn_only=True)
+
+
+def check_kfunc_binding(rep):
+    """G/K1：由 KP 解析填充的 `kf_mem*` 槽在产物里必须是 UND。
+
+    2026-11-17 实例：`cgroupv2_freeze` 1.0.12 因 `kfunc_def(memset)` 少了 `extern`，
+    文件作用域下成为暂定定义，`-fno-common` 把它落进模块自己的 `.bss`（DEF）。
+    KP 只解析 UND 符号 ⇒ 该槽恒为 0，加载期门禁恒返回 `-ENOENT`，模块在任何内核都装不上，
+    而 `identity.py verify` 仍然 0 问题（身份核验看不到符号绑定）。
+    其它 `kf_*` 允许 DEF：那一类在模块 init 里用 `kfunc_lookup_name()` 本地赋值。
+    """
+    problems = []
+    checked = 0
+    skipped = []
+    quarantined = set()
+    qpath = os.path.join(REPO, "metadata", "quarantine.json")
+    if os.path.exists(qpath):
+        try:
+            for entry in json.load(open(qpath, encoding="utf-8")).get("quarantined", []):
+                quarantined.add(entry.get("path"))
+        except Exception as exc:
+            problems.append(f"metadata/quarantine.json 解析失败 {exc}")
+    art = os.path.join(REPO, "artifacts")
+    if not os.path.isdir(art):
+        rep.check("kpm_kfunc_binding", True, "artifacts/ 不存在，跳过")
+        return
+    for root, _dirs, files in os.walk(art):
+        for name in files:
+            if not name.endswith(".kpm"):
+                continue
+            path = os.path.join(root, name)
+            rel = os.path.relpath(path, REPO)
+            if rel in quarantined:
+                skipped.append(rel)
+                continue
+            try:
+                syms = _elf_symbol_shndx(path)
+            except Exception as exc:  # pragma: no cover - 坏文件不应让门禁崩
+                problems.append(f"{os.path.relpath(path, REPO)} 解析失败 {exc}")
+                continue
+            if not syms:
+                continue
+            checked += 1
+            for sym, shndx in syms:
+                if sym in KP_FILLED_SLOTS and shndx != 0:
+                    problems.append(f"{os.path.relpath(path, REPO)}: {sym} 是 DEF（应由 KP 填充，须为 UND）")
+    note = f"{checked} 份产物：KP 填充槽均为 UND"
+    if skipped:
+        note += f"；{len(skipped)} 份已隔离（见 metadata/quarantine.json）"
+    rep.check("kpm_kfunc_binding", not problems,
+              "; ".join(problems) if problems else note)
+
+
 def main():
     ap = argparse.ArgumentParser(description="仓库门禁")
     ap.add_argument("--strict", action="store_true", help="产物必须在场且哈希可复算")
@@ -1224,6 +1455,7 @@ def main():
                      "handoff_registration"):
             rep.skip(name, "便携模式：依赖本地 metadata/、报告与产物，未检出")
         check_hygiene(rep)
+        check_kfunc_binding(rep)
         print("门禁模式：portable（克隆自检；不校验身份、验收与交付）")
         print()
         return rep.summary()
@@ -1231,6 +1463,7 @@ def main():
     check_ci_markers(rep)
     check_doc_links(rep)
     check_deliverable_links(rep)
+    check_companion_zip_binary(rep)
     check_metadata_schema(rep)
     check_report_integrity(rep, args.strict)
     check_identity_hashes(rep, args.strict)
@@ -1241,7 +1474,9 @@ def main():
     check_developer_artifacts(rep)
     check_handoff_registration(rep)
     check_auditor_independence(rep)
+    check_record_coverage(rep)
     check_hygiene(rep)
+    check_kfunc_binding(rep)
     print(f"门禁模式：{'strict（验收/发布）' if args.strict else 'regular'}")
     print()
     return rep.summary()

@@ -69,7 +69,7 @@ python3 run.py --image B2N-416G_boot.img               # 只对它跑偏移推�
 
 **真机只测一个变体**：`debug` 相对 `release` 只增加日志/断言详细度，因此真机测试**每个目标只测一个变体**（优先 `release`），未测变体由验收以审计确认的「变体差异」结论绑定；审计未确认差异仅限日志/断言时必须两个都测。判据全文见 [docs/process/tester-handbook.md](docs/process/tester-handbook.md) §4.1。
 
-**低版本兼容只做在二进制上（非必需）**：源码与 Makefile **只面向最新 KernelPatch**，不得含任何低版本兼容内容（不得有兼容分支、不得为旧内核改业务实现、不得在 Makefile 里放兼容目标，构建输入也不含兼容工具）；4.4 等旧 KP 目标经 `patch_offsets.py legacy-kp` 对**已构建的 `.kpm` 做字节级变换**得到派生件。派生件必须可追溯（base instance + source_commit + base 哈希 + 工具哈希与命令 + 派生哈希），设备证据/验收若用派生字节须同时写明 base 实例与派生哈希；`kp_compat` 只是**可选**自识别字段，`_legacy` 命名可被接受但非要求。**派生件的生成归 Developer**（随候选交接一并提供；本轮需要而来件缺失时，由维护者先提醒开发者补齐）；**Tester 只做真机测试**，维护者只登记与核对。派生件统一落在 `artifacts/binary-port/<模块>/<派生件 sha256>/<派生件名>`（目标身份记在元数据与回执里，不进路径；生成时用 `patch_offsets.py … --output <该路径>`）。变换工具与契约在派生物要交付或用于真机结论时须经独立复核。KernelPatch 修复 4.4 兼容后删除该路径（规则见 [docs/process/10-binary-adaptation.md](docs/process/10-binary-adaptation.md)）。
+**低版本兼容（4.4～5.10）需要 hotpatch**：这两个大版本要求 KernelPatch 自身带 hotpatch 修复，模块侧用**未变换的原始产物**即可。该修复属于 KernelPatch 侧改动，本仓库不提供构建物；使用者需按自己的机型与内核自行打补丁、重建 KernelPatch。本仓库不再生成 `legacy-kp` 派生件、也不把 4.4 作为支撑路径（裁定 [docs/process/10-binary-adaptation.md](docs/process/10-binary-adaptation.md)）。工具与 `artifacts/binary-port/` 下的既有派生件、既有设备证据保留但标注已退役、不再更新；判据是行为不是版本号（修好的构建能开机且 dmesg 出现 `KP hotpatch backend: framework`）。历史形态见 [docs/process/10-binary-adaptation.md](docs/process/10-binary-adaptation.md)。
 
 当前接入 rek / rekx / run_cmd，其他模块逐个接入，各模块在自己的 Makefile 中维护构建规则，额外输入规则见 `Developer/README.md`。Android 4.4～5.10 是函数推导新增适配范围，5.15 及以上默认使用 BTF；该范围用于安排工作，偏移仍由目标证据取得。
 
@@ -78,9 +78,9 @@ python3 run.py --image B2N-416G_boot.img               # 只对它跑偏移推�
 ```bash
 cd kernel_img/offset_harness && python3 extract_kernel.py --list                # Developer：先看 kernel_img/ 里有什么
 cd kernel_img/offset_harness && python3 extract_kernel.py --image <名字> && python3 run.py --image <名字>   # 指定镜像：img -> 裸 kernel -> 偏移矩阵（输出在 local/keep/target/kernel_offset）
-make -C re_kernel all debug                        # Developer：探索构建（需 NDK）
+make -C re_kernel all debug                        # Developer：探索构建（默认 aarch64-none-elf GCC；TOOLCHAIN=ndk 走 NDK）
 python3 tools/identity.py manifest re_kernel       # Developer/维护者：源树哈希、Build ID 与配方指纹
-python3 tools/build_candidate.py re_kernel --toolchain ndk26.3.11579264 --target "all debug"   # 冻结输入→构建→登记（脏树拒绝）
+python3 tools/build_candidate.py re_kernel --toolchain gcc12.2.1-aarch64-none-elf --target "all debug"   # 冻结输入→构建→登记（脏树拒绝；标签决定工具链）
 python3 tools/selftest_tools.py                    # 工具判据自检（历轮发现的漂移回归）
 python3 tools/freeze_check.py                      # 冻结就绪检查（无干净提交则 Auditor/Tester 无法绑定身份）
 python3 tools/check_repository.py                  # 门禁（结构/链接/身份/版本一致性/卫生）

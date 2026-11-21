@@ -41,7 +41,7 @@ MAX_TOKEN_BYTES = 8192
 MAX_NAME_LEN = 512
 MIN_SYMBOLS = 5000
 MAX_SYMBOLS = 2_000_000
-MAX_PAD = 256                     # 表之间的对齐填充上限
+MAX_PAD = 512                     # 表之间的对齐填充上限
 TYPE_CHARS = set("tTdDbBrRaAwWvVnNuU")
 BODY_CHARS = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.$")
 
@@ -66,7 +66,7 @@ def read_tokens(blob, tt, vals, ti_expected):
         tokens.append(blob[pos:end])
         pos = end + 1
     gap = ti_expected - pos
-    if not 0 <= gap <= 64 or any(blob[pos:ti_expected]):
+    if not 0 <= gap <= 512 or any(blob[pos:ti_expected]):
         return None, False
     if vals[TOKENS - 1] != sum(len(t) + 1 for t in tokens[:TOKENS - 1]):
         return None, False
@@ -92,7 +92,7 @@ def find_token_table(blob):
         vals = struct.unpack_from("<256H", blob, i)
         if vals[0] != 0 or any(vals[k] >= vals[k + 1] for k in range(TOKENS - 1)):
             continue
-        for total in range(vals[255] + 1, vals[255] + 257 + 64):
+        for total in range(vals[255] + 1, vals[255] + 257 + 512):
             tt = i - total
             if tt < 0:
                 break

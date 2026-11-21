@@ -37,7 +37,7 @@ instance_id = <build_id>#<n>
 ## 候选构建事务
 
 ```bash
-export ANDROID_NDK=<本地 NDK 路径>
+export AARCH64_NONE_ELF_DIR=<Arm GNU Toolchain 12.2.rel1 解包目录>   # 默认 gcc；历史实例用 --toolchain ndk<ver> 并设 ANDROID_NDK
 python3 tools/build_candidate.py <module> --toolchain <tag> --target "all debug"
 # 可用 --handoff Developer/reports/handoffs/<唯一文件名>.json 生成交接清单
 ```
@@ -170,6 +170,8 @@ nomount/local/{configs,tests}/         模块专属本地输入（目标静态�
   触发「构建期间构建输入发生变化」而拒绝登记）；默认落在模块目录的写法只适用于不入库的探索。
 - 归档期必须把布局 JSON 复制进该实例的 `artifacts/<instance_id>/`，与 `.kpm` 同目录，**不覆盖**已封存的
   `MANIFEST.json` 与既有字节。
+- 归档期由统一入口自动完成：`tools/identity.py` 的 `collect_artifacts` 把同名 `*.kpm.json` 作为**边车产物**与 `.kpm` 一起归档
+  （自检夹具 `identity_sidecar_collection`）。手工 `record` 时同样适用，不需要单独复制。
 - 登记期由维护者在 `maintainer_records[].baseline_layouts` 记录 `instance_id`、归档 `path`、文件 `sha256`/`size`
   与布局内嵌的 `kpm_sha256`。布局内嵌目标 `.kpm` 的 SHA-256，是它与实例对应的独立判据。
 - 布局缺失或与实例哈希不对应时，该实例的静态移植能力视为未覆盖，不得由其它变体的布局代填。

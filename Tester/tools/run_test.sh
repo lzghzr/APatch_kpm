@@ -33,6 +33,9 @@ POLL="${POLL:-10}"
 ADB="${ADB:-adb}"
 RECOVER=0
 NO_UNLOAD=0
+EXPECT_REJECT=0
+REJECT_DIAG=""
+CLEAN_BOOT_CREDENTIAL=""
 LOAD_ARGS="${LOAD_ARGS:-}"
 COMMIT="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
 
@@ -46,10 +49,21 @@ while [ $# -gt 0 ]; do
     --tool-freeze-commit) TOOL_FREEZE_COMMIT="$2"; shift 2 ;;
     --recover) RECOVER=1; shift ;;
     --no-unload) NO_UNLOAD=1; shift ;;
+    --expect-reject|--reject)
+      EXPECT_REJECT=1
+      if [ $# -ge 2 ] && [[ "$2" != --* ]]; then
+        REJECT_DIAG="$2"; shift 2
+      else
+        shift 1
+      fi
+      ;;
+    --clean-boot-credential|--verified-clean-boot)
+      [ $# -ge 2 ] || { echo "run_test: $1 缺少参数值" >&2; exit 2; }
+      CLEAN_BOOT_CREDENTIAL="$2"; shift 2 ;;
     --load-args)
       [ $# -ge 2 ] || { echo "run_test: --load-args 缺少参数值" >&2; exit 2; }
       LOAD_ARGS="$2"; shift 2 ;;
-    *) echo "用法: run_test.sh --kpm <path> --module <name> [--load-args <args>] [--timeout N] [--observe N] [--tool-freeze-commit SHA] [--instance-id ID] [--recover] [--no-unload]" >&2; exit 2 ;;
+    *) echo "用法: run_test.sh --kpm <path> --module <name> [--expect-reject [diag]] [--load-args <args>] [--timeout N] [--observe N] [--tool-freeze-commit SHA] [--instance-id ID] [--recover] [--no-unload]" >&2; exit 2 ;;
   esac
 done
 
@@ -117,9 +131,9 @@ kpm_run() {
 BLOB_SHA="$(sha256_hex < "$KPM")"
 RECORD="metadata/modules/${MODULE}.json"
 [ -f "$RECORD" ] || { echo "找不到模块登记记录: $RECORD" >&2; exit 2; }
-IDENT="$(python3 - "$RECORD" "$INSTANCE_ID" "$BLOB_SHA" <<'PY'
+IDENT="$(python3 - "$RECORD" "$INSTANCE_ID" "$BLOB_SHA" "$MODULE" <<'PY'
 import hashlib, json, sys
-path, want, blob = sys.argv[1], sys.argv[2], sys.argv[3]
+path, want, blob, mod_name = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 try:
     raw = open(path, "rb").read()
     rec = json.loads(raw.decode("utf-8"))
@@ -138,8 +152,9 @@ hashes = [a.get("sha256") for a in hit.get("artifacts", []) if a.get("sha256")]
 if blob not in hashes:
     print("ERR|产物哈希与登记不一致: 文件 sha256=%s ; 登记=%s" % (blob, ", ".join(hashes))); raise SystemExit(0)
 record_sha = hashlib.sha256(raw).hexdigest()
-print("OK|%s|%s|%s|%s" % (hit.get("instance_id") or "", hit.get("source_commit") or "",
-                           hit.get("build_id") or "", record_sha))
+mgmt_name = rec.get("kpm_name") or rec.get("module_name") or rec.get("name") or rec.get("module") or mod_name
+print("OK|%s|%s|%s|%s|%s" % (hit.get("instance_id") or "", hit.get("source_commit") or "",
+                           hit.get("build_id") or "", record_sha, mgmt_name))
 PY
 )"
 case "$IDENT" in
@@ -147,7 +162,9 @@ case "$IDENT" in
   OK*) : ;;
   *) echo "run_test: 身份核对异常（python3 输出: ${IDENT}）" >&2; exit 2 ;;
 esac
-IFS='|' read -r _ REG_INSTANCE REG_SOURCE_COMMIT REG_BUILD_ID REGISTRY_SHA <<<"$IDENT"
+IFS='|' read -r _ REG_INSTANCE REG_SOURCE_COMMIT REG_BUILD_ID REGISTRY_SHA REG_MGMT_NAME <<<"$IDENT"
+MGMT_NAME="${REG_MGMT_NAME:-$MODULE}"
+MODULE_NAMES_PAT="(${MODULE}|${MGMT_NAME})"
 
 SCRIPT_SHA="$(sha256_hex < "${BASH_SOURCE[0]}")"
 TOOL_COMMIT="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
@@ -368,7 +385,14 @@ case "$PSTORE_RAW" in
   # 空输出就是干净；只有特权通道本身不可用时才退回普通 shell。
   *"not found"*|*"inaccessible"*|*"only root"*) PSTORE_RAW="$(adb_out 'ls -A /sys/fs/pstore/ 2>&1')" ;;
 esac
-BASE_LIST="$(kpm_run "list")"
+BASE_LIST_OUT="$(kpm_run "list")"
+BASE_LIST_RC=$?
+timed_out "$BASE_LIST_RC" && escalate "kpm list 超时未返回（基线无法采集）" 1
+if [ "$BASE_LIST_RC" -ne 0 ] || printf '%s' "$BASE_LIST_OUT" | grep -Eq 'Permission denied|No such file|not found|Error|failed'; then
+  log "模块清单读取失败（rc=${BASE_LIST_RC}: ${BASE_LIST_OUT}）：前置条件未满足，按 C4/A6 不进入加载"
+  exit 3
+fi
+BASE_LIST="$BASE_LIST_OUT"
 
 # pstore 基线判定：空 → 干净；有文件名 → 旧崩溃残留；含错误文本 → 未采集
 if printf '%s' "$PSTORE_RAW" | grep -Eq 'Permission denied|No such file|not found|Error'; then
@@ -382,22 +406,72 @@ else
 fi
 
 if [ -z "$BOOT0" ] || [ -z "$UPTIME0" ]; then
-  log "基线缺失（boot_id='$BOOT0' uptime='$UPTIME0'）：无基线不许加载（C4/A6）"
+  log "基线缺失（boot_id='${BOOT0}' uptime='${UPTIME0}'）：无基线不许加载（C4/A6）"
   exit 3
 fi
-log "基线 boot_id=$BOOT0 uptime=$UPTIME0 pstore=空 已加载模块=[$BASE_LIST]"
+log "基线 boot_id=${BOOT0} uptime=${UPTIME0} pstore=空 已加载模块=[${BASE_LIST}]"
 
-if printf '%s' "$BASE_LIST" | grep -q "$MODULE"; then
-  if [ "$NO_UNLOAD" -eq 1 ]; then
-    log "模块 $MODULE 已在运行（--no-unload 模式：跳过初始 unload，继续测试）"
-  else
-    log "模块 $MODULE 已在运行，先卸载再测（不覆盖旧状态）"
-    kpm_run "unload $MODULE" | tee -a "$LOG"
-  fi
+if printf '%s' "$BASE_LIST" | grep -Eiq "(^|[[:space:]])${MODULE_NAMES_PAT}([[:space:]]|$)"; then
+  log "模块 ${MGMT_NAME}（key: ${MODULE}）已在运行列表中（已有实例）：项目裁定 Tester 不执行模块热卸载，换件须走授权重启；前置条件未满足，按 C4/A6 不进入加载"
+  exit 3
 fi
 
-log "清空 dmesg（只在测试开始前清一次）"
-run_to "$TIMEOUT" "$ADB" shell 'dmesg -c >/dev/null 2>&1 || true' >/dev/null 2>&1
+if [ "$EXPECT_REJECT" -eq 1 ]; then
+  log "拒载场景前置核验：确认本次启动从未成功加载 ${MGMT_NAME}（key: ${MODULE}）"
+  BOOT_DMESG="$(adb_out 'dmesg')"
+  BOOT_DMESG_RC=$?
+  timed_out "$BOOT_DMESG_RC" && escalate "读取 dmesg 超时（拒载前置核验失败）" 1
+  if [ "$BOOT_DMESG_RC" -ne 0 ] || [ -z "$BOOT_DMESG" ] || printf '%s' "$BOOT_DMESG" | grep -Eq 'Permission denied|No such file|not found|Error|read error'; then
+    log "拒载场景前置核验失败：内核日志读取失败（rc=${BOOT_DMESG_RC}）；前置条件未满足，按 C4/A6 停止加载"
+    exit 3
+  fi
+
+  # 1. 核查当前内核日志中是否存在本次启动曾成功加载记录（KP 标准日志格式 "[%s] succeed with [%s]"、嵌入/自动加载与手工加载）
+  if printf '%s\n' "$BOOT_DMESG" | grep -Eiq "(\[ *${MODULE_NAMES_PAT} *\] +succeed +with|load +AP +KPM:? +.*${MODULE_NAMES_PAT}.*rc: +0|kpm.*load.*${MODULE_NAMES_PAT}.*success)"; then
+    log "拒载场景前置核验失败：内核日志中检测到本次启动曾成功加载 ${MGMT_NAME} 的记录（已有成功记录）；按 C4/A6 停止加载"
+    exit 3
+  fi
+
+  # 2. 确认历史完整性：不能靠 dmesg 首行接近零断言从未加载，必须接收按本轮启动及模块绑定的操作人已核验凭据
+  CLEAN_BOOT_CONFIRMED=0
+  if [ -n "$CLEAN_BOOT_CREDENTIAL" ]; then
+    case "$CLEAN_BOOT_CREDENTIAL" in
+      "${BOOT0}:${MODULE}"|"${BOOT0}:${MGMT_NAME}")
+        CLEAN_BOOT_CONFIRMED=1
+        log "拒载场景凭据核验通过：操作人已绑定本轮启动核验凭据（${CLEAN_BOOT_CREDENTIAL}）"
+        ;;
+      "$BOOT0"|"verified:${BOOT0}"*|"${BOOT0}"*)
+        log "拒载场景凭据不合格：操作人凭据未严格绑定目标模块（${CLEAN_BOOT_CREDENTIAL}，必须为 <boot_id>:<module>，不能仅有 boot_id 或前缀通配）"
+        exit 3
+        ;;
+      *)
+        log "拒载场景凭据不匹配：操作人凭据（${CLEAN_BOOT_CREDENTIAL}）与当前 boot_id（${BOOT0}）或目标模块不一致"
+        exit 3
+        ;;
+    esac
+  else
+    log "拒载场景前置核验失败：未提供按本轮启动与模块绑定的操作人已核验凭据（项目裁定：仅凭 list 空或 dmesg 第一行接近零不足以证明从未加载，历史不明）；按 C4/A6 停止加载"
+    exit 3
+  fi
+
+  log "拒载场景前置核验通过：已确认本次启动从未加载 ${MGMT_NAME}（干净且确认的启动）"
+fi
+
+RAW_DIR="${RAW_DIR:-local/keep/evidence/tester-raw/${RUN_ID}}"
+mkdir -p "$RAW_DIR"
+
+log "保留完整内核日志快照（不执行 dmesg -c，存为私有原始证据，以设备时间边界区分新事件）"
+CUR_UPTIME="$(adb_out 'cat /proc/uptime')"
+START_UPTIME_SEC="${CUR_UPTIME%% *}"
+[ -n "$START_UPTIME_SEC" ] || START_UPTIME_SEC="${UPTIME0%% *}"
+PRE_DMESG_FULL="$(adb_out 'dmesg')"
+PRE_DMESG_RC=$?
+if [ "$PRE_DMESG_RC" -eq 0 ] && [ -n "$PRE_DMESG_FULL" ] && ! printf '%s' "$PRE_DMESG_FULL" | grep -Eq 'Permission denied|No such file|not found|Error|read error'; then
+  printf '%s\n' "$PRE_DMESG_FULL" > "$RAW_DIR/dmesg_pre_load.log"
+  log "完整内核日志快照已保存: ${RAW_DIR}/dmesg_pre_load.log（基线时间: ${START_UPTIME_SEC}s）"
+else
+  log "基线完整内核日志读取失败（rc=${PRE_DMESG_RC}）"
+fi
 
 # ---------------------------------------------------------------- 1. 推送并加载
 REMOTE="/data/local/tmp/$(basename "$KPM")"
@@ -416,10 +490,26 @@ LOAD_RC=$?
 printf '%s\n' "$LOAD_OUT" | tee -a "$LOG"
 timed_out "$LOAD_RC" && escalate "module load 超时未返回" 1
 
+# ---------------------------------------------------------------- 1.1 首次加载模块列表核验（独立取证）
+# 加载后立即查询模块列表：按 KP 一行一个管理名解析，查询失败不能当空表
+IMMED_LIST_OUT="$(kpm_run "list")"
+IMMED_LIST_RC=$?
+if timed_out "$IMMED_LIST_RC"; then
+  escalate "kpm list 超时未返回（首次加载核验）" 1
+fi
+IMMED_LIST_VALID=0
+if [ "$IMMED_LIST_RC" -eq 0 ] && ! printf '%s' "$IMMED_LIST_OUT" | grep -Eq 'Permission denied|No such file|not found|Error|failed'; then
+  IMMED_LIST_VALID=1
+fi
+IMMED_LISTED=0
+if [ "$IMMED_LIST_VALID" -eq 1 ]; then
+  printf '%s\n' "$IMMED_LIST_OUT" | grep -Eiq "(^|[[:space:]])${MODULE_NAMES_PAT}([[:space:]]|$)" && IMMED_LISTED=1
+fi
+
 # ---------------------------------------------------------------- 2. 观察窗口（存活=强证据，dmesg=弱证据）
 OBS_BOOT_SAME=1; OBS_UPTIME_MONO=1; OBS_CRASH=0; OBS_UNRESP=0; OBS_SAMPLES=0
 observe() {  # $1 阶段名（仅用于日志）
-  local phase="$1" prev="${UPTIME0%% *}" elapsed=0 up rc cur boot dmesg
+  local phase="$1" prev="${UPTIME0%% *}" elapsed=0 up rc cur boot dmesg window_dmesg
   OBS_UNRESP=0
   while [ "$elapsed" -lt "$OBSERVE" ]; do
     sleep "$POLL"; elapsed=$((elapsed+POLL))
@@ -445,8 +535,18 @@ observe() {  # $1 阶段名（仅用于日志）
       prev="$cur"
     fi
     dmesg="$(adb_out 'dmesg | tail -n 200')"
-    if printf '%s' "$dmesg" | grep -Eq 'Kernel panic|Unable to handle kernel|BUG:|Call trace'; then
-      printf '%s\n' "$dmesg" >> "$LOG"
+    # 诊断限于本次窗口：过滤掉早于本次加载时间边界的条目
+    window_dmesg="$(printf '%s\n' "$dmesg" | awk -v start="${START_UPTIME_SEC:-0}" '
+      match($0, /^\[ *([0-9]+)(\.[0-9]+)?\]/) {
+        ts = substr($0, RSTART + 1, RLENGTH - 2) + 0;
+        in_window = (ts >= start);
+        if (in_window) print $0;
+        next;
+      }
+      { if (in_window) print $0; }
+    ')"
+    if printf '%s' "$window_dmesg" | grep -Eq 'Kernel panic|Unable to handle kernel|BUG:|Call trace'; then
+      printf '%s\n' "$window_dmesg" >> "$LOG"
       OBS_CRASH=1
       break
     fi
@@ -459,33 +559,50 @@ if [ "$OBS_CRASH" -eq 1 ]; then
   escalate "dmesg 出现崩溃特征（Call trace/panic/BUG）——出现即按 07 升级，保留现场不卸载" 0
 fi
 
-# 加载后的模块列表：这是"加载成功"判据的一部分，必须在卸载前取
-LOADED_LISTED=0
-printf '%s' "$(kpm_run "list")" | grep -q "$MODULE" && LOADED_LISTED=1
-
-# ---------------------------------------------------------------- 3. 卸载或常驻存活检查
-if [ "$NO_UNLOAD" -eq 1 ]; then
-  log "跳过卸载阶段（--no-unload 模式：本模块设计为常驻，卸载会触发 UAF）"
-  AFTER_LIST="$(kpm_run "list")"
-  RESIDENT_LISTED=0
-  printf '%s' "$AFTER_LIST" | grep -q "$MODULE" && RESIDENT_LISTED=1
+# 采集加载后完整内核日志并截取本次窗口日志（保存私有原始证据）
+POST_DMESG_FULL="$(adb_out 'dmesg')"
+POST_DMESG_RC=$?
+OBS_DMESG_VALID=0
+OBS_WINDOW_DMESG=""
+if [ "$POST_DMESG_RC" -eq 0 ] && [ -n "$POST_DMESG_FULL" ] && ! printf '%s' "$POST_DMESG_FULL" | grep -Eq 'Permission denied|No such file|not found|Error|read error'; then
+  printf '%s\n' "$POST_DMESG_FULL" > "$RAW_DIR/dmesg_post_load.log"
+  OBS_DMESG_VALID=1
+  OBS_WINDOW_DMESG="$(printf '%s\n' "$POST_DMESG_FULL" | awk -v start="${START_UPTIME_SEC:-0}" '
+    match($0, /^\[ *([0-9]+)(\.[0-9]+)?\]/) {
+      ts = substr($0, RSTART + 1, RLENGTH - 2) + 0;
+      in_window = (ts >= start);
+      if (in_window) print $0;
+      next;
+    }
+    { if (in_window) print $0; }
+  ')"
 else
-  log "卸载模块"
-  UNLOAD_OUT="$(kpm_run "unload $MODULE")"
-  UNLOAD_RC=$?
-  printf '%s\n' "$UNLOAD_OUT" | tee -a "$LOG"
-  timed_out "$UNLOAD_RC" && escalate "module unload 超时未返回" 1
+  log "观察期内核日志读取失败（rc=${POST_DMESG_RC}）"
+fi
 
-  AFTER_LIST="$(kpm_run "list")"
-  STILL_LISTED=0
-  printf '%s' "$AFTER_LIST" | grep -q "$MODULE" && STILL_LISTED=1
+# ---------------------------------------------------------------- 2.1 观察期常驻存活模块列表核验（独立取证）
+# 观察期结束再次查询模块列表：按 KP 一行一个管理名解析，查询失败不能当空表
+RESIDENT_LIST_OUT="$(kpm_run "list")"
+RESIDENT_LIST_RC=$?
+if timed_out "$RESIDENT_LIST_RC"; then
+  escalate "kpm list 超时未返回（常驻检查）" 1
+fi
+RESIDENT_LIST_VALID=0
+if [ "$RESIDENT_LIST_RC" -eq 0 ] && ! printf '%s' "$RESIDENT_LIST_OUT" | grep -Eq 'Permission denied|No such file|not found|Error|failed'; then
+  RESIDENT_LIST_VALID=1
+fi
+RESIDENT_LISTED=0
+if [ "$RESIDENT_LIST_VALID" -eq 1 ]; then
+  printf '%s\n' "$RESIDENT_LIST_OUT" | grep -Eiq "(^|[[:space:]])${MODULE_NAMES_PAT}([[:space:]]|$)" && RESIDENT_LISTED=1
+fi
 
-  log "观察 ${OBSERVE}s（卸载后）"
-  OBS_CRASH=0
-  observe "卸载后"
-  if [ "$OBS_CRASH" -eq 1 ]; then
-    escalate "dmesg 出现崩溃特征（卸载后）" 0
-  fi
+# ---------------------------------------------------------------- 3. 常驻与存活检查（项目裁定：Tester 不执行热卸载，换件走授权重启）
+if [ "$EXPECT_REJECT" -eq 1 ]; then
+  log "拒载场景：跳过常驻检查（模块未成功加载，维持原状）"
+elif [ "$NO_UNLOAD" -eq 1 ]; then
+  log "跳过卸载阶段（--no-unload 模式，模块维持常驻）"
+else
+  log "常驻检查：模块设计为常驻运行（项目裁定：Tester 不执行热卸载，换件走授权重启）"
 fi
 
 # ---------------------------------------------------------------- 4. 判据
@@ -499,11 +616,30 @@ judge() {  # judge <证据强度> <名称> <0/1>
 # 存活判据：观察窗口内无 adb 连续超时、boot_id 不变、uptime 单调
 # （任一不成立时 observe()/escalate() 已经以 90 退出；能走到这里即成立）
 judge "强" "设备存活（整轮：${OBS_SAMPLES} 次采样均响应 + boot_id 不变 + uptime 单调）" "$( [ "$OBS_SAMPLES" -ge 1 ] && [ "$OBS_UNRESP" -eq 0 ] && [ "$OBS_BOOT_SAME" -eq 1 ] && [ "$OBS_UPTIME_MONO" -eq 1 ] && echo 0 || echo 1 )"
-judge "强" "加载成功（rc=0 且无失败特征 且 module list 出现模块）" "$( [ "$LOAD_RC" -eq 0 ] && ! fail_text "$LOAD_OUT" && [ "$LOADED_LISTED" -eq 1 ] && echo 0 || echo 1 )"
-if [ "$NO_UNLOAD" -eq 1 ]; then
-  judge "强" "常驻存活（--no-unload：维持运行且在 module list 中）" "$( [ "$RESIDENT_LISTED" -eq 1 ] && echo 0 || echo 1 )"
+
+if [ "$EXPECT_REJECT" -eq 1 ]; then
+  REJECT_DIAG_OK=0
+  # 必须非零 + 本次窗口明确的目标错误码和专用诊断 + 模块不在列表（首次与观察期末两次核验均有效且未在场）+ 存活 + 证据有效读到；
+  # 缺参数、任意其他非零（如 -95）、unknown symbol、rc=0、旧日志诊断、列表读失败、证据读不到均不通过
+  if [ "$LOAD_RC" -ne 0 ] && [ "$IMMED_LIST_VALID" -eq 1 ] && [ "$IMMED_LISTED" -eq 0 ] && \
+     [ "$RESIDENT_LIST_VALID" -eq 1 ] && [ "$RESIDENT_LISTED" -eq 0 ] && [ "$OBS_DMESG_VALID" -eq 1 ]; then
+    DIAG_POOL="${LOAD_OUT}"$'\n'"${OBS_WINDOW_DMESG}"
+    if [ -n "$REJECT_DIAG" ] && ! printf '%s' "$DIAG_POOL" | grep -Eq 'unknown symbol'; then
+      if printf '%s' "$DIAG_POOL" | grep -Eq "$REJECT_DIAG"; then
+        REJECT_DIAG_OK=1
+      fi
+    fi
+  fi
+  REJECT_JUDGE=1
+  [ "$REJECT_DIAG_OK" -eq 1 ] && REJECT_JUDGE=0
+  judge "强" "拒载验证（未被加载入列表 且 本次窗口出现明确目标错误码与专用诊断）" "$REJECT_JUDGE"
 else
-  judge "强" "卸载干净（rc=0 且无失败特征 且 module list 不含模块）" "$( [ "$UNLOAD_RC" -eq 0 ] && ! fail_text "$UNLOAD_OUT" && [ "$STILL_LISTED" -eq 0 ] && echo 0 || echo 1 )"
+  judge "强" "加载成功（rc=0 且无失败特征 且 module list 出现模块）" "$( [ "$LOAD_RC" -eq 0 ] && ! fail_text "$LOAD_OUT" && [ "$IMMED_LIST_VALID" -eq 1 ] && [ "$IMMED_LISTED" -eq 1 ] && echo 0 || echo 1 )"
+  if [ "$NO_UNLOAD" -eq 1 ]; then
+    judge "强" "常驻存活（--no-unload：维持运行且在 module list 中）" "$( [ "$RESIDENT_LIST_VALID" -eq 1 ] && [ "$RESIDENT_LISTED" -eq 1 ] && echo 0 || echo 1 )"
+  else
+    judge "强" "常驻存活（维持运行且在 module list 中）" "$( [ "$RESIDENT_LIST_VALID" -eq 1 ] && [ "$RESIDENT_LISTED" -eq 1 ] && echo 0 || echo 1 )"
+  fi
 fi
 
 # ---------------------------------------------------------------- 5. 报告骨架 + 日志
@@ -522,6 +658,9 @@ REPORT_HEAD="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
   echo "- 产物 SHA-256: \`$BLOB_SHA\`"
   if [ -n "${LOAD_ARGS}" ]; then
     echo "- 加载参数: \`${LOAD_ARGS}\`"
+  fi
+  if [ "$EXPECT_REJECT" -eq 1 ]; then
+    echo "- 测试模式: 拒载验证 (--expect-reject${REJECT_DIAG:+: $REJECT_DIAG})"
   fi
   echo "- 判据脚本: \`Tester/tools/run_test.sh\` \`sha256=$SCRIPT_SHA\`"
   echo "- 强证据判据通过 $PASS / 失败 ${FAIL}；弱证据（dmesg）崩溃特征命中：$OBS_CRASH"
@@ -554,6 +693,9 @@ REPORT_HEAD="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
   echo "| 产物 sha256 | \`$BLOB_SHA\` |"
   if [ -n "${LOAD_ARGS}" ]; then
     echo "| 加载参数 | \`${LOAD_ARGS}\` |"
+  fi
+  if [ "$EXPECT_REJECT" -eq 1 ]; then
+    echo "| 测试模式 | 拒载验证 (\`--expect-reject\`${REJECT_DIAG:+ \`$REJECT_DIAG\`}) |"
   fi
   echo "| 判据脚本 | \`Tester/tools/run_test.sh\` \`sha256=$SCRIPT_SHA\` |"
   echo

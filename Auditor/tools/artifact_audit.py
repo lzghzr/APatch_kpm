@@ -700,6 +700,9 @@ def main():
         if args.target_version and build.get("version") != args.target_version:
             continue
         for art in build.get("artifacts", []):
+            art_name = art.get("name") or os.path.basename(art.get("path", ""))
+            if art.get("sidecar") or not art_name.endswith(".kpm"):
+                continue
             path = os.path.join(REPO, art["path"])
             if os.path.isfile(path):
                 targets.append((build, path))

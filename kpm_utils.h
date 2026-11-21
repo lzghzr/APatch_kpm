@@ -40,11 +40,11 @@
     unhook(func);
 
 // task id
-#define __GET_CREDID(type, task)                                                             \
-  ({                                                                                         \
-    struct cred *cred = *(struct cred **)((uintptr_t)task + task_struct_offset.cred_offset); \
-    kuid_t ___val = *(kuid_t *)((uintptr_t)cred + cred_offset.type##_offset);                \
-    ___val;                                                                                  \
+#define __GET_CREDID(type, task)                                                            \
+  ({                                                                                        \
+    struct cred* cred = *(struct cred**)((uintptr_t)task + task_struct_offset.cred_offset); \
+    kuid_t ___val = *(kuid_t*)((uintptr_t)cred + cred_offset.type##_offset);                \
+    ___val;                                                                                 \
   })
 
 #define task_uid(task) __GET_CREDID(uid, task)
@@ -235,8 +235,8 @@ static inline int kpm_btf_enum(const struct kpm_btf* btf, const struct btf_type*
   static inline int inst_get_##abbr##_cond(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 3, 0) : -1; }
 #define __INST_GET_COND12(abbr) \
   static inline int inst_get_##abbr##_cond(uint32_t code) { return inst_is_##abbr(code) ? bits32(code, 15, 12) : -1; }
-#define __INST_GET_BIT_INDEX(abbr) \
-  static inline int inst_get_##abbr##_bit(uint32_t code) { \
+#define __INST_GET_BIT_INDEX(abbr)                                                  \
+  static inline int inst_get_##abbr##_bit(uint32_t code) {                          \
     return inst_is_##abbr(code) ? (bit(code, 31) << 5) | bits32(code, 23, 19) : -1; \
   }
 #define __INST_GET_IMM26(abbr) \
@@ -247,13 +247,13 @@ static inline int kpm_btf_enum(const struct kpm_btf* btf, const struct btf_type*
     return inst_is_##abbr(code) ? (int64_t)(int32_t)((uint32_t)inst_get_##abbr##_imm26(code) << 6) >> 4 : -1; \
   }
 
-#define __INST_GET_IMM19_LABEL(abbr)                                                                          \
-  static inline long inst_get_##abbr##_label(uint32_t code) {                                                 \
+#define __INST_GET_IMM19_LABEL(abbr)                                                                            \
+  static inline long inst_get_##abbr##_label(uint32_t code) {                                                   \
     return inst_is_##abbr(code) ? (int64_t)(int32_t)((uint32_t)inst_get_##abbr##_imm19(code) << 13) >> 11 : -1; \
   }
 
-#define __INST_GET_IMM14_LABEL(abbr)                                                                          \
-  static inline long inst_get_##abbr##_label(uint32_t code) {                                                 \
+#define __INST_GET_IMM14_LABEL(abbr)                                                                            \
+  static inline long inst_get_##abbr##_label(uint32_t code) {                                                   \
     return inst_is_##abbr(code) ? (int64_t)(int32_t)((uint32_t)inst_get_##abbr##_imm14(code) << 18) >> 16 : -1; \
   }
 
@@ -590,5 +590,6 @@ __INST_FUNCS(dmb_ishld, 0xFFFFFFFFu, 0xD50339BFu)
 
 // special
 __INST_FUNCS(mrs_sp_el0, 0xFFFFFFE0u, 0xD5384100u)
+__INST_GET_RT(mrs_sp_el0)
 
 #endif /* _KPM_UTILS_H */

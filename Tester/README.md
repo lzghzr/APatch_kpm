@@ -13,7 +13,7 @@
 bash Tester/tools/preflight.sh       # 预检 + 环境事实 + 加载前基线（所有 adb 调用带看门狗）
 bash Tester/tools/run_test.sh --kpm artifacts/<instance_id>/re_kernel_8.0.0.kpm \
      --module re_kernel --timeout 120 --tool-freeze-commit '<完整冻结工具 SHA>' \
-     --instance-id '<build_id>#<n>'   # instance_id 必填；冻结基线建议显式传入
+     --instance-id '<build_id>#<n>' [--expect-reject [diag]] [--clean-boot-credential <token>] # instance_id 必填；换件走授权重启，不执行热卸载
 bash Tester/tools/collect_evidence.sh --build-id <instance_id> --module re_kernel
 bash Tester/tools/selftest_scripts.sh   # 离线自检：mock 设备驱动上面三个脚本的分支与退出码
 ```
@@ -25,7 +25,7 @@ bash Tester/tools/selftest_scripts.sh   # 离线自检：mock 设备驱动上面
 | 0 | 强证据判据通过 | 写实机报告（补功能判据与未覆盖），交维护者验收 |
 | 1 | 判据失败（设备仍可用） | 记录现象与归属，交 Developer 或 Tester 修复 |
 | 2 | 用法/环境错误（缺特权通道、产物不存在、**身份不符**：`--instance-id` 未在册或产物哈希与登记不一致） | 修环境/换正确实例，不算产品缺陷 |
-| 3 | **前置条件未满足**（pstore 残留 / 基线采不到） | 停下问维护者（C4），不得"先加载再说" |
+| 3 | **前置条件未满足**（pstore 残留 / 基线采不到 / 已有同名实例在运行 / 拒载历史不明） | 停下问维护者（C4），换件走授权重启，不得热卸载或直接加载 |
 | **90** | **设备无响应/崩溃/重启** | **停止重试，走升级流程并通知维护者** |
 
 ## 硬约束（摘要，全文在 `02-roles.md`）
@@ -33,7 +33,9 @@ bash Tester/tools/selftest_scripts.sh   # 离线自检：mock 设备驱动上面
 1. **主判据是"设备存活"**（`boot_id` 不变 + `uptime` 单调 + adb 持续响应，强证据）；
    `dmesg` 无崩溃特征只是**弱证据**，只能写"未观察到"，不能写"没有发生"（C1）。
 2. **加载前必须记录基线四项**：`boot_id`、`uptime`、pstore 是否残留旧崩溃、已加载模块；
-   pstore 非空就停下问维护者（C4）。
+   pstore 非空或已有同名模块在运行就停下问维护者（C4）；**Tester 不执行模块热卸载**，换件走授权重启；
+   **保留完整内核日志**，严禁使用 `dmesg -c` 清除现场；
+   拒载测试场景（`--expect-reject`）必须确认为干净且确认的启动，接收操作人核验凭据（`--clean-boot-credential`）。
 3. **判据脚本要绑定**：报告写 `Tester/tools/*.sh` 的路径 + `sha256`；脚本改了旧结论不继承（C5）。
 4. **加载入口绑定在册实例**（MNT-008）：`--instance-id` **必填**，必须是 `metadata/modules/<module>.json`
    里登记的实例，且产物字节哈希与登记值一致，否则**在加载前**以退出码 2 拒绝。报告与升级单会写明

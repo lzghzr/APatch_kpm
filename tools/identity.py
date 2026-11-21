@@ -271,14 +271,38 @@ def signature_status(sha):
     return False, (detail[0] if detail else "git verify-commit 未通过")
 
 
-def sanitize(text):
-    """去掉本机绝对路径再落盘/入哈希（公开文件不写本机信息）。"""
+def toolchain_roots():
+    """本机工具链根目录候选（入哈希前要抹平，否则指纹耦合路径；AUD-046）。"""
+    roots = []
+    for var in ("AARCH64_NONE_ELF_DIR",):
+        value = os.environ.get(var)
+        if value:
+            roots.append(value.rstrip("/"))
+    prefix = os.environ.get("TARGET_COMPILE")          # 形如 <root>/bin/aarch64-none-elf-
+    if prefix:
+        parent = os.path.dirname(os.path.dirname(prefix.rstrip("/")))
+        if parent:
+            roots.append(parent)
+    return [r for r in roots if r and os.path.isabs(r)]
+
+
+def sanitize(text, toolchain=True):
+    """去掉本机绝对路径再落盘/入哈希（公开文件不写本机信息）。
+
+    toolchain=True（默认，路径无关口径 v2）：把工具链根目录也抹成
+    `$(AARCH64_NONE_ELF_DIR)`，使同一编译器字节在不同机器/不同安装路径下得到同一指纹；
+    编译器身份本身由 `compiler_sha256` 单独锁定，路径不入哈希不损失可追溯性。
+    toolchain=False 只抹仓库与家目录，等价于历史口径（用于核验既有实例）。
+    """
     for prefix, tag in ((str(REPO), "<repo>"), (str(Path.home()), "<home>")):
         text = text.replace(prefix, tag)
     for var in ("ANDROID_NDK_LATEST_HOME", "ANDROID_NDK", "ANDROID_NDK_HOME"):
         value = os.environ.get(var)
         if value:
             text = text.replace(value, f"<{var}>")
+    if toolchain:
+        for root in toolchain_roots():
+            text = text.replace(root, "$(AARCH64_NONE_ELF_DIR)")
     return text
 
 
@@ -309,7 +333,7 @@ def is_build_input_path(rel):
 
 
 def source_files(module, mdir, extra=()):
-    """全部构建输入：模块目录内源码/脚本/配置 + 仓库级共享头 + 显式追加。"""
+    """全部构建输入：模块目录内源码/脚本/配置 + 仓库级公共依赖 + 显式追加。"""
     files = []
     for root, dirs, names in os.walk(mdir):
         dirs[:] = [d for d in dirs if d not in IGNORED_DIRS and d not in NON_KPM_DIRS]
@@ -324,6 +348,13 @@ def source_files(module, mdir, extra=()):
     shared = REPO / "kpm_utils.h"
     if shared.is_file():
         files.append("kpm_utils.h")
+    # 新的公共构建单元在模块 Makefile 里显式引用。旧 Makefile 与未选择
+    # 运行时的模块不会因此多出输入。即使文件缺失也记录引用，不能静默漏掉。
+    makefile = mdir / "Makefile"
+    if makefile.is_file():
+        words = {word for line in makefile.read_text(encoding="utf-8").splitlines()
+                 for word in line.partition("#")[0].split()}
+        files.extend(name for name in ("kpm_toolchain.mk", "kpm_runtime.c") if f"../{name}" in words)
     files.extend(extra or [])
     return sorted(set(files))
 
@@ -400,6 +431,20 @@ def env_pairs(env_extra):
     return out
 
 
+def recipe_hash_matches(recorded, recomputed):
+    """配方哈希比较：兼容历史口径（含绝对路径）与 v2 口径（路径无关）。
+
+    历史实例记录了工具链绝对路径参与哈希的值；v2 把工具链根抹成
+    `$(AARCH64_NONE_ELF_DIR)`。两者任一相等即视为未变（不重写历史记录）。
+    """
+    want = recorded.get("dry_run_sha256")
+    if not want:
+        return False
+    if recomputed.get("dry_run_sha256") == want:
+        return True
+    return recomputed.get("dry_run_sha256_v2") == want
+
+
 def capture_build_recipe(build_cmd, env_extra=None):
     """用 `make -n -B` 捕获配方；递归/带 + 的规则仍按 Makefile 语义执行。"""
     if not build_cmd:
@@ -416,7 +461,9 @@ def capture_build_recipe(build_cmd, env_extra=None):
     except Exception as exc:
         return {"captured": False, "command": sanitize(build_cmd), "note": f"make -n 失败: {exc}"}
     raw_text = out.stdout + out.stderr
-    text = sanitize(raw_text)
+    # 历史口径：只抹仓库/家目录（工具链绝对路径仍参与哈希），用于核验既有实例；
+    # v2 口径：把工具链根也抹成占位符，使指纹与安装路径无关（AUD-046）。
+    text = sanitize(raw_text, toolchain=False)
     if out.returncode != 0:
         return {"captured": False, "command": sanitize(build_cmd), "returncode": out.returncode,
                 "note": f"make -n -B 返回 {out.returncode}，参数未捕获成功；请检查 --build-cmd / --env / 目标名",
@@ -438,11 +485,14 @@ def capture_build_recipe(build_cmd, env_extra=None):
     if not compiler_sha:
         return {"captured": False, "command": sanitize(build_cmd), "returncode": 0,
                 "note": "未能识别并复算编译器字节，不能建立工具链指纹"}
+    path_free = sanitize(raw_text, toolchain=True)
     return {
         "captured": True,
         "command": sanitize(build_cmd),
         "dry_run_args": "-n -B（强制重算配方）",
         "returncode": out.returncode,
+        "fingerprint_scheme": "paths-v2",
+        "dry_run_sha256_v2": sha256_bytes((path_free + "\ncompiler_sha256=" + compiler_sha).encode()),
         "dry_run_sha256": sha256_bytes((text + "\ncompiler_sha256=" + compiler_sha).encode()),
         "cc": cc,
         "compiler_sha256": compiler_sha,
@@ -481,12 +531,17 @@ def parse_kpm_info(blob):
 
 def artifact_facts(path):
     data = Path(path).read_bytes()
-    return {
+    facts = {
         "name": Path(path).name,
         "sha256": sha256_bytes(data),
         "size": len(data),
-        "embedded": parse_kpm_info(elf_sections(data).get(".kpm.info", b"")),
     }
+    # 边车（如 baselines 的 *.kpm.json）不是 ELF，只登记字节事实，不解析内嵌元信息。
+    if data[:4] == b"\x7fELF" and len(data) >= 64 and data[4] == 2 and data[5] == 1:
+        facts["embedded"] = parse_kpm_info(elf_sections(data).get(".kpm.info", b""))
+    else:
+        facts["sidecar"] = True
+    return facts
 
 
 def variant_of(name, module, version):
@@ -747,6 +802,11 @@ def cmd_manifest(args):
 
 
 def collect_artifacts(module, mdir, version, variants):
+    """返回 [(variant, 主产物, [边车产物…])]。
+
+    `*.kpm.json` 是 `patch_offsets.py baseline` 生成的静态偏移边车：静态基线实例
+    必须与 `.kpm` 一起归档，否则该实例的静态移植能力视为未覆盖。
+    """
     found = []
     for name in sorted(os.listdir(mdir)):
         if not name.endswith(".kpm"):
@@ -754,7 +814,8 @@ def collect_artifacts(module, mdir, version, variants):
         variant = variant_of(name, module, version)
         if variant is None or (variants and variant not in variants):
             continue
-        found.append((variant, mdir / name))
+        sidecar = mdir / (name + ".json")
+        found.append((variant, mdir / name, [sidecar] if sidecar.is_file() else []))
     return found
 
 
@@ -797,7 +858,7 @@ def record_locked(args):
 
         # 第一步：只构造与校验，不碰磁盘
         planned, problems, unchanged = [], [], []
-        for variant, path in artifacts:
+        for variant, path, extras in artifacts:
             entry = build_entry(args.module, mdir, version, variant, args.toolchain, args.build_cmd,
                                 args.env, commit, kp_commit, args.extra_input or [], kind=args.kind,
                                 prepared_recipe=getattr(args, "prepared_recipe", None))
@@ -826,8 +887,9 @@ def record_locked(args):
                 problems.append(f"{entry['build_id']}: 有效编译参数未捕获成功，不能登记为候选"
                                 f"（recipe.note: {entry['recipe'].get('note', '未提供 --build-cmd')}）")
                 continue
-            entry["artifacts"] = [artifact_facts(path)]
-            entry["artifacts"][0]["path"] = str(Path(path).relative_to(REPO))
+            entry["artifacts"] = [artifact_facts(path)] + [artifact_facts(e) for e in extras]
+            for facts in entry["artifacts"]:
+                facts["path"] = str((mdir / facts["name"]).relative_to(REPO))
             if args.kind == "candidate":
                 check = verify_build(entry, profile="candidate")
                 if check["problems"]:
@@ -845,7 +907,7 @@ def record_locked(args):
             while instance_dir(f"{entry['build_id']}#{index}").exists():
                 index += 1
             entry["instance_id"] = f"{entry['build_id']}#{index}"
-            planned.append((entry, path))
+            planned.append((entry, path, extras))
         if problems:
             for problem in problems:
                 print(f"error: {problem}", file=sys.stderr)
@@ -853,20 +915,22 @@ def record_locked(args):
             return 3
 
         # 第二步：归档（同一实例的归档不可覆盖）
-        for entry, path in planned:
-            facts = entry["artifacts"][0]
+        for entry, path, extras in planned:
+            sources = {path.name: path, **{e.name: e for e in extras}}
             if args.no_archive:
-                facts["path"] = str(Path(path).relative_to(REPO))
+                for facts in entry["artifacts"]:
+                    facts["path"] = str(Path(sources[facts["name"]]).relative_to(REPO))
                 continue
             outdir = instance_dir(entry["instance_id"])
             outdir.mkdir(parents=True, exist_ok=True)
-            target = outdir / facts["name"]
-            if target.is_file():
-                if sha256_file(target) != facts["sha256"]:
-                    die(f"{target.relative_to(REPO)} 已存在且哈希不同（归档不可覆盖）")
-            else:
-                shutil.copy2(path, target)
-            facts["path"] = str(target.relative_to(REPO))
+            for facts in entry["artifacts"]:
+                target = outdir / facts["name"]
+                if target.is_file():
+                    if sha256_file(target) != facts["sha256"]:
+                        die(f"{target.relative_to(REPO)} 已存在且哈希不同（归档不可覆盖）")
+                else:
+                    shutil.copy2(sources[facts["name"]], target)
+                facts["path"] = str(target.relative_to(REPO))
             manifest = outdir / "MANIFEST.json"
             if manifest.is_file():
                 old = json.loads(manifest.read_text(encoding="utf-8"))
@@ -879,12 +943,12 @@ def record_locked(args):
                 manifest.write_text(json.dumps(entry, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
         # 第三步：一次性追加并原子落盘
-        record["builds"].extend(entry for entry, _ in planned)
+        record["builds"].extend(entry for entry, _, _ in planned)
         if args.handoff is not None:
             payload = {"module": args.module, "version": version, "kernelpatch_commit": kp_commit,
                        "handoff_by": args.by, "handoff_at": utcnow(),
                        "note": "归档产物需随清单一起转移：artifacts/<instance_id>/（导入时会逐个核验哈希）",
-                       "builds": [entry for entry, _ in planned]}
+                       "builds": [entry for entry, _, _ in planned]}
             path = Path(args.handoff)
             if not path.is_absolute():
                 path = REPO / path
@@ -899,7 +963,7 @@ def record_locked(args):
 
     for build_id in unchanged:
         print(f"  已登记且完全一致，未改动: {build_id}")
-    for entry in (e for e, _ in planned):
+    for entry in (e for e, _, _ in planned):
         for art in entry["artifacts"]:
             print(f"  {entry['variant']:14s} {art['name']} sha256={art['sha256'][:16]}… instance={entry['instance_id']}")
     return 0
@@ -1114,6 +1178,16 @@ def verify_build(entry, worktree=False, check_build_args=False, profile="explora
     if kind == "exploration" and profile != "exploration":
         profile = "exploration"
     strict = PROFILE_LEVELS[profile] >= 1
+    # 工具链标签与实际编译器的交叉核对：标签说 ndk 就必须是 clang，说 gcc/arm-gnu 就必须是
+    # aarch64-none-elf-gcc。默认工具链切换后，这条能挡住「标签写 ndk、实际按 GCC 构建」的错标。
+    tag = (entry.get("toolchain") or "").lower()
+    cc = ((entry.get("recipe") or {}).get("cc") or "").lower()
+    toolchain_conflict = None
+    if cc:
+        if tag.startswith("ndk") and "clang" not in cc:
+            toolchain_conflict = f"工具链标签 {entry.get('toolchain')} 与 recipe.cc 不符（未使用 clang）：{cc}"
+        elif (tag.startswith("gcc") or tag.startswith("arm-gnu")) and "clang" in cc:
+            toolchain_conflict = f"工具链标签 {entry.get('toolchain')} 与 recipe.cc 不符（实际用了 clang）：{cc}"
     result = {"build_id": entry.get("build_id"), "instance_id": entry.get("instance_id"),
               "kind": kind, "profile": profile, "problems": [], "notes": []}
     if kind == "exploration":
@@ -1124,6 +1198,9 @@ def verify_build(entry, worktree=False, check_build_args=False, profile="explora
 
     def flag(message):
         (result["problems"] if strict else result["notes"]).append(message)
+
+    if toolchain_conflict:
+        flag(toolchain_conflict)
 
     if kind not in ("candidate", "exploration"):
         flag("kind 必须为 candidate 或 exploration")
@@ -1243,7 +1320,7 @@ def verify_build(entry, worktree=False, check_build_args=False, profile="explora
             again = capture_build_recipe(recipe["command"])
             if again.get("captured") is not True or again.get("returncode") != 0:
                 result["problems"].append("有效编译参数重新捕获失败")
-            elif again.get("dry_run_sha256") != recipe.get("dry_run_sha256"):
+            elif not recipe_hash_matches(recipe, again):
                 result["problems"].append("有效编译参数与记录不一致（工具链/环境变了？）")
         else:
             result["problems"].append("--check-build-args 要求提供 recipe.command")
@@ -1260,6 +1337,11 @@ def cmd_verify(args):
         if args.module and module != args.module:
             continue
         record = json.loads(path.read_text(encoding="utf-8"))
+        # 已归档模块只保留历史记录，其产物随退役清理；默认不参与核验（--include-archived 可纳入）。
+        if record.get("status") == "archived" and not getattr(args, "include_archived", False):
+            if not args.json:
+                print(f"note: {module}: 已归档，跳过产物核验（--include-archived 可纳入）", file=sys.stderr)
+            continue
         for entry in record.get("builds", []):
             if args.instance_id and entry.get("instance_id") != args.instance_id:
                 continue
@@ -1340,6 +1422,7 @@ def main():
                    help="exploration=只提示；candidate=候选交接必须完整；delivery=另要求已登记交付绑定")
     p.add_argument("--worktree", action="store_true", help="改用当前工作树复算（默认按 source_commit）")
     p.add_argument("--check-build-args", action="store_true", help="重跑 make -n 比较有效编译参数")
+    p.add_argument("--include-archived", action="store_true", help="连已归档模块一起核验（默认跳过）")
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_verify)
 

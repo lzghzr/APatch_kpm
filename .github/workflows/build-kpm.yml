@@ -87,6 +87,30 @@ jobs:
           python3 tools/selftest_release_assets.py
           python3 tools/selftest_offset_modes.py
 
+      - name: Cache Arm GNU toolchain
+        id: cache-toolchain
+        uses: actions/cache@v4
+        with:
+          path: arm-gnu-toolchain-12.2.rel1-x86_64-aarch64-none-elf
+          key: arm-gnu-toolchain-12.2.rel1-x86_64-aarch64-none-elf
+
+      - name: Install GCC toolchain (aarch64-none-elf 12.2.rel1)
+        # KPM 侧默认工具链是 aarch64-none-elf GCC，与上游 KernelPatch CI 用同一发行版与同一 URL
+        # （KernelPatch/.github/workflows/build.yml 的 Install Compiler 一步）。
+        # TARGET_COMPILE 写进 GITHUB_ENV 供后续步骤使用；各模块 Makefile 的前缀解析顺序为
+        # TARGET_COMPILE → AARCH64_NONE_ELF_DIR → PATH 上的 aarch64-none-elf-gcc。
+        run: |
+          DIR=arm-gnu-toolchain-12.2.rel1-x86_64-aarch64-none-elf
+          if [ ! -x "$DIR/bin/aarch64-none-elf-gcc" ]; then
+            curl -fsSL --retry 3 -o "$DIR.tar.xz" \
+              https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-x86_64-aarch64-none-elf.tar.xz
+            tar -Jxf "$DIR.tar.xz"
+          else
+            echo "toolchain cache hit: $DIR"
+          fi
+          ./$DIR/bin/aarch64-none-elf-gcc --version | head -1
+          echo "TARGET_COMPILE=$PWD/$DIR/bin/aarch64-none-elf-" >> "$GITHUB_ENV"
+
       - name: Build kpm
         run: |
           mkdir target
