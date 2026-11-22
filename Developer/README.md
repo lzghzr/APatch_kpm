@@ -80,6 +80,12 @@ GCC 可为聚合清零生成外部 `memset`，即使设置了 `-fno-builtin`。S
 - `debug` 只在有独立调试产物的模块中提供，与 `all` 分开。
 - CI 对在用模块统一调用 `make -C <模块> ci`。`ci` 依赖 `all`，继续交付调试 artifacts 的模块再显式依赖 `debug`；发布只使用普通产物。 双版本模块的 `ci` 核对普通动态版、静态版和配套 JSON，缺少任一件即失败。
 
+### 内嵌静态布局
+
+接入内嵌布局的模块从表定义源码为静态普通版和已有静态调试版生成版本化 `.kpm.layout`，随 KPM 固定字段顺序。只有静态链接规则带入该节；它不参与模块运行，偏移值仍在 `.data.re_offsets`。生成的汇编放在 `out/`，不入库。
+
+配套 JSON 从静态 KPM 导出，供候选归档和 CI 对照。Release 的用户从静态基线单件导出相同布局。新基线可仅用 KPM 执行 `patch_offsets.py baseline` 导出布局，或配合目标配置执行 `patch`；旧基线仍用原配套 JSON。内嵌布局无效时拒绝，不回退外部文件。
+
 ## 常用命令
 
 ```bash
@@ -120,9 +126,9 @@ python3 tools/build_candidate.py re_kernel --toolchain gcc12.2.1-aarch64-none-el
 
 static 的偏移表须可通过二进制替换，并生成同名 `.kpm.json`；dynamic 的偏移表在加载时填写，优先使用 BTF，再使用目标支持的固定小窗口推导。已经取得 BTF 但必要类型或布局不符合时停止加载。没有偏移依赖的模块继续生成通用 KPM。
 
-当前接入模块为 rek（`re_kernel`）、rekx（`re_kernel_x`）与 run_cmd（`run_cmd_demo`）。各模块在自己的 Makefile 中维护构建规则，其他模块逐个接入；公共构建输入按上节登记。Releases 发布两种普通版及静态 JSON，debug 留在 artifacts；维护者拥有的 Actions 和门禁调整以补丁建议交接。
+当前有六个双版本模块：`cgroupv2_freeze`、`nomount`、`re_kernel`、`re_kernel_x`、`run_cmd_demo` 和 `zram_zstd`。各模块在自己的 Makefile 中声明静态目标与字段定义；公共构建输入按上节登记。Releases 发布两种普通 KPM；配套 JSON 和 debug 件留在 artifacts。
 
-各模块独立维护偏移表与推导实现，rek/rekx 使用 `re_offsets.c`，run_cmd 使用 `rc_offsets.c`。仓库根目录的 `patch_offsets.py` 生成和替换静态偏移表：schema 1/2 用于既有 Binder 调用配置，schema 3 用于普通偏移表。生成布局 JSON 时通过 `--source` 指定本模块的表定义；构建时须通过 `--extra-input patch_offsets.py` 捕获该工具。
+仓库根目录的 `patch_offsets.py` 生成内嵌布局并替换静态偏移表：schema 2 用于可配置的 Binder 调用，schema 3 用于普通偏移表，历史固定 Binder ABI 仍用 schema 1。构建候选时通过 `--extra-input patch_offsets.py` 捕获该工具。
 
 ## 公共 BTF 查询
 

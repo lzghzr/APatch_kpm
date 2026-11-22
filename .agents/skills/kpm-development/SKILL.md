@@ -32,7 +32,7 @@ KPM 是由 KernelPatch 加载到内核空间的 ARM64 可重定位 ELF，不使�
 
 在新的空输出目录运行 `all` 生成两份普通版；已有且确有用途的 `debug` 目标按模块约定保留；`static`、`dynamic` 可单独选择，`baselines` 按模块约定生成静态件。静态 JSON 默认与 KPM 同目录，也可用 `LAYOUT_DIR` 单独指定。正式候选使用仓库统一构建入口，捕获 `--extra-input patch_offsets.py` 及实际工具链、输出参数。
 
-发布规范为 Releases 提供两种普通版及静态 JSON，debug 保留在 Actions artifacts。实施前检查当前工作流；双模式 CI/发布改动见维护者补丁建议（本地 `Developer/proposals/2026-10-10-kpm-modes/README.md`），不能把补丁副本的自检视为线上发布已生效。
+Releases 提供普通动态 KPM 和可单件导出布局的静态基线 KPM；布局 JSON 和 debug 件保留在 Actions artifacts。附件选择见[发布工作流](../../../.github/workflows/build-kpm.yml)。
 
 ## 结构体偏移策略
 

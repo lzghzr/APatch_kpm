@@ -339,10 +339,16 @@ jobs:
           # 只上传用户需要的资产；构建清单与校验和留在 CI 侧。
           mkdir upload
           shopt -s nullglob
+          layouts=$(mktemp -d)
+          trap 'rm -rf "$layouts"' EXIT
           for kpm in release/*.kpm; do
-            cp "$kpm" upload/
-            if [ -f "${kpm}.json" ]; then
-              cp "${kpm}.json" upload/
+            name=${kpm##*/}
+            cp "$kpm" "upload/$name"
+            if [[ "$name" == *_baselines.kpm || -f "$kpm.json" ]]; then
+              # 从用户实际下载的单件导出；内部配套 JSON 只用来对照。
+              python3 patch_offsets.py baseline "upload/$name" --output "$layouts/$name.json"
+              jq -es 'length == 2 and (.[0] | [.schema, .fields]) == (.[1] | [.schema, .fields])' \
+                "$layouts/$name.json" "$kpm.json" >/dev/null
             fi
           done
           companion=(release/NoMount-kpm_*.zip)

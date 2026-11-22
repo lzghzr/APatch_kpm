@@ -136,23 +136,41 @@ class UploadSelectionTests(WorkflowStepTestCase):
         super().setUp()
         self.release = self.root / "release"
         self.release.mkdir()
+        shutil.copy2(REPO / "patch_offsets.py", self.root)
         for name in ("re_kernel_x_1.6.kpm", "other_mod_x_1.6.kpm",
-                     "run_cmd_demo_1.3.0.kpm", "run_cmd_demo_1.3.0_baselines.kpm",
-                     "NoMount-kpm_2.1.1-20261014.zip"):
+                     "run_cmd_demo_1.3.0.kpm", "NoMount-kpm_2.1.1-20261014.zip"):
             (self.release / name).write_bytes(b"payload")
-        for name in ("re_kernel_x_1.6.kpm.json", "run_cmd_demo_1.3.0_baselines.kpm.json",
-                     "BUILD_MANIFEST.json", "NoMount-kpm_2.1.1-20261014.zip.json", "NoMount-kpm.json"):
+        for name in ("BUILD_MANIFEST.json", "NoMount-kpm_2.1.1-20261014.zip.json", "NoMount-kpm.json"):
             (self.release / name).write_text("{}")
         (self.release / "SHA256SUMS").write_text("")
+        self.static, _ = write_product(self.release, "run_cmd_demo", "static", embedded=True, version="1.3.0")
+        write_product(self.release, "re_kernel_x", "static", embedded=True, version="1.6")
 
     def test_uploads_only_user_assets(self):
         result = self.run_step()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertEqual({p.name for p in (self.root / "upload").iterdir()}, {
-            "re_kernel_x_1.6.kpm", "re_kernel_x_1.6.kpm.json", "other_mod_x_1.6.kpm",
+        upload = self.root / "upload"
+        self.assertEqual({p.name for p in upload.iterdir()}, {
+            "re_kernel_x_1.6.kpm", "re_kernel_x_1.6_baselines.kpm", "other_mod_x_1.6.kpm",
             "run_cmd_demo_1.3.0.kpm", "run_cmd_demo_1.3.0_baselines.kpm",
-            "run_cmd_demo_1.3.0_baselines.kpm.json",
             "NoMount-kpm_2.1.1-20261014.zip", "NoMount-kpm.json"})
+        for f in upload.iterdir():
+            self.assertEqual(f.read_bytes(), (self.release / f.name).read_bytes())
+
+    def test_sidecar_cannot_substitute_for_embedded_layout(self):
+        write_product(self.release, "run_cmd_demo", "static", embedded=False, version="1.3.0")
+        result = self.run_step()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("baseline without embedded layout requires --source", result.stderr)
+
+    def test_sidecar_field_swap_with_equal_values_is_rejected(self):
+        sidecar = self.release / (self.static.name + ".json")
+        layout = json.loads(sidecar.read_text())
+        first, second = layout["fields"][:2]
+        self.assertEqual(layout["offsets"][first], layout["offsets"][second])
+        layout["fields"][:2] = [second, first]
+        sidecar.write_text(json.dumps(layout))
+        self.assertNotEqual(self.run_step().returncode, 0)
 
     def test_missing_companion_zip_rejected(self):
         (self.release / "NoMount-kpm_2.1.1-20261014.zip").unlink()

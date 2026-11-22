@@ -22,9 +22,15 @@ rek（`re_kernel`）与 rekx（`re_kernel_x`）分别提供动态普通版 `<模
 
 ## 获取公开基准（用户侧）
 
-默认从项目 GitHub Releases 下载非 debug 的 `_baselines.kpm`，无需本地编译、NDK 或 KP SDK。若模块有调用 ABI 选择项，先确认目标签名。从同一发布 tag 下载静态基线及同名 `.kpm.json`；从该次构建提交取得根目录 `patch_offsets.py`，放入新的本地目录。核对发布清单，确认下载的是静态模式；debug 基准及全部构建产物保留在 Actions artifacts。补丁工具仅依赖 Python 标准库；镜像分析工具的依赖另行准备。
+默认从项目 GitHub Releases 下载非 debug 的 `_baselines.kpm`，无需本地编译、NDK 或 KP SDK。若模块有调用 ABI 选择项，先确认目标签名。下载静态基线，并从同一发布 tag 取得根目录的 `patch_offsets.py`。基线是唯一需要下载的模块产物。核对发布清单，确认下载的是静态模式；debug 基准及全部构建产物保留在 Actions artifacts。补丁工具仅依赖 Python 标准库；镜像分析工具的依赖另行准备。
 
-配套 JSON 未提供时，可用 `python3 patch_offsets.py baseline <基准.kpm> --source <同构建的表定义源文件> --output <基准.kpm.json>` 离线生成；源文件必须与基准构建提交一致，用于取得字段顺序，不进行编译。历史基线使用其构建提交配套的工具和布局，不套用当前字段表。
+需要查看字段顺序和当前表值时，在本地从静态 KPM 导出 JSON：
+
+```sh
+python3 patch_offsets.py baseline "$kpm" --output "$kpm.json"
+```
+
+`kpm` 指向下载的静态基线，输出路径须尚不存在。内嵌的是字段说明，不是目标机已核验的偏移值。没有内嵌布局的历史件继续使用原配套 JSON；若需重新生成，使用该构建提交的工具并传入 `--source <同构建的表定义源文件>`。
 
 配套 JSON 提供基线 SHA-256、表位置、长度与字段顺序。有 Binder 释放选择项的统一基线使用 schema 2；选择值随目标 offsets 一起替换，生成后的 binder_abi 同步为实际配置。旧固定基线的 schema 1 与 `.rodata.re_abi` 只读标记仍受支持，不能把旧代码改成另一种释放签名。替换前核对这些信息，不能混用不同版本的布局文件或将公开基准的模板偏移直接用于目标内核。记录实际 tag、来源和基准哈希；已有核对过的本地基准可复用，没有兼容基准时再转开发构建。
 
@@ -32,7 +38,7 @@ rek（`re_kernel`）与 rekx（`re_kernel_x`）分别提供动态普通版 `<模
 
 偏移集中于 `.data.re_offsets`，使用 `volatile` 防止编译器折叠成指令立即数。配置段必须可写、无重定位，不存运行时地址。复用已经核对的共同布局，只把变化字段放入表中。
 
-以模块 Makefile 为准选择目标：例如 `re_kernel_x` 的 `baselines` 生成静态普通版和静态 debug 版，`run_cmd_demo` 和 `nomount` 的同名目标只生成静态普通版。发布资产以[构建工作流](../../../.github/workflows/build-kpm.yml)为准；公开静态基线须配同次构建的 JSON 和对应提交的补丁工具。
+以模块 Makefile 为准选择目标：例如 `re_kernel_x` 的 `baselines` 生成静态普通版和静态 debug 版，`run_cmd_demo` 和 `nomount` 的同名目标只生成静态普通版。发布资产以[构建工作流](../../../.github/workflows/build-kpm.yml)为准；发布前，从静态基线单件导出的字段顺序和 schema 须与同次构建的 JSON 一致。
 
 ```bash
 make -C re_kernel_x baselines OUT_DIR=../local/baselines-round1

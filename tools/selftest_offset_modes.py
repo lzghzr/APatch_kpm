@@ -16,17 +16,21 @@ from selftest_workflow_support import REPO, WorkflowStepTestCase
 MODULES = ('re_kernel', 're_kernel_x', 'run_cmd_demo')
 
 
-def product(module, mode, debug=False):
-    version = '1.0_d' if debug else '1.0'
-    name = module + '_1.0' + ('_baselines' if mode == 'static' else '') + ('_debug' if debug else '') + '.kpm'
+def product(module, mode, debug=False, *, embedded=False, version='1.0'):
+    name = module + '_' + version + ('_baselines' if mode == 'static' else '') + ('_debug' if debug else '') + '.kpm'
     generic = module in ('run_cmd_demo', 'cgroupv2_freeze')
     fields = ['path', 'security', 'sid', 'worker_size'] if generic else ['first', 'second', 'binder_release_abi']
     values = [-1, -1, -1, -1] if generic else [16, -1, 6]
+    version += '_d' if debug else ''
     info = f'name={module}\0version={version}\0offset_mode={mode}\0license=GPL v2\0author=Fixture\0description=Mode fixture\0'.encode()
     sections = [('', 0, b''), ('.shstrtab', 3, b''), ('.kpm.info', 1, info),
                 ('.kpm.init', 1, bytes(8)), ('.kpm.exit', 1, bytes(8))]
     if mode == 'static':
         sections.append(('.data.re_offsets', 1, struct.pack('<' + 'h' * len(values), *values)))
+        if embedded:
+            descriptor = {'format': 1, 'encoding': 'i16le', 'schema': 3 if generic else 2, 'fields': fields}
+            raw = json.dumps(descriptor, sort_keys=True, separators=(',', ':')).encode() + b'\n'
+            sections.append(('.kpm.layout', 1, raw))
     strings = b'\0'
     names = []
     for section, _, _ in sections:
@@ -55,8 +59,8 @@ def product(module, mode, debug=False):
     return name, data, layout
 
 
-def write_product(root, module, mode, debug=False):
-    name, data, layout = product(module, mode, debug)
+def write_product(root, module, mode, debug=False, *, embedded=False, version='1.0'):
+    name, data, layout = product(module, mode, debug, embedded=embedded, version=version)
     path = root / name
     path.write_bytes(data)
     if layout is not None:

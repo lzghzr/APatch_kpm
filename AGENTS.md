@@ -65,7 +65,7 @@ python3 run.py --image B2N-416G_boot.img               # 只对它跑偏移推�
 
 有结构体偏移依赖的模块默认提供 static / dynamic 两种编译产物，共用业务实现，定义 `CONFIG_KPM_BASELINES` 选择静态基线，未定义时使用动态推导。静态版附带可替换偏移表及同名 `.kpm.json`；动态版加载时优先使用 BTF，再使用目标支持的固定小窗口推导。必要字段或共同布局无法确认时停止加载，不按版本号猜偏移。
 
-普通产物命名为 `<模块>_<版本>_baselines.kpm`、`<模块>_<版本>.kpm`，默认不生成单独 debug 件；只有明确需要且有独立调试用途时才添加 `_debug`，元信息记录 `offset_mode`。Releases 发布两种普通版与静态 JSON；debug 保留在 artifacts。同一模块的两种模式保留同一管理名称，每次选择一种加载。无偏移依赖的模块继续生成通用 KPM。
+普通产物命名为 `<模块>_<版本>_baselines.kpm`、`<模块>_<版本>.kpm`，默认不生成单独 debug 件；只有明确需要且有独立调试用途时才添加 `_debug`，元信息记录 `offset_mode`。Releases 发布两种普通 KPM；静态基线必须支持单件导出布局。构建生成的布局 JSON 和 debug 件保留在 Actions artifacts。同一模块的两种模式保留同一管理名称，每次选择一种加载。无偏移依赖的模块继续生成通用 KPM。
 
 **真机只测一个变体**：`debug` 相对 `release` 只增加日志/断言详细度，因此真机测试**每个目标只测一个变体**（优先 `release`），未测变体由验收以审计确认的「变体差异」结论绑定；审计未确认差异仅限日志/断言时必须两个都测。判据全文见 [docs/process/tester-handbook.md](docs/process/tester-handbook.md) §4.1。
 
