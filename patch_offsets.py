@@ -9,6 +9,9 @@ import re
 import struct
 
 
+EMBEDDED_LAYOUT = ".kpm.layout"
+
+
 def sha256(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -26,7 +29,7 @@ def elf_sections(data):
     return entries, names_index
 
 
-def sections(data):
+def configuration_sections(data):
     entries, names_index = elf_sections(data)
     names = entries[names_index]
     if names[1] != 3 or names[4] + names[5] > len(data):
@@ -40,7 +43,7 @@ def sections(data):
         if end < 0:
             raise ValueError("unterminated section name")
         name = strings[entry[0]:end].decode("ascii")
-        if name in (".data.re_offsets", ".rodata.re_abi"):
+        if name in (".data.re_offsets", ".rodata.re_abi", EMBEDDED_LAYOUT):
             if name in result or entry[1] != 1 or entry[4] + entry[5] > len(data):
                 raise ValueError("invalid configuration section")
             result[name] = (entry[4], entry[5], index, entry[2])
@@ -59,6 +62,19 @@ def sections(data):
         abi = struct.unpack_from("<I", data, abi_offset)[0]
         if abi not in (3, 4, 5, 6):
             raise ValueError("unknown Binder ABI")
+    embedded = None
+    if EMBEDDED_LAYOUT in result:
+        start, length, layout_index, layout_flags = result[EMBEDDED_LAYOUT]
+        if layout_flags or not length:
+            raise ValueError("embedded layout must be non-allocated data")
+        if any(entry[1] in (4, 9) and entry[7] == layout_index and entry[5] for entry in entries):
+            raise ValueError("embedded layout must not contain relocations")
+        embedded = data[start:start + length]
+    return offset, size, abi, embedded
+
+
+def sections(data):
+    offset, size, abi, _ = configuration_sections(data)
     return offset, size, abi
 
 
@@ -86,11 +102,47 @@ def table_abi(data, offset, size, fields, fixed_abi):
     return abi
 
 
+def layout_schema(abi, fixed_abi):
+    return 3 if abi is None else (1 if fixed_abi is not None else 2)
+
+
+def encode_embedded_layout(fields):
+    if (not isinstance(fields, list) or not fields
+            or not all(isinstance(field, str) and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", field) for field in fields)
+            or len(set(fields)) != len(fields)):
+        raise ValueError("invalid embedded layout field list")
+    if "binder_release_abi" in fields[:-1]:
+        raise ValueError("binder_release_abi must be the last field")
+    descriptor = {"format": 1, "encoding": "i16le", "fields": fields,
+                  "schema": 2 if fields[-1] == "binder_release_abi" else 3}
+    return (json.dumps(descriptor, sort_keys=True, separators=(",", ":")) + "\n").encode("ascii")
+
+
+def embedded_layout_fields(raw, size, fixed_abi):
+    if fixed_abi is not None:
+        raise ValueError("fixed Binder baselines use the legacy sidecar")
+    try:
+        descriptor = json.loads(raw)
+        fields = descriptor["fields"]
+        if encode_embedded_layout(fields) != raw or len(fields) * 2 != size:
+            raise ValueError("unexpected layout format or table length")
+    except (ValueError, KeyError, TypeError, RecursionError) as error:
+        raise ValueError(f"invalid embedded layout: {error}") from error
+    return fields
+
+
+def layout_assembly(source):
+    payload = encode_embedded_layout(source_fields(source)).decode("ascii")
+    return (f'.section {EMBEDDED_LAYOUT},"",%progbits\n'
+            f'.ascii {json.dumps(payload)}\n'
+            '.section .note.GNU-stack,"",%progbits\n')
+
+
 def read_layout(path, data, offset, size, fixed_abi):
     layout = json.loads(path.read_text())
     fields = layout["fields"]
     abi = table_abi(data, offset, size, fields, fixed_abi)
-    schema = 3 if abi is None else (1 if fixed_abi is not None else 2)
+    schema = layout_schema(abi, fixed_abi)
     if (any(type(layout.get(key)) is not int for key in ("schema", "table_offset", "table_size"))
             or (abi is not None and type(layout.get("binder_abi")) is not int)
             or layout["schema"] != schema or layout["sha256"] != sha256(data)
@@ -307,32 +359,51 @@ def legacy_kp(args, data):
     return receipt
 
 
+def describe_layout(kpm_name, data, offset, size, fixed_abi, fields):
+    abi = table_abi(data, offset, size, fields, fixed_abi)
+    layout = {
+        "schema": layout_schema(abi, fixed_abi),
+        "kpm": kpm_name,
+        "sha256": sha256(data),
+        "table_offset": offset,
+        "table_size": size,
+        "fields": fields,
+        "offsets": table_values(data, offset, size, fields),
+    }
+    if abi is not None:
+        layout["binder_abi"] = abi
+    return layout
+
+
 def run(args):
     data = args.kpm.read_bytes()
     if args.command == "legacy-kp":
         return legacy_kp(args, data)
-    offset, size, fixed_abi = sections(data)
+
+    offset, size, fixed_abi, embedded = configuration_sections(data)
+    fields = None if embedded is None else embedded_layout_fields(embedded, size, fixed_abi)
     if args.command == "baseline":
-        fields = source_fields(args.source)
+        if args.source is not None:
+            source = source_fields(args.source)
+            if fields is not None and fields != source:
+                raise ValueError("embedded layout and source field order differ")
+            fields = source
+        if fields is None:
+            raise ValueError("baseline without embedded layout requires --source")
         if len(fields) * 2 != size:
             raise ValueError("source fields do not match offset table size")
-        abi = table_abi(data, offset, size, fields, fixed_abi)
-        layout = {
-            "schema": 3 if abi is None else (1 if fixed_abi is not None else 2),
-            "kpm": args.kpm.name,
-            "sha256": sha256(data),
-            "table_offset": offset,
-            "table_size": size,
-            "fields": fields,
-            "offsets": table_values(data, offset, size, fields),
-        }
-        if abi is not None:
-            layout["binder_abi"] = abi
+        layout = describe_layout(args.kpm.name, data, offset, size, fixed_abi, fields)
         write_json(args.output, layout)
-        return {"binder_abi": abi, "table_bytes": size, "sha256": layout["sha256"]}
+        return {"binder_abi": layout.get("binder_abi"), "table_bytes": size, "sha256": layout["sha256"]}
 
-    layout_path = args.layout or Path(str(args.kpm) + ".json")
-    layout = read_layout(layout_path, data, offset, size, fixed_abi)
+    if fields is None:
+        layout = read_layout(args.layout or Path(str(args.kpm) + ".json"), data, offset, size, fixed_abi)
+    else:
+        layout = describe_layout(args.kpm.name, data, offset, size, fixed_abi, fields)
+        if args.layout is not None:
+            external = read_layout(args.layout, data, offset, size, fixed_abi)
+            if external["fields"] != fields:
+                raise ValueError("explicit sidecar and embedded layout field order differ")
     abi = layout.get("binder_abi")
     if args.command == "dump":
         with args.output.open("xb") as stream:
@@ -378,13 +449,15 @@ def run(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    layout_asm = commands.add_parser("layout-asm", help="从字段定义生成静态 KPM 的离线布局节")
+    layout_asm.add_argument("--source", type=Path, required=True)
     for command in ("baseline", "dump", "patch", "legacy-kp"):
         help_text = "旧 KP 缺少后缀查找导出时，生成原名函数指针转接兼容件" if command == "legacy-kp" else None
         subparser = commands.add_parser(command, help=help_text)
         subparser.add_argument("kpm", type=Path)
         subparser.add_argument("--output", type=Path, required=True)
         if command == "baseline":
-            subparser.add_argument("--source", type=Path, required=True, help="同一构建提交的模块偏移表源文件")
+            subparser.add_argument("--source", type=Path, help="旧基线必填：同一构建提交的模块偏移表源文件")
         else:
             subparser.add_argument("--layout", type=Path)
         if command == "patch":
@@ -393,7 +466,10 @@ def main():
             source.add_argument("--blob", type=Path, help="按基准版 fields 顺序排列的 int16 小端二进制")
     args = parser.parse_args()
     try:
-        print(json.dumps(run(args), ensure_ascii=False))
+        if args.command == "layout-asm":
+            print(layout_assembly(args.source), end="")
+        else:
+            print(json.dumps(run(args), ensure_ascii=False))
     except (OSError, ValueError, KeyError, TypeError, AttributeError, struct.error) as error:
         parser.exit(1, f"error: {error}\n")
 

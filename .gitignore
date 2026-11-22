@@ -19,8 +19,8 @@
 *.kpm
 *.kpm.json
 
-# 模块构建中间目录（zram_zstd 的编解码产物）
-zram_zstd/out/
+# 模块构建中间目录
+/*/out/
 
 # VSCode
 *.vscode
