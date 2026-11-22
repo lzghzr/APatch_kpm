@@ -74,7 +74,7 @@ SID 的静态配置不包含 `selinux_blob_sizes.lbs_cred`。这个值由内核�
 make -C run_cmd_demo all OUT_DIR=../local/run-cmd-round1
 ```
 
-根目录 `patch_offsets.py` 的 schema 3 适用于普通偏移表；schema 1/2 保留原有 Binder ABI 契约。静态 KPM 附带同名 `.kpm.json`，生成布局时使用 `--source run_cmd_demo/rc_offsets.c`。使用目标分析结果填写完整 `offsets` 后，执行：
+静态版从 `rc_offsets.c` 生成内嵌布局（schema 3），同名 `.kpm.json` 从产物导出。新基线可直接配合目标配置改表；旧件继续使用原配套 JSON。使用目标分析结果填写完整 `offsets` 后，执行：
 
 ```sh
 python3 patch_offsets.py patch run_cmd_demo_baselines.kpm --offsets target-offsets.json --output target.kpm
