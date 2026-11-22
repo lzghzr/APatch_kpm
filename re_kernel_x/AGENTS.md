@@ -37,7 +37,7 @@ README 面向使用者，只写用途、文件选择、界面操作、可见状�
 
 偏移表单独放在 `.data.re_offsets`，使用 `volatile` 防止编译器把固定值折叠进指令。当前为 47 个小端 `int16_t`，共 94 字节；前 44 项偏移及配置的顺序保持原样，随后为 `binder_proc_tmp_ref`、`template_abi`（模板确认字段，初值 -1），末项仍为 `binder_release_abi`。字段顺序、文件位置、当前释放 ABI 和 KPM SHA-256 随构建写入同名 `.kpm.json`，布局 schema 为 2，没有固定 `.rodata.re_abi` 标记。模块直接读表。45 项旧基线继续与原配套 JSON 使用，不能把它的配置直接套到新基线。
 
-下一次 Releases 发布统一的非 debug 基线及其布局 JSON，debug 和两份布局同时保存在 Actions artifacts。缺少配套 JSON 时，可用同一构建提交中仓库根目录的 `patch_offsets.py` 和 `re_kernel_x/re_offsets.c` 执行 `baseline <基准.kpm> --source re_kernel_x/re_offsets.c --output <基准.kpm.json>` 生成，无需 NDK；不能用不同提交的字段顺序代替。
+Releases 提供普通动态 KPM 和静态基线 KPM；debug 和构建生成的布局 JSON 保存在 Actions artifacts。内嵌布局的静态件可直接用 `patch_offsets.py baseline <基准.kpm> --output <基准.kpm.json>` 导出；重建旧件的布局需加 `--source <同构建提交的 re_offsets.c>`。Binder 调用配置仍由目标证据取得。
 
 准备一份 release 与一份 debug 基线，输出目录使用新的空目录：
 
@@ -119,6 +119,8 @@ tracepoint 指针用于原生注册，`__traceiter_*` 的 BTF 仅用于 ABI 核�
 动态模式使用本目录的 `re_btf.c` 与 `re_offsets.c`，按目标证据取得全部配置。BTF 五参数释放函数的 `off_end_offset` 与 `failed_at` 同为整数，按参数名确认语义。缺少 BTF 或原生查询接口时走固定小窗口指令推导。旧内核任务与凭据偏移使用 KP 已有计算结果；`sock_sk_net` 从 `sk_net_capable` 的短寄存器链取得。旧内核 `binder_buffer_data` 暂为 -1，缺少原生复制入口时添加清理规则返回 `-EOPNOTSUPP`，基础去重继续工作。字段初始化失败时尚未安装业务 hook。
 
 探索/候选构建须捕获共用输入：`--extra-input patch_offsets.py`。静态补丁测试入口保持 `test_static.py`；双模式入口为 `re_kernel/tools/test_modes.py`，BTF 入口为 `re_kernel/tools/test_btf.py`，旧内核入口为 `re_kernel/tools/test_dynamic_offsets.py`。目标语料必须按仓库规则先确认范围。
+
+运行 [构建布局回归](../Developer/tools/test_rekx_build_layout.py)（`python3 Developer/tools/test_rekx_build_layout.py --toolchain gcc`，NDK 改用 `ndk`），同时覆盖默认目录和独立 `OUT_DIR`，核对普通、调试静态件及配套 JSON。
 
 ## 接入、安装验证与生命周期
 
