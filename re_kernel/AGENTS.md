@@ -64,7 +64,7 @@
 
 静态 Genl 配置须在所有 hook 前通过计数宽度、字段范围、对齐和重叠检查。两种模式均先确认 Genl 依赖及可选 Binder 厂商 record 的 ABI；实际注册失败仍走原有失败清理。
 
-准备目标设备的 `boot.img`、静态基线及同一构建的 `.kpm.json`，分析目标偏移后填写到 JSON 的 `offsets` 中。基线是移植模板，须先完成目标适配。
+准备目标设备的 `boot.img` 和静态基线。用 `patch_offsets.py baseline <基准.kpm> --output <布局.json>` 导出内嵌布局，分析目标偏移后填写到 JSON 的 `offsets` 中。基线是移植模板，须先完成目标适配。
 
 在仓库根目录运行：
 
@@ -72,7 +72,7 @@
 python3 patch_offsets.py patch re_kernel_baselines.kpm --offsets target-offsets.json --output target.kpm
 ```
 
-配套布局文件应放在基线旁，命名为 `re_kernel_baselines.kpm.json`。替换工具只依赖 Python 标准库，用户侧无需 NDK。
+旧基线仍需同一构建的配套布局，放在基线旁并命名为 `re_kernel_baselines.kpm.json`。替换工具只依赖 Python 标准库。
 
 ## Binder 厂商入口与清理
 

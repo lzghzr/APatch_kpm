@@ -23,7 +23,11 @@ headers := re_kernel.h re_utils.h re_offsets.c ../kpm_utils.h ../patch_offsets.p
 headers += re_structs.h re_btf.c re_vendor_btf.c
 
 kpm := $(OUT_DIR)/re_kernel_$(MYKPM_VERSION)
-kpms := $(kpm).kpm $(kpm)_debug.kpm $(kpm)_baselines.kpm $(kpm)_baselines_debug.kpm
+dynamic_kpms := $(kpm).kpm $(kpm)_debug.kpm
+static_kpms := $(kpm)_baselines.kpm $(kpm)_baselines_debug.kpm
+layout_asm := $(OUT_DIR)/out/kpm-layout.S
+
+.DELETE_ON_ERROR:
 
 all: static dynamic
 ci: all debug
@@ -41,15 +45,26 @@ dynamic: $(kpm).kpm
 static_debug: $(kpm)_baselines_debug.kpm
 dynamic_debug: $(kpm)_debug.kpm
 
-$(kpm)_baselines.kpm $(kpm)_baselines_debug.kpm: CFLAGS += -DCONFIG_KPM_BASELINES
+$(layout_asm): re_offsets.c ../patch_offsets.py
+	@mkdir -p "$(dir $@)"
+	$(PYTHON) ../patch_offsets.py layout-asm --source "$<" > "$@.tmp" && mv "$@.tmp" "$@"
+
+$(static_kpms): CFLAGS += -DCONFIG_KPM_BASELINES
 $(kpm)_baselines_debug.kpm $(kpm)_debug.kpm: CFLAGS += -DCONFIG_DEBUG
 $(kpm)_baselines_debug.kpm $(kpm)_debug.kpm: MYKPM_VER := _d
 
-$(kpms): ${objs} ${headers} Makefile $(KPM_TOOLCHAIN_MK)
-	@mkdir -p $(OUT_DIR) $(LAYOUT_DIR)
-	@test ! -e $@
-	${CC} $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $(objs) -r -o $@
-	$(if $(filter %_baselines.kpm %_baselines_debug.kpm,$@),$(PYTHON) ../patch_offsets.py baseline $@ --source re_offsets.c --output $(LAYOUT_DIR)/$(notdir $@).json)
+$(dynamic_kpms) $(static_kpms): $(objs) $(headers) Makefile $(KPM_TOOLCHAIN_MK)
+
+$(dynamic_kpms):
+	@mkdir -p "$(OUT_DIR)"
+	@test ! -e "$@"
+	$(CC) $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $(objs) -r -o "$@"
+
+$(static_kpms): $(layout_asm)
+	@mkdir -p "$(OUT_DIR)" "$(LAYOUT_DIR)"
+	@test ! -e "$@"
+	$(CC) $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $(objs) "$(layout_asm)" -r -o "$@"
+	$(PYTHON) ../patch_offsets.py baseline "$@" --output "$(LAYOUT_DIR)/$(notdir $@).json"
 
 .PHONY: all ci debug base base_debug baselines static dynamic static_debug dynamic_debug clean
 clean:
