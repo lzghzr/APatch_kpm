@@ -23,6 +23,7 @@ headers := cgroupv2_freeze.h cfv2_utils.h cfv2_offsets.c ../kpm_utils.h
 
 kpm := $(OUT_DIR)/cgroupv2_freeze_$(MYKPM_VERSION)
 layout := $(LAYOUT_DIR)/$(notdir $(kpm))_baselines.kpm.json
+layout_asm := $(OUT_DIR)/out/kpm-layout.S
 
 .DELETE_ON_ERROR:
 
@@ -41,14 +42,18 @@ $(kpm).kpm: $(objs) $(headers) Makefile $(KPM_TOOLCHAIN_MK)
 	@mkdir -p "$(OUT_DIR)"
 	$(CC) $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) $(objs) -r -o "$@"
 
-$(kpm)_baselines.kpm: $(objs) $(headers) Makefile $(KPM_TOOLCHAIN_MK)
+$(layout_asm): cfv2_utils.h ../patch_offsets.py
+	@mkdir -p "$(dir $@)"
+	$(PYTHON) ../patch_offsets.py layout-asm --source "$<" > "$@.tmp" && mv "$@.tmp" "$@"
+
+$(kpm)_baselines.kpm: $(objs) $(headers) $(layout_asm) Makefile $(KPM_TOOLCHAIN_MK)
 	@mkdir -p "$(OUT_DIR)"
 	@test ! -e "$@"
-	$(CC) $(CFLAGS) -DCONFIG_KPM_BASELINES $(CFLAG) $(INCLUDE_FLAGS) $(objs) -r -o "$@"
+	$(CC) $(CFLAGS) -DCONFIG_KPM_BASELINES $(CFLAG) $(INCLUDE_FLAGS) $(objs) "$(layout_asm)" -r -o "$@"
 
 $(layout): $(kpm)_baselines.kpm ../patch_offsets.py cfv2_utils.h
 	@mkdir -p "$(LAYOUT_DIR)"
-	$(PYTHON) ../patch_offsets.py baseline "$<" --source cfv2_utils.h --output "$@"
+	$(PYTHON) ../patch_offsets.py baseline "$<" --output "$@"
 
 .PHONY: all ci base baselines dynamic static clean
 clean:
