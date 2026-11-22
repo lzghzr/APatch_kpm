@@ -68,7 +68,7 @@ CPUHP add 失败已经回滚此前 CPU，不再 remove。先 pin 住原生 zram 
 
 目标 4.4 的参考值还由其它实际入口核对：`crypto_check_alg` 读取 flags 邻近字段及名字，`crypto_decompress` 读取解压回调，`crypto_mod_get` 读取 module，`lzo_compress` 读取上下文。不能仅拿同一推导的重复结果当参考。
 
-静态版定义 `CONFIG_KPM_BASELINES`，六个 int16 字段（原五项顺序保留，driver_name 追加）位于 `.data.re_offsets`。基线模板均为 -1，配套 JSON 使用根目录 `patch_offsets.py` 的 schema 3；补丁只改变配置段。运行时符号查询两版共用。
+静态版定义 `CONFIG_KPM_BASELINES`，六个 int16 字段（原五项顺序保留，driver_name 追加）位于 `.data.re_offsets`。基线模板均为 -1；静态件内嵌 schema 3 的字段布局，配套 JSON 由该件导出。补丁只改变配置段，旧件仍需原配套 JSON。运行时符号查询两版共用。
 
 ## 算法来源与验证
 
@@ -145,7 +145,7 @@ LZ4/ZSTD 的独立库互解继续保留。测试清单迁移依据见 Developer 
 
 源码与 Makefile 以当前 KernelPatch SDK 构建普通 KPM。转接仅由外部 Python 工具修改已生成的 KPM 字节；保留普通候选的完整身份、转换工具提交及哈希、转换命令、输入／输出哈希和回执，写入独立的新输出目录。
 
-普通候选使用 `--target "all"`，额外捕获 `patch_offsets.py`。Makefile 只使用其 `baseline` 子命令生成静态布局 JSON；静态偏移配置使用 `patch` 子命令，这两项与 KP 版本转接分别处理。构建结束后，单独运行 `Developer/tools/test_legacy_kp_metadata.py` 检查普通 KPM 的二进制转接；需要 Clang 与同目录的 `ld.lld`，推荐使用 NDK 工具链。自检保留历史可选字段夹具，并覆盖实际 KPM 元信息字节保持、直接调用和原名指针导入、精确修改范围、静态布局与输出保护。回执与自检结果作为同轮证据留存。
+普通候选使用 `--target "all"`，额外捕获 `patch_offsets.py`。Makefile 用 `layout-asm` 生成内嵌布局，再用 `baseline` 导出配套 JSON。静态偏移配置使用 `patch`，与 KP 版本转接分别处理。构建结束后，单独运行 `Developer/tools/test_legacy_kp_metadata.py` 检查普通 KPM 的二进制转接；需要 Clang 与同目录的 `ld.lld`，推荐使用 NDK 工具链。自检保留历史可选字段夹具，并覆盖实际 KPM 元信息字节保持、直接调用和原名指针导入、精确修改范围、静态布局与输出保护。回执与自检结果作为同轮证据留存。
 
 统一候选构建使用 `--target all`，保留默认 `LAYOUT_DIR=$(OUT_DIR)`，让静态 JSON 与 KPM 同目录并一起归档。生成的 `.kpm.json` 和 `out/codec/` 不计入源码输入；统一入口会在重建前移走旧 KPM、JSON 和 `out/`。转接自检用两个 `--kpm <文件名>` 精确列出本轮普通件；不带选择器仍保留历史四件套判据。
 

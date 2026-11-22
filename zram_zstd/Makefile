@@ -20,7 +20,9 @@ codec := $(filter-out $(ZSTD_ROOT)/common/pool.c $(ZSTD_ROOT)/common/threading.c
 codec_rel := $(patsubst $(ZSTD_ROOT)/%,%,$(codec))
 codec_objs := $(addprefix $(CODEC_DIR)/,$(codec_rel:.c=.o))
 kpm := $(OUT_DIR)/zram_zstd_$(MYKPM_VERSION)
-kpms := $(kpm).kpm $(kpm)_baselines.kpm
+layout_asm := $(OUT_DIR)/out/kpm-layout.S
+
+.DELETE_ON_ERROR:
 
 all: dynamic static
 ci: all
@@ -55,8 +57,6 @@ $(CODEC_DIR)/lz4kd_decode.o: zs_lz4kd_decode.c $(GENERATED_DIR)/MANIFEST.json zs
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(CFLAG) -I. -Icompat -I$(GENERATED_DIR) -include zs_lz4kd_config.h -c $< -o $@
 
-$(kpm)_baselines.kpm: MODE_FLAGS += -DCONFIG_KPM_BASELINES
-
 NATIVE_ENTRY_OBJ := $(CODEC_DIR)/zs_native_entry.o
 $(NATIVE_ENTRY_OBJ): zs_native_entry.S Makefile $(KPM_TOOLCHAIN_MK)
 	@mkdir -p $(dir $@)
@@ -68,10 +68,26 @@ $(RUNTIME_OBJ): ../kpm_runtime.c Makefile $(KPM_TOOLCHAIN_MK)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $(CFLAG) $(INCLUDE_FLAGS) -DKPM_RUNTIME_COPY -c $< -o $@
 
-$(kpms): zram_zstd.c $(RUNTIME_OBJ) zs_structs.h zs_offsets.c zs_btf.c zs_display.c zs_memory.h zs_zstd_config.h zs_lz4kd.c zs_native.h zs_native.c zs_native_btf.c $(NATIVE_ENTRY_OBJ) $(codec_objs) $(LZ4_OBJ) $(LZ4KD_OBJ) zs_lz4_config.h ../kpm_utils.h ../patch_offsets.py Makefile $(KPM_TOOLCHAIN_MK)
-	@mkdir -p $(OUT_DIR) $(LAYOUT_DIR)
-	@test ! -e $@
-	$(CC) $(CFLAGS) $(CFLAG) $(MODE_FLAGS) -DMYKPM_VERSION=\"$(MYKPM_VERSION)\" $(INCLUDE_FLAGS) $(CODEC_FLAGS) zram_zstd.c $(RUNTIME_OBJ) $(NATIVE_ENTRY_OBJ) $(codec_objs) $(LZ4_OBJ) $(LZ4KD_OBJ) -r -o $@
-	$(if $(filter %_baselines.kpm,$@),$(PYTHON) ../patch_offsets.py baseline $@ --source zs_offsets.c --output $(LAYOUT_DIR)/$(notdir $@).json)
+kpm_inputs := zram_zstd.c $(RUNTIME_OBJ) $(NATIVE_ENTRY_OBJ) $(codec_objs) $(LZ4_OBJ) $(LZ4KD_OBJ)
+headers := zs_structs.h zs_offsets.c zs_btf.c zs_display.c zs_memory.h zs_zstd_config.h zs_lz4kd.c zs_native.h zs_native.c zs_native_btf.c zs_lz4kd_config.h ../kpm_utils.h ../patch_offsets.py
+link_kpm = $(CC) $(CFLAGS) $(CFLAG) $(MODE_FLAGS) -DMYKPM_VERSION=\"$(MYKPM_VERSION)\" $(INCLUDE_FLAGS) $(CODEC_FLAGS) $(kpm_inputs)
+
+$(layout_asm): zs_offsets.c ../patch_offsets.py
+	@mkdir -p "$(dir $@)"
+	$(PYTHON) ../patch_offsets.py layout-asm --source "$<" > "$@.tmp" && mv "$@.tmp" "$@"
+
+$(kpm).kpm $(kpm)_baselines.kpm: $(kpm_inputs) $(headers) Makefile $(KPM_TOOLCHAIN_MK)
+
+$(kpm).kpm:
+	@mkdir -p "$(OUT_DIR)"
+	@test ! -e "$@"
+	$(link_kpm) -r -o "$@"
+
+$(kpm)_baselines.kpm: MODE_FLAGS += -DCONFIG_KPM_BASELINES
+$(kpm)_baselines.kpm: $(layout_asm)
+	@mkdir -p "$(OUT_DIR)" "$(LAYOUT_DIR)"
+	@test ! -e "$@"
+	$(link_kpm) "$(layout_asm)" -r -o "$@"
+	$(PYTHON) ../patch_offsets.py baseline "$@" --output "$(LAYOUT_DIR)/$(notdir $@).json"
 
 .PHONY: all ci dynamic static baselines
