@@ -21,7 +21,10 @@ INCLUDE_FLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(KP_DIR)/kernel/$(dir))
 kpm_sources := nomount.c ../kpm_runtime.c
 headers := $(wildcard nm*.[ch]) ../kpm_utils.h ../patch_offsets.py
 kpm := $(OUT_DIR)/NoMount_$(MYKPM_VERSION)
-kpms := $(kpm).kpm $(kpm)_baselines.kpm
+layout_asm := $(OUT_DIR)/out/kpm-layout.S
+link_kpm = $(CC) $(CFLAGS) $(CFLAG) $(MODE_FLAGS) -DMYKPM_VERSION=\"$(MYKPM_VERSION)\" $(INCLUDE_FLAGS) $(kpm_sources)
+
+.DELETE_ON_ERROR:
 
 all: dynamic static
 ci: all
@@ -33,12 +36,22 @@ dynamic: $(kpm).kpm
 static: $(kpm)_baselines.kpm
 baselines: static
 
-$(kpm)_baselines.kpm: MODE_FLAGS += -DCONFIG_KPM_BASELINES
+$(layout_asm): nm_offsets.c ../patch_offsets.py
+	@mkdir -p "$(dir $@)"
+	$(PYTHON) ../patch_offsets.py layout-asm --source "$<" > "$@.tmp" && mv "$@.tmp" "$@"
 
-$(kpms): $(kpm_sources) $(headers) Makefile $(KPM_TOOLCHAIN_MK)
-	@mkdir -p $(OUT_DIR) $(LAYOUT_DIR)
-	@test ! -e $@
-	$(CC) $(CFLAGS) $(CFLAG) $(MODE_FLAGS) -DMYKPM_VERSION=\"$(MYKPM_VERSION)\" $(INCLUDE_FLAGS) $(kpm_sources) -r -o $@
-	$(if $(filter %_baselines.kpm,$@),$(PYTHON) ../patch_offsets.py baseline $@ --source nm_offsets.c --output $(LAYOUT_DIR)/$(notdir $@).json)
+$(kpm).kpm $(kpm)_baselines.kpm: $(kpm_sources) $(headers) Makefile $(KPM_TOOLCHAIN_MK)
+
+$(kpm).kpm:
+	@mkdir -p "$(OUT_DIR)"
+	@test ! -e "$@"
+	$(link_kpm) -r -o "$@"
+
+$(kpm)_baselines.kpm: MODE_FLAGS += -DCONFIG_KPM_BASELINES
+$(kpm)_baselines.kpm: $(layout_asm)
+	@mkdir -p "$(OUT_DIR)" "$(LAYOUT_DIR)"
+	@test ! -e "$@"
+	$(link_kpm) "$(layout_asm)" -r -o "$@"
+	$(PYTHON) ../patch_offsets.py baseline "$@" --output "$(LAYOUT_DIR)/$(notdir $@).json"
 
 .PHONY: all ci dynamic static baselines

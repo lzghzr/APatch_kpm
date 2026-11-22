@@ -33,7 +33,7 @@ git archive <迁移前提交> nomount/configs | tar -x -C local
 ## 文件职责
 
 - `nomount.c`：KPM 元信息、完整初始化、状态查询和驻留诊断入口。
-- `Makefile`：dynamic / static 两种产物，静态版附带布局 JSON。
+- `Makefile`：dynamic / static 两种产物；静态版内嵌布局，并由静态 KPM 导出配套 JSON。
 - 公共 `kpm_runtime.c`：将编译器生成的 `memset` 调用转接到 KP 的 `kf_memset`，与主入口分别编译、共同链接。
 - `nomount/local/configs/boot_los23.2.json`：首轮目标的38项配置及镜像、源码和证据绑定。
 - `nomount/local/configs/B2N-416G.json`／`nomount/local/configs/boot_los23.2-v2.json`：0.2.0 的42项静态配置。原0.1.0配置与候选保持原样。
@@ -238,7 +238,7 @@ v22 候选冻结前，Developer 显式运行 `tools/test_v22_sync.py --oracle-ou
 
 `tools/check_target_calls.py` 在 B2N 镜像的指定有界片段中核对字段与调用寄存器。其窗口和寄存器模式只覆盖已核对的目标；完整表尺寸另需目标配置／声明证据，不能把脚本通过当作通用布局保证。
 
-目标配置通过根目录 `patch_offsets.py` 修改已构建二进制。配置值须绑定目标证据，基础实例与派生哈希一起交接。手工构建使用新的空输出目录；统一候选入口保留默认 `LAYOUT_DIR=$(OUT_DIR)`，将同名静态 JSON 与 KPM 一起登记归档，并在重建前移走旧产物。已归档实例与清单不可覆盖。
+新静态件可用 `patch_offsets.py baseline` 直接导出布局，或配合目标配置执行 `patch`；旧件用原配套 JSON。配置值须绑定目标证据，基础实例与派生哈希一起交接。手工构建使用空输出目录；统一候选入口保留默认 `LAYOUT_DIR=$(OUT_DIR)`，将同名静态 JSON 与 KPM 一起登记归档。已归档实例与清单不可覆盖。
 
 新派生件统一生成到 `artifacts/binary-port/nomount/<派生 SHA-256>/<派生件名>`，目标身份写入元数据和回执。历史生成命令和交接记录保留原样；当前位置由维护者登记记录取得。
 
